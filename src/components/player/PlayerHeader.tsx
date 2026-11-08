@@ -26,7 +26,7 @@ export default function PlayerHeader({ player }: { player: PlayerDetail }) {
           {player.nameKo}
         </h1>
         {player.nameEn && (
-          <p className="mt-0.5 text-[0.71875rem] font-medium uppercase tracking-[0.08em] text-muted">
+          <p className="mt-0.5 text-[0.6875rem] font-medium uppercase tracking-[0.08em] text-muted">
             {player.nameEn}
           </p>
         )}

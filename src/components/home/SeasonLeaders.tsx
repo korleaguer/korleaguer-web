@@ -50,7 +50,7 @@ function LeaderCard({ leader, hitters }: { leader: Leader; hitters: HitterSeason
       <h3 className="text-[0.8125rem] font-semibold text-muted">{leader.title}</h3>
       {first ? (
         <>
-          <p className="mb-2 mt-0.5 text-[1.625rem] font-extrabold leading-tight tracking-[-0.02em] text-accent-ink tabular-nums">
+          <p className="mb-2 mt-0.5 text-[1.75rem] font-extrabold leading-tight tracking-[-0.02em] text-accent-ink tabular-nums">
             {leader.format(first.value)}
           </p>
           <p className="flex min-w-0 items-center gap-1 text-sm font-semibold">
