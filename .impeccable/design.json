@@ -1,349 +1,523 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-08T10:39:08+00:00",
+  "generatedAt": "2026-11-08T00:00:00+09:00",
   "title": "Design System: 코리거",
   "extensions": {
     "colorMeta": {
-      "visa-paper": {
+      "background": {
         "role": "neutral",
-        "displayName": "Visa Paper",
-        "canonical": "oklch(95.8% 0.004 214.3)",
+        "displayName": "차가운 회색 바탕",
         "tonalRamp": [
-          "#0a0b0c",
-          "#242526",
-          "#404243",
-          "#5f6263",
-          "#808384",
-          "#a3a5a6",
-          "#c7c9ca",
-          "#edefef"
-        ],
-        "dark": "#16244b",
-        "purpose": "밝은 모드 페이지 바탕(여권 속지)."
+          "#0e1116",
+          "#191d24",
+          "#2a303a",
+          "#5b6270",
+          "#9aa3b0",
+          "#d3d8e0",
+          "#eceef1",
+          "#f4f5f7"
+        ]
       },
-      "ink-navy": {
+      "foreground": {
         "role": "neutral",
-        "displayName": "Ink Navy",
-        "canonical": "oklch(21.9% 0.036 264.4)",
+        "displayName": "본문 글자",
         "tonalRamp": [
-          "#080b11",
-          "#20252f",
-          "#3b4250",
-          "#586174",
-          "#798396",
-          "#9da5b6",
-          "#c3c9d7",
-          "#eaeff8"
-        ],
-        "dark": "#e9edf6",
-        "purpose": "본문 글자."
+          "#0e1116",
+          "#191d24",
+          "#2a303a",
+          "#5b6270",
+          "#9aa3b0",
+          "#d3d8e0",
+          "#eceef1",
+          "#f4f5f7"
+        ]
       },
-      "page-white": {
+      "surface": {
         "role": "neutral",
-        "displayName": "Page White",
-        "canonical": "oklch(100.0% 0.000 89.9)",
+        "displayName": "흰 카드",
         "tonalRamp": [
-          "#0b0b0b",
-          "#252525",
-          "#424242",
-          "#616161",
-          "#828282",
-          "#a5a5a5",
-          "#c9c9c9",
-          "#eeeeee"
-        ],
-        "dark": "#1e2e5c",
-        "purpose": "내용이 놓이는 테두리 없는 면."
+          "#0e1116",
+          "#191d24",
+          "#2a303a",
+          "#5b6270",
+          "#9aa3b0",
+          "#d3d8e0",
+          "#eceef1",
+          "#f4f5f7"
+        ]
       },
-      "page-white-2": {
+      "surface-2": {
         "role": "neutral",
-        "displayName": "Page White 2",
-        "canonical": "oklch(97.1% 0.003 219.5)",
+        "displayName": "한 단계 진한 회색(점수 띠·칩)",
         "tonalRamp": [
-          "#0b0b0b",
-          "#242526",
-          "#414243",
-          "#5f6262",
-          "#808384",
-          "#a3a5a6",
-          "#c8c9ca",
-          "#edefef"
-        ],
-        "dark": "#24366a",
-        "purpose": "표 머리, 사진 자리 표시, 카드 hover."
+          "#0e1116",
+          "#191d24",
+          "#2a303a",
+          "#5b6270",
+          "#9aa3b0",
+          "#d3d8e0",
+          "#eceef1",
+          "#f4f5f7"
+        ]
       },
-      "hairline": {
+      "line": {
         "role": "neutral",
-        "displayName": "Hairline",
-        "canonical": "oklch(91.2% 0.009 232.4)",
+        "displayName": "카드 안 구분선",
         "tonalRamp": [
-          "#0a0b0c",
-          "#232627",
-          "#3f4345",
-          "#5d6265",
-          "#7e8387",
-          "#a1a6a9",
-          "#c6cacc",
-          "#eceff0"
-        ],
-        "dark": "#2f4278",
-        "purpose": "줄 사이 1px 선, 순위 막대 바탕."
+          "#0e1116",
+          "#191d24",
+          "#2a303a",
+          "#5b6270",
+          "#9aa3b0",
+          "#d3d8e0",
+          "#eceef1",
+          "#f4f5f7"
+        ]
       },
-      "muted-ink": {
+      "avatar-bg": {
         "role": "neutral",
-        "displayName": "Muted Ink",
-        "canonical": "oklch(49.0% 0.032 260.2)",
+        "displayName": "사진 원 바탕",
         "tonalRamp": [
-          "#080b10",
-          "#20252e",
-          "#3b424f",
-          "#586272",
-          "#788394",
-          "#9da6b4",
-          "#c3cad5",
-          "#eaeff7"
-        ],
-        "dark": "#a3aecb",
-        "purpose": "보조 글자."
+          "#0e1116",
+          "#191d24",
+          "#2a303a",
+          "#5b6270",
+          "#9aa3b0",
+          "#d3d8e0",
+          "#eceef1",
+          "#f4f5f7"
+        ]
       },
-      "link-navy": {
+      "muted": {
+        "role": "neutral",
+        "displayName": "흐린 글자",
+        "tonalRamp": [
+          "#0e1116",
+          "#191d24",
+          "#2a303a",
+          "#5b6270",
+          "#9aa3b0",
+          "#d3d8e0",
+          "#eceef1",
+          "#f4f5f7"
+        ]
+      },
+      "accent": {
         "role": "primary",
-        "displayName": "Link Navy",
-        "canonical": "oklch(36.7% 0.113 265.2)",
+        "displayName": "스코어보드 파랑(로고 상자·'승' 알약)",
         "tonalRamp": [
-          "#040a1d",
-          "#162343",
-          "#2c406e",
-          "#445f9c",
-          "#6481c1",
-          "#8ca4da",
-          "#b5c9f3",
-          "#e1efff"
-        ],
-        "dark": "#9db7ff",
-        "purpose": "링크, 포커스 테두리, accent-color."
+          "#172554",
+          "#1e3a8a",
+          "#1d4ed8",
+          "#2563eb",
+          "#3b82f6",
+          "#8db1ff",
+          "#c7d8ff",
+          "#e8efff"
+        ]
       },
-      "cover-navy": {
+      "accent-fg": {
         "role": "primary",
-        "displayName": "Cover Navy",
-        "canonical": "oklch(27.2% 0.075 266.6)",
+        "displayName": "채운 파랑 위 글자",
         "tonalRamp": [
-          "#060b17",
-          "#1c2439",
-          "#35415f",
-          "#4f6088",
-          "#7082ac",
-          "#95a5c8",
-          "#bdc9e5",
-          "#e6efff"
-        ],
-        "dark": "#0f1a3a",
-        "purpose": "머리띠(여권 표지). 다크 모드에서는 페이지 바탕."
+          "#0e1116",
+          "#191d24",
+          "#2a303a",
+          "#5b6270",
+          "#9aa3b0",
+          "#d3d8e0",
+          "#eceef1",
+          "#f4f5f7"
+        ]
       },
-      "cover-fg": {
+      "accent-ink": {
+        "role": "primary",
+        "displayName": "진한 파랑 글자(1위·현재 메뉴·링크)",
+        "tonalRamp": [
+          "#172554",
+          "#1e3a8a",
+          "#1d4ed8",
+          "#2563eb",
+          "#3b82f6",
+          "#8db1ff",
+          "#c7d8ff",
+          "#e8efff"
+        ]
+      },
+      "accent-soft": {
+        "role": "primary",
+        "displayName": "연파랑 알약(현재 메뉴)",
+        "tonalRamp": [
+          "#172554",
+          "#1e3a8a",
+          "#1d4ed8",
+          "#2563eb",
+          "#3b82f6",
+          "#8db1ff",
+          "#c7d8ff",
+          "#e8efff"
+        ]
+      },
+      "neutral-pill": {
         "role": "neutral",
-        "displayName": "Cover Fg",
-        "canonical": "oklch(97.0% 0.007 268.5)",
+        "displayName": "회색 알약('패'·'무')",
         "tonalRamp": [
-          "#0b0b0c",
-          "#242527",
-          "#414245",
-          "#606165",
-          "#818286",
-          "#a4a5a8",
-          "#c8c9cc",
-          "#eeeef0"
-        ],
-        "dark": "#f3f5fa",
-        "purpose": "머리띠 안 현재 메뉴 글자."
+          "#0e1116",
+          "#191d24",
+          "#2a303a",
+          "#5b6270",
+          "#9aa3b0",
+          "#d3d8e0",
+          "#eceef1",
+          "#f4f5f7"
+        ]
       },
-      "cover-muted": {
+      "neutral-pill-fg": {
         "role": "neutral",
-        "displayName": "Cover Muted",
-        "canonical": "oklch(78.3% 0.036 267.6)",
+        "displayName": "회색 알약·칩 글자",
         "tonalRamp": [
-          "#090b11",
-          "#21252f",
-          "#3c4250",
-          "#596174",
-          "#7a8297",
-          "#9ea5b6",
-          "#c3c9d7",
-          "#eaeef8"
-        ],
-        "dark": "#a3aecb",
-        "purpose": "머리띠 안 나머지 메뉴·설명."
-      },
-      "gold-foil": {
-        "role": "secondary",
-        "displayName": "Gold Foil",
-        "canonical": "oklch(73.9% 0.103 84.2)",
-        "tonalRamp": [
-          "#130900",
-          "#322200",
-          "#553e03",
-          "#7a5c12",
-          "#9d7d3a",
-          "#bba26e",
-          "#dbc79f",
-          "#fbedd2"
-        ],
-        "dark": "#d6b46a",
-        "purpose": "남색 위 금박: 워드마크, 현재 메뉴 밑줄."
-      },
-      "gold-ink": {
-        "role": "secondary",
-        "displayName": "Gold Ink",
-        "canonical": "oklch(53.1% 0.103 81.3)",
-        "tonalRamp": [
-          "#130900",
-          "#332100",
-          "#563d05",
-          "#7c5b14",
-          "#9f7c3b",
-          "#bda16e",
-          "#dcc6a0",
-          "#fcedd2"
-        ],
-        "dark": "#e2c27c",
-        "purpose": "흰 면 위 1위 값."
-      },
-      "ink-win": {
-        "role": "tertiary",
-        "displayName": "Win Green",
-        "canonical": "oklch(51.7% 0.103 161.4)",
-        "tonalRamp": [
-          "#001006",
-          "#012d1c",
-          "#104e35",
-          "#227150",
-          "#489470",
-          "#7ab496",
-          "#a9d5be",
-          "#d9f7e6"
-        ],
-        "dark": "#4fc48e",
-        "purpose": "승 도장 잉크."
-      },
-      "ink-loss": {
-        "role": "tertiary",
-        "displayName": "Loss Red",
-        "canonical": "oklch(50.0% 0.182 29.5)",
-        "tonalRamp": [
-          "#210000",
-          "#4b0502",
-          "#791810",
-          "#ab2c20",
-          "#d35243",
-          "#ed8273",
-          "#ffb0a3",
-          "#ffded4"
-        ],
-        "dark": "#ff7b6e",
-        "purpose": "패 도장 잉크."
-      },
-      "ink-tie": {
-        "role": "tertiary",
-        "displayName": "Tie Violet",
-        "canonical": "oklch(49.5% 0.127 297.5)",
-        "tonalRamp": [
-          "#0e061c",
-          "#291c42",
-          "#48356d",
-          "#69519a",
-          "#8a72bf",
-          "#ab99d8",
-          "#cec0f2",
-          "#f2e8ff"
-        ],
-        "dark": "#b79cf0",
-        "purpose": "무 도장 잉크."
+          "#0e1116",
+          "#191d24",
+          "#2a303a",
+          "#5b6270",
+          "#9aa3b0",
+          "#d3d8e0",
+          "#eceef1",
+          "#f4f5f7"
+        ]
       },
       "notice-bg": {
-        "role": "neutral",
-        "displayName": "Notice Ground",
-        "canonical": "oklch(95.7% 0.015 27.3)",
+        "role": "secondary",
+        "displayName": "안내 호박 바탕",
         "tonalRamp": [
-          "#0e0a0a",
-          "#292423",
-          "#48403f",
-          "#695e5d",
-          "#8b7f7e",
-          "#aca2a1",
-          "#cfc7c6",
-          "#f2edec"
-        ],
-        "dark": "#3b1714",
-        "purpose": "샘플 데이터·요금제 안내 띠 바탕."
+          "#33260b",
+          "#6b4300",
+          "#92400e",
+          "#b45309",
+          "#d97706",
+          "#f5b94a",
+          "#ffe2a3",
+          "#fff4dc"
+        ]
       },
       "notice-fg": {
-        "role": "neutral",
-        "displayName": "Notice Ink",
-        "canonical": "oklch(38.2% 0.132 29.4)",
+        "role": "secondary",
+        "displayName": "안내 호박 글자",
         "tonalRamp": [
-          "#1c0201",
-          "#42140e",
-          "#6c2a22",
-          "#9a4237",
-          "#c06457",
-          "#db8e82",
-          "#f5b8ae",
-          "#ffe3db"
-        ],
-        "dark": "#ffd2cc",
-        "purpose": "안내 띠 글자."
+          "#33260b",
+          "#6b4300",
+          "#92400e",
+          "#b45309",
+          "#d97706",
+          "#f5b94a",
+          "#ffe2a3",
+          "#fff4dc"
+        ]
+      },
+      "notice-mark": {
+        "role": "secondary",
+        "displayName": "안내 호박 알약",
+        "tonalRamp": [
+          "#33260b",
+          "#6b4300",
+          "#92400e",
+          "#b45309",
+          "#d97706",
+          "#f5b94a",
+          "#ffe2a3",
+          "#fff4dc"
+        ]
+      },
+      "background-dark": {
+        "role": "neutral",
+        "displayName": "차가운 회색 바탕 (다크 모드)",
+        "tonalRamp": [
+          "#0e1116",
+          "#191d24",
+          "#2a303a",
+          "#5b6270",
+          "#9aa3b0",
+          "#d3d8e0",
+          "#eceef1",
+          "#f4f5f7"
+        ]
+      },
+      "foreground-dark": {
+        "role": "neutral",
+        "displayName": "본문 글자 (다크 모드)",
+        "tonalRamp": [
+          "#0e1116",
+          "#191d24",
+          "#2a303a",
+          "#5b6270",
+          "#9aa3b0",
+          "#d3d8e0",
+          "#eceef1",
+          "#f4f5f7"
+        ]
+      },
+      "surface-dark": {
+        "role": "neutral",
+        "displayName": "흰 카드 (다크 모드)",
+        "tonalRamp": [
+          "#0e1116",
+          "#191d24",
+          "#2a303a",
+          "#5b6270",
+          "#9aa3b0",
+          "#d3d8e0",
+          "#eceef1",
+          "#f4f5f7"
+        ]
+      },
+      "surface-2-dark": {
+        "role": "neutral",
+        "displayName": "한 단계 진한 회색(점수 띠·칩) (다크 모드)",
+        "tonalRamp": [
+          "#0e1116",
+          "#191d24",
+          "#2a303a",
+          "#5b6270",
+          "#9aa3b0",
+          "#d3d8e0",
+          "#eceef1",
+          "#f4f5f7"
+        ]
+      },
+      "line-dark": {
+        "role": "neutral",
+        "displayName": "카드 안 구분선 (다크 모드)",
+        "tonalRamp": [
+          "#0e1116",
+          "#191d24",
+          "#2a303a",
+          "#5b6270",
+          "#9aa3b0",
+          "#d3d8e0",
+          "#eceef1",
+          "#f4f5f7"
+        ]
+      },
+      "avatar-bg-dark": {
+        "role": "neutral",
+        "displayName": "사진 원 바탕 (다크 모드)",
+        "tonalRamp": [
+          "#0e1116",
+          "#191d24",
+          "#2a303a",
+          "#5b6270",
+          "#9aa3b0",
+          "#d3d8e0",
+          "#eceef1",
+          "#f4f5f7"
+        ]
+      },
+      "muted-dark": {
+        "role": "neutral",
+        "displayName": "흐린 글자 (다크 모드)",
+        "tonalRamp": [
+          "#0e1116",
+          "#191d24",
+          "#2a303a",
+          "#5b6270",
+          "#9aa3b0",
+          "#d3d8e0",
+          "#eceef1",
+          "#f4f5f7"
+        ]
+      },
+      "accent-ink-dark": {
+        "role": "primary",
+        "displayName": "진한 파랑 글자(1위·현재 메뉴·링크) (다크 모드)",
+        "tonalRamp": [
+          "#172554",
+          "#1e3a8a",
+          "#1d4ed8",
+          "#2563eb",
+          "#3b82f6",
+          "#8db1ff",
+          "#c7d8ff",
+          "#e8efff"
+        ]
+      },
+      "accent-soft-dark": {
+        "role": "primary",
+        "displayName": "연파랑 알약(현재 메뉴) (다크 모드)",
+        "tonalRamp": [
+          "#172554",
+          "#1e3a8a",
+          "#1d4ed8",
+          "#2563eb",
+          "#3b82f6",
+          "#8db1ff",
+          "#c7d8ff",
+          "#e8efff"
+        ]
+      },
+      "neutral-pill-dark": {
+        "role": "neutral",
+        "displayName": "회색 알약('패'·'무') (다크 모드)",
+        "tonalRamp": [
+          "#0e1116",
+          "#191d24",
+          "#2a303a",
+          "#5b6270",
+          "#9aa3b0",
+          "#d3d8e0",
+          "#eceef1",
+          "#f4f5f7"
+        ]
+      },
+      "neutral-pill-fg-dark": {
+        "role": "neutral",
+        "displayName": "회색 알약·칩 글자 (다크 모드)",
+        "tonalRamp": [
+          "#0e1116",
+          "#191d24",
+          "#2a303a",
+          "#5b6270",
+          "#9aa3b0",
+          "#d3d8e0",
+          "#eceef1",
+          "#f4f5f7"
+        ]
+      },
+      "notice-bg-dark": {
+        "role": "secondary",
+        "displayName": "안내 호박 바탕 (다크 모드)",
+        "tonalRamp": [
+          "#33260b",
+          "#6b4300",
+          "#92400e",
+          "#b45309",
+          "#d97706",
+          "#f5b94a",
+          "#ffe2a3",
+          "#fff4dc"
+        ]
+      },
+      "notice-fg-dark": {
+        "role": "secondary",
+        "displayName": "안내 호박 글자 (다크 모드)",
+        "tonalRamp": [
+          "#33260b",
+          "#6b4300",
+          "#92400e",
+          "#b45309",
+          "#d97706",
+          "#f5b94a",
+          "#ffe2a3",
+          "#fff4dc"
+        ]
+      },
+      "notice-mark-dark": {
+        "role": "secondary",
+        "displayName": "안내 호박 알약 (다크 모드)",
+        "tonalRamp": [
+          "#33260b",
+          "#6b4300",
+          "#92400e",
+          "#b45309",
+          "#d97706",
+          "#f5b94a",
+          "#ffe2a3",
+          "#fff4dc"
+        ]
       }
     },
     "typographyMeta": {
       "display": {
         "displayName": "Display",
-        "purpose": "페이지 제목. 명조(Hahmlet). 휴대폰 1.75rem, 넓은 화면 1.875rem."
+        "purpose": "선수 페이지 이름, '선수' 페이지 제목."
       },
-      "display-name": {
-        "displayName": "Display Name",
-        "purpose": "선수 페이지의 한글 이름."
+      "stat-hero": {
+        "displayName": "Stat hero",
+        "purpose": "선수 시즌 큰 숫자 칸(시즌 1위 카드 숫자도 같은 역할)."
+      },
+      "score": {
+        "displayName": "Score",
+        "purpose": "점수 띠 가운데 점수."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "섹션 제목, 카드 밖 회색 바탕 위."
       },
       "wordmark": {
         "displayName": "Wordmark",
-        "purpose": "머리띠의 '코리거'. 작은 영문 KORLEAGUER와 한 덩어리 로고."
-      },
-      "stat-hero": {
-        "displayName": "Stat Hero",
-        "purpose": "선수 시즌 핵심 숫자. 휴대폰 1.875rem."
-      },
-      "summary-line": {
-        "displayName": "Summary Line",
-        "purpose": "최근 경기 한 줄 기록. 휴대폰 1.0625rem. 이 서비스의 핵심 문장."
+        "purpose": "머리글 '코리거'."
       },
       "title": {
         "displayName": "Title",
-        "purpose": "묶음 제목."
+        "purpose": "경기 카드 선수 이름."
+      },
+      "summary-line": {
+        "displayName": "Summary line",
+        "purpose": "선수 한 줄 기록. 카드 안 가장 굵은 본문."
       },
       "body": {
         "displayName": "Body",
-        "purpose": "이름, 표 칸, 설명."
+        "purpose": "표, 빈 상태 문구."
       },
       "label": {
         "displayName": "Label",
-        "purpose": "항목 이름, 표 머리, 시각, 팀·점수 줄."
+        "purpose": "팀 이름, 칩, 요약 알약, 카드 제목."
       },
-      "name-latin": {
-        "displayName": "Name Latin",
-        "purpose": "영문 이름. 대문자, 자간 넓게."
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "기준 시각, 표 머리, 알약 글자, 바닥글."
+      },
+      "micro": {
+        "displayName": "Micro",
+        "purpose": "점수 아래 '종료 · 홈 · 시각'."
       }
     },
     "shadows": [
       {
-        "name": "scroll-edge",
-        "value": "radial-gradient(farthest-side at 100% 50%, color-mix(in oklab, var(--foreground) 16%, transparent), transparent) right / 0.875rem 100% no-repeat scroll",
-        "purpose": "가로로 밀리는 표에서 밀 내용이 남은 쪽 끝에만. 면에는 그림자를 쓰지 않는다."
+        "name": "shadow-card",
+        "value": "0 1px 2px rgb(16 24 40 / 0.06), 0 1px 1px rgb(16 24 40 / 0.03)",
+        "purpose": "모든 카드의 쉼 상태(밝은 모드)."
+      },
+      {
+        "name": "shadow-card-hover",
+        "value": "0 4px 14px rgb(16 24 40 / 0.1), 0 1px 2px rgb(16 24 40 / 0.06)",
+        "purpose": "누를 수 있는 카드에 마우스를 올렸을 때(밝은 모드)."
+      },
+      {
+        "name": "shadow-card-dark",
+        "value": "0 0 0 1px rgb(255 255 255 / 0.05)",
+        "purpose": "다크 모드 카드 가장자리."
+      },
+      {
+        "name": "shadow-card-hover-dark",
+        "value": "0 0 0 1px rgb(255 255 255 / 0.12), 0 6px 18px rgb(0 0 0 / 0.4)",
+        "purpose": "다크 모드 카드 올림."
+      },
+      {
+        "name": "avatar-ring",
+        "value": "0 1px 4px rgb(0 0 0 / 0.14)",
+        "purpose": "선수 머리 카드의 96px 사진(흰 4px 테두리와 함께)."
+      },
+      {
+        "name": "header-rule",
+        "value": "0 1px 0 var(--line)",
+        "purpose": "머리글 아래 1px 선."
       }
     ],
     "motion": [
       {
-        "name": "stamp-press",
-        "value": "220ms cubic-bezier(0.16, 1, 0.3, 1); scale 1.4 → 1, opacity 0 → 1; delay = row × 40ms",
-        "purpose": "홈 최근 경기 목록의 도장이 처음 그려질 때만. prefers-reduced-motion이면 없음."
+        "name": "ease-out-expo",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "모든 움직임의 곡선."
+      },
+      {
+        "name": "card-hover",
+        "value": "box-shadow 160ms",
+        "purpose": "누를 수 있는 카드의 그림자 전환."
+      },
+      {
+        "name": "card-rise",
+        "value": "260ms, translateY(6px) → 0, 카드마다 35ms 늦게",
+        "purpose": "홈 경기 카드가 처음 그려질 때 한 번. 동작 줄이기 설정이면 없음."
       }
     ],
     "breakpoints": [
@@ -359,149 +533,151 @@
         "name": "lg",
         "value": "1024px"
       }
-    ],
-    "modes": {
-      "strategy": "prefers-color-scheme",
-      "note": "같은 CSS 변수 이름이 다크 모드에서 colorMeta.*.dark 값으로 바뀐다. 다크 모드 바탕은 #16244b, 머리띠는 #0f1a3a."
-    },
-    "patterns": [
-      {
-        "name": "guilloche",
-        "value": "public/patterns/guilloche.svg (240×120 mask, 사인 곡선 14줄)",
-        "purpose": "선수 신원 면 바탕. 색은 --guilloche(밝은: accent 20%, 다크: gold 16%)."
-      }
     ]
   },
   "components": [
     {
-      "name": "Result Stamp",
-      "kind": "custom",
-      "refersTo": "stamp-win",
-      "description": "경기 결과 도장. 이중 테두리, 잉크색, 살짝 기울어짐. 홈 목록에서만 위에서부터 차례로 찍힌다.",
-      "html": "<div class=\"ds-stamp-row\"><span class=\"ds-stamp ds-win\" style=\"--tilt:-2deg;--i:0\">승<small>9.27</small></span><span class=\"ds-stamp ds-loss\" style=\"--tilt:1.5deg;--i:1\">패<small>9.27</small></span><span class=\"ds-stamp ds-tie\" style=\"--tilt:-1deg;--i:2\">무<small>9.26</small></span><span class=\"ds-stamp ds-empty\" style=\"--tilt:2deg;--i:3\">–<small>9.28</small></span></div>",
-      "css": ".ds-stamp-row{display:flex;gap:12px;align-items:center;font-family:-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', Pretendard, 'Noto Sans KR', 'Malgun Gothic', system-ui, sans-serif;padding:16px;background:var(--surface, #ffffff)}.ds-stamp{--tilt:0deg;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;height:44px;min-width:48px;padding:0 6px;border:1.5px solid currentColor;border-radius:6px;outline:1px solid currentColor;outline-offset:-4.5px;background:color-mix(in oklab,currentColor 7%,transparent);transform:rotate(var(--tilt));line-height:1;font-weight:800;font-size:14px;animation:ds-press 220ms cubic-bezier(0.16,1,0.3,1) backwards;animation-delay:calc(var(--i,0)*40ms)}.ds-stamp small{font-size:10px;font-weight:600;letter-spacing:-0.01em;font-variant-numeric:tabular-nums}.ds-win{color:var(--ink-win, #1f7a55)}.ds-loss{color:var(--ink-loss, #b42318)}.ds-tie{color:var(--ink-tie, #6b4fa0)}.ds-empty{color:var(--muted, #566173);border-style:dashed;outline:none;background:transparent}@keyframes ds-press{from{transform:rotate(var(--tilt)) scale(1.4);opacity:0}to{transform:rotate(var(--tilt)) scale(1);opacity:1}}@media (prefers-reduced-motion:reduce){.ds-stamp{animation:none}}"
+      "name": "카드",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "모든 내용의 기본 그릇. 흰 16px 카드, 테두리 없음, 옅은 그림자. 누를 수 있으면 올림 그림자.",
+      "html": "<div class=\"ds-card ds-card-link\"><p class=\"ds-card-label\">타율</p><p class=\"ds-card-stat\">.312</p></div>",
+      "css": ".ds-card{font-family:var(--font-sans, \"Pretendard Variable\", Pretendard, -apple-system, system-ui, \"Apple SD Gothic Neo\", sans-serif);background:var(--surface,#fff);color:var(--foreground,#111827);border-radius:16px;box-shadow:var(--shadow-card,0 1px 2px rgb(16 24 40/.06),0 1px 1px rgb(16 24 40/.03));padding:14px;width:180px} .ds-card-link{transition:box-shadow 160ms cubic-bezier(.16,1,.3,1);cursor:pointer} .ds-card-link:hover{box-shadow:var(--shadow-card-hover,0 4px 14px rgb(16 24 40/.1),0 1px 2px rgb(16 24 40/.06))} .ds-card-link:focus-visible{outline:2px solid var(--accent,#2563eb);outline-offset:2px} .ds-card-label{margin:0;font-size:.8125rem;font-weight:600;color:var(--muted,#5b6270)} .ds-card-stat{margin:2px 0 0;font-size:1.75rem;font-weight:800;line-height:1.25;letter-spacing:-.02em;color:var(--accent-ink,#1d4ed8);font-variant-numeric:tabular-nums}"
     },
     {
-      "name": "Site Header",
+      "name": "경기 카드",
+      "kind": "custom",
+      "refersTo": "game-card",
+      "description": "시그니처. 위는 회색 점수 띠, 아래는 원형 사진·이름·결과 알약과 굵은 한 줄 기록.",
+      "html": "<div class=\"ds-game\" tabindex=\"0\"><div class=\"ds-band\"><span class=\"ds-team\"><i class=\"ds-dot\" style=\"background:#fd5a1e\"></i>샌프란시스코</span><span class=\"ds-mid\"><b class=\"ds-score\">5 - 3</b><small class=\"ds-meta\">종료 · 홈 · 05:05</small></span><span class=\"ds-team ds-end\"><i class=\"ds-dot\" style=\"background:#333366\"></i>콜로라도</span></div><div class=\"ds-row\"><span class=\"ds-av\">이</span><div class=\"ds-txt\"><div class=\"ds-name\">이정후<span class=\"ds-win\">승</span></div><p class=\"ds-line\">4타수 2안타 1홈런 2타점</p></div></div></div>",
+      "css": ".ds-game{font-family:var(--font-sans, \"Pretendard Variable\", Pretendard, -apple-system, system-ui, \"Apple SD Gothic Neo\", sans-serif);width:340px;background:var(--surface,#fff);color:var(--foreground,#111827);border-radius:16px;padding:12px;box-shadow:var(--shadow-card,0 1px 2px rgb(16 24 40/.06));transition:box-shadow 160ms cubic-bezier(.16,1,.3,1);animation:ds-rise 260ms cubic-bezier(.16,1,.3,1) backwards} .ds-game:hover{box-shadow:var(--shadow-card-hover,0 4px 14px rgb(16 24 40/.1))} .ds-game:focus-visible{outline:2px solid var(--accent,#2563eb);outline-offset:2px} .ds-band{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:8px;background:var(--surface-2,#f4f5f7);border-radius:12px;padding:10px 12px} .ds-team{display:flex;align-items:center;gap:6px;font-size:.8125rem;font-weight:600;min-width:0} .ds-end{flex-direction:row-reverse;text-align:right} .ds-dot{width:8px;height:8px;border-radius:9999px;flex-shrink:0} .ds-mid{text-align:center} .ds-score{display:block;font-size:1.3125rem;font-weight:800;line-height:1.25;letter-spacing:.02em;font-variant-numeric:tabular-nums} .ds-meta{display:block;font-size:.6875rem;color:var(--muted,#5b6270);white-space:nowrap;font-variant-numeric:tabular-nums} .ds-row{display:flex;gap:12px;margin-top:12px;padding:0 2px} .ds-av{width:44px;height:44px;border-radius:9999px;background:var(--avatar-bg,#e8ebef);display:grid;place-items:center;font-weight:800;flex-shrink:0} .ds-txt{flex:1;min-width:0} .ds-name{display:flex;align-items:center;font-size:1rem;font-weight:700} .ds-win{margin-left:auto;border-radius:9999px;padding:2px 10px;font-size:.75rem;font-weight:700;line-height:1.125rem;background:var(--accent,#2563eb);color:var(--accent-fg,#fff)} .ds-line{margin:2px 0 0;font-size:.9375rem;font-weight:600;line-height:1.45} @keyframes ds-rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}} @media (prefers-reduced-motion:reduce){.ds-game{animation:none;transition:none}}"
+    },
+    {
+      "name": "결과 알약 '승'",
+      "kind": "chip",
+      "refersTo": "result-pill-win",
+      "description": "팀이 이겼을 때만. 채운 파랑.",
+      "html": "<span class=\"ds-pill ds-pill-win\">승</span>",
+      "css": ".ds-pill{font-family:var(--font-sans, \"Pretendard Variable\", Pretendard, -apple-system, system-ui, \"Apple SD Gothic Neo\", sans-serif);display:inline-flex;align-items:center;border-radius:9999px;padding:2px 10px;font-size:.75rem;font-weight:700;line-height:1.125rem} .ds-pill-win{background:var(--accent,#2563eb);color:var(--accent-fg,#fff)}"
+    },
+    {
+      "name": "결과 알약 '패'·'무'",
+      "kind": "chip",
+      "refersTo": "result-pill-loss",
+      "description": "진 경기·비긴 경기. 빨강 없이 회색.",
+      "html": "<span class=\"ds-pill ds-pill-loss\">패</span> <span class=\"ds-pill ds-pill-tie\">무</span>",
+      "css": ".ds-pill{font-family:var(--font-sans, \"Pretendard Variable\", Pretendard, -apple-system, system-ui, \"Apple SD Gothic Neo\", sans-serif);display:inline-flex;align-items:center;border-radius:9999px;padding:2px 10px;font-size:.75rem;font-weight:700;line-height:1.125rem} .ds-pill-loss{background:var(--neutral-pill,#e5e7eb);color:var(--neutral-pill-fg,#374151)} .ds-pill-tie{background:var(--neutral-pill,#e5e7eb);color:var(--foreground,#111827)}"
+    },
+    {
+      "name": "정보 칩",
+      "kind": "chip",
+      "refersTo": "info-chip",
+      "description": "선수 팀·포지션·등번호·나이. 회색 알약.",
+      "html": "<ul class=\"ds-chips\"><li class=\"ds-chip\">샌프란시스코</li><li class=\"ds-chip\">중견수</li><li class=\"ds-chip\">#51</li><li class=\"ds-chip\">28세</li></ul>",
+      "css": ".ds-chips{font-family:var(--font-sans, \"Pretendard Variable\", Pretendard, -apple-system, system-ui, \"Apple SD Gothic Neo\", sans-serif);display:flex;flex-wrap:wrap;gap:6px;list-style:none;margin:0;padding:0} .ds-chip{display:inline-flex;align-items:center;gap:6px;border-radius:9999px;background:var(--surface-2,#f4f5f7);color:var(--neutral-pill-fg,#374151);padding:4px 10px;font-size:.8125rem;font-weight:600;line-height:1.25rem}"
+    },
+    {
+      "name": "상단 메뉴",
       "kind": "nav",
-      "refersTo": "site-header",
-      "description": "여권 표지 남색 머리띠. 금박 워드마크, '야구' 꼬리표, 메뉴(현재 메뉴 금색 밑줄).",
-      "html": "<header class=\"ds-head\"><a class=\"ds-mark\" href=\"#\"><span class=\"ds-mark-ko\">코리거</span><span class=\"ds-mark-en\">KORLEAGUER</span></a><span class=\"ds-tag\">야구</span><nav class=\"ds-nav\"><a href=\"#\" aria-current=\"page\">홈</a><a href=\"#\">선수</a></nav></header>",
-      "css": ".ds-head{display:flex;align-items:center;gap:16px;height:56px;padding:0 16px;background:var(--cover, #16244b);color:var(--cover-fg, #f3f5fa);border-bottom:1px solid color-mix(in oklab,var(--gold, #c9a55a) 40%,transparent);font-family:-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', Pretendard, 'Noto Sans KR', 'Malgun Gothic', system-ui, sans-serif}.ds-mark{display:flex;align-items:baseline;gap:8px;color:var(--gold, #c9a55a);text-decoration:none}.ds-mark-ko{font-family:var(--font-hahmlet, Hahmlet), 'Nanum Myeongjo', AppleMyungjo, serif;font-size:1.375rem;font-weight:700;line-height:1}.ds-mark-en{font-size:0.625rem;font-weight:600;letter-spacing:0.22em}.ds-tag{border-radius:9999px;padding:2px 8px;font-size:12px;font-weight:600;color:var(--cover-muted, #aeb8d0);box-shadow:0 0 0 1px color-mix(in oklab,var(--cover-muted, #aeb8d0) 40%,transparent)}.ds-nav{display:flex;gap:4px;height:100%}.ds-nav a{display:flex;align-items:center;padding:2px 10px 0;border-bottom:2px solid transparent;font-size:14px;font-weight:600;color:var(--cover-muted, #aeb8d0);text-decoration:none}.ds-nav a:hover{color:var(--cover-fg, #f3f5fa)}.ds-nav a[aria-current]{color:var(--cover-fg, #f3f5fa);border-bottom-color:var(--gold, #c9a55a)}.ds-head a:focus-visible{outline:2px solid var(--gold, #c9a55a);outline-offset:2px;border-radius:4px}"
+      "refersTo": "nav-pill-current",
+      "description": "흰 머리글 56px. 파란 'K' 상자 + 코리거, 알약 메뉴. 현재 메뉴는 연파랑 알약.",
+      "html": "<header class=\"ds-header\"><a class=\"ds-brand\" href=\"#\"><span class=\"ds-k\">K</span>코리거</a><nav class=\"ds-nav\"><a class=\"ds-nav-item\" aria-current=\"page\" href=\"#\">홈</a><a class=\"ds-nav-item\" href=\"#\">선수</a></nav></header>",
+      "css": ".ds-header{font-family:var(--font-sans, \"Pretendard Variable\", Pretendard, -apple-system, system-ui, \"Apple SD Gothic Neo\", sans-serif);display:flex;align-items:center;gap:12px;height:56px;padding:0 16px;background:var(--surface,#fff);box-shadow:0 1px 0 var(--line,#eceef1)} .ds-brand{display:flex;align-items:center;gap:7px;font-size:1.125rem;font-weight:800;letter-spacing:-.03em;color:var(--foreground,#111827);text-decoration:none} .ds-k{display:grid;place-items:center;width:26px;height:26px;border-radius:8px;background:var(--accent,#2563eb);color:var(--accent-fg,#fff);font-size:.875rem;font-weight:800} .ds-nav{display:flex;gap:4px} .ds-nav-item{border-radius:9999px;padding:6px 12px;font-size:.875rem;font-weight:600;color:var(--muted,#5b6270);text-decoration:none} .ds-nav-item:hover{background:var(--surface-2,#f4f5f7);color:var(--foreground,#111827)} .ds-nav-item[aria-current]{background:var(--accent-soft,#e8efff);color:var(--accent-ink,#1d4ed8)} .ds-nav-item:focus-visible,.ds-brand:focus-visible{outline:2px solid var(--accent,#2563eb);outline-offset:2px;border-radius:6px}"
     },
     {
-      "name": "Recent Game Row",
-      "kind": "card",
-      "refersTo": "panel",
-      "description": "홈 최근 경기 흰 면의 한 줄: 도장, 이름, 시각, 크게 쓴 한 줄 기록, 팀·점수 줄.",
-      "html": "<ul class=\"ds-list\"><li class=\"ds-row\"><span class=\"ds-stamp2\" style=\"--tilt:-2deg\">승<small>9.27</small></span><div class=\"ds-body\"><div class=\"ds-top\"><a href=\"#\">이정후</a><span class=\"ds-time\">05:05</span></div><p class=\"ds-sum\">4타수 2안타(2루타 1) 1홈런 2타점 1볼넷</p><p class=\"ds-meta\">샌프란시스코 5 : 3 콜로라도 · 홈</p></div></li><li class=\"ds-row\"><span class=\"ds-stamp2 ds-l\" style=\"--tilt:1.5deg\">패<small>9.27</small></span><div class=\"ds-body\"><div class=\"ds-top\"><a href=\"#\">김하성</a><span class=\"ds-time\">08:10</span></div><p class=\"ds-sum\">4타수 1안타 1홈런 1타점</p><p class=\"ds-meta\">애틀랜타 4 : 5 뉴욕 메츠 · 원정</p></div></li></ul>",
-      "css": ".ds-list{list-style:none;margin:0;padding:0;background:var(--surface, #ffffff);border-radius:10px;overflow:hidden;color:var(--foreground, #121a2b);font-family:-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', Pretendard, 'Noto Sans KR', 'Malgun Gothic', system-ui, sans-serif;word-break:keep-all}.ds-row{display:flex;gap:14px;padding:14px 16px}.ds-row+.ds-row{border-top:1px solid var(--line, #dce3e7)}.ds-stamp2{--tilt:0deg;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;flex-shrink:0;height:44px;min-width:48px;padding:0 6px;color:var(--ink-win, #1f7a55);border:1.5px solid currentColor;border-radius:6px;outline:1px solid currentColor;outline-offset:-4.5px;background:color-mix(in oklab,currentColor 7%,transparent);transform:rotate(var(--tilt));line-height:1;font-weight:800;font-size:14px}.ds-stamp2 small{font-size:10px;font-weight:600}.ds-l{color:var(--ink-loss, #b42318)}.ds-body{flex:1;min-width:0}.ds-top{display:flex;align-items:center;gap:8px}.ds-top a{font-size:14px;font-weight:600;color:inherit;text-decoration:none}.ds-top a:hover{text-decoration:underline;text-underline-offset:3px}.ds-top a:focus-visible{outline:2px solid var(--accent, #213a7a);outline-offset:2px;border-radius:4px}.ds-time{margin-left:auto;font-size:12px;color:var(--muted, #566173);font-variant-numeric:tabular-nums}.ds-sum{margin:6px 0 0;font-size:1.125rem;font-weight:600;line-height:1.375}.ds-meta{margin:6px 0 0;font-size:12px;color:var(--muted, #566173);font-variant-numeric:tabular-nums}"
-    },
-    {
-      "name": "Player Card",
-      "kind": "card",
-      "refersTo": "panel",
-      "description": "선수 목록 카드. 3:4 사진, 이름, 영문 대문자 이름, 팀, 아래 기록 세 칸. 카드 전체가 링크.",
-      "html": "<div class=\"ds-card\"><div class=\"ds-cardtop\"><span class=\"ds-photo\">이</span><div><a class=\"ds-name\" href=\"#\">이정후</a><p class=\"ds-en\">JUNG HOO LEE</p><p class=\"ds-team\">샌프란시스코</p><p class=\"ds-info\">중견수 · 만 28세 · #51</p></div></div><dl class=\"ds-stats\"><div><dt>타율</dt><dd>.417</dd></div><div><dt>홈런</dt><dd>1</dd></div><div><dt>OPS</dt><dd>1.333</dd></div></dl></div>",
-      "css": ".ds-card{position:relative;max-width:320px;padding:16px;background:var(--surface, #ffffff);border-radius:10px;color:var(--foreground, #121a2b);font-family:-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', Pretendard, 'Noto Sans KR', 'Malgun Gothic', system-ui, sans-serif}.ds-card:hover{background:var(--surface-2, #f3f6f7)}.ds-card:has(a:focus-visible){box-shadow:0 0 0 2px var(--accent, #213a7a)}.ds-cardtop{display:flex;gap:14px}.ds-photo{display:inline-flex;align-items:center;justify-content:center;width:48px;height:64px;border-radius:4px;background:#fd5a1e;color:#fff;font-weight:800;font-size:20px;flex-shrink:0}.ds-name{font-size:1.125rem;font-weight:700;line-height:1.25;color:inherit;text-decoration:none}.ds-name::after{content:'';position:absolute;inset:0}.ds-name:focus-visible{outline:none}.ds-en{margin:2px 0 0;font-size:0.6875rem;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted, #566173)}.ds-team{margin:8px 0 0;font-size:14px}.ds-info{margin:2px 0 0;font-size:12px;color:var(--muted, #566173)}.ds-stats{display:grid;grid-template-columns:repeat(3,1fr);margin:16px 0 0;padding-top:12px;border-top:1px solid var(--line, #dce3e7)}.ds-stats dt{font-size:0.6875rem;color:var(--muted, #566173)}.ds-stats dd{margin:2px 0 0;font-size:1.25rem;font-weight:700;letter-spacing:-0.025em;font-variant-numeric:tabular-nums}"
-    },
-    {
-      "name": "Player ID Page",
-      "kind": "custom",
-      "refersTo": "player-photo-lg",
-      "description": "선수 신원 면. 보안 무늬 바탕, 96×128 세로 사진, 명조 이름, 오른쪽 위 등번호, 고정 순서 항목.",
-      "html": "<div class=\"ds-id\"><p class=\"ds-no\"><span>등번호</span>No. 51</p><div class=\"ds-idgrid\"><span class=\"ds-idphoto\">이</span><div class=\"ds-idname\"><h1>이정후<span>JUNG HOO LEE</span></h1><p class=\"ds-idteam\">샌프란시스코 (San Francisco Giants)</p><a href=\"#\">MLB 공식 페이지 <svg viewBox=\"0 0 16 16\" width=\"12\" height=\"12\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5.5 10.5 11 5M6 5h5v5\"/></svg></a></div><dl class=\"ds-fields\"><div><dt>포지션</dt><dd>중견수</dd></div><div><dt>투타</dt><dd>우투좌타</dd></div><div><dt>MLB 데뷔</dt><dd>2024년</dd></div></dl></div></div>",
-      "css": ".ds-id{position:relative;isolation:isolate;overflow:hidden;padding:20px;background:var(--surface, #ffffff);border-radius:10px;color:var(--foreground, #121a2b);font-family:-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', Pretendard, 'Noto Sans KR', 'Malgun Gothic', system-ui, sans-serif}.ds-id::before{content:'';position:absolute;inset:0;z-index:-1;background:repeating-linear-gradient(170deg,transparent 0 10px,color-mix(in oklab,var(--accent, #213a7a) 20%,transparent) 10px 11px);pointer-events:none}.ds-no{position:absolute;right:20px;top:16px;margin:0;text-align:right;font-size:1.25rem;font-weight:700;letter-spacing:-0.025em}.ds-no span{display:block;font-size:0.6875rem;font-weight:400;color:var(--muted, #566173)}.ds-idgrid{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:20px}.ds-idphoto{display:inline-flex;align-items:center;justify-content:center;width:96px;height:128px;border-radius:6px;background:#fd5a1e;color:#fff;font-size:36px;font-weight:800}.ds-idname{padding:4px 64px 0 0}.ds-idname h1{margin:0;font-family:var(--font-hahmlet, Hahmlet), 'Nanum Myeongjo', AppleMyungjo, serif;font-size:2rem;font-weight:700;line-height:1.25}.ds-idname h1 span{display:block;margin-top:4px;font-family:-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', Pretendard, 'Noto Sans KR', 'Malgun Gothic', system-ui, sans-serif;font-size:12px;font-weight:600;letter-spacing:0.16em;color:var(--muted, #566173)}.ds-idteam{margin:12px 0 0;font-size:14px;font-weight:500}.ds-idname a{display:inline-flex;align-items:center;gap:4px;margin-top:8px;font-size:14px;font-weight:600;color:var(--accent, #213a7a);text-decoration:none}.ds-idname a:hover{text-decoration:underline;text-underline-offset:3px}.ds-idname a:focus-visible{outline:2px solid var(--accent, #213a7a);outline-offset:2px;border-radius:4px}.ds-fields{grid-column:2;display:grid;grid-template-columns:repeat(3,1fr);gap:14px 24px;margin:20px 0 0;padding-top:16px;border-top:1px solid var(--line, #dce3e7);font-size:14px}.ds-fields dt{font-size:12px;color:var(--muted, #566173)}.ds-fields dd{margin:2px 0 0;font-weight:500}"
-    },
-    {
-      "name": "Record Table",
-      "kind": "custom",
-      "refersTo": "table-head",
-      "description": "기록 표. 머리는 Page White 2, 줄은 머리카락 선, 숫자 오른쪽 정렬, 1위 값은 Gold Ink 굵게.",
-      "html": "<table class=\"ds-table\"><thead><tr><th class=\"ds-l\">이름</th><th>경기</th><th>타율</th><th>홈런</th></tr></thead><tbody><tr><th class=\"ds-l\" scope=\"row\">김혜성</th><td>2</td><td class=\"ds-top1\">.429</td><td>0</td></tr><tr><th class=\"ds-l\" scope=\"row\">이정후</th><td>3</td><td>.417</td><td class=\"ds-top1\">1</td></tr></tbody></table>",
-      "css": ".ds-table{width:100%;border-collapse:collapse;background:var(--surface, #ffffff);color:var(--foreground, #121a2b);font-family:-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', Pretendard, 'Noto Sans KR', 'Malgun Gothic', system-ui, sans-serif;font-size:14px;font-variant-numeric:tabular-nums}.ds-table thead th{padding:8px 12px;background:var(--surface-2, #f3f6f7);border-bottom:1px solid var(--line, #dce3e7);font-size:12px;font-weight:600;color:var(--muted, #566173);text-align:right;white-space:nowrap}.ds-table tbody tr+tr{border-top:1px solid var(--line, #dce3e7)}.ds-table td,.ds-table tbody th{padding:8px 12px;text-align:right}.ds-table .ds-l{text-align:left;font-weight:600}.ds-table thead .ds-l{font-weight:600}.ds-top1{font-weight:700;color:var(--gold-ink, #8a6514)}"
-    },
-    {
-      "name": "Notice Banner",
+      "name": "안내 띠",
       "kind": "custom",
       "refersTo": "notice-banner",
-      "description": "샘플 데이터·요금제 안내 띠. 기운 견본 도장 + 굵은 제목.",
-      "html": "<div class=\"ds-notice\" role=\"status\"><span class=\"ds-nmark\" aria-hidden=\"true\">견본</span><div><p class=\"ds-nt\">샘플 데이터 — 실제 기록이 아닙니다</p><p class=\"ds-nd\">API 키 없이 실행 중이라 지어낸 숫자를 보여 주고 있습니다.</p></div></div>",
-      "css": ".ds-notice{display:flex;align-items:center;gap:16px;padding:12px 16px;border-radius:10px;background:var(--notice-bg, #fbedeb);color:var(--notice-fg, #7a1a12);font-family:-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', Pretendard, 'Noto Sans KR', 'Malgun Gothic', system-ui, sans-serif}.ds-nmark{display:inline-flex;align-items:center;justify-content:center;height:44px;min-width:56px;padding:0 8px;border:1.5px solid currentColor;border-radius:6px;outline:1px solid currentColor;outline-offset:-4.5px;background:color-mix(in oklab,currentColor 7%,transparent);transform:rotate(-4deg);font-size:14px;font-weight:800;letter-spacing:0.2em}.ds-nt{margin:0;font-size:1rem;font-weight:800}.ds-nd{margin:2px 0 0;font-size:12px;opacity:.85}"
+      "description": "샘플 데이터·요금제 한계 안내 전용. 호박색 카드 + 앞 알약.",
+      "html": "<div class=\"ds-notice\" role=\"status\"><span class=\"ds-notice-mark\">샘플</span><div><p class=\"ds-notice-title\">샘플 데이터 — 실제 기록이 아닙니다</p><p class=\"ds-notice-body\">API 키 없이 실행 중이라 지어낸 숫자를 보여 주고 있습니다.</p></div></div>",
+      "css": ".ds-notice{font-family:var(--font-sans, \"Pretendard Variable\", Pretendard, -apple-system, system-ui, \"Apple SD Gothic Neo\", sans-serif);display:flex;align-items:flex-start;gap:12px;border-radius:16px;background:var(--notice-bg,#fff4dc);color:var(--notice-fg,#6b4300);padding:12px 16px} .ds-notice-mark{flex-shrink:0;margin-top:1px;border-radius:9999px;background:var(--notice-mark,#b45309);color:var(--notice-bg,#fff4dc);padding:2px 10px;font-size:.75rem;font-weight:700;line-height:1.125rem} .ds-notice-title{margin:0;font-size:.9375rem;font-weight:700;line-height:1.375} .ds-notice-body{margin:2px 0 0;font-size:.8125rem;opacity:.9}"
     },
     {
-      "name": "Leaderboard",
+      "name": "선수 머리 카드",
       "kind": "custom",
-      "refersTo": "text-link",
-      "description": "순위판. 페이지 바탕 위, 위쪽 머리카락 선, 1위 숫자만 Gold Ink, 팀 색 막대.",
-      "html": "<div class=\"ds-board\"><h3>타율</h3><ul><li><span class=\"ds-rk ds-g\">1</span><a href=\"#\">김혜성</a><span class=\"ds-bar\"><i style=\"width:100%;background:#005a9c\"></i></span><b>.429</b></li><li><span class=\"ds-rk\">2</span><a href=\"#\">이정후</a><span class=\"ds-bar\"><i style=\"width:97%;background:#fd5a1e\"></i></span><b>.417</b></li></ul></div>",
-      "css": ".ds-board{max-width:320px;padding:12px 0 16px;border-top:1px solid var(--line, #dce3e7);background:var(--background, #eef2f3);color:var(--foreground, #121a2b);font-family:-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', Pretendard, 'Noto Sans KR', 'Malgun Gothic', system-ui, sans-serif}.ds-board h3{margin:0 0 10px;font-size:12px;font-weight:600;color:var(--muted, #566173)}.ds-board ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}.ds-board li{display:flex;align-items:center;gap:8px;font-size:14px}.ds-rk{width:16px;text-align:center;font-size:12px;font-weight:700;color:var(--muted, #566173)}.ds-g{color:var(--gold-ink, #8a6514)}.ds-board a{width:96px;font-weight:600;color:inherit;text-decoration:none}.ds-board a:hover{text-decoration:underline;text-underline-offset:3px}.ds-board a:focus-visible{outline:2px solid var(--accent, #213a7a);outline-offset:2px;border-radius:4px}.ds-bar{flex:1;height:6px;border-radius:9999px;background:var(--line, #dce3e7);overflow:hidden}.ds-bar i{display:block;height:100%;border-radius:9999px}.ds-board b{width:44px;text-align:right;font-variant-numeric:tabular-nums}"
+      "refersTo": "avatar",
+      "description": "팀 색 띠 위에 흰 테두리 96px 원형 사진이 걸치는 선수 페이지 머리.",
+      "html": "<section class=\"ds-ph\" style=\"--team:#fd5a1e\"><div class=\"ds-ph-band\"></div><div class=\"ds-ph-body\"><span class=\"ds-ph-av\">이</span><h1 class=\"ds-ph-name\">이정후</h1><p class=\"ds-ph-en\">Jung Hoo Lee</p></div></section>",
+      "css": ".ds-ph{font-family:var(--font-sans, \"Pretendard Variable\", Pretendard, -apple-system, system-ui, \"Apple SD Gothic Neo\", sans-serif);width:320px;overflow:hidden;border-radius:16px;background:var(--surface,#fff);color:var(--foreground,#111827);box-shadow:var(--shadow-card,0 1px 2px rgb(16 24 40/.06))} .ds-ph-band{height:68px;background:linear-gradient(120deg,var(--team),color-mix(in srgb,var(--team) 45%,var(--surface,#fff)))} .ds-ph-body{margin-top:-44px;padding:0 16px 16px} .ds-ph-av{display:grid;place-items:center;width:96px;height:96px;border-radius:9999px;background:var(--avatar-bg,#e8ebef);border:4px solid var(--surface,#fff);box-shadow:0 1px 4px rgb(0 0 0/.14);font-size:2.25rem;font-weight:800;box-sizing:border-box} .ds-ph-name{margin:8px 0 0;font-size:1.5rem;font-weight:800;line-height:1.25;letter-spacing:-.02em} .ds-ph-en{margin:2px 0 0;font-size:.71875rem;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--muted,#5b6270)}"
     }
   ],
   "narrative": {
-    "northStar": "해외파 여권",
-    "overview": "코리거는 해외로 나간 한국 선수들의 여권처럼 보인다. 경기 하나는 입국 도장 하나, 선수 페이지는 사진이 붙은 신원 면, 맨 위 머리띠는 여권 표지다. 밝은 모드는 여권 속지(푸른 기가 도는 옅은 바탕 위에 테두리 없는 흰 면), 다크 모드는 여권 표지(남색 바탕)다. 운영체제 설정을 따라 바뀐다.\n\n화면은 빽빽하게 정보를 담되 무게는 고르지 않다. 가장 중요한 것(한 줄 기록, 시즌 핵심 숫자)은 크기로 세우고, 상자나 배경 타일로 강조하지 않는다. 면과 면은 바탕색 차이로만 나누고, 면 안의 줄은 머리카락 선으로 나눈다. 테두리를 두른 물건은 도장뿐이다. 그래서 도장이 눈에 띈다.\n\n회색 카드를 같은 무게로 늘어놓는 스포츠 대시보드 기본형은 쓰지 않는다.",
+    "northStar": "점수 띠 위의 한 줄",
+    "overview": "처음 온 야구 팬도 설명 없이 읽는 스포츠 앱의 정석이다. 차가운 회색 바탕 위에 흰 카드가 놓이고, 경기 하나는 카드 하나다. 카드 위쪽은 팀 대 팀 점수 띠, 아래쪽은 우리 선수 사진·이름과 굵은 한 줄 기록. 비교 기준은 네이버 스포츠·FotMob의 완성도다.\n\n장식은 없다. 위계는 글꼴 굵기(800/600/400)와 크기, 바탕색 차이, 아주 옅은 그림자로만 만든다. 색은 거의 회색이고, 강조는 파랑 하나뿐이다. 팀 색은 데이터로만 들어온다(팀 로고, 선수 페이지 머리 띠, 사진이 없을 때 이니셜 원). 다크 모드는 운영체제 설정을 따르며, 밝은 모드와 같은 구조를 색만 바꿔 쓴다.\n\n예전의 여권 세계(명조 글꼴, 금박, 도장, 무늬)는 사용자가 버렸다(11-08). 다시 쓰지 않는다.",
     "keyCharacteristics": [
-      "여권 표지 남색 머리띠 + 금박 워드마크",
-      "경기 결과는 이중 테두리 도장(승 초록, 패 빨강, 무 보라, 경기 전은 점선 빈 자리), 조금 비뚤게 찍힘",
-      "선수 사진은 여권 사진처럼 세로 직사각형(3:4), 둥근 원이 아님",
-      "선수 신원 면 바탕에 가는 보안 무늬(guilloche)",
-      "제목만 명조(Hahmlet), 나머지는 시스템 한글 고딕 한 가족",
-      "영문 이름은 대문자, 자간 넓게"
+      "회색 바탕 + 흰 카드(16px 모서리, 테두리 없음, 옅은 그림자)",
+      "파랑 하나: 채운 파랑은 로고 상자와 '승' 알약, 진한 파랑 글자는 1위 숫자·현재 메뉴·링크",
+      "Pretendard 한 가족, 숫자는 모두 고정폭",
+      "알약 모양(완전히 둥근) 메뉴·결과·정보 칩",
+      "휴대폰 1열 → 태블릿 2열 → 데스크톱 3열 카드 격자"
     ],
     "rules": [
       {
-        "name": "The Gold Means First Rule",
-        "body": "금색 글자는 세 가지 뜻만 가진다: 이 서비스(워드마크), 지금 여기(현재 메뉴), 1위. 그 밖의 강조에 금색을 쓰지 않는다. 머리띠 아래 선·글자 선택 색·다크 모드 보안 무늬의 옅은 금빛은 재질이지 강조가 아니다.",
+        "name": "The One Blue Rule",
+        "body": "채운 파랑은 로고 상자와 '승' 알약 둘뿐이다. 진한 파랑 글자는 1위 숫자, 현재 메뉴, 링크 셋뿐이다. 버튼이나 제목을 파랗게 칠하지 않는다.",
         "section": "colors"
       },
       {
-        "name": "The Ink Is Only For Results Rule",
-        "body": "초록·빨강·보라 잉크는 승·패·무에만 쓴다. 오류나 안내는 Notice 색을 쓴다.",
+        "name": "The Grey Loss Rule",
+        "body": "'패'와 '무'는 빨강·초록 없이 회색 알약이다. 이긴 경기만 파랑으로 튄다.",
+        "section": "colors"
+      },
+      {
+        "name": "The Amber Is For Honesty Rule",
+        "body": "호박색은 샘플 데이터·요금제 한계 안내에만 쓴다. 꾸밈이나 강조에 빌려 쓰지 않는다.",
+        "section": "colors"
+      },
+      {
+        "name": "The Team Color Is Data Rule",
+        "body": "팀 색은 팀을 가리킬 때만 나온다(로고, 머리 띠, 이니셜 원, 색 점). 화면 강조색으로 쓰지 않는다.",
         "section": "colors"
       },
       {
         "name": "The 4.5:1 Rule",
-        "body": "모든 글자색은 놓인 바탕 대비 4.5:1 이상이다. 그래서 흰 면 위 금색은 Gold Foil이 아니라 Gold Ink를 쓴다.",
+        "body": "글자는 밝은·어두운 모드 모두 바탕 대비 4.5:1 이상이다.",
         "section": "colors"
       },
       {
-        "name": "The Size Not Boxes Rule",
-        "body": "위계는 글자 크기와 굵기로만 만든다. 중요한 숫자에 색 타일·테두리 상자를 씌우지 않는다.",
+        "name": "The Tabular Numbers Rule",
+        "body": "점수, 기록, 시각 등 숫자는 모두 고정폭(`tabular-nums`)이다. 줄이 바뀌어도 자릿수가 흔들리지 않는다.",
         "section": "typography"
       },
       {
-        "name": "The Two Faces Rule",
-        "body": "명조는 워드마크와 페이지 제목·선수 이름에만. 묶음 제목, 숫자, 표는 고딕이다.",
+        "name": "The Weight Ladder Rule",
+        "body": "위계는 굵기와 크기로만 만든다. 두 번째 글꼴(명조, 장식체)을 들이지 않는다.",
         "section": "typography"
       },
       {
-        "name": "The Ground Not Lines Rule",
-        "body": "면과 면은 바탕색 차이로만 나눈다. 면에 테두리나 그림자를 두르지 않는다. 면 안의 줄은 1px 머리카락 선(Hairline)으로 나눈다.",
+        "name": "The Keep-All Rule",
+        "body": "한국어는 낱말 중간에서 줄을 바꾸지 않는다(`word-break: keep-all`). 너무 긴 낱말만 쪼갠다.",
+        "section": "typography"
+      },
+      {
+        "name": "The No-Border Card Rule",
+        "body": "밝은 모드에서 카드 바깥 가장자리에 선을 긋지 않는다. 다크 모드의 1px 흰빛 테두리는 그림자 토큰(`--shadow-card`)이 맡는 가장자리이고, 따로 `border`를 더하지 않는다. 카드 안 구분(표 머리, 기록 칸 위, 경기 목록 사이)에만 `line` 색 1px 선을 쓴다.",
         "section": "elevation"
       },
       {
-        "name": "The One White Panel Rule (홈)",
-        "body": "홈에서 흰 면은 최근 경기 목록 하나뿐이다. 순위판과 시즌 성적 표는 페이지 바탕 위에 머리카락 선만으로 놓인다(표 바탕도 `--table-bg`로 페이지 바탕에 맞춘다).",
+        "name": "The Rise Once Rule",
+        "body": "홈 경기 카드는 처음 그려질 때만 위에서부터 차례로 6px 떠오른다(260ms, 카드마다 35ms 늦게). 동작 줄이기 설정이면 움직임도 그림자 전환도 없다.",
         "section": "elevation"
       }
     ],
     "dos": [
-      "**Do** 경기 결과는 늘 결과 도장으로 보여 준다. 색은 승·패·무 잉크만 쓴다.",
-      "**Do** 면은 테두리 없는 흰 면(10px)으로, 면 안의 줄은 1px 머리카락 선으로 나눈다.",
-      "**Do** 선수 사진은 3:4 세로 직사각형으로, 정해진 세 크기 중 하나를 쓴다.",
-      "**Do** 핵심 숫자는 크게(최대 2.5rem, 굵게, 자릿수 맞춤) 세운다.",
-      "**Do** 금색 글자는 워드마크·현재 메뉴·1위에만 쓰고, 흰 면 위에서는 Gold Ink를 쓴다.",
-      "**Do** 새 색을 만들면 밝은·다크 두 값을 함께 정하고 4.5:1 대비를 맞춘다.",
-      "**Do** 움직임은 도장 찍힘 하나로 충분하다. 동작 줄이기 설정을 존중한다."
+      "**Do** 새 화면도 회색 바탕 위 흰 16px 카드로 만들고, 섹션 제목은 카드 밖 바탕 위에 둔다.",
+      "**Do** 경기 하나를 카드 하나로 보여 준다: 점수 띠 위, 선수와 한 줄 기록 아래.",
+      "**Do** 숫자는 모두 고정폭으로 쓴다.",
+      "**Do** 짧은 상태·분류 글자는 완전히 둥근 알약으로 만든다.",
+      "**Do** 새 색은 밝은·어두운 모드 값을 함께 정하고 4.5:1 대비를 확인한다.",
+      "**Do** 움직임은 `cubic-bezier(0.16, 1, 0.3, 1)`로 짧게, 동작 줄이기 설정이면 끈다."
     ],
     "donts": [
-      "**Don't** 면에 그림자나 테두리를 두르지 않는다. 테두리를 두른 것은 도장(과 사진의 가는 고리)뿐이다.",
-      "**Don't** 같은 무게의 회색 카드를 늘어놓는 대시보드 모양으로 돌아가지 않는다.",
-      "**Don't** 선수 사진을 둥근 원으로 자르지 않는다.",
-      "**Don't** 강조하려고 색 타일·배경 상자를 씌우지 않는다. 크기로 강조한다.",
-      "**Don't** 명조를 묶음 제목·표·숫자에 쓰지 않는다.",
-      "**Don't** 홈에 흰 면을 더 늘리지 않는다. 최근 경기 목록 하나만 흰 면이다."
+      "**Don't** 여권 세계 장식(명조 글꼴, 금박, 도장, 무늬)을 다시 들인다(사용자 결정 11-08).",
+      "**Don't** 파랑을 로고 상자·'승' 알약·1위 숫자·현재 메뉴·링크 밖으로 넓힌다.",
+      "**Don't** '패'를 빨강, '승'을 초록으로 칠한다.",
+      "**Don't** 카드 바깥에 `border`를 긋거나, 그림자 토큰 두 개(쉼·올림) 밖의 그림자를 만든다.",
+      "**Don't** 같은 무게의 회색 표만 늘어놓은 관리자 화면을 만든다. 표는 카드와 한 줄 기록 다음이다.",
+      "**Don't** Pretendard 말고 다른 글꼴을 들인다."
     ]
   }
 }
