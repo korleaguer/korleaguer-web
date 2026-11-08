@@ -1,7 +1,7 @@
 /** 데이터를 받는 동안 보여 주는 회색 자리 표시 */
 export default function LoadingBlock({ rows = 4 }: { rows?: number }) {
   return (
-    <div role="status" className="rounded-xl border border-line bg-surface p-4">
+    <div role="status" className="rounded-[10px] bg-surface p-4">
       <span className="sr-only">불러오는 중</span>
       <div aria-hidden className="animate-pulse space-y-3">
         <div className="h-4 w-1/3 rounded bg-surface-2" />

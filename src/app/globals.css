@@ -1,36 +1,66 @@
 @import "tailwindcss";
 
-/* 화면 전체에서 쓰는 색. 다크 모드는 운영체제 설정(prefers-color-scheme)을 따른다. */
+/*
+ * 화면 전체에서 쓰는 색. 다크 모드는 운영체제 설정(prefers-color-scheme)을 따른다.
+ * 밝은 모드 = 여권 속지(옅은 바탕 위 흰 면), 다크 모드 = 여권 표지(남색 바탕).
+ * 글자색은 바탕 대비 4.5:1 이상으로 맞춘다.
+ */
 :root {
-  --background: #f3f4f6;
-  --foreground: #16181d;
-  --surface: #ffffff;
-  --surface-2: #f8f9fb;
-  --line: #e4e7ec;
-  /* 글자색은 배경 대비 4.5:1 이상으로 맞춘다 */
-  --muted: #5f6672;
-  --accent: #1d4ed8;
-  --win: #166534;
-  --loss: #b91c1c;
-  --notice-bg: #fef3c7;
-  --notice-fg: #78350f;
-  --notice-line: #f59e0b;
+  --background: #eef2f3; /* 페이지 바탕 */
+  --foreground: #121a2b;
+  --surface: #ffffff; /* 내용이 놓이는 면 */
+  --surface-2: #f3f6f7; /* 표 머리, 자리 표시 */
+  --line: #dce3e7; /* 머리카락 선 */
+  --muted: #566173;
+  --accent: #213a7a; /* 링크 */
+
+  /* 머리띠(여권 표지) */
+  --cover: #16244b;
+  --cover-fg: #f3f5fa;
+  --cover-muted: #aeb8d0;
+
+  /* 금박: 워드마크·현재 메뉴·1위 표시에만 쓴다 */
+  --gold: #c9a55a; /* 남색 위 글자·밑줄 */
+  --gold-ink: #8a6514; /* 흰 면 위 글자 */
+
+  /* 도장 잉크: 승·패·무 */
+  --ink-win: #1f7a55;
+  --ink-loss: #b42318;
+  --ink-tie: #6b4fa0;
+
+  --notice-bg: #fbedeb;
+  --notice-fg: #7a1a12;
+
+  /* 선수 신원 면의 보안 무늬 색 */
+  --guilloche: color-mix(in oklab, var(--accent) 20%, transparent);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0c0e12;
-    --foreground: #e6e8eb;
-    --surface: #15181d;
-    --surface-2: #1b1f26;
-    --line: #272c35;
-    --muted: #9aa1ac;
-    --accent: #7aa7ff;
-    --win: #4ade80;
-    --loss: #f87171;
-    --notice-bg: #33260a;
-    --notice-fg: #fcd34d;
-    --notice-line: #b45309;
+    --background: #16244b; /* 여권 표지 남색 그대로 */
+    --foreground: #e9edf6;
+    --surface: #1e2e5c;
+    --surface-2: #24366a;
+    --line: #2f4278;
+    --muted: #a3aecb;
+    --accent: #9db7ff;
+
+    /* 머리띠는 바탕보다 한 단계 짙게 + 아래 금색 선으로 구분한다 */
+    --cover: #0f1a3a;
+    --cover-fg: #f3f5fa;
+    --cover-muted: #a3aecb;
+
+    --gold: #d6b46a;
+    --gold-ink: #e2c27c;
+
+    --ink-win: #4fc48e;
+    --ink-loss: #ff7b6e;
+    --ink-tie: #b79cf0;
+
+    --notice-bg: #3b1714;
+    --notice-fg: #ffd2cc;
+
+    --guilloche: color-mix(in oklab, var(--gold) 16%, transparent);
   }
 }
 
@@ -43,17 +73,148 @@
   --color-line: var(--line);
   --color-muted: var(--muted);
   --color-accent: var(--accent);
-  --color-win: var(--win);
-  --color-loss: var(--loss);
+  --color-cover: var(--cover);
+  --color-cover-fg: var(--cover-fg);
+  --color-cover-muted: var(--cover-muted);
+  --color-gold: var(--gold);
+  --color-gold-ink: var(--gold-ink);
+  --color-ink-win: var(--ink-win);
+  --color-ink-loss: var(--ink-loss);
+  --color-ink-tie: var(--ink-tie);
   --color-notice-bg: var(--notice-bg);
   --color-notice-fg: var(--notice-fg);
-  --color-notice-line: var(--notice-line);
   --font-sans:
     -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", Pretendard,
     "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
+  /* 워드마크·페이지 제목. Hahmlet은 layout.tsx에서 next/font로 우리 서버가 준다 */
+  --font-display: var(--font-hahmlet), "Nanum Myeongjo", "AppleMyungjo", serif;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
+/*
+ * 아래 규칙은 @layer base / components 안에 둔다.
+ * 레이어 밖에 두면 Tailwind 클래스(focus-visible:outline-none 등)보다 항상 이겨 버린다.
+ */
+@layer base {
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    /* 한국어는 낱말 중간에서 줄을 바꾸지 않는다("있/습니다" 방지). 너무 긴 낱말만 쪼갠다 */
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
+
+  /* 브라우저 기본 모양(선택 영역, 커서, 포커스, 스크롤바, 밑줄)도 같은 색으로 맞춘다. */
+  html {
+    accent-color: var(--accent);
+    caret-color: var(--accent);
+    scrollbar-color: var(--line) var(--background);
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--gold) 40%, transparent);
+    color: var(--foreground);
+  }
+
+  a {
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* 남색 머리띠 안에서는 포커스 테두리를 금색으로 (남색 위 남색은 안 보인다) */
+  .bg-cover :focus-visible {
+    outline-color: var(--gold);
+  }
+}
+
+@layer components {
+  /*
+   * 결과 도장. 바깥 테두리 + 안쪽 가는 테두리(outline)로 입국 도장의 이중 테두리를 만든다.
+   * 색은 currentColor(잉크)를 따른다. --tilt로 조금 비뚤게 찍힌다.
+   */
+  .stamp {
+    --tilt: 0deg;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1.5px solid currentColor;
+    border-radius: 6px;
+    outline: 1px solid currentColor;
+    outline-offset: -4.5px;
+    background: color-mix(in oklab, currentColor 7%, transparent);
+    transform: rotate(var(--tilt));
+    line-height: 1;
+    font-weight: 800;
+  }
+
+  /* 아직 안 찍힌 자리(경기 전·결과 없음): 점선 한 줄 */
+  .stamp-empty {
+    border-style: dashed;
+    outline: none;
+    background: transparent;
+  }
+
+  /* 홈 최근 경기 목록에서만, 처음 그려질 때 위에서부터 차례로 도장이 찍힌다. --i = 줄 번호 */
+  .stamp-press {
+    animation: stamp-press 220ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+    animation-delay: calc(var(--i, 0) * 40ms);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .stamp-press {
+      animation: none;
+    }
+  }
+
+  /*
+   * 여권 속지 보안 무늬. public/patterns/guilloche.svg(가는 사인 곡선)를 모양 틀(mask)로 쓰고
+   * 색은 --guilloche로 입힌다. 내용은 무늬 위(z-index)에 놓인다.
+   */
+  .guilloche {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .guilloche::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-color: var(--guilloche);
+    mask-image: url("/patterns/guilloche.svg");
+    mask-size: 240px 120px;
+    mask-repeat: repeat;
+    pointer-events: none;
+  }
+
+  /*
+   * 가로로 밀리는 표. 밀 내용이 남아 있는 쪽 끝에 그림자가 생겨 "옆에 더 있다"를 알려 준다.
+   * 앞 두 겹(local)은 표와 함께 움직이며 끝에 닿으면 그림자를 덮고, 뒤 두 겹(scroll)이 그림자다.
+   */
+  .table-scroll {
+    --edge-bg: var(--table-bg, var(--surface));
+    background:
+      linear-gradient(to right, var(--edge-bg) 40%, transparent) left / 2.5rem 100% no-repeat local,
+      linear-gradient(to left, var(--edge-bg) 40%, transparent) right / 2.5rem 100% no-repeat local,
+      radial-gradient(farthest-side at 100% 50%, color-mix(in oklab, var(--foreground) 16%, transparent), transparent)
+        right / 0.875rem 100% no-repeat scroll;
+  }
+}
+
+@keyframes stamp-press {
+  from {
+    transform: rotate(var(--tilt)) scale(1.4);
+    opacity: 0;
+  }
+  to {
+    transform: rotate(var(--tilt)) scale(1);
+    opacity: 1;
+  }
 }

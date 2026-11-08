@@ -19,7 +19,7 @@ const MESSAGES: Record<ApiFailure, { title: string; detail: string }> = {
 export default function ApiErrorNotice({ failure }: { failure: ApiFailure }) {
   const { title, detail } = MESSAGES[failure];
   return (
-    <div role="alert" className="rounded-xl border border-line bg-surface px-5 py-10 text-center">
+    <div role="alert" className="rounded-[10px] bg-surface px-5 py-10 text-center">
       <p className="text-base font-bold">{title}</p>
       <p className="mt-2 text-sm text-muted">{detail}</p>
     </div>
