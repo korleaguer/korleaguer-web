@@ -18,15 +18,16 @@ function currentOf(href: string, pathname: string | null) {
 /** 상단 메뉴. pathname이 null이면 현재 메뉴 표시 없이 그린다(주소를 알기 전 자리 표시). */
 export function NavLinks({ pathname }: { pathname: string | null }) {
   return (
-    <nav aria-label="주요 메뉴" className="flex gap-1">
+    <nav aria-label="주요 메뉴" className="flex h-full gap-1">
       {LINKS.map(({ href, label }) => {
         const current = currentOf(href, pathname);
+        // 현재 메뉴는 아래쪽 금색 밑줄로 표시한다.
         return (
           <Link
             key={href}
             href={href}
             aria-current={current}
-            className={`rounded-md px-2.5 py-1.5 text-sm font-semibold hover:bg-surface-2 hover:text-foreground ${current ? "bg-surface-2 text-foreground" : "text-muted"}`}
+            className={`flex items-center border-b-2 px-2.5 pt-0.5 text-sm font-semibold hover:text-cover-fg ${current ? "border-gold text-cover-fg" : "border-transparent text-cover-muted"}`}
           >
             {label}
           </Link>

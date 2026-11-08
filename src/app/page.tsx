@@ -26,15 +26,16 @@ async function HomeContent() {
   if (!result.ok) return <ApiErrorNotice failure={result.failure} />;
 
   const home = result.data;
+  const meta = `${home.season} 시즌 · 기준 ${formatDate(home.generatedAt)} ${formatTime(home.generatedAt)}`;
   return (
-    <div className="space-y-4">
+    <div className="space-y-8">
       <DataBanners dataMode={home.dataMode} statsAvailable={home.statsAvailable} />
-      <p className="text-xs text-muted">
-        {`${home.season} 시즌 · 기준 ${formatDate(home.generatedAt)} ${formatTime(home.generatedAt)}`}
-      </p>
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
-        <RecentGames recent={home.recent} />
-        <Leaderboard statsAvailable={home.statsAvailable} hitters={home.hitters} />
+      {/* 넓은 화면: 1줄 = 최근 경기 제목, 2줄 = 최근 경기 목록 | 순위판 */}
+      <div className="grid gap-y-8 lg:grid-cols-[minmax(0,1fr)_20rem] lg:grid-rows-[auto_auto] lg:gap-x-6 lg:gap-y-3">
+        <RecentGames recent={home.recent} meta={meta} className="lg:row-span-2" />
+        <div className="lg:col-start-2 lg:row-start-2">
+          <Leaderboard statsAvailable={home.statsAvailable} hitters={home.hitters} />
+        </div>
       </div>
       <SeasonStats
         season={home.season}

@@ -5,11 +5,12 @@ import { useImageFailed } from "@/lib/useImageFailed";
 
 type Size = "sm" | "md" | "lg";
 
-// 크기를 고정해 두면 사진이 늦게 떠도 레이아웃이 흔들리지 않는다. px는 <img> width/height 속성에 쓴다.
-const SIZES: Record<Size, { px: number; box: string; initial: string }> = {
-  sm: { px: 28, box: "size-7", initial: "text-xs" }, // 이름 옆
-  md: { px: 56, box: "size-14", initial: "text-xl" }, // 카드
-  lg: { px: 96, box: "size-24", initial: "text-4xl" }, // 선수 페이지
+// 여권 사진처럼 세로로 긴 직사각형(3:4). 크기를 고정해 두면 사진이 늦게 떠도 레이아웃이 흔들리지 않는다.
+// w/h는 <img> width/height 속성에 쓴다.
+const SIZES: Record<Size, { w: number; h: number; box: string; initial: string }> = {
+  sm: { w: 24, h: 32, box: "h-8 w-6 rounded-[3px]", initial: "text-xs" }, // 이름 옆
+  md: { w: 48, h: 64, box: "h-16 w-12 rounded-[4px]", initial: "text-xl" }, // 카드
+  lg: { w: 96, h: 128, box: "h-32 w-24 rounded-[6px]", initial: "text-4xl" }, // 선수 페이지
 };
 
 interface Props {
@@ -21,7 +22,7 @@ interface Props {
   decorative?: boolean;
 }
 
-/** 동그란 선수 사진. 사진이 없거나 안 뜨면 팀 색 동그라미 + 이름 첫 글자로 대신한다. */
+/** 세로 직사각형 선수 사진. 사진이 없거나 안 뜨면 팀 색 칸 + 이름 첫 글자로 대신한다. */
 export default function PlayerAvatar({
   nameKo,
   photoUrl,
@@ -30,14 +31,14 @@ export default function PlayerAvatar({
   decorative = size === "sm",
 }: Props) {
   const { failed, ref, onError } = useImageFailed(photoUrl);
-  const { px, box, initial } = SIZES[size];
+  const { w, h, box, initial } = SIZES[size];
 
   if (!photoUrl || failed) {
     const color = teamColor(teamAbbr);
     return (
       <span
         aria-hidden
-        className={`inline-flex ${box} shrink-0 items-center justify-center rounded-full font-extrabold ${initial}`}
+        className={`inline-flex ${box} shrink-0 items-center justify-center font-extrabold ${initial}`}
         style={{ backgroundColor: color, color: textColorOn(color) }}
       >
         {nameKo.charAt(0)}
@@ -52,12 +53,12 @@ export default function PlayerAvatar({
       ref={ref}
       src={photoUrl}
       alt={decorative ? "" : `${nameKo} 사진`}
-      width={px}
-      height={px}
+      width={w}
+      height={h}
       loading="lazy"
       referrerPolicy="no-referrer"
       onError={onError}
-      className={`${box} shrink-0 rounded-full bg-surface-2 object-cover object-top`}
+      className={`${box} shrink-0 bg-surface-2 object-cover object-top ring-1 ring-line`}
     />
   );
 }
