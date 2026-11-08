@@ -6,7 +6,7 @@ import DataBanners from "@/components/DataBanners";
 import LoadingBlock from "@/components/LoadingBlock";
 import PlayerCard from "@/components/players/PlayerCard";
 
-// <title>: "선수 · 코리거" (뒷부분은 layout의 template이 붙인다)
+// <title>: "선수 · KOR Leaguer" (뒷부분은 layout의 template이 붙인다)
 export const metadata: Metadata = {
   title: "선수",
   description: "한국 MLB 선수 모아보기. 선수별 시즌 성적을 한눈에 봅니다.",
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 export default function PlayersPage() {
   return (
     <div className="space-y-4">
-      <h1 className="text-lg font-extrabold tracking-tight">선수</h1>
+      <h1 className="px-1 text-2xl font-extrabold tracking-[-0.02em]">선수</h1>
       <Suspense fallback={<LoadingBlock rows={6} />}>
         <PlayersContent />
       </Suspense>
@@ -38,13 +38,13 @@ async function PlayersContent() {
   return (
     <div className="space-y-4">
       <DataBanners dataMode={home.dataMode} statsAvailable={home.statsAvailable} />
-      <p className="text-xs text-muted">{`${players.length}명 · ${home.season} 시즌`}</p>
+      <p className="px-1 text-sm font-medium text-muted">{`${players.length}명 · ${home.season} 시즌 기록`}</p>
       {players.length === 0 ? (
-        <p className="rounded-xl border border-line bg-surface px-5 py-10 text-center text-sm text-muted">
+        <p className="card px-5 py-10 text-center text-sm text-muted">
           아직 등록된 선수가 없습니다.
         </p>
       ) : (
-        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
           {players.map((player) => (
             <PlayerCard
               key={player.id}

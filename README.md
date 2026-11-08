@@ -1,4 +1,4 @@
-# korleaguer-web — 코리거 화면
+# korleaguer-web — KOR Leaguer 화면
 
 한국 MLB 선수들의 최근 경기 한 줄 기록과 시즌 성적을 보여 주는 Next.js 화면이다.
 데이터는 api 서버([korleaguer-server](https://github.com/korleaguer/korleaguer-server), Spring Boot)에서 받는다. 브라우저는 api를 직접 부르지 않고, Next.js 서버가 api를 불러 HTML을 만든다.

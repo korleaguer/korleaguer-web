@@ -1,5 +1,5 @@
 // 숫자·날짜를 화면용 문자열로 바꾸는 함수들. 값이 없거나 이상하면 "-"를 돌려준다.
-import type { GameLine, HitterSeason, PitcherSeason } from "./api";
+import type { GameLine } from "./api";
 
 const KST = "Asia/Seoul";
 
@@ -37,12 +37,35 @@ export function formatDate(value: string | null | undefined): string {
   return `${part(parts, "month")}월 ${part(parts, "day")}일(${part(parts, "weekday")})`;
 }
 
+/** 경기 기록 왼쪽 작은 날짜: "9.27" */
+export function formatShortDate(value: string | null | undefined): string {
+  const date = toDate(value);
+  if (!date) return "-";
+  const parts = dateFormat.formatToParts(date);
+  return `${part(parts, "month")}.${part(parts, "day")}`;
+}
+
+/** 요일 한 글자: "일" */
+export function formatWeekday(value: string | null | undefined): string {
+  const date = toDate(value);
+  if (!date) return "-";
+  return part(dateFormat.formatToParts(date), "weekday");
+}
+
 /** "05:05" */
 export function formatTime(value: string | null | undefined): string {
   const date = toDate(value);
   if (!date) return "-";
   const parts = timeFormat.formatToParts(date);
   return `${part(parts, "hour")}:${part(parts, "minute")}`;
+}
+
+/**
+ * 한 줄 기록 문장. 괄호 안("(2루타 1)")에서는 줄이 바뀌지 않게 띄어쓰기를 줄바꿈 없는 공백으로 바꾼다.
+ * "4타수 2안타(2루타 / 1) ..."처럼 괄호가 두 줄로 갈리는 것을 막는다.
+ */
+export function formatSummary(summary: string): string {
+  return summary.replace(/\([^)]*\)/g, (group) => group.replace(/ /g, " "));
 }
 
 /** 타율·OPS 등 비율: 0.276 → ".276", 1.05 → "1.050", null → "-" */
@@ -56,12 +79,12 @@ export function formatEra(value: number | null): string {
   return value == null ? "-" : value.toFixed(2);
 }
 
-/** "5 : 3". 경기 전이라 점수가 없으면 null (부르는 쪽에서 점수 부분을 뺀다) */
+/** "5 - 3" (우리 팀 - 상대 팀). 경기 전이라 점수가 없으면 null (부르는 쪽에서 점수 부분을 뺀다) */
 export function formatScore(
   line: Pick<GameLine, "teamScore" | "opponentScore">,
 ): string | null {
   if (line.teamScore == null || line.opponentScore == null) return null;
-  return `${line.teamScore} : ${line.opponentScore}`;
+  return `${line.teamScore} - ${line.opponentScore}`;
 }
 
 /** 만 나이: 28 → "만 28세". 없으면 null (부르는 쪽에서 그 칸을 뺀다) */
@@ -82,14 +105,4 @@ export function formatBody(heightCm: number | null, weightKg: number | null): st
     weightKg != null && `${Math.round(weightKg)}kg`,
   ].filter(Boolean);
   return parts.length > 0 ? parts.join(" · ") : null;
-}
-
-/** 선수 카드의 타자 시즌 한 줄: "타율 .276 · 10홈런 · OPS .812" */
-export function formatHitterLine(h: HitterSeason): string {
-  return `타율 ${formatRate(h.avg)} · ${h.homeRuns}홈런 · OPS ${formatRate(h.ops)}`;
-}
-
-/** 선수 카드의 투수 시즌 한 줄: "평균자책 3.21 · 5승 3패 · 50삼진" */
-export function formatPitcherLine(p: PitcherSeason): string {
-  return `평균자책 ${formatEra(p.era)} · ${p.wins}승 ${p.losses}패 · ${p.strikeouts}삼진`;
 }

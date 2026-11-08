@@ -21,12 +21,13 @@ export function NavLinks({ pathname }: { pathname: string | null }) {
     <nav aria-label="주요 메뉴" className="flex gap-1">
       {LINKS.map(({ href, label }) => {
         const current = currentOf(href, pathname);
+        // 현재 메뉴는 연파랑 알약으로 표시한다.
         return (
           <Link
             key={href}
             href={href}
             aria-current={current}
-            className={`rounded-md px-2.5 py-1.5 text-sm font-semibold hover:bg-surface-2 hover:text-foreground ${current ? "bg-surface-2 text-foreground" : "text-muted"}`}
+            className={`rounded-full px-3 py-1.5 text-sm font-semibold ${current ? "bg-accent-soft text-accent-ink" : "text-muted hover:bg-surface-2 hover:text-foreground"}`}
           >
             {label}
           </Link>

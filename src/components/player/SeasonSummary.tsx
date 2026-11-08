@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import type { HitterSeason, PitcherSeason } from "@/lib/api";
 import { formatEra, formatRate } from "@/lib/format";
 import Section from "@/components/Section";
@@ -9,95 +10,92 @@ interface Props {
   pitching: PitcherSeason | null;
 }
 
-/** 선수 시즌 요약 카드. 큰 숫자 4개 + 작은 숫자 여러 개 */
+type Stat = [label: string, value: string | number];
+
+/** 선수 시즌 성적. 큰 숫자 카드 네 장 + 세부 기록 한 장 */
 export default function SeasonSummary({ season, statsAvailable, hitting, pitching }: Props) {
   return (
-    <Section title={`${season} 시즌 성적`}>
-      {hitting && <HittingStats h={hitting} />}
-      {pitching && <PitchingStats p={pitching} />}
-      {!hitting && !pitching && (
-        <p className="px-4 py-6 text-sm text-muted">
-          {statsAvailable ? "이번 시즌 기록이 없습니다." : "요금제가 없어 시즌 기록을 받지 못했습니다."}
-        </p>
-      )}
+    <Section id="season-title" title={`${season} 시즌 성적`}>
+      <div className="space-y-2.5">
+        {hitting && (
+          <StatBlock
+            // 야구 중계에서 쓰는 '타율/출루율/장타율' + OPS
+            big={[
+              ["타율", formatRate(hitting.avg)],
+              ["출루율", formatRate(hitting.obp)],
+              ["장타율", formatRate(hitting.slg)],
+              ["OPS", formatRate(hitting.ops)],
+            ]}
+            line={[
+              ["경기", hitting.games],
+              ["타수", hitting.atBats],
+              ["안타", hitting.hits],
+              ["2루타", hitting.doubles],
+              ["홈런", hitting.homeRuns],
+              ["타점", hitting.rbi],
+              ["볼넷", hitting.walks],
+              ["삼진", hitting.strikeouts],
+              ["도루", hitting.stolenBases],
+            ]}
+          />
+        )}
+        {pitching && (
+          <StatBlock
+            big={[
+              ["평균자책점", formatEra(pitching.era)],
+              ["승-패", `${pitching.wins}-${pitching.losses}`],
+              ["이닝", pitching.inningsText],
+              ["탈삼진", pitching.strikeouts],
+            ]}
+            line={[
+              ["경기", pitching.games],
+              ["이닝", pitching.inningsText],
+              ["승", pitching.wins],
+              ["패", pitching.losses],
+              ["세이브", pitching.saves],
+              ["탈삼진", pitching.strikeouts],
+              ["볼넷", pitching.walks],
+              ["피안타", pitching.hitsAllowed],
+            ]}
+          />
+        )}
+        {!hitting && !pitching && (
+          <p className="card px-4 py-5 text-sm text-muted">
+            {statsAvailable ? "이번 시즌 기록이 없습니다." : "요금제가 없어 시즌 기록을 받지 못했습니다."}
+          </p>
+        )}
+      </div>
     </Section>
   );
 }
 
-function HittingStats({ h }: { h: HitterSeason }) {
-  return (
-    <div className="p-4">
-      <BigStats
-        items={[
-          ["타율", formatRate(h.avg)],
-          ["출루율", formatRate(h.obp)],
-          ["장타율", formatRate(h.slg)],
-          ["OPS", formatRate(h.ops)],
-        ]}
-      />
-      <SmallStats
-        items={[
-          ["경기", h.games],
-          ["타수", h.atBats],
-          ["안타", h.hits],
-          ["2루타", h.doubles],
-          ["홈런", h.homeRuns],
-          ["타점", h.rbi],
-          ["볼넷", h.walks],
-          ["삼진", h.strikeouts],
-          ["도루", h.stolenBases],
-        ]}
-      />
-    </div>
-  );
-}
+/**
+ * 큰 숫자 카드(휴대폰 2×2, 넓으면 4칸) + 세부 기록 카드(휴대폰 3·4칸씩 줄바꿈, 넓으면 한 줄).
+ * 이름(dt)이 위, 숫자(dd)가 아래라 화면 낭독기도 "타율 .417" 순서로 읽는다.
+ */
+function StatBlock({ big, line }: { big: Stat[]; line: Stat[] }) {
+  // 휴대폰: 4로 나누어떨어지면 4칸, 아니면 3칸씩. 넓은 화면: 한 줄에 전부
+  const narrowCols = line.length % 4 === 0 ? "grid-cols-4" : "grid-cols-3";
+  const wideCols = { "--line-cols": `repeat(${line.length}, minmax(0, 1fr))` } as CSSProperties;
 
-function PitchingStats({ p }: { p: PitcherSeason }) {
   return (
-    <div className="p-4">
-      <BigStats
-        items={[
-          ["평균자책점", formatEra(p.era)],
-          ["이닝", p.inningsText],
-          ["승-패-세", `${p.wins}-${p.losses}-${p.saves}`],
-          ["탈삼진", String(p.strikeouts)],
-        ]}
-      />
-      <SmallStats
-        items={[
-          ["경기", p.games],
-          ["피안타", p.hitsAllowed],
-          ["볼넷", p.walks],
-        ]}
-      />
-    </div>
-  );
-}
-
-function BigStats({ items }: { items: [string, string][] }) {
-  return (
-    <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-      {items.map(([label, value]) => (
-        <div key={label} className="rounded-lg bg-surface-2 px-2 py-2.5 text-center">
-          <dt className="text-[11px] text-muted">{label}</dt>
-          <dd className="mt-0.5 whitespace-nowrap text-lg font-extrabold tracking-tight tabular-nums sm:text-xl">
-            {value}
-          </dd>
-        </div>
-      ))}
-    </dl>
-  );
-}
-
-function SmallStats({ items }: { items: [string, number][] }) {
-  return (
-    <dl className="mt-3 grid grid-cols-3 gap-x-4 gap-y-1.5 text-sm sm:grid-cols-5">
-      {items.map(([label, value]) => (
-        <div key={label} className="flex justify-between gap-2 border-b border-line pb-1">
-          <dt className="text-muted">{label}</dt>
-          <dd className="font-semibold tabular-nums">{value}</dd>
-        </div>
-      ))}
-    </dl>
+    <>
+      <dl className="grid grid-cols-2 gap-2.5 md:grid-cols-4">
+        {big.map(([label, value]) => (
+          <div key={label} className="card min-w-0 px-4 py-3.5">
+            <dt className="text-[0.8125rem] text-muted">{label}</dt>
+            <dd className="text-[1.75rem] font-extrabold leading-tight tracking-[-0.02em] tabular-nums">{value}</dd>
+          </div>
+        ))}
+      </dl>
+      <dl className={`card grid p-1.5 ${narrowCols} md:grid-cols-(--line-cols)`} style={wideCols}>
+        {line.map(([label, value]) => (
+          <div key={label} className="min-w-0 px-1 py-2.5 text-center">
+            <dt className="text-xs text-muted">{label}</dt>
+            <dd className="text-[1.0625rem] font-bold tabular-nums">{value}</dd>
+          </div>
+        ))}
+      </dl>
+    </>
   );
 }
