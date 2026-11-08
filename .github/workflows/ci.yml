@@ -1,0 +1,46 @@
+# PR과 develop·main 푸시마다 lint → 라우트 타입 생성 → 타입 검사 → 빌드를 돌린다.
+name: CI
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main]
+
+# 같은 브랜치에 새 커밋이 오면 이전 실행은 취소한다.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: lint · typecheck · build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NEXT_TELEMETRY_DISABLED: 1
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: 의존성 설치
+        run: npm ci
+
+      - name: lint
+        run: npm run lint
+
+      # LayoutProps·PageProps 같은 라우트 타입은 next가 만들어 준다. 먼저 만들어야 tsc가 통과한다.
+      - name: 라우트 타입 생성 + 타입 검사
+        run: |
+          npx next typegen
+          npx tsc --noEmit
+
+      - name: 빌드
+        run: npm run build
