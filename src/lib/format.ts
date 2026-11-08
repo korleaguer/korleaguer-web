@@ -37,12 +37,19 @@ export function formatDate(value: string | null | undefined): string {
   return `${part(parts, "month")}월 ${part(parts, "day")}일(${part(parts, "weekday")})`;
 }
 
-/** 도장 안 작은 날짜: "9.27" */
+/** 경기 기록 왼쪽 작은 날짜: "9.27" */
 export function formatShortDate(value: string | null | undefined): string {
   const date = toDate(value);
   if (!date) return "-";
   const parts = dateFormat.formatToParts(date);
   return `${part(parts, "month")}.${part(parts, "day")}`;
+}
+
+/** 요일 한 글자: "일" */
+export function formatWeekday(value: string | null | undefined): string {
+  const date = toDate(value);
+  if (!date) return "-";
+  return part(dateFormat.formatToParts(date), "weekday");
 }
 
 /** "05:05" */
@@ -72,12 +79,12 @@ export function formatEra(value: number | null): string {
   return value == null ? "-" : value.toFixed(2);
 }
 
-/** "5 : 3". 경기 전이라 점수가 없으면 null (부르는 쪽에서 점수 부분을 뺀다) */
+/** "5 - 3" (우리 팀 - 상대 팀). 경기 전이라 점수가 없으면 null (부르는 쪽에서 점수 부분을 뺀다) */
 export function formatScore(
   line: Pick<GameLine, "teamScore" | "opponentScore">,
 ): string | null {
   if (line.teamScore == null || line.opponentScore == null) return null;
-  return `${line.teamScore} : ${line.opponentScore}`;
+  return `${line.teamScore} - ${line.opponentScore}`;
 }
 
 /** 만 나이: 28 → "만 28세". 없으면 null (부르는 쪽에서 그 칸을 뺀다) */

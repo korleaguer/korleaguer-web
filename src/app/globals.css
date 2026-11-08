@@ -2,65 +2,61 @@
 
 /*
  * 화면 전체에서 쓰는 색. 다크 모드는 운영체제 설정(prefers-color-scheme)을 따른다.
- * 밝은 모드 = 여권 속지(옅은 바탕 위 흰 면), 다크 모드 = 여권 표지(남색 바탕).
- * 글자색은 바탕 대비 4.5:1 이상으로 맞춘다.
+ * 회색 바탕 위 흰 카드, 강조는 파랑 하나. 글자색은 바탕 대비 4.5:1 이상으로 맞춘다.
  */
 :root {
-  --background: #eef2f3; /* 페이지 바탕 */
-  --foreground: #121a2b;
-  --surface: #ffffff; /* 내용이 놓이는 면 */
-  --surface-2: #f3f6f7; /* 표 머리, 자리 표시 */
-  --line: #dce3e7; /* 머리카락 선 */
-  --muted: #566173;
-  --accent: #213a7a; /* 링크 */
+  --background: #eef0f3; /* 페이지 바탕 */
+  --foreground: #111827;
+  --surface: #ffffff; /* 카드 */
+  --surface-2: #f4f5f7; /* 카드 안 점수 띠, 칩, 자리 표시 */
+  --line: #eceef1; /* 카드 안 구분선 */
+  --avatar-bg: #e8ebef; /* 선수 사진 원 바탕(흰 유니폼이 묻히지 않을 만큼) */
+  --muted: #5b6270;
 
-  /* 머리띠(여권 표지) */
-  --cover: #16244b;
-  --cover-fg: #f3f5fa;
-  --cover-muted: #aeb8d0;
+  /* 파랑: 채운 파랑은 로고 상자·'승' 알약에만, 진한 파랑 글자는 1위 숫자·현재 메뉴·링크에만 쓴다 */
+  --accent: #2563eb;
+  --accent-fg: #ffffff; /* 채운 파랑 위 글자 */
+  --accent-ink: #1d4ed8;
+  --accent-soft: #e8efff; /* 현재 메뉴 알약 */
 
-  /* 금박: 워드마크·현재 메뉴·1위 표시에만 쓴다 */
-  --gold: #c9a55a; /* 남색 위 글자·밑줄 */
-  --gold-ink: #8a6514; /* 흰 면 위 글자 */
+  /* 패·무 알약 */
+  --neutral-pill: #e5e7eb;
+  --neutral-pill-fg: #374151;
 
-  /* 도장 잉크: 승·패·무 */
-  --ink-win: #1f7a55;
-  --ink-loss: #b42318;
-  --ink-tie: #6b4fa0;
+  /* 샘플 데이터·요금제 안내 (호박색) */
+  --notice-bg: #fff4dc;
+  --notice-fg: #6b4300;
+  --notice-mark: #b45309;
 
-  --notice-bg: #fbedeb;
-  --notice-fg: #7a1a12;
-
-  /* 선수 신원 면의 보안 무늬 색 */
-  --guilloche: color-mix(in oklab, var(--accent) 20%, transparent);
+  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.06), 0 1px 1px rgb(16 24 40 / 0.03);
+  --shadow-card-hover: 0 4px 14px rgb(16 24 40 / 0.1), 0 1px 2px rgb(16 24 40 / 0.06);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #16244b; /* 여권 표지 남색 그대로 */
-    --foreground: #e9edf6;
-    --surface: #1e2e5c;
-    --surface-2: #24366a;
-    --line: #2f4278;
-    --muted: #a3aecb;
-    --accent: #9db7ff;
+    --background: #0e1116;
+    --foreground: #e8eaee;
+    --surface: #191d24;
+    --surface-2: #222731;
+    --line: #2a303a;
+    --avatar-bg: #2c323c;
+    --muted: #9aa3b0;
 
-    /* 머리띠는 바탕보다 한 단계 짙게 + 아래 금색 선으로 구분한다 */
-    --cover: #0f1a3a;
-    --cover-fg: #f3f5fa;
-    --cover-muted: #a3aecb;
+    --accent: #2563eb;
+    --accent-fg: #ffffff;
+    --accent-ink: #8db1ff;
+    --accent-soft: #1d2a47;
 
-    --gold: #d6b46a;
-    --gold-ink: #e2c27c;
+    --neutral-pill: #2e3440;
+    --neutral-pill-fg: #d3d8e0;
 
-    --ink-win: #4fc48e;
-    --ink-loss: #ff7b6e;
-    --ink-tie: #b79cf0;
+    --notice-bg: #33260b;
+    --notice-fg: #ffe2a3;
+    --notice-mark: #f5b94a;
 
-    --notice-bg: #3b1714;
-    --notice-fg: #ffd2cc;
-
-    --guilloche: color-mix(in oklab, var(--gold) 16%, transparent);
+    /* 어두운 바탕에서는 그림자 대신 아주 옅은 테두리로 카드 가장자리를 잡는다 */
+    --shadow-card: 0 0 0 1px rgb(255 255 255 / 0.05);
+    --shadow-card-hover: 0 0 0 1px rgb(255 255 255 / 0.12), 0 6px 18px rgb(0 0 0 / 0.4);
   }
 }
 
@@ -71,23 +67,23 @@
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
   --color-line: var(--line);
+  --color-avatar-bg: var(--avatar-bg);
   --color-muted: var(--muted);
   --color-accent: var(--accent);
-  --color-cover: var(--cover);
-  --color-cover-fg: var(--cover-fg);
-  --color-cover-muted: var(--cover-muted);
-  --color-gold: var(--gold);
-  --color-gold-ink: var(--gold-ink);
-  --color-ink-win: var(--ink-win);
-  --color-ink-loss: var(--ink-loss);
-  --color-ink-tie: var(--ink-tie);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-neutral-pill: var(--neutral-pill);
+  --color-neutral-pill-fg: var(--neutral-pill-fg);
   --color-notice-bg: var(--notice-bg);
   --color-notice-fg: var(--notice-fg);
+  --color-notice-mark: var(--notice-mark);
+  --shadow-card: var(--shadow-card);
+  --shadow-card-hover: var(--shadow-card-hover);
+  /* Pretendard는 layout.tsx에서 불러온다(우리 서버가 주고, 화면에 쓴 글자 조각만 받는다) */
   --font-sans:
-    -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", Pretendard,
-    "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
-  /* 워드마크·페이지 제목. Hahmlet은 layout.tsx에서 next/font로 우리 서버가 준다 */
-  --font-display: var(--font-hahmlet), "Nanum Myeongjo", "AppleMyungjo", serif;
+    "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui,
+    "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
 }
 
 /*
@@ -107,11 +103,11 @@
   html {
     accent-color: var(--accent);
     caret-color: var(--accent);
-    scrollbar-color: var(--line) var(--background);
+    scrollbar-color: color-mix(in oklab, var(--muted) 45%, transparent) var(--background);
   }
 
   ::selection {
-    background: color-mix(in oklab, var(--gold) 40%, transparent);
+    background: color-mix(in oklab, var(--accent) 22%, transparent);
     color: var(--foreground);
   }
 
@@ -123,75 +119,56 @@
   :focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
-    border-radius: 4px;
-  }
-
-  /* 남색 머리띠 안에서는 포커스 테두리를 금색으로 (남색 위 남색은 안 보인다) */
-  .bg-cover :focus-visible {
-    outline-color: var(--gold);
+    border-radius: 6px;
   }
 }
 
 @layer components {
+  /* 흰 카드. 테두리 없이 바탕색 차이와 옅은 그림자로 구분한다 */
+  .card {
+    border-radius: 16px;
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
+  }
+
+  /* 누르면 다른 화면으로 가는 카드: 마우스를 올리면 그림자가 짙어진다 */
+  .card-link {
+    transition: box-shadow 160ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .card-link:hover {
+    box-shadow: var(--shadow-card-hover);
+  }
+
   /*
-   * 결과 도장. 바깥 테두리 + 안쪽 가는 테두리(outline)로 입국 도장의 이중 테두리를 만든다.
-   * 색은 currentColor(잉크)를 따른다. --tilt로 조금 비뚤게 찍힌다.
+   * 선수 페이지 머리 카드의 팀 색 띠. --team = 팀 색. 팀 색에서 카드 색으로 옅어진다.
+   * 다크 모드에서는 어두운 팀 색(샌디에이고 갈색, 밀워키·미네소타 남색)이 바탕에 묻히지 않게 시작색을 밝힌다.
    */
-  .stamp {
-    --tilt: 0deg;
-    display: inline-flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    border: 1.5px solid currentColor;
-    border-radius: 6px;
-    outline: 1px solid currentColor;
-    outline-offset: -4.5px;
-    background: color-mix(in oklab, currentColor 7%, transparent);
-    transform: rotate(var(--tilt));
-    line-height: 1;
-    font-weight: 800;
+  .team-band {
+    --band-from: var(--team);
+    background: linear-gradient(120deg, var(--band-from), color-mix(in srgb, var(--band-from) 45%, var(--surface)));
   }
 
-  /* 아직 안 찍힌 자리(경기 전·결과 없음): 점선 한 줄 */
-  .stamp-empty {
-    border-style: dashed;
-    outline: none;
-    background: transparent;
-  }
-
-  /* 홈 최근 경기 목록에서만, 처음 그려질 때 위에서부터 차례로 도장이 찍힌다. --i = 줄 번호 */
-  .stamp-press {
-    animation: stamp-press 220ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
-    animation-delay: calc(var(--i, 0) * 40ms);
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .stamp-press {
-      animation: none;
+  @media (prefers-color-scheme: dark) {
+    .team-band {
+      --band-from: color-mix(in oklab, var(--team), white 32%);
     }
   }
 
-  /*
-   * 여권 속지 보안 무늬. public/patterns/guilloche.svg(가는 사인 곡선)를 모양 틀(mask)로 쓰고
-   * 색은 --guilloche로 입힌다. 내용은 무늬 위(z-index)에 놓인다.
-   */
-  .guilloche {
-    position: relative;
-    isolation: isolate;
+  /* 홈 경기 카드가 처음 그려질 때 위에서부터 차례로 살짝 떠오른다. --i = 카드 순서 */
+  .card-rise {
+    animation: card-rise 260ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+    animation-delay: calc(var(--i, 0) * 35ms);
   }
 
-  .guilloche::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    background-color: var(--guilloche);
-    mask-image: url("/patterns/guilloche.svg");
-    mask-size: 240px 120px;
-    mask-repeat: repeat;
-    pointer-events: none;
+  @media (prefers-reduced-motion: reduce) {
+    .card-rise {
+      animation: none;
+    }
+
+    .card-link {
+      transition: none;
+    }
   }
 
   /*
@@ -208,13 +185,13 @@
   }
 }
 
-@keyframes stamp-press {
+@keyframes card-rise {
   from {
-    transform: rotate(var(--tilt)) scale(1.4);
     opacity: 0;
+    transform: translateY(6px);
   }
   to {
-    transform: rotate(var(--tilt)) scale(1);
     opacity: 1;
+    transform: none;
   }
 }

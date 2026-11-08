@@ -20,7 +20,7 @@ export function Th({
   return (
     <th
       scope="col"
-      className={`whitespace-nowrap border-b border-line bg-(--table-head-bg,var(--surface-2)) px-3 py-2 text-xs font-semibold text-muted ${ALIGN[align]} ${sticky ? "sticky left-0 z-10" : ""} ${className}`}
+      className={`whitespace-nowrap border-b border-line bg-(--table-head-bg,var(--surface)) px-2.5 py-2 text-xs font-semibold text-muted ${ALIGN[align]} ${sticky ? "sticky left-0 z-10" : ""} ${className}`}
     >
       {children}
     </th>
@@ -32,14 +32,14 @@ export function RowHeader({ children }: { children: ReactNode }) {
   return (
     <th
       scope="row"
-      className="sticky left-0 z-10 whitespace-nowrap bg-(--table-bg,var(--surface)) px-3 py-2 text-left font-semibold"
+      className="sticky left-0 z-10 whitespace-nowrap bg-(--table-bg,var(--surface)) px-2.5 py-3 text-left font-semibold"
     >
       {children}
     </th>
   );
 }
 
-/** 일반 칸. strong이면 1위 값으로 금색 굵게 표시하고, 화면 낭독기에는 "(1위)"를 읽어 준다. */
+/** 일반 칸. strong이면 1위 값으로 진한 파랑 굵게 표시하고, 화면 낭독기에는 "(1위)"를 읽어 준다. */
 export function Td({
   children,
   align = "right",
@@ -48,7 +48,7 @@ export function Td({
 }: CellProps & { strong?: boolean }) {
   return (
     <td
-      className={`whitespace-nowrap px-3 py-2 ${ALIGN[align]} ${strong ? "font-bold text-gold-ink" : ""} ${className}`}
+      className={`whitespace-nowrap px-2.5 py-3 ${ALIGN[align]} ${strong ? "font-extrabold text-accent-ink" : ""} ${className}`}
     >
       {children}
       {strong && <span className="sr-only"> (1위)</span>}
@@ -59,12 +59,13 @@ export function Td({
 /**
  * 표가 화면보다 넓으면 표 안에서만 가로로 밀린다(페이지 전체는 밀리지 않음). 밀 내용이 남으면 오른쪽 끝에 그림자가 진다.
  * relative가 없으면 칸 안의 sr-only(position: absolute) 글자가 스크롤 영역 밖으로 빠져나와 페이지가 가로로 밀린다.
- * 표 바탕색은 부모가 --table-bg / --table-head-bg로 바꿀 수 있다(기본은 흰 면).
+ * 표 바탕색은 부모가 --table-bg / --table-head-bg로 바꿀 수 있다(기본은 카드 흰색).
+ * 첫 칸·끝 칸은 카드 가장자리에서 16px 띄운다.
  */
 export function TableScroll({ children }: { children: ReactNode }) {
   return (
     <div className="table-scroll relative overflow-x-auto">
-      <table className="w-full border-collapse text-sm tabular-nums">{children}</table>
+      <table className="w-full border-collapse text-sm tabular-nums [&_tr>*:first-child]:pl-4 [&_tr>*:last-child]:pr-4">{children}</table>
     </div>
   );
 }

@@ -7,6 +7,7 @@ import LoadingBlock from "@/components/LoadingBlock";
 import NotFoundNotice from "@/components/NotFoundNotice";
 import GameLog from "@/components/player/GameLog";
 import PlayerHeader from "@/components/player/PlayerHeader";
+import PlayerInfo from "@/components/player/PlayerInfo";
 import SeasonSummary from "@/components/player/SeasonSummary";
 
 type Props = PageProps<"/players/[id]">;
@@ -57,16 +58,22 @@ async function PlayerContent({ params }: Pick<Props, "params">) {
 
   const { dataMode, statsAvailable, season, player, hitting, pitching, games } = result.data;
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 sm:space-y-5">
       <DataBanners dataMode={dataMode} statsAvailable={statsAvailable} />
       <PlayerHeader player={player} />
-      <SeasonSummary
-        season={season}
-        statsAvailable={statsAvailable}
-        hitting={hitting}
-        pitching={pitching}
-      />
-      <GameLog games={games} />
+      {/* 넓은 화면: 왼쪽 시즌 성적·경기 기록 | 오른쪽 선수 정보 */}
+      <div className="space-y-7 pt-2 lg:grid lg:grid-cols-[minmax(0,1fr)_21.25rem] lg:items-start lg:gap-x-4 lg:space-y-0">
+        <div className="min-w-0 space-y-7">
+          <SeasonSummary
+            season={season}
+            statsAvailable={statsAvailable}
+            hitting={hitting}
+            pitching={pitching}
+          />
+          <GameLog games={games} />
+        </div>
+        <PlayerInfo player={player} />
+      </div>
     </div>
   );
 }

@@ -1,132 +1,145 @@
-import { Fragment } from "react";
+import type { CSSProperties } from "react";
+import Link from "next/link";
 import type { GameLine, GameResult, HomeResponse } from "@/lib/api";
-import { formatDate, formatScore, formatSummary, formatTime } from "@/lib/format";
-import PlayerLink from "@/components/PlayerLink";
-import ResultStamp from "@/components/ResultStamp";
-import TeamName from "@/components/TeamName";
+import { formatDate, formatSummary, formatTime } from "@/lib/format";
+import { teamColor, teamLogoUrl } from "@/lib/teams";
+import PlayerAvatar from "@/components/PlayerAvatar";
+import ResultPill from "@/components/ResultPill";
+import ScoreText from "@/components/ScoreText";
+import Section from "@/components/Section";
+import TeamMark from "@/components/TeamMark";
 
 type Recent = HomeResponse["recent"];
 
 interface Props {
   recent: Recent;
-  /** 제목 오른쪽 작은 글씨. 예: "2026 시즌 · 기준 11월 8일(일) 19:06" */
-  meta: string;
-  className?: string;
+  /** 제목 오른쪽 작은 글씨. 예: "기준 11월 8일(일) 19:06" */
+  asOf: string;
 }
 
-/** 제목 세 갈래: 최근 24시간 / 마지막 경기일로 대신 / 경기 데이터 없음. note는 제목 아래 설명 */
+/** 경기 상태(balldontlie status_state) → 점수 아래 작은 글씨. 모르는 상태는 비운다 */
+const STATUS: Record<string, string> = {
+  final: "종료",
+  in_progress: "경기 중",
+  scheduled: "경기 전",
+};
+
+/** 제목 세 갈래: 최근 24시간 / 마지막 경기일로 대신 / 경기 데이터 없음. note는 요약 알약 앞에 붙는 설명 */
 function heading(recent: Recent): { title: string; note: string | null } {
   if (!recent.isFallback) return { title: "최근 24시간", note: null };
   if (recent.dateKst) {
-    return { title: `마지막 경기일 ${formatDate(recent.dateKst)}`, note: "최근 24시간 경기가 없습니다" };
+    return { title: `${formatDate(recent.dateKst)} 경기`, note: "최근 24시간 경기가 없습니다" };
   }
   return { title: "아직 경기 데이터가 없습니다", note: null };
 }
 
-/** "6명 중 5명 출전 · 팀 결과 3승 3패". 결과가 난 경기가 없으면 출전 수만, 줄이 없으면 null */
-function tally(lines: GameLine[]): string | null {
-  if (lines.length === 0) return null;
+/** ["6명 중 5명 출전", "팀 결과 3승 3패"]. 결과가 난 경기가 없으면 출전 수만, 줄이 없으면 빈 배열 */
+function tally(lines: GameLine[]): string[] {
+  if (lines.length === 0) return [];
   const played = lines.filter((line) => line.played).length;
   const count = (result: GameResult) => lines.filter((line) => line.result === result).length;
   const [wins, losses, ties] = [count("W"), count("L"), count("T")];
-  const results =
-    wins + losses + ties > 0 ? ` · 팀 결과 ${wins}승 ${losses}패${ties > 0 ? ` ${ties}무` : ""}` : "";
-  return `${lines.length}명 중 ${played}명 출전${results}`;
+  const parts = [`${lines.length}명 중 ${played}명 출전`];
+  if (wins + losses + ties > 0) parts.push(`팀 결과 ${wins}승 ${losses}패${ties > 0 ? ` ${ties}무` : ""}`);
+  return parts;
 }
 
-/**
- * 최근 경기: 선수당 한 줄. 왼쪽 끝 결과 도장이 위에서부터 차례로 찍힌다.
- * 넓은 화면에서는 부모 격자의 두 줄(제목 줄, 목록 줄)을 그대로 이어 쓴다(subgrid). 순위판이 목록 위 끝에 맞춰진다.
- */
-export default function RecentGames({ recent, meta, className = "" }: Props) {
+/** 최근 경기: 선수당 카드 한 장. 위는 팀 대 팀 점수 띠, 아래는 선수와 한 줄 기록. */
+export default function RecentGames({ recent, asOf }: Props) {
   const { title, note } = heading(recent);
   const noData = recent.isFallback && !recent.dateKst;
-  // 줄이 바뀌어도 "팀 결과 3승 3패" 같은 덩어리는 쪼개지지 않게 덩어리마다 span으로 감싼다.
-  const subline = [note, ...(tally(recent.lines)?.split(" · ") ?? [])].filter(
-    (part): part is string => Boolean(part),
-  );
+  const pills = [note, ...tally(recent.lines)].filter((part): part is string => Boolean(part));
 
   return (
-    <section
-      aria-labelledby="recent-title"
-      className={`min-w-0 space-y-3 lg:grid lg:grid-rows-subgrid lg:space-y-0 ${className}`}
-    >
-      <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
-        <div className="min-w-0">
-          <h2 id="recent-title" className="font-display text-[1.75rem] font-bold leading-tight sm:text-3xl">
-            {title}
-          </h2>
-          {subline.length > 0 && (
-            <p className="mt-1 text-sm font-medium text-muted">
-              {/* 구분점 " · "는 span 밖에 둬야 그 자리에서 줄이 바뀔 수 있다 */}
-              {subline.map((part, i) => (
-                <Fragment key={part}>
-                  {i > 0 && " · "}
-                  <span className="whitespace-nowrap">{part}</span>
-                </Fragment>
-              ))}
-            </p>
-          )}
-        </div>
-        <p className="text-xs text-muted tabular-nums">{meta}</p>
-      </div>
-
-      {recent.lines.length === 0 ? (
-        <p className="rounded-[10px] bg-surface px-4 py-6 text-sm text-muted">
-          {noData ? "경기 기록이 모이면 선수별 최근 경기가 여기에 나옵니다." : "표시할 경기가 없습니다."}
-        </p>
-      ) : (
-        <ul className="divide-y divide-line self-start overflow-hidden rounded-[10px] bg-surface">
-          {recent.lines.map((line, index) => (
-            <GameLineRow key={`${line.playerId}-${line.gameId}`} line={line} index={index} />
+    <Section id="recent-title" title={title} aside={asOf}>
+      {pills.length > 0 && (
+        <ul className="-mt-0.5 mb-3 flex flex-wrap gap-1.5 px-1">
+          {pills.map((part) => (
+            <li
+              key={part}
+              className="rounded-full bg-surface px-2.5 py-0.5 text-[0.8125rem] font-semibold leading-5 text-neutral-pill-fg"
+            >
+              {part}
+            </li>
           ))}
         </ul>
       )}
-    </section>
+
+      {recent.lines.length === 0 ? (
+        <p className="card px-4 py-6 text-sm text-muted">
+          {noData ? "경기 기록이 모이면 선수별 최근 경기가 여기에 나옵니다." : "표시할 경기가 없습니다."}
+        </p>
+      ) : (
+        <ul className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+          {recent.lines.map((line, index) => (
+            <GameCard key={`${line.playerId}-${line.gameId}`} line={line} index={index} />
+          ))}
+        </ul>
+      )}
+    </Section>
   );
 }
 
-function GameLineRow({ line, index }: { line: GameLine; index: number }) {
-  // 경기 전이라 점수가 없으면 "샌프란시스코 vs 콜로라도"
-  const score = formatScore(line) ?? "vs";
+function GameCard({ line, index }: { line: GameLine; index: number }) {
+  // "종료 · 홈 · 05:05". 모르는 상태는 뺀다.
+  const meta = [STATUS[line.gameStatus], line.home ? "홈" : "원정", formatTime(line.startTimeKst)]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
-    <li className="flex gap-3.5 px-4 py-3.5">
-      <ResultStamp
-        result={line.result}
-        gameId={line.gameId}
-        size="md"
-        date={line.startTimeKst}
-        pressIndex={index}
-      />
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <PlayerLink
-            playerId={line.playerId}
-            nameKo={line.nameKo}
-            photoUrl={line.photoUrl}
-            teamAbbr={line.teamAbbr}
-            className="text-sm font-semibold"
-          />
-          {line.role === "PITCHER" && <span className="text-xs text-muted">투수</span>}
-          <span className="ml-auto shrink-0 text-xs text-muted tabular-nums">
-            {formatTime(line.startTimeKst)}
-          </span>
+    // 이름 링크를 카드 전체로 넓혀서(after:absolute) 카드 어디를 눌러도 선수 페이지로 간다. 화면 낭독기는 이름만 읽는다.
+    // --i: 처음 그릴 때 위에서부터 차례로 떠오르는 순서
+    <li
+      className="card card-link card-rise relative p-3 has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-accent"
+      style={{ "--i": index } as CSSProperties}
+    >
+      {/* 점수 띠: 우리 팀 | 점수 + 상태 | 상대 팀 */}
+      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 rounded-xl bg-surface-2 px-3 py-2.5">
+        <TeamSide teamKo={line.teamKo} teamAbbr={line.teamAbbr} />
+        <div className="text-center">
+          {line.teamScore != null && line.opponentScore != null ? (
+            <ScoreText line={line} className="block text-[1.3125rem] font-extrabold leading-tight tracking-[0.02em]" />
+          ) : (
+            <span className="block text-base font-bold leading-tight text-muted">vs</span>
+          )}
+          <span className="block whitespace-nowrap text-[0.6875rem] text-muted tabular-nums">{meta}</span>
         </div>
-        {/* 한 줄 기록이 이 서비스의 핵심이라 이름 바로 아래에, 줄 안에서 가장 크고 굵게 둔다 */}
-        <p
-          className={`mt-1.5 text-[1.0625rem] font-semibold leading-snug text-balance sm:text-lg ${line.played ? "" : "text-muted"}`}
-        >
-          {formatSummary(line.summary)}
-        </p>
-        {/* 내 팀 · 점수 · 상대 팀 (팀 로고가 붙는다) */}
-        <p className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-muted tabular-nums">
-          <TeamName teamKo={line.teamKo} teamAbbr={line.teamAbbr} />
-          {score}
-          <TeamName teamKo={line.opponentKo} teamAbbr={line.opponentAbbr} />
-          {`· ${line.home ? "홈" : "원정"}`}
-        </p>
+        <TeamSide teamKo={line.opponentKo} teamAbbr={line.opponentAbbr} end />
+      </div>
+
+      <div className="mt-3 flex items-start gap-3 px-0.5">
+        <PlayerAvatar size={44} nameKo={line.nameKo} photoUrl={line.photoUrl} teamAbbr={line.teamAbbr} />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5">
+            <Link
+              href={`/players/${line.playerId}`}
+              className="text-base font-bold after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none"
+            >
+              {line.nameKo}
+            </Link>
+            {line.role === "PITCHER" && <span className="text-xs text-muted">투수</span>}
+            <ResultPill result={line.result} className="ml-auto" />
+          </div>
+          {/* 한 줄 기록이 이 서비스의 핵심이라 카드 안에서 가장 굵게 둔다. 안 뛰었으면 흐리게 */}
+          <p
+            className={`mt-0.5 text-[0.9375rem] leading-[1.45] text-pretty ${line.played ? "font-semibold" : "font-medium text-muted"}`}
+          >
+            {formatSummary(line.summary)}
+          </p>
+        </div>
       </div>
     </li>
+  );
+}
+
+/** 점수 띠의 팀 한쪽: 로고 + 이름. end면 오른쪽 끝에 붙고 로고가 이름 뒤에 온다 */
+function TeamSide({ teamKo, teamAbbr, end = false }: { teamKo: string; teamAbbr: string | null; end?: boolean }) {
+  return (
+    <span
+      className={`flex min-w-0 items-center gap-1.5 text-[0.8125rem] font-semibold ${end ? "flex-row-reverse text-right" : ""}`}
+    >
+      <TeamMark logoUrl={teamLogoUrl(teamAbbr)} color={teamColor(teamAbbr)} size="md" />
+      <span className="truncate">{teamKo}</span>
+    </span>
   );
 }

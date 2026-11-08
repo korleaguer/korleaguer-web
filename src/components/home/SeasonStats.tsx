@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { HitterSeason, PitcherSeason } from "@/lib/api";
 import Section from "@/components/Section";
 import HitterTable from "./HitterTable";
@@ -10,39 +11,33 @@ interface Props {
   pitchers: PitcherSeason[];
 }
 
-/**
- * 시즌 성적: 타자 표 + 투수 표. 흰 면 없이 페이지 바탕 위에 머리카락 선으로만 나눈다.
- * 표 칸 바탕(고정된 이름 칸 등)도 페이지 바탕색으로 맞춘다(--table-bg).
- */
+/** 시즌 기록: 타자 표 카드 + 투수 표 카드 (위아래로 쌓는다) */
 export default function SeasonStats({ season, statsAvailable, hitters, pitchers }: Props) {
-  const title = `${season} 시즌 성적`;
-
   // 요금제가 없으면 기록 자체를 못 받으므로, 표 대신 한 줄로 알린다.
   if (!statsAvailable) {
     return (
-      <Section title={title} plain>
-        <p className="py-4 text-sm text-muted">요금제가 없어 시즌 기록을 받지 못했습니다.</p>
+      <Section id="stats-title" title={`${season} 시즌 기록`}>
+        <p className="card px-4 py-5 text-sm text-muted">요금제가 없어 시즌 기록을 받지 못했습니다.</p>
       </Section>
     );
   }
 
   return (
-    <Section title={title} aside="금색 굵은 숫자 = 해당 항목 1위" plain>
-      {/* 표의 첫 칸·끝 칸 바깥 여백을 없애 글자와 선이 제목·순위판과 같은 열 안에서 시작하고 끝나게 한다 */}
-      <div className="[--table-bg:var(--background)] [--table-head-bg:var(--background)] [&_tr>*:first-child]:pl-0 [&_tr>*:last-child]:pr-0">
-        <SubTitle>타자 · 타율 순</SubTitle>
-        {hitters.length > 0 ? <HitterTable hitters={hitters} /> : <Empty />}
-        <SubTitle>투수 · 평균자책점 순</SubTitle>
-        {pitchers.length > 0 ? <PitcherTable pitchers={pitchers} /> : <Empty />}
-      </div>
-    </Section>
+    <div className="space-y-7">
+      <Section id="hitters-title" title="타자 시즌 기록" aside="타율 순 · 파란 숫자 = 1위">
+        <TableCard>{hitters.length > 0 ? <HitterTable hitters={hitters} /> : <Empty />}</TableCard>
+      </Section>
+      <Section id="pitchers-title" title="투수 시즌 기록" aside="평균자책점 순">
+        <TableCard>{pitchers.length > 0 ? <PitcherTable pitchers={pitchers} /> : <Empty />}</TableCard>
+      </Section>
+    </div>
   );
 }
 
-function SubTitle({ children }: { children: string }) {
-  return <h3 className="pb-1 pt-4 text-sm font-bold">{children}</h3>;
+function TableCard({ children }: { children: ReactNode }) {
+  return <div className="card overflow-hidden py-1.5">{children}</div>;
 }
 
 function Empty() {
-  return <p className="py-4 text-sm text-muted">아직 기록이 없습니다.</p>;
+  return <p className="px-4 py-4 text-sm text-muted">아직 기록이 없습니다.</p>;
 }

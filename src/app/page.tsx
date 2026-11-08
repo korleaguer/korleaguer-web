@@ -4,8 +4,8 @@ import { formatDate, formatTime } from "@/lib/format";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import DataBanners from "@/components/DataBanners";
 import LoadingBlock from "@/components/LoadingBlock";
-import Leaderboard from "@/components/home/Leaderboard";
 import RecentGames from "@/components/home/RecentGames";
+import SeasonLeaders from "@/components/home/SeasonLeaders";
 import SeasonStats from "@/components/home/SeasonStats";
 
 // 홈 화면. 데이터는 요청마다 api에서 새로 받는다.
@@ -26,17 +26,12 @@ async function HomeContent() {
   if (!result.ok) return <ApiErrorNotice failure={result.failure} />;
 
   const home = result.data;
-  const meta = `${home.season} 시즌 · 기준 ${formatDate(home.generatedAt)} ${formatTime(home.generatedAt)}`;
+  const asOf = `기준 ${formatDate(home.generatedAt)} ${formatTime(home.generatedAt)}`;
   return (
-    <div className="space-y-8">
+    <div className="space-y-7">
       <DataBanners dataMode={home.dataMode} statsAvailable={home.statsAvailable} />
-      {/* 넓은 화면: 1줄 = 최근 경기 제목, 2줄 = 최근 경기 목록 | 순위판 */}
-      <div className="grid gap-y-8 lg:grid-cols-[minmax(0,1fr)_20rem] lg:grid-rows-[auto_auto] lg:gap-x-6 lg:gap-y-3">
-        <RecentGames recent={home.recent} meta={meta} className="lg:row-span-2" />
-        <div className="lg:col-start-2 lg:row-start-2">
-          <Leaderboard statsAvailable={home.statsAvailable} hitters={home.hitters} />
-        </div>
-      </div>
+      <RecentGames recent={home.recent} asOf={asOf} />
+      <SeasonLeaders season={home.season} statsAvailable={home.statsAvailable} hitters={home.hitters} />
       <SeasonStats
         season={home.season}
         statsAvailable={home.statsAvailable}

@@ -15,8 +15,8 @@ export const metadata: Metadata = {
 // 선수 목록. 데이터는 요청마다 api에서 새로 받는다.
 export default function PlayersPage() {
   return (
-    <div className="space-y-5">
-      <h1 className="font-display text-[1.75rem] font-bold leading-tight sm:text-3xl">선수</h1>
+    <div className="space-y-4">
+      <h1 className="px-1 text-2xl font-extrabold tracking-[-0.02em]">선수</h1>
       <Suspense fallback={<LoadingBlock rows={6} />}>
         <PlayersContent />
       </Suspense>
@@ -38,13 +38,13 @@ async function PlayersContent() {
   return (
     <div className="space-y-4">
       <DataBanners dataMode={home.dataMode} statsAvailable={home.statsAvailable} />
-      <p className="text-sm font-medium text-muted">{`${players.length}명 · ${home.season} 시즌 기록`}</p>
+      <p className="px-1 text-sm font-medium text-muted">{`${players.length}명 · ${home.season} 시즌 기록`}</p>
       {players.length === 0 ? (
-        <p className="rounded-[10px] bg-surface px-5 py-10 text-center text-sm text-muted">
+        <p className="card px-5 py-10 text-center text-sm text-muted">
           아직 등록된 선수가 없습니다.
         </p>
       ) : (
-        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
           {players.map((player) => (
             <PlayerCard
               key={player.id}

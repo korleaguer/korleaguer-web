@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
 import type { DataMode } from "@/lib/api";
 
 interface Props {
@@ -13,7 +13,7 @@ export default function DataBanners({ dataMode, statsAvailable }: Props) {
   return (
     <div className="space-y-2">
       {dataMode === "sample" && (
-        <Banner mark="견본" title="샘플 데이터 — 실제 기록이 아닙니다">
+        <Banner mark="샘플" title="샘플 데이터 — 실제 기록이 아닙니다">
           API 키 없이 실행 중이라 지어낸 숫자를 보여 주고 있습니다.
         </Banner>
       )}
@@ -26,21 +26,19 @@ export default function DataBanners({ dataMode, statsAvailable }: Props) {
   );
 }
 
-// 여권 견본처럼 비뚤게 찍힌 도장. 제목이 같은 말을 하므로 화면 낭독기는 건너뛴다.
-const MARK_STYLE = { "--tilt": "-4deg" } as CSSProperties;
-
+// 호박색 카드. 앞의 알약은 제목이 같은 말을 하므로 화면 낭독기는 건너뛴다.
 function Banner({ mark, title, children }: { mark: string; title: string; children: ReactNode }) {
   return (
-    <div
-      role="status"
-      className="flex items-center gap-4 rounded-[10px] bg-notice-bg px-4 py-3 text-notice-fg"
-    >
-      <span aria-hidden className="stamp h-11 min-w-14 px-2 text-sm tracking-[0.2em]" style={MARK_STYLE}>
+    <div role="status" className="flex items-start gap-3 rounded-2xl bg-notice-bg px-4 py-3 text-notice-fg">
+      <span
+        aria-hidden
+        className="mt-px shrink-0 rounded-full bg-notice-mark px-2.5 py-0.5 text-xs font-bold leading-[1.125rem] text-notice-bg"
+      >
         {mark}
       </span>
       <div className="min-w-0">
-        <p className="text-base font-extrabold">{title}</p>
-        <p className="mt-0.5 text-xs opacity-85">{children}</p>
+        <p className="text-[0.9375rem] font-bold leading-snug">{title}</p>
+        <p className="mt-0.5 text-[0.8125rem] opacity-90">{children}</p>
       </div>
     </div>
   );

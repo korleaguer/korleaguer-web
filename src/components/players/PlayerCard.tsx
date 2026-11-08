@@ -1,8 +1,8 @@
 import Link from "next/link";
 import type { HitterSeason, PitcherSeason, PlayerSummary } from "@/lib/api";
-import { formatAge, formatEra, formatRate } from "@/lib/format";
+import { formatEra, formatRate } from "@/lib/format";
+import InfoChips from "@/components/InfoChips";
 import PlayerAvatar from "@/components/PlayerAvatar";
-import TeamName from "@/components/TeamName";
 
 interface Props {
   player: PlayerSummary;
@@ -36,52 +36,38 @@ function seasonStats(player: PlayerSummary, hitting: HitterSeason | null, pitchi
     : null;
 }
 
-/** 선수 목록의 카드 한 장(여권 신원 면을 줄인 모양). 카드 어디를 눌러도 선수 페이지로 간다. */
+/** 선수 목록의 카드 한 장. 카드 어디를 눌러도 선수 페이지로 간다. */
 export default function PlayerCard({ player, hitting, pitching }: Props) {
-  // "중견수 · 만 28세 · #51". 없는 건 뺀다.
-  const info = [player.positionKo, formatAge(player.age), player.jersey && `#${player.jersey}`]
-    .filter(Boolean)
-    .join(" · ");
   const stats = seasonStats(player, hitting, pitching);
 
   return (
     // 이름 링크를 카드 전체로 넓혀서(after:absolute) 카드 전체가 링크가 된다. 화면 낭독기는 이름만 읽는다.
-    <li className="relative flex flex-col rounded-[10px] bg-surface p-4 hover:bg-surface-2 has-[a:focus-visible]:ring-2 has-[a:focus-visible]:ring-accent">
-      <div className="flex gap-3.5">
-        <PlayerAvatar
-          size="md"
-          nameKo={player.nameKo}
-          photoUrl={player.photoUrl}
-          teamAbbr={player.teamAbbr}
-        />
+    <li className="card card-link relative flex flex-col p-4 has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-accent">
+      <div className="flex items-center gap-3">
+        <PlayerAvatar size={56} nameKo={player.nameKo} photoUrl={player.photoUrl} teamAbbr={player.teamAbbr} />
         <div className="min-w-0 flex-1">
           <Link
             href={`/players/${player.id}`}
-            className="text-lg font-bold leading-tight after:absolute after:inset-0 focus-visible:outline-none"
+            className="text-[1.0625rem] font-extrabold tracking-[-0.01em] after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none"
           >
             {player.nameKo}
           </Link>
           {player.nameEn && (
-            <p className="mt-0.5 truncate text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-muted">
+            <p className="truncate text-[0.6875rem] font-medium uppercase tracking-[0.08em] text-muted">
               {player.nameEn}
             </p>
           )}
-          {player.teamKo && (
-            <p className="mt-2 text-sm">
-              <TeamName teamKo={player.teamKo} teamAbbr={player.teamAbbr} />
-            </p>
-          )}
-          {info && <p className="mt-0.5 text-xs text-muted">{info}</p>}
         </div>
       </div>
+      <InfoChips player={player} className="mt-3" />
       {/* mt-auto: 같은 줄의 카드끼리 기록 칸이 같은 높이에 오도록 카드 아래 끝에 붙인다 */}
-      <div className="mt-auto pt-4">
+      <div className="mt-auto pt-3.5">
         {stats ? (
           <dl className="grid grid-cols-3 border-t border-line pt-3">
             {stats.map(({ label, value }) => (
               <div key={label} className="min-w-0">
-                <dt className="text-[0.6875rem] text-muted">{label}</dt>
-                <dd className="mt-0.5 text-xl font-bold tracking-tight tabular-nums">{value}</dd>
+                <dt className="text-xs text-muted">{label}</dt>
+                <dd className="mt-0.5 text-xl font-extrabold tracking-[-0.02em] tabular-nums">{value}</dd>
               </div>
             ))}
           </dl>
