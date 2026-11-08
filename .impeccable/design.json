@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "generatedAt": "2026-11-08T00:00:00+09:00",
-  "title": "Design System: 코리거",
+  "title": "Design System: KOR Leaguer",
   "extensions": {
     "colorMeta": {
       "background": {
@@ -444,7 +444,7 @@
       },
       "wordmark": {
         "displayName": "Wordmark",
-        "purpose": "머리글 '코리거'."
+        "purpose": "머리글 'KOR Leaguer'."
       },
       "title": {
         "displayName": "Title",
@@ -580,8 +580,8 @@
       "name": "상단 메뉴",
       "kind": "nav",
       "refersTo": "nav-pill-current",
-      "description": "흰 머리글 56px. 파란 'K' 상자 + 코리거, 알약 메뉴. 현재 메뉴는 연파랑 알약.",
-      "html": "<header class=\"ds-header\"><a class=\"ds-brand\" href=\"#\"><span class=\"ds-k\">K</span>코리거</a><nav class=\"ds-nav\"><a class=\"ds-nav-item\" aria-current=\"page\" href=\"#\">홈</a><a class=\"ds-nav-item\" href=\"#\">선수</a></nav></header>",
+      "description": "흰 머리글 56px. 파란 'K' 상자 + KOR Leaguer, 알약 메뉴. 현재 메뉴는 연파랑 알약.",
+      "html": "<header class=\"ds-header\"><a class=\"ds-brand\" href=\"#\"><span class=\"ds-k\">K</span>KOR Leaguer</a><nav class=\"ds-nav\"><a class=\"ds-nav-item\" aria-current=\"page\" href=\"#\">홈</a><a class=\"ds-nav-item\" href=\"#\">선수</a></nav></header>",
       "css": ".ds-header{font-family:var(--font-sans, \"Pretendard Variable\", Pretendard, -apple-system, system-ui, \"Apple SD Gothic Neo\", sans-serif);display:flex;align-items:center;gap:12px;height:56px;padding:0 16px;background:var(--surface,#fff);box-shadow:0 1px 0 var(--line,#eceef1)} .ds-brand{display:flex;align-items:center;gap:7px;font-size:1.125rem;font-weight:800;letter-spacing:-.03em;color:var(--foreground,#111827);text-decoration:none} .ds-k{display:grid;place-items:center;width:26px;height:26px;border-radius:8px;background:var(--accent,#2563eb);color:var(--accent-fg,#fff);font-size:.875rem;font-weight:800} .ds-nav{display:flex;gap:4px} .ds-nav-item{border-radius:9999px;padding:6px 12px;font-size:.875rem;font-weight:600;color:var(--muted,#5b6270);text-decoration:none} .ds-nav-item:hover{background:var(--surface-2,#f4f5f7);color:var(--foreground,#111827)} .ds-nav-item[aria-current]{background:var(--accent-soft,#e8efff);color:var(--accent-ink,#1d4ed8)} .ds-nav-item:focus-visible,.ds-brand:focus-visible{outline:2px solid var(--accent,#2563eb);outline-offset:2px;border-radius:6px}"
     },
     {

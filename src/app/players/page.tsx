@@ -6,7 +6,7 @@ import DataBanners from "@/components/DataBanners";
 import LoadingBlock from "@/components/LoadingBlock";
 import PlayerCard from "@/components/players/PlayerCard";
 
-// <title>: "선수 · 코리거" (뒷부분은 layout의 template이 붙인다)
+// <title>: "선수 · KOR Leaguer" (뒷부분은 layout의 template이 붙인다)
 export const metadata: Metadata = {
   title: "선수",
   description: "한국 MLB 선수 모아보기. 선수별 시즌 성적을 한눈에 봅니다.",

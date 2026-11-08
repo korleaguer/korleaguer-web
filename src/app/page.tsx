@@ -13,7 +13,7 @@ export default function HomePage() {
   return (
     <>
       {/* 눈에는 안 보이고 화면 낭독기만 읽는 페이지 제목 */}
-      <h1 className="sr-only">코리거 — 한국 MLB 선수 경기 기록</h1>
+      <h1 className="sr-only">KOR Leaguer — 한국 MLB 선수 경기 기록</h1>
       <Suspense fallback={<HomeLoading />}>
         <HomeContent />
       </Suspense>

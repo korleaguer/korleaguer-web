@@ -1,5 +1,5 @@
 ---
-name: 코리거
+name: KOR Leaguer
 description: 한국 MLB 선수들의 최근 경기 한 줄 기록. 경기 하나는 카드 하나.
 colors:
   background: "#eef0f3"
@@ -186,7 +186,7 @@ components:
     size: "44px"
 ---
 
-# Design System: 코리거
+# Design System: KOR Leaguer
 
 ## Overview
 
@@ -250,7 +250,7 @@ components:
 - **Stat hero** (800, 1.75rem, 1.25, 고정폭): 선수 시즌 큰 숫자 칸. 시즌 1위 카드 숫자도 같은 역할이다.
 - **Score** (800, 1.3125rem, 고정폭, 0.02em): 점수 띠 가운데 "5 - 3".
 - **Headline** (800, 1.1875rem, -0.02em): 섹션 제목. 카드 밖 회색 바탕 위.
-- **Wordmark** (800, 1.125rem, -0.03em): 머리글 '코리거'.
+- **Wordmark** (800, 1.125rem, -0.03em): 머리글 'KOR Leaguer'.
 - **Title** (700, 1rem): 경기 카드 선수 이름.
 - **Summary line** (600, 0.9375rem, 1.45): 한 줄 기록. 카드 안에서 가장 굵은 본문이다. 안 뛰었으면 500 + 흐린 글자.
 - **Body** (400, 0.875rem): 표, 빈 상태 문구.
@@ -294,7 +294,7 @@ components:
 ## Components
 
 ### Navigation
-- **Style:** 흰 머리글(56px). 왼쪽에 파란 'K' 상자(26px) + '코리거' 글자, 이어서 알약 메뉴 '홈'·'선수'. 데스크톱(768px 이상)에서는 오른쪽 끝에 작은 흐린 소개 글.
+- **Style:** 흰 머리글(56px). 왼쪽에 파란 'K' 상자(26px) + 'KOR Leaguer' 글자, 이어서 알약 메뉴 '홈'·'선수'. 데스크톱(768px 이상)에서는 오른쪽 끝에 작은 흐린 소개 글.
 - **States:** 기본은 흐린 글자, 마우스 올림은 `surface-2` 바탕 + 본문 글자, 현재 메뉴는 연파랑 알약 + 진한 파랑 글자. 선수 페이지 안에서는 '선수'가 현재 메뉴다.
 
 ### Cards / Containers

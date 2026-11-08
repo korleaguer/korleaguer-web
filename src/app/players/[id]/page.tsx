@@ -17,7 +17,7 @@ function parseId(id: string): number | null {
   return /^[1-9]\d{0,9}$/.test(id) ? Number(id) : null;
 }
 
-// <title>: "이정후 2026 기록 · 코리거" (뒷부분은 layout의 template이 붙인다)
+// <title>: "이정후 2026 기록 · KOR Leaguer" (뒷부분은 layout의 template이 붙인다)
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const id = parseId((await params).id);
   const result = id == null ? null : await getPlayer(id);
