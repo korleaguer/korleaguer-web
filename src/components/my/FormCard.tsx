@@ -59,7 +59,8 @@ export default function FormCard({ entry, days, fromKst, toKst, statsAvailable }
           <>
             {entry.hitting && <HitterNumbers days={days} hitting={entry.hitting} />}
             {entry.pitching && <PitcherNumbers days={days} pitching={entry.pitching} />}
-            <GameBars slots={barSlots(fromKst, toKst, games)} role={player.role} days={days} />
+            {/* 기간이 바뀌면 막대 자리도 바뀌므로 고른 막대를 처음부터 다시 정한다(key) */}
+            <GameBars key={`${fromKst}~${toKst}`} slots={barSlots(fromKst, toKst, games)} role={player.role} days={days} />
           </>
         ) : (
           <p className="mt-3 rounded-xl bg-surface-2 px-3 py-2.5 text-sm text-muted">

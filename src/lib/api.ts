@@ -372,7 +372,12 @@ export const getPlayer = cache((id: number) =>
   fetchApi(`/api/players/${id}`, normalizePlayer),
 );
 
-/** GET /api/my: 고른 선수들의 최근 days일 경기. ids는 1명 이상이어야 한다(빈 목록은 api가 400) */
-export const getMyPlayers = cache((ids: readonly number[], days: number) =>
-  fetchApi(`/api/my?ids=${ids.join(",")}&days=${days}`, normalizeMy),
+/** GET /api/my: 고른 선수들의 최근 days일 경기. ids는 "1,5,2"처럼 1명 이상(빈 목록은 api가 400) */
+const getMyPlayersCached = cache((ids: string, days: number) =>
+  fetchApi(`/api/my?ids=${ids}&days=${days}`, normalizeMy),
 );
+
+// cache는 인자를 값이 아니라 참조로 비교하므로, 배열을 문자열로 바꿔 넘긴다.
+export function getMyPlayers(ids: readonly number[], days: number) {
+  return getMyPlayersCached(ids.join(","), days);
+}
