@@ -33,6 +33,32 @@ export interface GameLine {
   played: boolean;
   /** api가 만든 한국어 한 줄 기록. 안 뛰었으면 이유("결장", "경기 전" ...) */
   summary: string;
+  /** 이 경기 타격 숫자. 안 뛰었거나 기록을 못 받았으면 null */
+  batting: GameBatting | null;
+  /** 이 경기 투구 숫자. 안 던졌거나 기록을 못 받았으면 null */
+  pitching: GamePitching | null;
+}
+
+export interface GameBatting {
+  atBats: number;
+  hits: number;
+  homeRuns: number;
+  rbi: number;
+  walks: number;
+  stolenBases: number;
+}
+
+export interface GamePitching {
+  /** 잡은 아웃 수. 모르면 null */
+  outs: number | null;
+  /** "1⅔". 아웃 수를 모르면 null */
+  inningsText: string | null;
+  runs: number;
+  earnedRuns: number;
+  strikeouts: number;
+  win: boolean;
+  loss: boolean;
+  save: boolean;
 }
 
 export interface HitterSeason {
@@ -140,6 +166,61 @@ export interface PlayerResponse {
   games: GameLine[];
 }
 
+/** 내 선수 카드의 기간 합계(타자). avg는 타수가 없으면 null */
+export interface HitterPeriod {
+  games: number;
+  atBats: number;
+  hits: number;
+  homeRuns: number;
+  rbi: number;
+  walks: number;
+  stolenBases: number;
+  avg: number | null;
+  /** 이번 정규시즌 타율(비교용) */
+  seasonAvg: number | null;
+}
+
+/** 내 선수 카드의 기간 합계(투수). era는 이닝이 없으면 null */
+export interface PitcherPeriod {
+  games: number;
+  outs: number;
+  inningsText: string;
+  earnedRuns: number;
+  era: number | null;
+  strikeouts: number;
+  wins: number;
+  losses: number;
+  saves: number;
+  /** 이번 정규시즌 평균자책점(비교용) */
+  seasonEra: number | null;
+}
+
+/** 내 선수 한 명: 선수 정보 + 기간 합계 + 연속 기록 + 기간 안 경기(최신부터) */
+export interface MyPlayer {
+  player: PlayerSummary;
+  hitting: HitterPeriod | null;
+  pitching: PitcherPeriod | null;
+  /** 타자는 연속 안타, 투수는 연속 무실점 경기 수. 기록을 못 받았으면 null */
+  streak: number | null;
+  games: GameLine[];
+}
+
+/** GET /api/my?ids=1,2&days=7 */
+export interface MyPlayersResponse {
+  dataMode: DataMode;
+  statsAvailable: boolean;
+  season: number;
+  generatedAt: string;
+  days: number;
+  /** 기간 첫날·마지막 날(한국 날짜, "2026-09-21") */
+  fromKst: string;
+  toKst: string;
+  /** 최근 days일에 경기가 없어 마지막 경기일로 기간을 당겼으면 true(비시즌) */
+  isFallback: boolean;
+  /** 고른 순서대로. 없는 선수는 빠진다 */
+  players: MyPlayer[];
+}
+
 // ---- 응답 보정 ----
 // api가 계약과 조금 다르게 보내도(필드 빠짐, 배열 대신 null) 화면이 죽지 않게 빈 값을 채운다.
 // 모양이 아예 틀리면 여기서 예외가 나고, fetchApi가 badResponse로 바꾼다.
@@ -159,6 +240,8 @@ function normalizeLine(line: GameLine): GameLine {
     opponentScore: line.opponentScore ?? null,
     result: line.result ?? null,
     summary: line.summary ?? "",
+    batting: line.batting ?? null,
+    pitching: line.pitching ?? null,
   };
 }
 
@@ -228,6 +311,21 @@ function normalizePlayer(raw: PlayerResponse): PlayerResponse {
   };
 }
 
+function normalizeMy(raw: MyPlayersResponse): MyPlayersResponse {
+  return {
+    ...raw,
+    isFallback: raw.isFallback ?? false,
+    players: (raw.players ?? []).map((p) => ({
+      ...p,
+      player: normalizeSummary(p.player),
+      hitting: p.hitting ?? null,
+      pitching: p.pitching ?? null,
+      streak: p.streak ?? null,
+      games: (p.games ?? []).map(normalizeLine),
+    })),
+  };
+}
+
 // ---- 호출 ----
 
 /** 호출 실패 이유. 화면은 이 값을 보고 안내 문구를 고른다. */
@@ -272,4 +370,9 @@ export const getPlayers = cache(() => fetchApi("/api/players", normalizePlayers)
 
 export const getPlayer = cache((id: number) =>
   fetchApi(`/api/players/${id}`, normalizePlayer),
+);
+
+/** GET /api/my: 고른 선수들의 최근 days일 경기. ids는 1명 이상이어야 한다(빈 목록은 api가 400) */
+export const getMyPlayers = cache((ids: readonly number[], days: number) =>
+  fetchApi(`/api/my?ids=${ids.join(",")}&days=${days}`, normalizeMy),
 );

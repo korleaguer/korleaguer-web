@@ -22,7 +22,8 @@ export default function GameLog({ games }: { games: GameLine[] }) {
   );
 }
 
-function GameRow({ game: g }: { game: GameLine }) {
+/** 경기 한 줄(선수 페이지 경기 기록, 내 선수 카드의 '모두 보기'가 같이 쓴다) */
+export function GameRow({ game: g }: { game: GameLine }) {
   const hasScore = g.teamScore != null && g.opponentScore != null;
 
   return (
