@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-08T00:00:00+09:00",
+  "generatedAt": "2026-11-09T00:00:00+09:00",
   "title": "Design System: KOR Leaguer",
   "extensions": {
     "colorMeta": {
@@ -48,7 +48,7 @@
       },
       "surface-2": {
         "role": "neutral",
-        "displayName": "한 단계 진한 회색(점수 띠·칩)",
+        "displayName": "한 단계 진한 회색(점수 띠·칩·작은 숫자 칸)",
         "tonalRamp": [
           "#0e1116",
           "#191d24",
@@ -104,7 +104,7 @@
       },
       "accent": {
         "role": "primary",
-        "displayName": "스코어보드 파랑(로고 상자·'승' 알약)",
+        "displayName": "스코어보드 파랑(로고 상자·'승' 알약·경기별 막대)",
         "tonalRamp": [
           "#172554",
           "#1e3a8a",
@@ -132,7 +132,7 @@
       },
       "accent-ink": {
         "role": "primary",
-        "displayName": "진한 파랑 글자(1위·현재 메뉴·링크)",
+        "displayName": "진한 파랑 글자(1위·현재 메뉴·링크·시즌 비교·켜진 별)",
         "tonalRamp": [
           "#172554",
           "#1e3a8a",
@@ -146,7 +146,7 @@
       },
       "accent-soft": {
         "role": "primary",
-        "displayName": "연파랑 알약(현재 메뉴)",
+        "displayName": "연파랑 알약(현재 메뉴·현재 기간·켜진 '내 선수')",
         "tonalRamp": [
           "#172554",
           "#1e3a8a",
@@ -272,7 +272,7 @@
       },
       "surface-2-dark": {
         "role": "neutral",
-        "displayName": "한 단계 진한 회색(점수 띠·칩) (다크 모드)",
+        "displayName": "한 단계 진한 회색(점수 띠·칩·작은 숫자 칸) (다크 모드)",
         "tonalRamp": [
           "#0e1116",
           "#191d24",
@@ -328,7 +328,7 @@
       },
       "accent-ink-dark": {
         "role": "primary",
-        "displayName": "진한 파랑 글자(1위·현재 메뉴·링크) (다크 모드)",
+        "displayName": "진한 파랑 글자(1위·현재 메뉴·링크·시즌 비교·켜진 별) (다크 모드)",
         "tonalRamp": [
           "#172554",
           "#1e3a8a",
@@ -342,7 +342,7 @@
       },
       "accent-soft-dark": {
         "role": "primary",
-        "displayName": "연파랑 알약(현재 메뉴) (다크 모드)",
+        "displayName": "연파랑 알약(현재 메뉴·현재 기간·켜진 '내 선수') (다크 모드)",
         "tonalRamp": [
           "#172554",
           "#1e3a8a",
@@ -428,11 +428,15 @@
     "typographyMeta": {
       "display": {
         "displayName": "Display",
-        "purpose": "선수 페이지 이름, '선수' 페이지 제목."
+        "purpose": "선수 페이지 이름, '선수'·'내 선수' 페이지 제목."
       },
       "stat-hero": {
         "displayName": "Stat hero",
         "purpose": "선수 시즌 큰 숫자 칸(시즌 1위 카드 숫자도 같은 역할)."
+      },
+      "stat-form": {
+        "displayName": "Stat form",
+        "purpose": "'내 선수' 카드의 큰 숫자 하나(최근 N일 타율·평균자책점)."
       },
       "score": {
         "displayName": "Score",
@@ -441,6 +445,10 @@
       "headline": {
         "displayName": "Headline",
         "purpose": "섹션 제목, 카드 밖 회색 바탕 위."
+      },
+      "card-name": {
+        "displayName": "Card name",
+        "purpose": "'내 선수' 카드 선수 이름. 회색 칸 작은 숫자 셋도 같은 크기."
       },
       "wordmark": {
         "displayName": "Wordmark",
@@ -498,6 +506,16 @@
         "purpose": "선수 머리 카드의 96px 사진(흰 4px 테두리와 함께)."
       },
       {
+        "name": "stage-photo",
+        "value": "drop-shadow(0 3px 6px rgb(0 0 0 / 0.28))",
+        "purpose": "'내 선수' 카드 무대 위 배경 없는 사진(윤곽을 따라 짐)."
+      },
+      {
+        "name": "stage-floor",
+        "value": "linear-gradient(transparent, rgb(0 0 0 / 0.12)), 아래 22px",
+        "purpose": "팀 색 무대 아래 끝을 살짝 어둡게(`.player-stage::after`)."
+      },
+      {
         "name": "header-rule",
         "value": "0 1px 0 var(--line)",
         "purpose": "머리글 아래 1px 선."
@@ -518,6 +536,16 @@
         "name": "card-rise",
         "value": "260ms, translateY(6px) → 0, 카드마다 35ms 늦게",
         "purpose": "홈 경기 카드가 처음 그려질 때 한 번. 동작 줄이기 설정이면 없음."
+      },
+      {
+        "name": "bar-rise",
+        "value": "260ms, scaleY(0) → 1(바닥 기준), 막대마다 30ms 늦게(10번째까지)",
+        "purpose": "'내 선수' 경기별 막대가 처음 그려질 때 한 번. 동작 줄이기 설정이면 없음."
+      },
+      {
+        "name": "toggle-colors",
+        "value": "color·background 150ms",
+        "purpose": "별 버튼, 고르기 줄, 막대 진하기 전환."
       }
     ],
     "breakpoints": [
@@ -599,14 +627,38 @@
       "description": "팀 색 띠 위에 흰 테두리 96px 원형 사진이 걸치는 선수 페이지 머리.",
       "html": "<section class=\"ds-ph\" style=\"--team:#fd5a1e\"><div class=\"ds-ph-band\"></div><div class=\"ds-ph-body\"><span class=\"ds-ph-av\">이</span><h1 class=\"ds-ph-name\">이정후</h1><p class=\"ds-ph-en\">Jung Hoo Lee</p></div></section>",
       "css": ".ds-ph{font-family:var(--font-sans, \"Pretendard Variable\", Pretendard, -apple-system, system-ui, \"Apple SD Gothic Neo\", sans-serif);width:320px;overflow:hidden;border-radius:16px;background:var(--surface,#fff);color:var(--foreground,#111827);box-shadow:var(--shadow-card,0 1px 2px rgb(16 24 40/.06))} .ds-ph-band{height:68px;background:linear-gradient(120deg,var(--team),color-mix(in srgb,var(--team) 45%,var(--surface,#fff)))} .ds-ph-body{margin-top:-44px;padding:0 16px 16px} .ds-ph-av{display:grid;place-items:center;width:96px;height:96px;border-radius:9999px;background:var(--avatar-bg,#e8ebef);border:4px solid var(--surface,#fff);box-shadow:0 1px 4px rgb(0 0 0/.14);font-size:2.25rem;font-weight:800;box-sizing:border-box} .ds-ph-name{margin:8px 0 0;font-size:1.5rem;font-weight:800;line-height:1.25;letter-spacing:-.02em} .ds-ph-en{margin:2px 0 0;font-size:.71875rem;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--muted,#5b6270)}"
+    },
+    {
+      "name": "내 선수 카드",
+      "kind": "custom",
+      "refersTo": "form-card",
+      "description": "선수 한 명에 카드 한 장. 팀 색 무대 위 배경 없는 사진 → 이름 → 큰 숫자와 시즌 비교, 회색 칸 작은 숫자 셋 → 경기별 막대 → 고른 경기 한 줄.",
+      "html": "<div class=\"ds-fc\" style=\"--team:#fd5a1e\"><div class=\"ds-stage\"><span class=\"ds-streak\"><i></i>3경기 연속 안타</span><span class=\"ds-cut\"></span></div><div class=\"ds-fc-body\"><div class=\"ds-fc-head\"><div><p class=\"ds-fc-name\">이정후</p><p class=\"ds-fc-meta\">샌프란시스코 · 중견수</p></div><button class=\"ds-star\" aria-pressed=\"true\" aria-label=\"이정후 내 선수\"><svg viewBox=\"0 0 20 20\"><path d=\"M10 2.6l2.27 4.6 5.08.74-3.67 3.58.87 5.06L10 14.2l-4.55 2.38.87-5.06L2.65 7.94l5.08-.74L10 2.6z\"/></svg></button></div><div class=\"ds-fc-nums\"><dl><dt>최근 7일 타율</dt><dd class=\"ds-big\">.348</dd><dd class=\"ds-cmp\">시즌 .301보다 ▲.047</dd></dl><dl class=\"ds-tile\"><div><dt>안타</dt><dd>8</dd></div><div><dt>홈런</dt><dd>1</dd></div><div><dt>타점</dt><dd>4</dd></div></dl></div><div class=\"ds-bars\"><span style=\"height:50%\"></span><span class=\"ds-zero\"></span><span style=\"height:75%\"></span><span class=\"ds-dash\"></span><span class=\"ds-on\" style=\"height:50%\"></span></div><p class=\"ds-sel\">4타수 2안타 1홈런 2타점</p></div></div>",
+      "css": ".ds-fc{font-family:var(--font-sans, \"Pretendard Variable\", Pretendard, -apple-system, system-ui, \"Apple SD Gothic Neo\", sans-serif);width:320px;overflow:hidden;border-radius:16px;background:var(--surface,#fff);color:var(--foreground,#111827);box-shadow:var(--shadow-card,0 1px 2px rgb(16 24 40/.06))} .ds-stage{position:relative;height:92px;overflow:hidden;background:radial-gradient(4.5rem 3.75rem at calc(100% - 3.9rem) 38%,color-mix(in srgb,white 34%,transparent),transparent 70%),linear-gradient(100deg,color-mix(in srgb,var(--team) 78%,var(--surface,#fff)) 0%,var(--team) 55%,color-mix(in oklab,var(--team),black 18%) 100%)} .ds-stage::after{content:\"\";position:absolute;inset:auto 0 0;height:22px;background:linear-gradient(transparent,rgb(0 0 0/.12))} .ds-streak{position:absolute;left:14px;top:12px;z-index:1;display:inline-flex;align-items:center;gap:6px;border-radius:9999px;background:var(--surface,#fff);padding:2px 10px;font-size:.75rem;font-weight:700;line-height:1.25rem;box-shadow:var(--shadow-card,0 1px 2px rgb(16 24 40/.06))} .ds-streak i{width:7px;height:7px;border-radius:9999px;background:var(--accent,#2563eb)} .ds-cut{position:absolute;right:8px;bottom:-16px;width:112px;height:112px;border-radius:50% 50% 0 0;background:rgb(255 255 255/.55);filter:drop-shadow(0 3px 6px rgb(0 0 0/.28))} .ds-fc-body{padding:12px 16px 8px} .ds-fc-head{display:flex;align-items:flex-start;gap:8px} .ds-fc-head>div{flex:1;min-width:0} .ds-fc-name{margin:0;font-size:1.25rem;font-weight:800;line-height:1.375;letter-spacing:-.02em} .ds-fc-meta{margin:0;font-size:.8125rem;color:var(--muted,#5b6270)} .ds-star{display:grid;place-items:center;width:36px;height:36px;margin:-4px -8px 0 0;border:0;border-radius:9999px;background:none;color:var(--accent-ink,#1d4ed8);cursor:pointer} .ds-star svg{width:20px;height:20px;fill:currentColor;stroke:currentColor;stroke-width:1.6;stroke-linejoin:round} .ds-star:hover{background:var(--accent-soft,#e8efff)} .ds-fc-nums{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:end;gap:16px;margin-top:14px} .ds-fc-nums dl{margin:0} .ds-fc-nums dt{font-size:.75rem;color:var(--muted,#5b6270)} .ds-fc-nums dd{margin:0} .ds-big{margin-top:4px!important;font-size:2.75rem;font-weight:800;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums} .ds-cmp{margin-top:6px!important;font-size:.75rem;font-weight:600;color:var(--accent-ink,#1d4ed8)} .ds-tile{display:grid!important;grid-template-columns:repeat(3,1fr);border-radius:12px;background:var(--surface-2,#f4f5f7);padding:8px 0;text-align:center} .ds-tile dd{font-size:1.25rem;font-weight:800;line-height:1.25;font-variant-numeric:tabular-nums} .ds-bars{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;align-items:end;height:72px;margin-top:16px;border-bottom:1px solid var(--line,#eceef1)} .ds-bars span{justify-self:center;width:72%;max-width:28px;border-radius:6px 6px 4px 4px;background:var(--accent,#2563eb);opacity:.35;transform-origin:bottom;animation:ds-bar 260ms cubic-bezier(.16,1,.3,1) backwards} .ds-bars .ds-on{opacity:1} .ds-bars .ds-zero{height:4px;border-radius:4px;background:var(--muted,#5b6270);opacity:.35} .ds-bars .ds-dash{height:14px;background:none;border:1.5px dashed var(--muted,#5b6270);opacity:.6;box-sizing:border-box} .ds-sel{margin:12px 0 8px;border-radius:12px;background:var(--surface-2,#f4f5f7);padding:10px 12px;font-size:.9375rem;font-weight:600;line-height:1.45} @keyframes ds-bar{from{transform:scaleY(0)}to{transform:none}} @media (prefers-reduced-motion:reduce){.ds-bars span{animation:none}}"
+    },
+    {
+      "name": "내 선수 별표",
+      "kind": "button",
+      "refersTo": "my-toggle-pill",
+      "description": "내 선수 넣기·빼기. 선수 페이지 머리는 알약, 카드 구석은 36px 둥근 별. 켜지면 연파랑/진한 파랑 칠한 별.",
+      "html": "<div class=\"ds-tg\"><button class=\"ds-tg-pill\" aria-pressed=\"false\"><svg viewBox=\"0 0 20 20\"><path d=\"M10 2.6l2.27 4.6 5.08.74-3.67 3.58.87 5.06L10 14.2l-4.55 2.38.87-5.06L2.65 7.94l5.08-.74L10 2.6z\"/></svg>내 선수에 넣기</button><button class=\"ds-tg-pill\" aria-pressed=\"true\"><svg viewBox=\"0 0 20 20\"><path d=\"M10 2.6l2.27 4.6 5.08.74-3.67 3.58.87 5.06L10 14.2l-4.55 2.38.87-5.06L2.65 7.94l5.08-.74L10 2.6z\"/></svg>내 선수</button></div>",
+      "css": ".ds-tg{font-family:var(--font-sans, \"Pretendard Variable\", Pretendard, -apple-system, system-ui, \"Apple SD Gothic Neo\", sans-serif);display:flex;gap:8px} .ds-tg-pill{display:inline-flex;align-items:center;gap:6px;border:0;border-radius:9999px;padding:6px 14px;font:inherit;font-size:.8125rem;font-weight:600;background:var(--surface-2,#f4f5f7);color:var(--neutral-pill-fg,#374151);cursor:pointer;transition:color 150ms,background-color 150ms} .ds-tg-pill:hover{color:var(--foreground,#111827)} .ds-tg-pill svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linejoin:round} .ds-tg-pill[aria-pressed=true]{background:var(--accent-soft,#e8efff);color:var(--accent-ink,#1d4ed8)} .ds-tg-pill[aria-pressed=true] svg{fill:currentColor} .ds-tg-pill:focus-visible{outline:2px solid var(--accent,#2563eb);outline-offset:2px}"
+    },
+    {
+      "name": "기간 알약 · 선수 고르기",
+      "kind": "nav",
+      "refersTo": "period-pill-current",
+      "description": "'내 선수' 제목 아래 7·14·30일 알약(현재는 연파랑)과 오른쪽 흰 '선수 고르기' 버튼.",
+      "html": "<div class=\"ds-pp\"><nav><a aria-current=\"page\" href=\"#\">7일</a><a href=\"#\">14일</a><a href=\"#\">30일</a></nav><button>선수 고르기</button></div>",
+      "css": ".ds-pp{font-family:var(--font-sans, \"Pretendard Variable\", Pretendard, -apple-system, system-ui, \"Apple SD Gothic Neo\", sans-serif);display:flex;align-items:center;justify-content:space-between;gap:12px;width:340px;padding:12px;background:var(--background,#eef0f3)} .ds-pp nav{display:flex;gap:6px} .ds-pp a{border-radius:9999px;padding:4px 12px;font-size:.8125rem;font-weight:600;text-decoration:none;background:var(--surface,#fff);color:var(--muted,#5b6270)} .ds-pp a:hover{color:var(--foreground,#111827)} .ds-pp a[aria-current]{background:var(--accent-soft,#e8efff);color:var(--accent-ink,#1d4ed8)} .ds-pp button{border:0;border-radius:9999px;padding:6px 14px;font:inherit;font-size:.8125rem;font-weight:600;background:var(--surface,#fff);color:var(--foreground,#111827);box-shadow:var(--shadow-card,0 1px 2px rgb(16 24 40/.06));transition:box-shadow 150ms;cursor:pointer} .ds-pp button:hover{box-shadow:var(--shadow-card-hover,0 4px 14px rgb(16 24 40/.1))}"
     }
   ],
   "narrative": {
     "northStar": "점수 띠 위의 한 줄",
-    "overview": "처음 온 야구 팬도 설명 없이 읽는 스포츠 앱의 정석이다. 차가운 회색 바탕 위에 흰 카드가 놓이고, 경기 하나는 카드 하나다. 카드 위쪽은 팀 대 팀 점수 띠, 아래쪽은 우리 선수 사진·이름과 굵은 한 줄 기록. 비교 기준은 네이버 스포츠·FotMob의 완성도다.\n\n장식은 없다. 위계는 글꼴 굵기(800/600/400)와 크기, 바탕색 차이, 아주 옅은 그림자로만 만든다. 색은 거의 회색이고, 강조는 파랑 하나뿐이다. 팀 색은 데이터로만 들어온다(팀 로고, 선수 페이지 머리 띠, 사진이 없을 때 이니셜 원). 다크 모드는 운영체제 설정을 따르며, 밝은 모드와 같은 구조를 색만 바꿔 쓴다.\n\n예전의 여권 세계(명조 글꼴, 금박, 도장, 무늬)는 사용자가 버렸다(11-08). 다시 쓰지 않는다.",
+    "overview": "처음 온 야구 팬도 설명 없이 읽는 스포츠 앱의 정석이다. 차가운 회색 바탕 위에 흰 카드가 놓이고, 경기 하나는 카드 하나다. 카드 위쪽은 팀 대 팀 점수 띠, 아래쪽은 우리 선수 사진·이름과 굵은 한 줄 기록. 비교 기준은 네이버 스포츠·FotMob의 완성도다.\n\n장식은 없다. 위계는 글꼴 굵기(800/600/400)와 크기, 바탕색 차이, 아주 옅은 그림자로만 만든다. 색은 거의 회색이고, 강조는 파랑 하나뿐이다. 팀 색은 데이터로만 들어온다(팀 로고, 선수 페이지 머리 띠, '내 선수' 카드의 팀 색 무대, 사진이 없을 때 이니셜 원). 다크 모드는 운영체제 설정을 따르며, 밝은 모드와 같은 구조를 색만 바꿔 쓴다.\n\n예전의 여권 세계(명조 글꼴, 금박, 도장, 무늬)는 사용자가 버렸다(11-08). 다시 쓰지 않는다.",
     "keyCharacteristics": [
       "회색 바탕 + 흰 카드(16px 모서리, 테두리 없음, 옅은 그림자)",
-      "파랑 하나: 채운 파랑은 로고 상자와 '승' 알약, 진한 파랑 글자는 1위 숫자·현재 메뉴·링크",
+      "파랑 하나: 채운 파랑은 로고 상자·'승' 알약·경기별 막대, 진한 파랑 글자는 1위 숫자·현재 메뉴·링크·시즌 비교·켜진 별",
       "Pretendard 한 가족, 숫자는 모두 고정폭",
       "알약 모양(완전히 둥근) 메뉴·결과·정보 칩",
       "휴대폰 1열 → 태블릿 2열 → 데스크톱 3열 카드 격자"
@@ -614,7 +666,7 @@
     "rules": [
       {
         "name": "The One Blue Rule",
-        "body": "채운 파랑은 로고 상자와 '승' 알약 둘뿐이다. 진한 파랑 글자는 1위 숫자, 현재 메뉴, 링크 셋뿐이다. 버튼이나 제목을 파랗게 칠하지 않는다.",
+        "body": "채운 파랑은 로고 상자, '승' 알약, 경기별 막대(와 연속 기록 딱지 점)뿐이다. 진한 파랑 글자는 1위 숫자, 현재 메뉴, 링크, 그리고 '내 선수'에서 '나아졌는지·고른 것'을 가리키는 표시(시즌 비교, 고른 막대 날짜, 홈런 점, 켜진 별)뿐이다. 버튼이나 제목을 파랗게 칠하지 않는다.",
         "section": "colors"
       },
       {
@@ -629,7 +681,7 @@
       },
       {
         "name": "The Team Color Is Data Rule",
-        "body": "팀 색은 팀을 가리킬 때만 나온다(로고, 머리 띠, 이니셜 원, 색 점). 화면 강조색으로 쓰지 않는다.",
+        "body": "팀 색은 팀을 가리킬 때만 나온다(로고, 머리 띠, '내 선수' 카드 무대, 이니셜 원, 색 점). 화면 강조색으로 쓰지 않는다.",
         "section": "colors"
       },
       {
@@ -659,7 +711,7 @@
       },
       {
         "name": "The Rise Once Rule",
-        "body": "홈 경기 카드는 처음 그려질 때만 위에서부터 차례로 6px 떠오른다(260ms, 카드마다 35ms 늦게). 동작 줄이기 설정이면 움직임도 그림자 전환도 없다.",
+        "body": "홈 경기 카드는 처음 그려질 때만 위에서부터 차례로 6px 떠오른다(260ms, 카드마다 35ms 늦게). '내 선수' 카드의 경기별 막대는 처음 그려질 때만 바닥에서 자란다(`.bar-rise`, 260ms, 막대마다 30ms 늦게, 10번째부터는 더 늦추지 않음). 동작 줄이기 설정이면 움직임도 그림자 전환도 없다.",
         "section": "elevation"
       }
     ],
@@ -673,9 +725,9 @@
     ],
     "donts": [
       "**Don't** 여권 세계 장식(명조 글꼴, 금박, 도장, 무늬)을 다시 들인다(사용자 결정 11-08).",
-      "**Don't** 파랑을 로고 상자·'승' 알약·1위 숫자·현재 메뉴·링크 밖으로 넓힌다.",
+      "**Don't** 파랑을 로고 상자·'승' 알약·경기별 막대·1위 숫자·현재 메뉴·링크·'내 선수' 표시(시즌 비교, 고른 날짜, 홈런 점, 켜진 별) 밖으로 넓힌다.",
       "**Don't** '패'를 빨강, '승'을 초록으로 칠한다.",
-      "**Don't** 카드 바깥에 `border`를 긋거나, 그림자 토큰 두 개(쉼·올림) 밖의 그림자를 만든다.",
+      "**Don't** 카드 바깥에 `border`를 긋거나, 그림자 토큰 두 개(쉼·올림) 밖의 그림자를 만든다. 예외는 사진 그림자 둘(머리 사진 걸침, 무대 사진 그림자)뿐이다.",
       "**Don't** 같은 무게의 회색 표만 늘어놓은 관리자 화면을 만든다. 표는 카드와 한 줄 기록 다음이다.",
       "**Don't** Pretendard 말고 다른 글꼴을 들인다."
     ]

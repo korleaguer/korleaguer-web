@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { getPlayer } from "@/lib/api";
+import { readMyPlayers } from "@/lib/myPlayers";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import DataBanners from "@/components/DataBanners";
 import LoadingBlock from "@/components/LoadingBlock";
@@ -50,7 +51,7 @@ async function PlayerContent({ params }: Pick<Props, "params">) {
   const id = parseId((await params).id);
   if (id == null) return <NotFoundNotice />;
 
-  const result = await getPlayer(id);
+  const [result, myIds] = await Promise.all([getPlayer(id), readMyPlayers()]);
   if (!result.ok) {
     if (result.failure === "notFound") return <NotFoundNotice />;
     return <ApiErrorNotice failure={result.failure} />;
@@ -60,7 +61,7 @@ async function PlayerContent({ params }: Pick<Props, "params">) {
   return (
     <div className="space-y-4 sm:space-y-5">
       <DataBanners dataMode={dataMode} statsAvailable={statsAvailable} />
-      <PlayerHeader player={player} />
+      <PlayerHeader player={player} isMine={myIds.includes(player.id)} />
       {/* 넓은 화면: 왼쪽 시즌 성적·경기 기록 | 오른쪽 선수 정보 */}
       <div className="space-y-7 pt-2 lg:grid lg:grid-cols-[minmax(0,1fr)_21.25rem] lg:items-start lg:gap-x-4 lg:space-y-0">
         <div className="min-w-0 space-y-7">

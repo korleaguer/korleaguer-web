@@ -37,6 +37,15 @@ export function formatDate(value: string | null | undefined): string {
   return `${part(parts, "month")}월 ${part(parts, "day")}일(${part(parts, "weekday")})`;
 }
 
+/** 기간: "9월 21일(월) ~ 27일(일)". 달이 다르면 "8월 31일(월) ~ 9월 6일(일)" */
+export function formatDateRange(from: string, to: string): string {
+  const start = formatDate(from);
+  const end = formatDate(to);
+  if (start === "-" || end === "-") return "-";
+  const sameMonth = from.slice(0, 7) === to.slice(0, 7);
+  return `${start} ~ ${sameMonth ? end.replace(/^\d+월 /, "") : end}`;
+}
+
 /** 경기 기록 왼쪽 작은 날짜: "9.27" */
 export function formatShortDate(value: string | null | undefined): string {
   const date = toDate(value);

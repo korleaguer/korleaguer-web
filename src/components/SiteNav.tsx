@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 const LINKS = [
   { href: "/", label: "홈" },
   { href: "/players", label: "선수" },
+  { href: "/my", label: "내 선수" },
 ];
 
 /** "page": 지금 이 페이지, "true": 이 메뉴 아래 화면(예: /players/1 은 "선수" 아래), 그 외 undefined */

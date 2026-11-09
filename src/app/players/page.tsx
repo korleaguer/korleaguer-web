@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { getHome, getPlayers } from "@/lib/api";
+import { readMyPlayers } from "@/lib/myPlayers";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import DataBanners from "@/components/DataBanners";
 import LoadingBlock from "@/components/LoadingBlock";
@@ -26,7 +27,7 @@ export default function PlayersPage() {
 
 async function PlayersContent() {
   // 목록은 /api/players, 시즌 성적은 /api/home에서 받아 playerId로 합친다.
-  const [playersResult, homeResult] = await Promise.all([getPlayers(), getHome()]);
+  const [playersResult, homeResult, myIds] = await Promise.all([getPlayers(), getHome(), readMyPlayers()]);
   if (!playersResult.ok) return <ApiErrorNotice failure={playersResult.failure} />;
   if (!homeResult.ok) return <ApiErrorNotice failure={homeResult.failure} />;
 
@@ -51,6 +52,7 @@ async function PlayersContent() {
               player={player}
               hitting={hitters.get(player.id) ?? null}
               pitching={pitchers.get(player.id) ?? null}
+              isMine={myIds.includes(player.id)}
             />
           ))}
         </ul>

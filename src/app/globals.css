@@ -155,14 +155,52 @@
     }
   }
 
+  /*
+   * 내 선수 카드 위쪽 팀 색 무대. 배경 없는 선수 사진이 서는 자리다.
+   * 사진 뒤(오른쪽)를 가장 진하게 두고 머리 뒤에 은은한 빛을 넣어, 사진이 바랜 색 위에 떠 보이지 않게 한다.
+   * 아래 끝을 살짝 어둡게 해서 띠 아래로 잘린 어깨가 바닥에 닿아 보이게 한다. --team = 팀 색
+   */
+  .player-stage {
+    --stage: var(--team);
+    position: relative;
+    overflow: hidden;
+    background:
+      radial-gradient(4.5rem 3.75rem at calc(100% - 3.9rem) 38%, color-mix(in srgb, white 34%, transparent), transparent 70%),
+      linear-gradient(100deg, color-mix(in srgb, var(--stage) 78%, var(--surface)) 0%, var(--stage) 55%, color-mix(in oklab, var(--stage), black 18%) 100%);
+  }
+
+  .player-stage::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 0;
+    height: 1.375rem;
+    background: linear-gradient(transparent, rgb(0 0 0 / 0.12));
+    pointer-events: none;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .player-stage {
+      /* 어두운 팀 색(남색·갈색)이 어두운 카드에 묻히지 않게 조금만 밝힌다. 너무 밝히면 사진 뒤가 바래 보인다 */
+      --stage: color-mix(in oklab, var(--team), white 20%);
+    }
+  }
+
   /* 홈 경기 카드가 처음 그려질 때 위에서부터 차례로 살짝 떠오른다. --i = 카드 순서 */
   .card-rise {
     animation: card-rise 260ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
     animation-delay: calc(var(--i, 0) * 35ms);
   }
 
+  /* 내 선수 카드의 경기별 막대가 처음 그려질 때 아래에서 자란다. --i = 막대 순서 */
+  .bar-rise {
+    transform-origin: bottom;
+    animation: bar-rise 260ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+    animation-delay: calc(min(var(--i, 0), 10) * 30ms);
+  }
+
   @media (prefers-reduced-motion: reduce) {
-    .card-rise {
+    .card-rise,
+    .bar-rise {
       animation: none;
     }
 
@@ -192,6 +230,15 @@
   }
   to {
     opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes bar-rise {
+  from {
+    transform: scaleY(0);
+  }
+  to {
     transform: none;
   }
 }
