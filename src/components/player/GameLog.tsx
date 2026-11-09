@@ -28,9 +28,9 @@ export function GameRow({ game: g }: { game: GameLine }) {
 
   return (
     <li className="flex gap-3 p-3.5">
-      {/* 눈에는 "9.27 / 일", 화면 낭독기에는 "9월 27일(일)" */}
-      <p className="w-[2.625rem] shrink-0 text-center">
-        <span aria-hidden className="block text-base font-bold leading-snug tabular-nums">
+      {/* 눈에는 "9.27 / 일", 화면 낭독기에는 "9월 27일(일)". 10~12월("10.16")도 한 줄에 들어가는 너비 */}
+      <p className="w-12 shrink-0 text-center">
+        <span aria-hidden className="block whitespace-nowrap text-base font-bold leading-snug tabular-nums">
           {formatShortDate(g.startTimeKst)}
         </span>
         <span aria-hidden className="block text-xs text-muted">
