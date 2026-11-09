@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { PlayerSummary } from "@/lib/api";
 import PlayerAvatar from "@/components/PlayerAvatar";
+import OrderList from "./OrderList";
 import StarIcon from "./StarIcon";
 import { useMyPlayerToggle } from "./useMyPlayerToggle";
 
@@ -21,6 +22,10 @@ interface Props {
 export default function MyHeader({ subtitle, players, selectedIds }: Props) {
   const [open, setOpen] = useState(selectedIds.length === 0);
   const selected = new Set(selectedIds);
+  // 고른 순서대로 선수 정보. 화면 순서 목록에 쓴다
+  const ordered = selectedIds
+    .map((id) => players.find((p) => p.id === id))
+    .filter((p): p is PlayerSummary => p != null);
 
   return (
     <div>
@@ -54,6 +59,13 @@ export default function MyHeader({ subtitle, players, selectedIds }: Props) {
 
       {open && (
         <section id="my-picker" aria-label="선수 고르기" className="card mt-3 p-2">
+          {ordered.length >= 2 && (
+            <div className="mb-2 border-b border-line pb-2">
+              <h2 className="px-2 pb-1 pt-1 text-xs font-semibold text-muted">화면 순서 · 손잡이를 끌어서 바꾸기</h2>
+              <OrderList players={ordered} />
+            </div>
+          )}
+          <h2 className="sr-only">전체 선수</h2>
           <p className="px-2 pb-1.5 pt-1 text-xs text-muted">
             누르면 내 선수에 넣거나 뺍니다. 가입 없이 이 기기에만 저장됩니다.
           </p>

@@ -28,6 +28,20 @@ export async function setMyPlayer(playerId: number, on: boolean): Promise<boolea
   return true;
 }
 
+/**
+ * '내 선수' 화면 순서를 바꾼다. order에 없는 선수(그사이 다른 화면에서 넣은 선수)는 맨 뒤에 남기고,
+ * 쿠키에 없는 id는 무시한다. 넣기·빼기는 하지 않는다.
+ */
+export async function setMyPlayersOrder(order: number[]): Promise<void> {
+  // 서버 함수는 브라우저가 아무 값이나 보낼 수 있으니, 쿠키에 있는 id만 받아들인다.
+  if (!Array.isArray(order)) return;
+  const ids = parseMyPlayers((await cookies()).get(MY_PLAYERS_COOKIE)?.value);
+  const known = new Set(ids);
+  const front = [...new Set(order.filter((id) => known.has(id)))];
+  const rest = ids.filter((id) => !front.includes(id));
+  await saveMyPlayers([...front, ...rest]);
+}
+
 async function saveMyPlayers(ids: number[]): Promise<void> {
   (await cookies()).set(MY_PLAYERS_COOKIE, serializeMyPlayers(ids), {
     path: "/",
