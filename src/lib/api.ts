@@ -37,7 +37,11 @@ export interface GameLine {
   batting: GameBatting | null;
   /** 이 경기 투구 숫자. 안 던졌거나 기록을 못 받았으면 null */
   pitching: GamePitching | null;
+  /** 선발(STARTER)인지 교체(SUB)로 나왔는지. 안 뛰었거나 모르면 null (MLB 공식 박스스코어 기준) */
+  lineup: Lineup | null;
 }
+
+export type Lineup = "STARTER" | "SUB";
 
 export interface GameBatting {
   atBats: number;
@@ -264,6 +268,7 @@ function normalizeLine(line: GameLine): GameLine {
     summary: line.summary ?? "",
     batting: line.batting ?? null,
     pitching: line.pitching ?? null,
+    lineup: line.lineup === "STARTER" || line.lineup === "SUB" ? line.lineup : null,
   };
 }
 

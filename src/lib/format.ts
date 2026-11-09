@@ -46,6 +46,13 @@ export function formatDateRange(from: string, to: string): string {
   return `${start} ~ ${sameMonth ? end.replace(/^\d+월 /, "") : end}`;
 }
 
+/** 선발·교체: 타자는 "선발"/"교체", 투수는 "선발"/"구원". 모르면 null (부르는 쪽에서 뺀다) */
+export function formatLineup(line: Pick<GameLine, "lineup" | "role">): string | null {
+  if (line.lineup === "STARTER") return "선발";
+  if (line.lineup === "SUB") return line.role === "PITCHER" ? "구원" : "교체";
+  return null;
+}
+
 /** 경기 기록 왼쪽 작은 날짜: "9.27" */
 export function formatShortDate(value: string | null | undefined): string {
   const date = toDate(value);

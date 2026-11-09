@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
 import type { GameLine, GameResult, HomeResponse } from "@/lib/api";
-import { formatDate, formatSummary, formatTime } from "@/lib/format";
+import { formatDate, formatLineup, formatSummary, formatTime } from "@/lib/format";
 import { teamColor, teamLogoUrl } from "@/lib/teams";
 import PlayerAvatar from "@/components/PlayerAvatar";
 import ResultPill from "@/components/ResultPill";
@@ -42,6 +42,12 @@ function tally(lines: GameLine[]): string[] {
   const parts = [`${lines.length}명 중 ${played}명 출전`];
   if (wins + losses + ties > 0) parts.push(`팀 결과 ${wins}승 ${losses}패${ties > 0 ? ` ${ties}무` : ""}`);
   return parts;
+}
+
+/** 이름 옆 작은 글씨: 투수면 "투수", 선발·교체를 알면 덧붙인다. 둘 다 없으면 null */
+function sideNote(line: GameLine): string | null {
+  const parts = [line.role === "PITCHER" ? "투수" : null, formatLineup(line)].filter(Boolean);
+  return parts.length > 0 ? parts.join(" · ") : null;
 }
 
 /** 최근 경기: 선수당 카드 한 장. 위는 팀 대 팀 점수 띠, 아래는 선수와 한 줄 기록. */
@@ -117,7 +123,8 @@ function GameCard({ line, index }: { line: GameLine; index: number }) {
             >
               {line.nameKo}
             </Link>
-            {line.role === "PITCHER" && <span className="text-xs text-muted">투수</span>}
+            {/* "투수 · 구원", "선발"처럼 이름 옆 작은 글씨 */}
+            {sideNote(line) && <span className="text-xs text-muted">{sideNote(line)}</span>}
             <ResultPill result={line.result} className="ml-auto" />
           </div>
           {/* 한 줄 기록이 이 서비스의 핵심이라 카드 안에서 가장 굵게 둔다. 안 뛰었으면 흐리게 */}

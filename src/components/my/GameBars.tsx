@@ -2,7 +2,7 @@
 
 import { useState, type CSSProperties } from "react";
 import type { GameLine, Role } from "@/lib/api";
-import { formatDate, formatShortDate, formatSummary, formatWeekday } from "@/lib/format";
+import { formatDate, formatLineup, formatShortDate, formatSummary, formatWeekday } from "@/lib/format";
 import ResultPill from "@/components/ResultPill";
 import ScoreText from "@/components/ScoreText";
 import type { BarSlot } from "./columns";
@@ -21,7 +21,8 @@ function barValue(game: GameLine, role: Role): number | null {
 
 /** 화면 낭독기용 막대 설명: "9월 27일(일) 콜로라도전 2안타 1홈런" */
 function barLabel(game: GameLine, role: Role): string {
-  const head = `${formatDate(game.startTimeKst)} ${game.opponentKo}전`;
+  const lineup = formatLineup(game);
+  const head = `${formatDate(game.startTimeKst)} ${game.opponentKo}전${lineup ? ` ${lineup}` : ""}`;
   if (!game.played) return `${head} ${game.summary}`;
   if (role === "PITCHER") {
     const innings = game.pitching?.inningsText;
@@ -162,6 +163,7 @@ export default function GameBars({ slots, role, days }: Props) {
             <p className="flex items-center gap-1.5 text-[0.8125rem] text-muted">
               <span className="tabular-nums">{`${formatShortDate(current.startTimeKst)}(${formatWeekday(current.startTimeKst)})`}</span>
               <span>{`vs ${current.opponentKo}`}</span>
+              {formatLineup(current) && <span>{`· ${formatLineup(current)}`}</span>}
               <ScoreText line={current} className="text-[0.9375rem] font-extrabold text-foreground" />
               <ResultPill result={current.result} className="ml-auto" />
             </p>
