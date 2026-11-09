@@ -1,17 +1,18 @@
-import type { HitterSeason } from "@/lib/api";
+import type { HitterSeason, RankingMinimums } from "@/lib/api";
 import { formatRate } from "@/lib/format";
-import { bestOf, isBest } from "@/lib/stats";
+import { bestOf, isBest, rankedHitter } from "@/lib/stats";
 import PlayerLink from "@/components/PlayerLink";
 import TeamName from "@/components/TeamName";
 import { RowHeader, TableScroll, Td, Th } from "@/components/table";
 
-/** 타자 시즌 성적 표. 열마다 가장 좋은 값은 굵게 표시한다. */
-export default function HitterTable({ hitters }: { hitters: HitterSeason[] }) {
+/** 타자 시즌 성적 표. 열마다 가장 좋은 값은 굵게 표시한다. 타율·OPS는 순위 기준(최소 타석)을 채운 선수 중에서만 */
+export default function HitterTable({ hitters, ranking }: { hitters: HitterSeason[]; ranking: RankingMinimums | null }) {
+  const ranked = rankedHitter(ranking);
   const best = {
-    avg: bestOf(hitters, (h) => h.avg, "max"),
+    avg: bestOf(hitters, (h) => h.avg, "max", ranked),
     homeRuns: bestOf(hitters, (h) => h.homeRuns, "max"),
     rbi: bestOf(hitters, (h) => h.rbi, "max"),
-    ops: bestOf(hitters, (h) => h.ops, "max"),
+    ops: bestOf(hitters, (h) => h.ops, "max", ranked),
     stolenBases: bestOf(hitters, (h) => h.stolenBases, "max"),
   };
 
@@ -44,10 +45,10 @@ export default function HitterTable({ hitters }: { hitters: HitterSeason[] }) {
               <TeamName teamKo={h.teamKo} teamAbbr={h.teamAbbr} />
             </Td>
             <Td>{h.games}</Td>
-            <Td strong={isBest(h.avg, best.avg)}>{formatRate(h.avg)}</Td>
+            <Td strong={ranked(h) && isBest(h.avg, best.avg)}>{formatRate(h.avg)}</Td>
             <Td strong={isBest(h.homeRuns, best.homeRuns)}>{h.homeRuns}</Td>
             <Td strong={isBest(h.rbi, best.rbi)}>{h.rbi}</Td>
-            <Td strong={isBest(h.ops, best.ops)}>{formatRate(h.ops)}</Td>
+            <Td strong={ranked(h) && isBest(h.ops, best.ops)}>{formatRate(h.ops)}</Td>
             <Td strong={isBest(h.stolenBases, best.stolenBases)}>{h.stolenBases}</Td>
           </tr>
         ))}

@@ -31,10 +31,16 @@ async function HomeContent() {
     <div className="space-y-7">
       <DataBanners dataMode={home.dataMode} statsAvailable={home.statsAvailable} />
       <RecentGames recent={home.recent} asOf={asOf} />
-      <SeasonLeaders season={home.season} statsAvailable={home.statsAvailable} hitters={home.hitters} />
+      <SeasonLeaders
+        season={home.season}
+        statsAvailable={home.statsAvailable}
+        ranking={home.ranking}
+        hitters={home.hitters}
+      />
       <SeasonStats
         season={home.season}
         statsAvailable={home.statsAvailable}
+        ranking={home.ranking}
         hitters={home.hitters}
         pitchers={home.pitchers}
       />

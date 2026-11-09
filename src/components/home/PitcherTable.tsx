@@ -1,14 +1,15 @@
-import type { PitcherSeason } from "@/lib/api";
+import type { PitcherSeason, RankingMinimums } from "@/lib/api";
 import { formatEra } from "@/lib/format";
-import { bestOf, isBest } from "@/lib/stats";
+import { bestOf, isBest, rankedPitcher } from "@/lib/stats";
 import PlayerLink from "@/components/PlayerLink";
 import TeamName from "@/components/TeamName";
 import { RowHeader, TableScroll, Td, Th } from "@/components/table";
 
-/** 투수 시즌 성적 표. 열마다 가장 좋은 값은 굵게 표시한다. */
-export default function PitcherTable({ pitchers }: { pitchers: PitcherSeason[] }) {
+/** 투수 시즌 성적 표. 열마다 가장 좋은 값은 굵게 표시한다. 평균자책점은 순위 기준(최소 이닝)을 채운 투수 중에서만 */
+export default function PitcherTable({ pitchers, ranking }: { pitchers: PitcherSeason[]; ranking: RankingMinimums | null }) {
+  const ranked = rankedPitcher(ranking);
   const best = {
-    era: bestOf(pitchers, (p) => p.era, "min"),
+    era: bestOf(pitchers, (p) => p.era, "min", ranked),
     strikeouts: bestOf(pitchers, (p) => p.strikeouts, "max"),
   };
 
@@ -41,7 +42,7 @@ export default function PitcherTable({ pitchers }: { pitchers: PitcherSeason[] }
             </Td>
             <Td>{p.games}</Td>
             <Td>{p.inningsText}</Td>
-            <Td strong={isBest(p.era, best.era)}>{formatEra(p.era)}</Td>
+            <Td strong={ranked(p) && isBest(p.era, best.era)}>{formatEra(p.era)}</Td>
             <Td>{`${p.wins}-${p.losses}-${p.saves}`}</Td>
             <Td strong={isBest(p.strikeouts, best.strikeouts)}>{p.strikeouts}</Td>
           </tr>
