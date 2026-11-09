@@ -64,7 +64,7 @@ export default function FormCard({ entry, days, fromKst, toKst, statsAvailable }
           </>
         ) : (
           <p className="mt-3 rounded-xl bg-surface-2 px-3 py-2.5 text-sm text-muted">
-            {statsAvailable ? "아직 이 선수의 기록을 연결하지 못했습니다." : "요금제가 없어 경기별 기록을 받지 못했습니다."}
+            {statsAvailable ? "아직 이 선수의 기록을 연결하지 못했습니다." : "아직 경기별 기록을 받지 못했습니다."}
           </p>
         )}
 
