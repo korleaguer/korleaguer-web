@@ -170,6 +170,8 @@ export interface PlayerSummary {
   level: Level | null;
   /** MLB 공식 API가 알려 준 지금 소속 팀 이름. 마이너면 "St. Paul Saints"처럼 영어 */
   levelTeam: string | null;
+  /** MLB 이동 기록상 FA(마지막 'FA 선언' 뒤 새 팀 기록 없음). 그러면 level·levelTeam은 null이고 팀 칸은 마지막 팀이다 */
+  freeAgent: boolean;
 }
 
 export type Level = "MLB" | "MINORS";
@@ -260,6 +262,99 @@ export interface MyPlayer {
   /** 타자는 연속 안타, 투수는 연속 무실점 경기 수. 기록을 못 받았으면 null */
   streak: number | null;
   games: GameLine[];
+  /** 상태 배지. 메이저에서 평소대로 뛰면 null */
+  status: CardStatus | null;
+  /** 출전 줄. 메이저에 있을 때만 */
+  play: PlayLine | null;
+  /** 한 줄 소식(사실만). 눈에 띄는 일이 없으면 null */
+  fact: FormFact | null;
+  /** 큰 숫자·막대(hitting·pitching·games)가 어떤 기간인지 */
+  basis: CardBasis;
+  /** 그 기록의 단계: "MLB" 또는 마이너 약어("AAA" 등). 시즌 합계·기록 없음이면 null */
+  level: string | null;
+  /** FA·시즌 끝일 때 시즌 합계 */
+  seasonTotals: SeasonTotals | null;
+}
+
+/**
+ * 상태 배지 종류. IL 부상자 명단 · RETURNED 부상 복귀(7일 안) · CALLED_UP 콜업(7일 안) · MINORS 마이너 ·
+ * MINORS_IL 마이너 부상자 명단 · SUSPENDED 출장 정지 · DFA 지명 할당 · FA · SEASON_OVER 시즌 끝
+ */
+export type CardStatusKind =
+  | "IL"
+  | "RETURNED"
+  | "CALLED_UP"
+  | "MINORS"
+  | "MINORS_IL"
+  | "SUSPENDED"
+  | "DFA"
+  | "FA"
+  | "SEASON_OVER";
+
+export interface CardStatus {
+  kind: CardStatusKind;
+  /** 그 상태가 시작된 미국 날짜("2026-09-20"). 모르면 null */
+  since: string | null;
+  /** since부터 며칠째인지. 모르면 null */
+  days: number | null;
+  /** 마이너 단계 약어("AAA" 등) */
+  level: string | null;
+  /** 마이너 팀 이름(영어) */
+  teamName: string | null;
+  /** FA·시즌 끝일 때 마지막 경기(미국 날짜)와 단계("MLB" 또는 마이너 약어) */
+  lastGameDate: string | null;
+  lastGameLevel: string | null;
+}
+
+/** 팀 경기 하나에서의 출전: 선발 · 교체 · 출전(선발·교체 모름) · 결장 */
+export type PlayCode = "STARTER" | "SUB" | "PLAYED" | "ABSENT";
+
+/**
+ * 출전 줄. 타자는 recent(지금 단계 기간이 시작된 뒤 팀 최근 10경기, 오래된 것부터)와
+ * after(10경기가 안 되고 복귀·콜업 뒤면 그 시작), 투수는 최근 14일 등판 수와 마지막 등판이 며칠 전인지.
+ */
+export interface PlayLine {
+  recent: PlayCode[] | null;
+  after: "RETURNED" | "CALLED_UP" | null;
+  appearances14: number | null;
+  daysSinceLast: number | null;
+}
+
+/** 한 줄 소식. HOT은 좋은 일(주황), COLD는 안 좋은 일(파랑) */
+export interface FormFact {
+  tone: "HOT" | "COLD";
+  text: string;
+}
+
+/**
+ * RECENT 오늘까지 · LAST_PLAYED 마지막으로 뛴 날까지 · BEFORE_INJURY 다치기 전 ·
+ * SEASON 시즌 합계(seasonTotals) · NONE 보여 줄 기록 없음
+ */
+export type CardBasis = "RECENT" | "LAST_PLAYED" | "BEFORE_INJURY" | "REHAB" | "SEASON" | "NONE";
+
+/** 한 단계의 시즌 합계. 타자는 atBats·hits·homeRuns·avg, 투수는 outs·inningsText·era·strikeouts·saves·holds */
+export interface LevelTotals {
+  /** "MLB", 마이너 약어("AAA" 등), 여러 마이너 단계면 "MINORS" */
+  level: string;
+  games: number;
+  atBats: number;
+  hits: number;
+  homeRuns: number;
+  avg: number | null;
+  outs: number;
+  inningsText: string | null;
+  era: number | null;
+  strikeouts: number;
+  saves: number;
+  holds: number;
+}
+
+export interface SeasonTotals {
+  season: number;
+  /** 크게 보일 쪽 */
+  primary: "MLB" | "MINORS" | null;
+  mlb: LevelTotals | null;
+  minors: LevelTotals | null;
 }
 
 /** GET /api/my?ids=1,2&days=7 */
@@ -352,6 +447,8 @@ function normalizeSummary<T extends PlayerSummary>(p: T): T {
     jersey: String(p.jersey ?? "").trim() || null,
     level: p.level === "MLB" || p.level === "MINORS" ? p.level : null,
     levelTeam: p.levelTeam ?? null,
+    // FA를 주지 않는 오래된 api면 FA가 아닌 것으로 본다(지금처럼 단계 알약만)
+    freeAgent: p.freeAgent === true,
   };
 }
 
@@ -397,6 +494,13 @@ function normalizeMy(raw: MyPlayersResponse): MyPlayersResponse {
       pitching: p.pitching ?? null,
       streak: p.streak ?? null,
       games: (p.games ?? []).map(normalizeLine),
+      status: p.status ?? null,
+      play: p.play ?? null,
+      fact: p.fact ?? null,
+      // 기간 근거가 없으면(오래된 api) 당겼는지로 정한다
+      basis: p.basis ?? ((p.isFallback ?? raw.isFallback) ? "LAST_PLAYED" : "RECENT"),
+      level: p.level ?? "MLB",
+      seasonTotals: p.seasonTotals ?? null,
     })),
   };
 }
