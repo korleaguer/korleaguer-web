@@ -53,6 +53,14 @@ export function topBy<T>(
   }));
 }
 
+/** 메이저 선수들끼리 비교하는 묶음(올해 주로 메이저)과 따로 보여 줄 묶음(올해 주로 마이너)으로 나눈다. 순서는 그대로 */
+export function splitByMinors<T extends { mainlyMinors: boolean }>(rows: T[]): { majors: T[]; minors: T[] } {
+  return {
+    majors: rows.filter((row) => !row.mainlyMinors),
+    minors: rows.filter((row) => row.mainlyMinors),
+  };
+}
+
 /** 타율·OPS 순위에 넣는 타자인가. 기준을 모르면(null) 거르지 않는다 */
 export function rankedHitter(ranking: RankingMinimums | null) {
   return (h: HitterSeason) => ranking == null || h.plateAppearances >= ranking.minPlateAppearances;

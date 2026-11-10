@@ -1,6 +1,6 @@
 import type { HitterSeason, RankingMinimums } from "@/lib/api";
 import { formatRate } from "@/lib/format";
-import { rankedHitter, topBy } from "@/lib/stats";
+import { rankedHitter, splitByMinors, topBy } from "@/lib/stats";
 import PlayerLink from "@/components/PlayerLink";
 import Section from "@/components/Section";
 
@@ -28,6 +28,7 @@ const LEADERS: Leader[] = [
 
 /**
  * 시즌 1위 카드 네 장(타율·홈런·OPS·타점). 공동 1위면 "이정후 외 2명".
+ * 올해 주로 마이너에서 뛴 선수는 빼고 메이저 선수끼리 비교한다.
  * 타율·OPS는 몇 타석만 뛴 선수가 1위가 되지 않게 순위 기준(최소 타석)을 채운 선수 중에서 고른다.
  */
 export default function SeasonLeaders({ season, statsAvailable, ranking, hitters }: Props) {
@@ -56,7 +57,10 @@ function LeaderCard({
   hitters: HitterSeason[];
 }) {
   const filtered = leader.ranked && ranking != null;
-  const candidates = filtered ? hitters.filter(rankedHitter(ranking)) : hitters;
+  const { majors } = splitByMinors(hitters);
+  // 표의 1위 표시와 같은 규칙: 메이저 선수가 2명 이상일 때만 1위를 고른다
+  const comparable = majors.length >= 2 ? majors : [];
+  const candidates = filtered ? comparable.filter(rankedHitter(ranking)) : comparable;
   // 값이 0보다 큰 선수 중 1위(공동 포함)
   const firsts = topBy(candidates, leader.pick, candidates.length).filter((r) => r.rank === 1);
   const first = firsts[0];
@@ -84,10 +88,15 @@ function LeaderCard({
           </p>
         </>
       ) : (
-        <p className="mt-1.5 text-sm text-muted">
-          {filtered && hitters.length > 0 ? "아직 기준을 채운 선수가 없습니다." : "아직 기록이 없습니다."}
-        </p>
+        <p className="mt-1.5 text-sm text-muted">{emptyMessage(hitters.length, majors.length, filtered)}</p>
       )}
     </li>
   );
+}
+
+/** 1위가 없을 때 이유 한 줄. 표와 같은 기준(메이저 선수 2명 이상, 비율 기록은 최소 타석)으로 말한다 */
+function emptyMessage(hitterCount: number, majorCount: number, filtered: boolean): string {
+  if (hitterCount === 0) return "아직 기록이 없습니다.";
+  if (majorCount < 2) return "비교할 메이저 선수가 아직 2명이 안 됩니다.";
+  return filtered ? "아직 기준을 채운 선수가 없습니다." : "아직 기록이 없습니다.";
 }
