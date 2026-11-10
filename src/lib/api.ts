@@ -352,10 +352,10 @@ function normalizeMy(raw: MyPlayersResponse): MyPlayersResponse {
     isFallback: raw.isFallback ?? false,
     players: (raw.players ?? []).map((p) => ({
       ...p,
-      // 선수별 기간이 없으면(오래된 api) 맨 위 기간을 쓴다
+      // 선수별 기간이 없으면(오래된 api) 모두 맨 위 기간을 같이 쓴다(당겼는지도 맨 위 값)
       fromKst: p.fromKst ?? raw.fromKst,
       toKst: p.toKst ?? raw.toKst,
-      isFallback: p.isFallback ?? false,
+      isFallback: p.isFallback ?? raw.isFallback ?? false,
       player: normalizeSummary(p.player),
       hitting: p.hitting ?? null,
       pitching: p.pitching ?? null,
