@@ -133,12 +133,11 @@ export interface HomeResponse {
     /** 선수당 한 줄 */
     lines: GameLine[];
   };
-  /** 타율 높은 순 */
   /** 순위 기준. 없으면(오래된 api) null이고, 그때는 거르지 않는다 */
   ranking: RankingMinimums | null;
   /** 순위 기준을 채운 선수 먼저 타율 순, 그다음 못 채운 선수 타율 순 */
   hitters: HitterSeason[];
-  /** 평균자책점 낮은 순 */
+  /** 순위 기준을 채운 투수 먼저 평균자책점 낮은 순, 그다음 못 채운 투수 평균자책점 낮은 순 */
   pitchers: PitcherSeason[];
 }
 

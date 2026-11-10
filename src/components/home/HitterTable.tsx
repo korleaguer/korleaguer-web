@@ -23,6 +23,7 @@ export default function HitterTable({ hitters, ranking }: { hitters: HitterSeaso
           <Th align="left" sticky>이름</Th>
           <Th align="left">팀</Th>
           <Th>경기</Th>
+          <Th>타석</Th>
           <Th>타율</Th>
           <Th>홈런</Th>
           <Th>타점</Th>
@@ -45,6 +46,7 @@ export default function HitterTable({ hitters, ranking }: { hitters: HitterSeaso
               <TeamName teamKo={h.teamKo} teamAbbr={h.teamAbbr} />
             </Td>
             <Td>{h.games}</Td>
+            <Td>{h.plateAppearances}</Td>
             <Td strong={ranked(h) && isBest(h.avg, best.avg)}>{formatRate(h.avg)}</Td>
             <Td strong={isBest(h.homeRuns, best.homeRuns)}>{h.homeRuns}</Td>
             <Td strong={isBest(h.rbi, best.rbi)}>{h.rbi}</Td>
