@@ -43,6 +43,8 @@ async function HomeContent() {
         ranking={home.ranking}
         hitters={home.hitters}
         pitchers={home.pitchers}
+        minorHitters={home.minorHitters}
+        minorPitchers={home.minorPitchers}
       />
     </div>
   );
