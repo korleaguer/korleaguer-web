@@ -136,6 +136,26 @@ export interface PlayerSummary {
   age: number | null;
   /** 등번호. 숫자가 아닐 수도 있어서 문자열 */
   jersey: string | null;
+  /** 지금 메이저인지 마이너인지(MLB 공식 API 기준). 소속이 없거나 모르면 null */
+  level: Level | null;
+  /** MLB 공식 API가 알려 준 지금 소속 팀 이름. 마이너면 "St. Paul Saints"처럼 영어 */
+  levelTeam: string | null;
+}
+
+export type Level = "MLB" | "MINORS";
+
+/** 선수 이동 기록 한 줄(콜업, 마이너 강등, 부상자 명단 등) */
+export interface RosterMove {
+  /** "2026-08-30" */
+  date: string;
+  /** MLB 거래 종류 코드(OPT, CU, OUT ...) */
+  typeCode: string;
+  /** "마이너 강등(옵션)"처럼 api가 만든 짧은 한국어 */
+  labelKo: string;
+  fromTeam: string | null;
+  toTeam: string | null;
+  /** 옮겨 간 곳이 메이저인지 마이너인지. 모르면 null */
+  toLevel: Level | null;
 }
 
 export interface PlayerDetail extends PlayerSummary {
@@ -164,6 +184,8 @@ export interface PlayerResponse {
   pitching: PitcherSeason | null;
   /** 최신 경기부터 */
   games: GameLine[];
+  /** 이동 기록, 최신부터. 이동 기록을 주지 않는 오래된 api면 null(없다고 단정하지 않는다) */
+  moves: RosterMove[] | null;
 }
 
 /** 내 선수 카드의 기간 합계(타자). avg는 타수가 없으면 null */
@@ -282,6 +304,8 @@ function normalizeSummary<T extends PlayerSummary>(p: T): T {
     photoUrl: httpUrl(p.photoUrl),
     age: p.age ?? null,
     jersey: String(p.jersey ?? "").trim() || null,
+    level: p.level === "MLB" || p.level === "MINORS" ? p.level : null,
+    levelTeam: p.levelTeam ?? null,
   };
 }
 
@@ -308,6 +332,7 @@ function normalizePlayer(raw: PlayerResponse): PlayerResponse {
     hitting: raw.hitting ? normalizeSeason(raw.hitting) : null,
     pitching: raw.pitching ? normalizeSeason(raw.pitching) : null,
     games: (raw.games ?? []).map(normalizeLine),
+    moves: raw.moves ?? null,
   };
 }
 

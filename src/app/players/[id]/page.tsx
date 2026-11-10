@@ -9,6 +9,7 @@ import NotFoundNotice from "@/components/NotFoundNotice";
 import GameLog from "@/components/player/GameLog";
 import PlayerHeader from "@/components/player/PlayerHeader";
 import PlayerInfo from "@/components/player/PlayerInfo";
+import RosterMoves from "@/components/player/RosterMoves";
 import SeasonSummary from "@/components/player/SeasonSummary";
 
 type Props = PageProps<"/players/[id]">;
@@ -57,7 +58,7 @@ async function PlayerContent({ params }: Pick<Props, "params">) {
     return <ApiErrorNotice failure={result.failure} />;
   }
 
-  const { dataMode, statsAvailable, season, player, hitting, pitching, games } = result.data;
+  const { dataMode, statsAvailable, season, player, hitting, pitching, games, moves } = result.data;
   return (
     <div className="space-y-4 sm:space-y-5">
       <DataBanners dataMode={dataMode} statsAvailable={statsAvailable} />
@@ -73,7 +74,11 @@ async function PlayerContent({ params }: Pick<Props, "params">) {
           />
           <GameLog games={games} />
         </div>
-        <PlayerInfo player={player} />
+        {/* 오른쪽 칸: 선수 정보 + 이동 기록(메이저·마이너 오간 날짜) */}
+        <div className="min-w-0 space-y-7">
+          <PlayerInfo player={player} />
+          {moves && <RosterMoves moves={moves} />}
+        </div>
       </div>
     </div>
   );
