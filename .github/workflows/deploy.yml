@@ -1,5 +1,13 @@
-# GitHub Release를 만들면(published, prerelease 제외) 웹 이미지를 만들어 GHCR에 올리고 서버에 배포한다.
-# 수동 실행(Run workflow)에 버전을 넣으면 이미지를 새로 만들지 않고 그 버전을 다시 배포한다(롤백).
+# 지속 배포: develop에 병합(푸시)되면 사람 손 없이 서버까지 나간다.
+#   검사(ci.yml) → 버전 정하기 → 이미지(GHCR) → 서버 무중단 교체(korleaguer-server의 deploy/korleaguer-deploy)
+#   → 공개 주소의 /healthz가 새 버전을 주는지 바깥에서 확인 → 성공하면 태그·릴리스 노트(vX.Y.Z)를 남기고 main을 배포한 커밋에 맞춘다.
+# 배포가 실패하면 서버는 옛 버전 그대로이고 태그·릴리스도 남지 않는다(다음 병합이나 '다시 실행'이 같은 버전으로 다시 한다).
+# 문서만 바뀐 푸시(*.md, .impeccable/)는 배포하지 않는다.
+# 되돌리기: Actions → deploy → Run workflow에 이전 버전(예 0.2.0)을 넣으면 그 이미지로 다시 배포한다(서버에 최근 3개 버전이 있다).
+#
+# 버전(.github/scripts/next-version.sh, Conventional Commits): 마지막 vX.Y.Z 뒤 커밋 제목으로
+#   호환이 깨지는 변경(type!: 또는 BREAKING CHANGE) → 1.0.0 전에는 minor, 뒤에는 major / feat → minor / 그 밖 → patch.
+#   버전은 git 태그가 정한다(package.json의 version은 배포에 쓰지 않는다).
 #
 # 필요한 값(저장소 Settings → Secrets and variables → Actions). 서버 준비와 자세한 안내는
 # korleaguer-server 저장소의 deploy/README.md.
@@ -7,20 +15,26 @@
 #   variable DEPLOY_HOST          서버 주소(예: pigeon.ddns.net)
 #   variable DEPLOY_KNOWN_HOSTS   서버 호스트 키 한 줄(server-setup.sh가 출력). 처음 보는 서버에는 접속하지 않는다
 #   variable DEPLOY_PORT          SSH 포트(없으면 22)
-#   variable DEPLOY_PLATFORM      서버 CPU(linux/amd64 또는 linux/arm64, 없으면 linux/amd64)
+#   variable DEPLOY_PLATFORM      서버 CPU(linux/amd64 또는 linux/arm64, 없으면 linux/amd64). arm64면 ARM 러너에서 바로 만든다
+#   variable SITE_URL             공개 주소(없으면 https://DEPLOY_HOST). 배포 뒤 /healthz를 본다
 #   variable NEXT_PUBLIC_TEAM_LOGOS  off면 팀 로고 대신 팀 색 점(빌드할 때 코드에 박힌다). 없으면 로고를 쓴다
 name: deploy
 
 on:
-  release:
-    types: [published]
+  push:
+    branches: [develop]
+    paths-ignore:
+      - '**/*.md'
+      - '.impeccable/**'
+      - '.github/ISSUE_TEMPLATE/**'
   workflow_dispatch:
     inputs:
       version:
-        description: 다시 배포할 버전(예 0.2.0). GHCR에 이미 있는 이미지를 쓴다
+        description: 되돌리거나 다시 배포할 버전(예 0.2.0). GHCR에 이미 있는 이미지를 쓴다
         required: true
 
-# 이 저장소의 배포는 한 번에 하나씩. 서버에서도 두 저장소의 배포가 겹치지 않게 잠근다.
+# 배포는 한 번에 하나씩, 도는 중인 배포는 끊지 않는다(기다리던 배포가 여럿이면 가장 새 것만 남는다).
+# 서버에서도 두 저장소의 배포가 겹치지 않게 잠근다(korleaguer-deploy).
 concurrency:
   group: deploy-production
   cancel-in-progress: false
@@ -32,9 +46,36 @@ env:
   IMAGE: ghcr.io/korleaguer/korleaguer-web
 
 jobs:
+  test:
+    name: 검사
+    if: github.event_name == 'push'
+    uses: ./.github/workflows/ci.yml
+
+  version:
+    name: 버전 정하기
+    needs: test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      value: ${{ steps.next.outputs.value }}
+      state: ${{ steps.next.outputs.state }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # 태그와 전체 이력(마지막 버전 뒤 커밋을 본다)
+
+      - name: 다음 버전
+        id: next
+        run: |
+          out="$(bash .github/scripts/next-version.sh)"
+          read -r value state <<< "$out"
+          echo "value=$value" >> "$GITHUB_OUTPUT"
+          echo "state=$state" >> "$GITHUB_OUTPUT"
+          echo "배포할 버전: $value ($state)"
+
   build:
     name: 이미지 만들기
-    if: github.event_name == 'release' && !github.event.release.prerelease
+    needs: version
     runs-on: ${{ vars.DEPLOY_PLATFORM == 'linux/arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     timeout-minutes: 30
     permissions:
@@ -42,12 +83,6 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: 버전 확인
-        run: |
-          [[ "$TAG" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "릴리스 태그가 버전 형식(v0.2.0)이 아닙니다: $TAG"; exit 1; }
-        env:
-          TAG: ${{ github.event.release.tag_name }}
 
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
@@ -63,9 +98,10 @@ jobs:
         with:
           images: ${{ env.IMAGE }}
           tags: |
-            type=semver,pattern={{version}},value=${{ github.event.release.tag_name }}
+            type=raw,value=${{ needs.version.outputs.value }}
             type=sha,format=short,prefix=sha-
 
+      # SBOM(이미지에 든 패키지 목록)과 출처 증명(어느 커밋·워크플로가 만들었나)을 이미지와 함께 올린다.
       - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
@@ -75,14 +111,17 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             NEXT_PUBLIC_TEAM_LOGOS=${{ vars.NEXT_PUBLIC_TEAM_LOGOS }}
+            APP_VERSION=${{ needs.version.outputs.value }}
+          provenance: mode=max
+          sbom: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
   deploy:
     name: 서버에 배포
-    needs: build
-    # 릴리스면 이미지를 만든 뒤, 수동 실행이면 이미지 만들기를 건너뛰고 바로 배포한다.
-    if: always() && (needs.build.result == 'success' || (github.event_name == 'workflow_dispatch' && needs.build.result == 'skipped'))
+    needs: [version, build]
+    # 병합이면 이미지를 만든 뒤, 수동 실행(되돌리기)이면 검사·이미지 만들기를 건너뛰고 바로 배포한다.
+    if: always() && ((github.event_name == 'push' && needs.build.result == 'success') || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
@@ -92,13 +131,13 @@ jobs:
       - name: 배포할 버전
         id: version
         run: |
-          version="${INPUT_VERSION:-$TAG}"
+          version="${INPUT_VERSION:-$NEXT_VERSION}"
           version="${version#v}"
           [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "버전 형식(0.2.0)이 아닙니다: $version"; exit 1; }
           echo "value=$version" >> "$GITHUB_OUTPUT"
         env:
           INPUT_VERSION: ${{ inputs.version }}
-          TAG: ${{ github.event.release.tag_name }}
+          NEXT_VERSION: ${{ needs.version.outputs.value }}
 
       - name: SSH 준비
         run: |
@@ -117,6 +156,7 @@ jobs:
 
       # 서버는 이 키로 'korleaguer-deploy web'만 실행한다. 보내는 명령은 버전뿐이고,
       # 표준입력으로 이 job의 임시 토큰(packages:read)을 넘겨 GHCR에서 이미지를 받게 한다(job이 끝나면 만료).
+      # 서버가 새 컨테이너를 옛 것과 겹쳐 띄워 healthy가 되면 바꾸고, 안 되면 옛 것을 그대로 둔다.
       - name: 배포
         run: |
           printf '%s\n%s\n' "$GITHUB_ACTOR" "$GHCR_TOKEN" | ssh \
@@ -133,3 +173,67 @@ jobs:
       - name: SSH 키 지우기
         if: always()
         run: rm -f ~/.ssh/deploy_key
+
+      # 인터넷 → (nginx) → Caddy → 웹 길로 새 버전이 실제로 나오는지 본다.
+      # 되돌리기로 이 방식 전에 만든 옛 이미지를 낼 때는 버전 없이 'ok'만 줄 수 있어 'ok'로 시작하면 된다.
+      - name: 바깥에서 새 버전 확인
+        run: |
+          url="${SITE_URL:-https://${DEPLOY_HOST}}/healthz"
+          want="ok ${VERSION}"
+          got=""
+          for _ in $(seq 1 20); do
+            got="$(curl -fsS --max-time 10 "$url" 2> /dev/null || true)"
+            if [ "$got" = "$want" ] || { [ "$EVENT" = workflow_dispatch ] && [ "${got%% *}" = ok ]; }; then
+              echo "확인: $url → $got"
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "::error::$url 이 '$want'를 주지 않습니다(받은 값: ${got:-없음})"
+          exit 1
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          VERSION: ${{ steps.version.outputs.value }}
+          EVENT: ${{ github.event_name }}
+
+      - name: 요약
+        run: |
+          echo "### 웹 ${VERSION} 배포 완료 (${GITHUB_SHA::7})" >> "$GITHUB_STEP_SUMMARY"
+        env:
+          VERSION: ${{ steps.version.outputs.value }}
+
+  release:
+    name: 태그·릴리스 노트, main 맞추기
+    needs: [version, deploy]
+    if: github.event_name == 'push' && needs.deploy.result == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      # 릴리스 노트는 지난 릴리스 뒤 병합된 PR 제목으로 만든다. 이 토큰으로 만든 Release는 다른 워크플로를 깨우지 않는다.
+      - name: 태그와 릴리스 노트
+        if: needs.version.outputs.state == 'new'
+        run: |
+          gh release create "v${VERSION}" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "v${VERSION}" --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.version.outputs.value }}
+
+      # main은 '지금 서버에 나가 있는 코드'다. 배포한 커밋을 main에 병합해 둔다(이미 들어 있으면 그대로).
+      - name: main을 배포한 커밋에 맞추기
+        run: |
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/merges" \
+            -f base=main -f head="$GITHUB_SHA" \
+            -f commit_message="chore(release): v${VERSION} 배포를 main에 반영" --silent \
+            || echo "::warning::main에 병합하지 못했습니다. 배포는 끝났으니 main만 직접 맞추세요"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.version.outputs.value }}
+
+      - name: 요약
+        run: |
+          echo "릴리스: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/tag/v${VERSION}" >> "$GITHUB_STEP_SUMMARY"
+        env:
+          VERSION: ${{ needs.version.outputs.value }}

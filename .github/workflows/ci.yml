@@ -1,15 +1,15 @@
-# PR과 develop·main 푸시마다 lint → 라우트 타입 생성 → 타입 검사 → 빌드를 돌린다.
+# lint → 라우트 타입 생성 → 타입 검사 → 빌드. PR마다 돌고, develop에 병합되면 배포 워크플로(deploy.yml)가 배포 전에
+# 이 워크플로를 부른다. 그래서 같은 커밋을 두 번 검사하지 않는다(develop·main 푸시에 따로 돌지 않는다).
 name: CI
 
 on:
   pull_request:
     branches: [develop, main]
-  push:
-    branches: [develop, main]
+  workflow_call:
 
-# 같은 브랜치에 새 커밋이 오면 이전 실행은 취소한다.
+# PR에 새 커밋이 오면 그 PR의 이전 실행은 취소한다. 배포에서 부를 때는 실행마다 따로라 취소하지 않는다.
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ${{ github.event_name == 'pull_request' && format('ci-{0}', github.ref) || format('ci-run-{0}', github.run_id) }}
   cancel-in-progress: true
 
 permissions:
@@ -18,14 +18,14 @@ permissions:
 jobs:
   check:
     name: lint · typecheck · build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     env:
       NEXT_TELEMETRY_DISABLED: 1
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24
           cache: npm
