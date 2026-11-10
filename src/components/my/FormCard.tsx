@@ -4,6 +4,7 @@ import type { HitterPeriod, MyPlayer, PitcherPeriod } from "@/lib/api";
 import { formatEra, formatRate } from "@/lib/format";
 import { teamColor } from "@/lib/teams";
 import { GameRow } from "@/components/player/GameLog";
+import ShowMore from "@/components/ShowMore";
 import BandPhoto from "./BandPhoto";
 import { Notice, Numbers, SeasonNumbers, StatusBadge, SummaryLines } from "./FormSummary";
 import GameBars from "./GameBars";
@@ -90,18 +91,17 @@ export default function FormCard({ entry, days, statsAvailable }: Props) {
           <Notice>아직 이 선수의 기록을 연결하지 못했습니다.</Notice>
         )}
 
+        {/* 펼치면 경기별 기록이 버튼 위에 붙고, 버튼은 카드 맨 아래에서 '접기'가 된다 */}
         {showsGames && (
-          <details className="group mt-auto pt-3">
-            <summary className="flex cursor-pointer list-none items-center justify-center gap-1 rounded-lg py-2 text-[0.8125rem] font-semibold text-accent-ink [&::-webkit-details-marker]:hidden">
-              {`경기별 기록 ${games.length}개 모두 보기`}
-              <Chevron />
-            </summary>
-            <ul className="-mx-4 border-t border-line divide-y divide-line">
-              {games.map((game) => (
-                <GameRow key={game.gameId} game={game} />
-              ))}
-            </ul>
-          </details>
+          <div className="mt-auto pt-3">
+            <ShowMore moreLabel={`경기별 기록 ${games.length}개 모두 보기`} buttonClassName="rounded-lg py-2">
+              <ul className="-mx-4 border-y border-line divide-y divide-line">
+                {games.map((game) => (
+                  <GameRow key={game.gameId} game={game} />
+                ))}
+              </ul>
+            </ShowMore>
+          </div>
         )}
       </div>
     </li>
@@ -176,22 +176,5 @@ function Delta({ seasonText, diff, better, amount }: { seasonText: string; diff:
         <span className="tabular-nums">{amount}</span>
       </span>
     </span>
-  );
-}
-
-function Chevron() {
-  return (
-    <svg
-      aria-hidden
-      viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="size-3.5 transition-transform duration-200 group-open:rotate-180"
-    >
-      <path d="m4 6 4 4 4-4" />
-    </svg>
   );
 }

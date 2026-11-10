@@ -1,5 +1,6 @@
 import type { RosterMove } from "@/lib/api";
 import Section from "@/components/Section";
+import ShowMore from "@/components/ShowMore";
 
 /** 처음에 보여 줄 줄 수. 나머지는 '더 보기'로 펼친다 */
 const VISIBLE = 6;
@@ -30,29 +31,16 @@ export default function RosterMoves({ moves }: { moves: RosterMove[] }) {
               <MoveRow key={`${move.date}-${move.typeCode}-${i}`} move={move} />
             ))}
           </ol>
+          {/* 펼치면 나머지 줄이 버튼 위에 붙고, 버튼은 맨 아래에서 '접기'가 된다 */}
           {rest.length > 0 && (
-            <details className="group border-t border-line">
-              <summary className="flex cursor-pointer list-none items-center justify-center gap-1 py-2.5 text-[0.8125rem] font-semibold text-accent-ink [&::-webkit-details-marker]:hidden">
-                {`${rest.length}건 더 보기`}
-                <svg
-                  aria-hidden
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.75"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="size-3.5 transition-transform duration-200 group-open:rotate-180"
-                >
-                  <path d="m4 6 4 4 4-4" />
-                </svg>
-              </summary>
-              <ol className="divide-y divide-line border-t border-line">
+            <ShowMore moreLabel={`${rest.length}건 더 보기`} buttonClassName="border-t border-line py-2.5">
+              {/* 이동이 많은 선수(20건 넘게)도 화면이 아래로 끝없이 늘지 않게, 펼친 줄은 일정 높이 안에서 스크롤한다 */}
+              <ol className="max-h-[26rem] divide-y divide-line overflow-y-auto overscroll-contain border-t border-line">
                 {rest.map((move, i) => (
                   <MoveRow key={`${move.date}-${move.typeCode}-r${i}`} move={move} />
                 ))}
               </ol>
-            </details>
+            </ShowMore>
           )}
         </div>
       )}
