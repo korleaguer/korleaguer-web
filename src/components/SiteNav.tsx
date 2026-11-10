@@ -19,7 +19,8 @@ function currentOf(href: string, pathname: string | null) {
 /** 상단 메뉴. pathname이 null이면 현재 메뉴 표시 없이 그린다(주소를 알기 전 자리 표시). */
 export function NavLinks({ pathname }: { pathname: string | null }) {
   return (
-    <nav aria-label="주요 메뉴" className="flex gap-1">
+    // 앱 안에서는 숨긴다. 앱 아래 탭(홈·선수·내 선수)이 같은 일을 한다.
+    <nav aria-label="주요 메뉴" className="flex gap-1 in-app:hidden">
       {LINKS.map(({ href, label }) => {
         const current = currentOf(href, pathname);
         // 현재 메뉴는 연파랑 알약으로 표시한다.

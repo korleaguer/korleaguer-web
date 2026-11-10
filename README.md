@@ -40,6 +40,16 @@ api가 꺼져 있어도 화면은 뜬다. 이때는 "데이터 서버에 연결�
 - 사진이 없거나 안 뜨면 팀 색 동그라미 + 이름 첫 글자로, 로고가 없거나 안 뜨면 팀 색 점으로 대신한다.
 - 상단 메뉴(홈, 선수)는 지금 보는 화면을 `aria-current`로 표시한다. 선수 페이지(`/players/1`)에서는 "선수"가 하위 화면(`aria-current="true"`)으로 표시된다.
 
+## 앱(웹뷰) 안에서
+
+iOS·안드로이드 앱([korleaguer-app](https://github.com/korleaguer/korleaguer-app), Expo)은 이 웹을 웹뷰로 띄운다. 앱은 문서를 그리기 전에 `<html data-app="ios|android">`를 붙이고, User-Agent 끝에 `KORLeaguerApp/<버전> (<기기>)`를 덧붙인다.
+
+- `in-app:` Tailwind 변형(`globals.css`)은 앱 안에서만 켜진다. 예: 위쪽 메뉴는 `in-app:hidden`(앱 아래 탭이 대신한다).
+- 앱 안에서는 누를 때 회색 번쩍임, 길게 눌러 뜨는 메뉴, 글자 선택을 끈다(입력칸 제외). 화면 확대는 앱이 막는다.
+- 앱 이벤트(`window`의 `korleaguer:app`, `components/AppBridge.tsx`): 다른 탭에 다녀오면 `{type:"focus"}` → `router.refresh()`로 최신 데이터(스크롤 유지). 보고 있는 탭을 또 누르면 `{type:"tab-root", path}` → 그 탭 첫 화면이면 맨 위로, 아니면 첫 화면으로.
+- 앱이 React보다 먼저 `<html>` 속성을 바꾸므로 `<html>`에 `suppressHydrationWarning`을 둔다.
+- 일반 브라우저에서는 위 동작이 하나도 켜지지 않는다.
+
 ## 공개 전 점검
 
 - 공식 선수 사진·팀 로고(MLB 이미지 서버)는 허락을 받았는지 확인한다. 허락이 없으면 로고는 `NEXT_PUBLIC_TEAM_LOGOS=off`로 끄고 다시 빌드한다. 선수 사진은 api가 주는 `photoUrl`을 비우면 쓰이지 않는다.
