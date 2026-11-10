@@ -2,7 +2,8 @@
 import { cache } from "react";
 import { connection } from "next/server";
 
-export type DataMode = "sample" | "bdl";
+/** mlb: MLB 공식 Stats API에서 받은 실제 데이터, sample: 테스트·오프라인용 지어낸 데이터 */
+export type DataMode = "sample" | "mlb";
 export type Role = "HITTER" | "PITCHER";
 export type GameResult = "W" | "L" | "T" | null;
 
@@ -28,7 +29,7 @@ export interface GameLine {
   opponentScore: number | null;
   /** 경기 전·중이면 null */
   result: GameResult;
-  /** balldontlie status_state 그대로 (scheduled, in_progress, final ...) */
+  /** 경기 상태 (scheduled, in_progress, final, postponed ...) */
   gameStatus: string;
   played: boolean;
   /** api가 만든 한국어 한 줄 기록. 안 뛰었으면 이유("결장", "경기 전" ...) */
@@ -205,8 +206,8 @@ export interface PlayerResponse {
   pitching: PitcherSeason | null;
   /** 최신 경기부터 */
   games: GameLine[];
-  /** 이동 기록, 최신부터 */
-  moves: RosterMove[];
+  /** 이동 기록, 최신부터. 이동 기록을 주지 않는 오래된 api면 null(없다고 단정하지 않는다) */
+  moves: RosterMove[] | null;
 }
 
 /** 내 선수 카드의 기간 합계(타자). avg는 타수가 없으면 null */
@@ -355,7 +356,7 @@ function normalizePlayer(raw: PlayerResponse): PlayerResponse {
     hitting: raw.hitting ? normalizeSeason(raw.hitting) : null,
     pitching: raw.pitching ? normalizeSeason(raw.pitching) : null,
     games: (raw.games ?? []).map(normalizeLine),
-    moves: raw.moves ?? [],
+    moves: raw.moves ?? null,
   };
 }
 

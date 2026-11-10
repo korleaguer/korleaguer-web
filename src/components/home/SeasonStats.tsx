@@ -14,11 +14,11 @@ interface Props {
 
 /** 시즌 기록: 타자 표 카드 + 투수 표 카드 (위아래로 쌓는다) */
 export default function SeasonStats({ season, statsAvailable, ranking, hitters, pitchers }: Props) {
-  // 요금제가 없으면 기록 자체를 못 받으므로, 표 대신 한 줄로 알린다.
+  // 선수 기록을 아직 못 받았으면 표 대신 한 줄로 알린다.
   if (!statsAvailable) {
     return (
       <Section id="stats-title" title={`${season} 시즌 기록`}>
-        <p className="card px-4 py-5 text-sm text-muted">요금제가 없어 시즌 기록을 받지 못했습니다.</p>
+        <p className="card px-4 py-5 text-sm text-muted">아직 시즌 기록을 받지 못했습니다.</p>
       </Section>
     );
   }
