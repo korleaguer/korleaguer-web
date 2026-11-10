@@ -48,7 +48,7 @@ api가 꺼져 있어도 화면은 뜬다. 이때는 "데이터 서버에 연결�
 ## 배포
 
 develop에 병합되면 Actions(`.github/workflows/deploy.yml`)가 검사 → 이미지(`Dockerfile`, Next.js `standalone` 출력,
-GHCR `ghcr.io/korleaguer/korleaguer-web:sha-<커밋>`) → SSH로 서버(pigeon.ddns.net)에 접속해 새 컨테이너로 바꾸기(끊김 없이, 실패하면 옛 것 유지) →
+GHCR `ghcr.io/korleaguer/korleaguer-web:sha-<커밋>`) → SSH로 서버(pigeon.ddns.net)에 접속해 새 컨테이너로 바꾸기(끊김 없이, 새 것이 정상이 안 되면 옛 것 유지) →
 공개 주소의 `/healthz`가 그 커밋을 주는지 확인까지 알아서 한다(지속 배포, 버전 번호 없이 커밋 해시로 구분).
 서버 구성(Caddy·web·api·MySQL), 처음 준비, 되돌리기는 korleaguer-server 저장소의 `deploy/README.md`.
 
