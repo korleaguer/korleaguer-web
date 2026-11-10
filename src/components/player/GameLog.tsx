@@ -46,10 +46,10 @@ export function GameRow({ game: g }: { game: GameLine }) {
           <TeamName teamKo={g.opponentKo} teamAbbr={g.opponentAbbr} />
           <span>{`· ${g.home ? "홈" : "원정"}`}</span>
           {lineup && <span>{`· ${lineup}`}</span>}
-          {/* 경기 전이면 점수 대신 시작 시각 */}
+          {/* 경기 전이면 점수 대신 시작 시각. 끝났는데 점수가 없으면(마이너 경기) 둘 다 쓰지 않는다 */}
           {hasScore ? (
             <ScoreText line={g} className="text-sm font-bold text-foreground" />
-          ) : (
+          ) : g.gameStatus === "final" ? null : (
             <span className="tabular-nums">{`· ${formatTime(g.startTimeKst)}`}</span>
           )}
           <ResultPill result={g.result} className="ml-auto" />
