@@ -14,12 +14,12 @@ export default function DataBanners({ dataMode, statsAvailable }: Props) {
     <div className="space-y-2">
       {dataMode === "sample" && (
         <Banner mark="샘플" title="샘플 데이터 — 실제 기록이 아닙니다">
-          API 키 없이 실행 중이라 지어낸 숫자를 보여 주고 있습니다.
+          테스트용으로 실행 중이라 지어낸 숫자를 보여 주고 있습니다.
         </Banner>
       )}
       {!statsAvailable && (
-        <Banner mark="안내" title="선수 기록을 받으려면 유료 요금제가 필요합니다">
-          경기 일정과 결과만 보여 줍니다.
+        <Banner mark="안내" title="선수 기록을 아직 받지 못했습니다">
+          MLB에서 기록을 받는 중이거나 잠시 받지 못했습니다. 경기 일정과 결과만 보여 줍니다.
         </Banner>
       )}
     </div>

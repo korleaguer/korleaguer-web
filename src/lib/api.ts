@@ -2,7 +2,8 @@
 import { cache } from "react";
 import { connection } from "next/server";
 
-export type DataMode = "sample" | "bdl";
+/** mlb: MLB 공식 Stats API에서 받은 실제 데이터, sample: 테스트·오프라인용 지어낸 데이터 */
+export type DataMode = "sample" | "mlb";
 export type Role = "HITTER" | "PITCHER";
 export type GameResult = "W" | "L" | "T" | null;
 
@@ -28,7 +29,7 @@ export interface GameLine {
   opponentScore: number | null;
   /** 경기 전·중이면 null */
   result: GameResult;
-  /** balldontlie status_state 그대로 (scheduled, in_progress, final ...) */
+  /** 경기 상태 (scheduled, in_progress, final, postponed ...) */
   gameStatus: string;
   played: boolean;
   /** api가 만든 한국어 한 줄 기록. 안 뛰었으면 이유("결장", "경기 전" ...) */
@@ -72,6 +73,8 @@ export interface HitterSeason {
   teamAbbr: string | null;
   photoUrl: string | null;
   games: number;
+  /** 타석. 순위 기준(RankingMinimums)과 비교한다 */
+  plateAppearances: number;
   atBats: number;
   hits: number;
   doubles: number;
@@ -105,6 +108,19 @@ export interface PitcherSeason {
   hitsAllowed: number;
 }
 
+/**
+ * 시즌 순위(타율·OPS·평균자책점)에 넣는 최소 표본. 몇 타석만 뛴 선수가 1위가 되지 않게 거른다.
+ * 타자는 팀 경기 수 × 0.5타석(최소 10), 투수는 팀 경기 수 × 0.2이닝(최소 5이닝). 홈런·타점처럼 쌓이는 기록에는 쓰지 않는다.
+ */
+export interface RankingMinimums {
+  /** 시즌이 얼마나 지났는지(우리 선수 구단 중 끝난 정규시즌 경기가 가장 많은 구단의 경기 수) */
+  teamGames: number;
+  minPlateAppearances: number;
+  minOuts: number;
+  /** "32⅔" 처럼 api가 만든 이닝 표기 */
+  minInningsText: string;
+}
+
 /** GET /api/home */
 export interface HomeResponse {
   dataMode: DataMode;
@@ -118,9 +134,11 @@ export interface HomeResponse {
     /** 선수당 한 줄 */
     lines: GameLine[];
   };
-  /** 타율 높은 순 */
+  /** 순위 기준. 없으면(오래된 api) null이고, 그때는 거르지 않는다 */
+  ranking: RankingMinimums | null;
+  /** 순위 기준을 채운 선수 먼저 타율 순, 그다음 못 채운 선수 타율 순 */
   hitters: HitterSeason[];
-  /** 평균자책점 낮은 순 */
+  /** 순위 기준을 채운 투수 먼저 평균자책점 낮은 순, 그다음 못 채운 투수 평균자책점 낮은 순 */
   pitchers: PitcherSeason[];
 }
 
@@ -188,8 +206,8 @@ export interface PlayerResponse {
   pitching: PitcherSeason | null;
   /** 최신 경기부터 */
   games: GameLine[];
-  /** 이동 기록, 최신부터 */
-  moves: RosterMove[];
+  /** 이동 기록, 최신부터. 이동 기록을 주지 않는 오래된 api면 null(없다고 단정하지 않는다) */
+  moves: RosterMove[] | null;
 }
 
 /** 내 선수 카드의 기간 합계(타자). avg는 타수가 없으면 null */
@@ -297,6 +315,7 @@ function normalizeHome(raw: HomeResponse): HomeResponse {
       dateKst: raw.recent?.dateKst ?? null,
       lines: (raw.recent?.lines ?? []).map(normalizeLine),
     },
+    ranking: raw.ranking ?? null,
     hitters: (raw.hitters ?? []).map(normalizeSeason),
     pitchers: (raw.pitchers ?? []).map(normalizeSeason),
   };
@@ -342,7 +361,7 @@ function normalizePlayer(raw: PlayerResponse): PlayerResponse {
     hitting: raw.hitting ? normalizeSeason(raw.hitting) : null,
     pitching: raw.pitching ? normalizeSeason(raw.pitching) : null,
     games: (raw.games ?? []).map(normalizeLine),
-    moves: raw.moves ?? [],
+    moves: raw.moves ?? null,
   };
 }
 
