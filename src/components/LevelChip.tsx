@@ -1,7 +1,7 @@
 import type { PlayerSummary } from "@/lib/api";
 
 /**
- * 메이저·마이너 알약. 메이저는 파란 점 + "메이저", 마이너는 빈 점 + "마이너 · 팀 이름".
+ * 메이저·마이너·FA 알약. 메이저는 파란 점 + "메이저", 마이너는 빈 점 + "마이너 · 팀 이름", FA는 점선 빈 점 + "FA".
  * 모르면 그리지 않는다. 같은 줄의 다른 알약(팀·포지션)과 크기를 맞춘다.
  */
 export default function LevelChip({
@@ -9,10 +9,20 @@ export default function LevelChip({
   as: Tag = "span",
   className = "",
 }: {
-  player: Pick<PlayerSummary, "level" | "levelTeam">;
+  player: Pick<PlayerSummary, "level" | "levelTeam" | "freeAgent">;
   as?: "span" | "li";
   className?: string;
 }) {
+  if (player.freeAgent) {
+    return (
+      <Tag
+        className={`inline-flex min-w-0 items-center gap-1.5 rounded-full bg-neutral-pill px-2.5 py-1 text-[0.8125rem] font-semibold leading-5 text-neutral-pill-fg ${className}`}
+      >
+        <span aria-hidden className="size-2 shrink-0 rounded-full border-[1.5px] border-dashed border-neutral-pill-fg" />
+        <span className="truncate">FA</span>
+      </Tag>
+    );
+  }
   if (!player.level) return null;
   const minors = player.level === "MINORS";
 
