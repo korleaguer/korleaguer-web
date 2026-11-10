@@ -170,6 +170,8 @@ export interface PlayerSummary {
   level: Level | null;
   /** MLB 공식 API가 알려 준 지금 소속 팀 이름. 마이너면 "St. Paul Saints"처럼 영어 */
   levelTeam: string | null;
+  /** MLB 이동 기록상 FA(마지막 'FA 선언' 뒤 새 팀 기록 없음). 그러면 level·levelTeam은 null이고 팀 칸은 마지막 팀이다 */
+  freeAgent: boolean;
 }
 
 export type Level = "MLB" | "MINORS";
@@ -352,6 +354,8 @@ function normalizeSummary<T extends PlayerSummary>(p: T): T {
     jersey: String(p.jersey ?? "").trim() || null,
     level: p.level === "MLB" || p.level === "MINORS" ? p.level : null,
     levelTeam: p.levelTeam ?? null,
+    // FA를 주지 않는 오래된 api면 FA가 아닌 것으로 본다(지금처럼 단계 알약만)
+    freeAgent: p.freeAgent === true,
   };
 }
 

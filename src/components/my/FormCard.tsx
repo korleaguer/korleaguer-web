@@ -54,8 +54,10 @@ export default function FormCard({ entry, days, statsAvailable }: Props) {
             {isFallback && (
               <p className="mt-0.5 text-xs text-muted">{`마지막으로 뛴 ${days}일 · ${formatDateRange(fromKst, toKst)}`}</p>
             )}
-            {/* 마이너에 있으면 이름 아래에 바로 알린다. 메이저는 기본이라 카드에서는 따로 쓰지 않는다 */}
-            {player.level === "MINORS" && <LevelChip player={player} className="mt-1.5 max-w-full" />}
+            {/* 마이너에 있거나 FA면 이름 아래에 바로 알린다. 메이저는 기본이라 카드에서는 따로 쓰지 않는다 */}
+            {(player.level === "MINORS" || player.freeAgent) && (
+              <LevelChip player={player} className="mt-1.5 max-w-full" />
+            )}
           </div>
           <MyPlayerToggle playerId={player.id} nameKo={player.nameKo} initialOn variant="icon" className="-mr-2 -mt-1" />
         </div>
