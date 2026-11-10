@@ -423,6 +423,279 @@
           "#ffe2a3",
           "#fff4dc"
         ]
+      },
+      "hot": {
+        "role": "secondary",
+        "displayName": "불꽃 주황 점",
+        "tonalRamp": [
+          "#3b1f10",
+          "#7c2d12",
+          "#9a3412",
+          "#c2410c",
+          "#ea580c",
+          "#f97316",
+          "#ffa36b",
+          "#ffeee3"
+        ]
+      },
+      "hot-strong": {
+        "role": "secondary",
+        "displayName": "불꽃 주황 채운 배지",
+        "tonalRamp": [
+          "#3b1f10",
+          "#7c2d12",
+          "#9a3412",
+          "#c2410c",
+          "#ea580c",
+          "#f97316",
+          "#ffa36b",
+          "#ffeee3"
+        ]
+      },
+      "hot-on": {
+        "role": "secondary",
+        "displayName": "채운 주황 위 글자",
+        "tonalRamp": [
+          "#ffffff"
+        ]
+      },
+      "hot-ink": {
+        "role": "secondary",
+        "displayName": "불꽃 주황 글자",
+        "tonalRamp": [
+          "#3b1f10",
+          "#7c2d12",
+          "#9a3412",
+          "#c2410c",
+          "#ea580c",
+          "#f97316",
+          "#ffa36b",
+          "#ffeee3"
+        ]
+      },
+      "hot-soft": {
+        "role": "secondary",
+        "displayName": "옅은 주황 배지 바탕",
+        "tonalRamp": [
+          "#3b1f10",
+          "#7c2d12",
+          "#9a3412",
+          "#c2410c",
+          "#ea580c",
+          "#f97316",
+          "#ffa36b",
+          "#ffeee3"
+        ]
+      },
+      "danger-bg": {
+        "role": "secondary",
+        "displayName": "위기 빨강 바탕",
+        "tonalRamp": [
+          "#3a1615",
+          "#7a1d14",
+          "#b42318",
+          "#d92d20",
+          "#f97066",
+          "#ffa39b",
+          "#fecdca",
+          "#fde8e7"
+        ]
+      },
+      "danger-fg": {
+        "role": "secondary",
+        "displayName": "위기 빨강 글자",
+        "tonalRamp": [
+          "#3a1615",
+          "#7a1d14",
+          "#b42318",
+          "#d92d20",
+          "#f97066",
+          "#ffa39b",
+          "#fecdca",
+          "#fde8e7"
+        ]
+      },
+      "success-bg": {
+        "role": "secondary",
+        "displayName": "복귀 초록 바탕",
+        "tonalRamp": [
+          "#0f2c1b",
+          "#0b4d27",
+          "#13703a",
+          "#16a34a",
+          "#4ade80",
+          "#80dea4",
+          "#bbf7d0",
+          "#e2f5e9"
+        ]
+      },
+      "success-fg": {
+        "role": "secondary",
+        "displayName": "복귀 초록 글자",
+        "tonalRamp": [
+          "#0f2c1b",
+          "#0b4d27",
+          "#13703a",
+          "#16a34a",
+          "#4ade80",
+          "#80dea4",
+          "#bbf7d0",
+          "#e2f5e9"
+        ]
+      },
+      "fa-bg": {
+        "role": "secondary",
+        "displayName": "이적 보라 바탕",
+        "tonalRamp": [
+          "#2a2145",
+          "#4c1d95",
+          "#6d28d9",
+          "#7c3aed",
+          "#a78bfa",
+          "#c9b8ff",
+          "#ddd6fe",
+          "#f1ebff"
+        ]
+      },
+      "fa-fg": {
+        "role": "secondary",
+        "displayName": "이적 보라 글자",
+        "tonalRamp": [
+          "#2a2145",
+          "#4c1d95",
+          "#6d28d9",
+          "#7c3aed",
+          "#a78bfa",
+          "#c9b8ff",
+          "#ddd6fe",
+          "#f1ebff"
+        ]
+      },
+      "hot-dark": {
+        "role": "secondary",
+        "displayName": "불꽃 주황 점 (다크 모드)",
+        "tonalRamp": [
+          "#3b1f10",
+          "#7c2d12",
+          "#9a3412",
+          "#c2410c",
+          "#ea580c",
+          "#f97316",
+          "#ffa36b",
+          "#ffeee3"
+        ]
+      },
+      "hot-ink-dark": {
+        "role": "secondary",
+        "displayName": "불꽃 주황 글자 (다크 모드)",
+        "tonalRamp": [
+          "#3b1f10",
+          "#7c2d12",
+          "#9a3412",
+          "#c2410c",
+          "#ea580c",
+          "#f97316",
+          "#ffa36b",
+          "#ffeee3"
+        ]
+      },
+      "hot-soft-dark": {
+        "role": "secondary",
+        "displayName": "옅은 주황 배지 바탕 (다크 모드)",
+        "tonalRamp": [
+          "#3b1f10",
+          "#7c2d12",
+          "#9a3412",
+          "#c2410c",
+          "#ea580c",
+          "#f97316",
+          "#ffa36b",
+          "#ffeee3"
+        ]
+      },
+      "danger-bg-dark": {
+        "role": "secondary",
+        "displayName": "위기 빨강 바탕 (다크 모드)",
+        "tonalRamp": [
+          "#3a1615",
+          "#7a1d14",
+          "#b42318",
+          "#d92d20",
+          "#f97066",
+          "#ffa39b",
+          "#fecdca",
+          "#fde8e7"
+        ]
+      },
+      "danger-fg-dark": {
+        "role": "secondary",
+        "displayName": "위기 빨강 글자 (다크 모드)",
+        "tonalRamp": [
+          "#3a1615",
+          "#7a1d14",
+          "#b42318",
+          "#d92d20",
+          "#f97066",
+          "#ffa39b",
+          "#fecdca",
+          "#fde8e7"
+        ]
+      },
+      "success-bg-dark": {
+        "role": "secondary",
+        "displayName": "복귀 초록 바탕 (다크 모드)",
+        "tonalRamp": [
+          "#0f2c1b",
+          "#0b4d27",
+          "#13703a",
+          "#16a34a",
+          "#4ade80",
+          "#80dea4",
+          "#bbf7d0",
+          "#e2f5e9"
+        ]
+      },
+      "success-fg-dark": {
+        "role": "secondary",
+        "displayName": "복귀 초록 글자 (다크 모드)",
+        "tonalRamp": [
+          "#0f2c1b",
+          "#0b4d27",
+          "#13703a",
+          "#16a34a",
+          "#4ade80",
+          "#80dea4",
+          "#bbf7d0",
+          "#e2f5e9"
+        ]
+      },
+      "fa-bg-dark": {
+        "role": "secondary",
+        "displayName": "이적 보라 바탕 (다크 모드)",
+        "tonalRamp": [
+          "#2a2145",
+          "#4c1d95",
+          "#6d28d9",
+          "#7c3aed",
+          "#a78bfa",
+          "#c9b8ff",
+          "#ddd6fe",
+          "#f1ebff"
+        ]
+      },
+      "fa-fg-dark": {
+        "role": "secondary",
+        "displayName": "이적 보라 글자 (다크 모드)",
+        "tonalRamp": [
+          "#2a2145",
+          "#4c1d95",
+          "#6d28d9",
+          "#7c3aed",
+          "#a78bfa",
+          "#c9b8ff",
+          "#ddd6fe",
+          "#f1ebff"
+        ]
       }
     },
     "typographyMeta": {
@@ -666,13 +939,21 @@
     "rules": [
       {
         "name": "The One Blue Rule",
-        "body": "채운 파랑은 로고 상자, '승' 알약, 경기별 막대(와 연속 기록 딱지 점)뿐이다. 진한 파랑 글자는 1위 숫자, 현재 메뉴, 링크, 그리고 '내 선수'에서 '나아졌는지·고른 것'을 가리키는 표시(시즌 비교, 고른 막대 날짜, 홈런 점, 켜진 별)뿐이다. 버튼이나 제목을 파랗게 칠하지 않는다.",
+        "body": "채운 파랑은 로고 상자, '승' 알약, 경기별 막대, 메이저 알약 점뿐이다. 진한 파랑 글자는 1위 숫자, 현재 메뉴, 링크, 메이저로 옮긴 이동 알약, 그리고 '내 선수'의 시즌보다 나빠진 차이·고른 막대 날짜·켜진 별뿐이다. 버튼이나 제목을 파랗게 칠하지 않는다.",
         "section": "colors"
       },
       {
         "name": "The Grey Loss Rule",
         "body": "'패'와 '무'는 빨강·초록 없이 회색 알약이다. 이긴 경기만 파랑으로 튄다.",
         "section": "colors"
+      },
+      {
+        "name": "The Signal Color Rule",
+        "body": "신호색은 뜻 하나에 색 하나다. 주황 = 좋은 활약, 빨강 = 위기(부상·DFA·방출·출장 정지), 초록 = 복귀·계약, 보라 = 소속이 바뀜(FA·트레이드·웨이버 클레임). 승패에는 쓰지 않는다. 나쁜 활약(패전·무안타)은 배지로 만들지 않는다."
+      },
+      {
+        "name": "The Hot Is Earned Rule",
+        "body": "주황은 기록이 만든 순간에만 나온다(홈런, 멀티히트, 승리투수, 연속 기록, 시즌보다 좋아짐). 꾸밈·버튼·제목에 빌려 쓰지 않고, 한 경기 배지는 두 개까지다."
       },
       {
         "name": "The Amber Is For Honesty Rule",
@@ -729,7 +1010,8 @@
       "**Don't** '패'를 빨강, '승'을 초록으로 칠한다.",
       "**Don't** 카드 바깥에 `border`를 긋거나, 그림자 토큰 두 개(쉼·올림) 밖의 그림자를 만든다. 예외는 사진 그림자 둘(머리 사진 걸침, 무대 사진 그림자)뿐이다.",
       "**Don't** 같은 무게의 회색 표만 늘어놓은 관리자 화면을 만든다. 표는 카드와 한 줄 기록 다음이다.",
-      "**Don't** Pretendard 말고 다른 글꼴을 들인다."
+      "**Don't** Pretendard 말고 다른 글꼴을 들인다.",
+      "**Don't** 신호색(주황·빨강·초록·보라)을 뜻 없이 쓰거나 넓은 면에 칠한다. 한 경기 활약 배지는 두 개까지."
     ]
   }
 }

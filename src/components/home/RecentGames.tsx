@@ -5,6 +5,7 @@ import { formatDate, formatLineup, formatSummary, formatTime } from "@/lib/forma
 import { teamColor, teamLogoUrl } from "@/lib/teams";
 import PlayerAvatar from "@/components/PlayerAvatar";
 import ResultPill from "@/components/ResultPill";
+import Highlights from "@/components/Highlights";
 import ScoreText from "@/components/ScoreText";
 import Section from "@/components/Section";
 import TeamMark from "@/components/TeamMark";
@@ -133,6 +134,7 @@ function GameCard({ line, index }: { line: GameLine; index: number }) {
           >
             {formatSummary(line.summary)}
           </p>
+          <Highlights line={line} className="mt-1.5" />
         </div>
       </div>
     </li>

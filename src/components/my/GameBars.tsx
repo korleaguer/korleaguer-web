@@ -4,6 +4,7 @@ import { useState, type CSSProperties } from "react";
 import type { GameLine, Role } from "@/lib/api";
 import { formatDate, formatLineup, formatShortDate, formatSummary, formatWeekday } from "@/lib/format";
 import ResultPill from "@/components/ResultPill";
+import Highlights from "@/components/Highlights";
 import ScoreText from "@/components/ScoreText";
 import type { BarSlot } from "./columns";
 
@@ -53,7 +54,7 @@ function showsDay(slot: BarSlot, index: number, count: number, days: number): bo
 
 /**
  * 경기별 막대 + 고른 경기 한 줄. 왼쪽이 오래된 날이다.
- * 결장은 점선 막대, 경기가 없는 날은 빈칸, 홈런 친 경기는 막대 위에 점.
+ * 결장은 점선 막대, 경기가 없는 날은 빈칸, 홈런 친 경기는 막대 위에 주황 점(좋은 활약 색).
  */
 export default function GameBars({ slots, role, days }: Props) {
   const [selected, setSelected] = useState(() => defaultIndex(slots));
@@ -131,7 +132,7 @@ export default function GameBars({ slots, role, days }: Props) {
                 {homeRun && height && (
                   <span
                     aria-hidden
-                    className="absolute left-1/2 size-2 -translate-x-1/2 rounded-full bg-accent-ink"
+                    className="absolute left-1/2 size-2 -translate-x-1/2 rounded-full bg-hot"
                     style={{ bottom: `calc(${height} + 4px)` }}
                   />
                 )}
@@ -145,7 +146,7 @@ export default function GameBars({ slots, role, days }: Props) {
       <p className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[0.6875rem] text-muted">
         {!pitcher && (
           <span className="inline-flex items-center gap-1">
-            <span aria-hidden className="size-2 rounded-full bg-accent-ink" />
+            <span aria-hidden className="size-2 rounded-full bg-hot" />
             홈런
           </span>
         )}
@@ -172,6 +173,7 @@ export default function GameBars({ slots, role, days }: Props) {
             >
               {formatSummary(current.summary)}
             </p>
+            <Highlights line={current} className="mt-1.5" />
           </>
         ) : (
           <p className="text-sm text-muted">이 기간에는 경기가 없습니다.</p>

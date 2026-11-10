@@ -1,6 +1,7 @@
 import type { GameLine } from "@/lib/api";
 import { formatDate, formatLineup, formatShortDate, formatSummary, formatTime, formatWeekday } from "@/lib/format";
 import ResultPill from "@/components/ResultPill";
+import Highlights from "@/components/Highlights";
 import ScoreText from "@/components/ScoreText";
 import Section from "@/components/Section";
 import TeamName from "@/components/TeamName";
@@ -58,6 +59,7 @@ export function GameRow({ game: g }: { game: GameLine }) {
         >
           {formatSummary(g.summary)}
         </p>
+        <Highlights line={g} className="mt-1.5" />
       </div>
     </li>
   );
