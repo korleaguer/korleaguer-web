@@ -12,23 +12,23 @@ FROM node:24-alpine AS build
 WORKDIR /app
 # NEXT_PUBLIC_ 값은 빌드할 때 코드에 박힌다. 팀 로고를 끄려면 off(배포 워크플로는 저장소 variable에서 넘긴다).
 ARG NEXT_PUBLIC_TEAM_LOGOS=""
-# 배포 버전(배포 워크플로가 넘긴다). /healthz가 "ok 0.2.0"처럼 돌려줘 배포 뒤 새 버전이 나오는지 바깥에서 확인한다.
-ARG APP_VERSION=dev
+# 배포한 커밋(배포 워크플로가 넘긴다). /healthz가 "ok 1a2b3c4"처럼 돌려줘 배포 뒤 그 커밋이 나오는지 바깥에서 확인한다.
+ARG APP_COMMIT=dev
 ENV NEXT_TELEMETRY_DISABLED=1 \
     NEXT_PUBLIC_TEAM_LOGOS=${NEXT_PUBLIC_TEAM_LOGOS} \
-    APP_VERSION=${APP_VERSION}
+    APP_COMMIT=${APP_COMMIT}
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
 
 FROM node:24-alpine AS run
 WORKDIR /app
-ARG APP_VERSION=dev
+ARG APP_COMMIT=dev
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
     PORT=3000 \
     HOSTNAME=0.0.0.0 \
-    APP_VERSION=${APP_VERSION}
+    APP_COMMIT=${APP_COMMIT}
 # standalone server.js는 .next/static을 직접 복사해 줘야 내보낸다(public 폴더는 지금 없다).
 COPY --from=build --chown=node:node /app/.next/standalone ./
 COPY --from=build --chown=node:node /app/.next/static ./.next/static
