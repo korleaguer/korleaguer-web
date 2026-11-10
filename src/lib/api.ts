@@ -188,8 +188,8 @@ export interface PlayerResponse {
   pitching: PitcherSeason | null;
   /** 최신 경기부터 */
   games: GameLine[];
-  /** 이동 기록, 최신부터 */
-  moves: RosterMove[];
+  /** 이동 기록, 최신부터. 이동 기록을 주지 않는 오래된 api면 null(없다고 단정하지 않는다) */
+  moves: RosterMove[] | null;
 }
 
 /** 내 선수 카드의 기간 합계(타자). avg는 타수가 없으면 null */
@@ -337,7 +337,7 @@ function normalizePlayer(raw: PlayerResponse): PlayerResponse {
     hitting: raw.hitting ? normalizeSeason(raw.hitting) : null,
     pitching: raw.pitching ? normalizeSeason(raw.pitching) : null,
     games: (raw.games ?? []).map(normalizeLine),
-    moves: raw.moves ?? [],
+    moves: raw.moves ?? null,
   };
 }
 
