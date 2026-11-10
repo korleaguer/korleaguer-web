@@ -13,6 +13,8 @@ interface Props {
   role: Role;
   /** 기간 일수(7·14·30). 막대 아래 날짜를 얼마나 촘촘히 쓸지 정한다 */
   days: number;
+  /** 마이너 기록이면 true. 마이너는 팀 일정을 몰라 결장 막대가 없으므로 범례에서 뺀다 */
+  minors?: boolean;
 }
 
 /** 막대 높이에 쓰는 값: 타자는 안타 수, 투수는 잡은 아웃 수. 모르면 null */
@@ -56,7 +58,7 @@ function showsDay(slot: BarSlot, index: number, count: number, days: number): bo
  * 경기별 막대 + 고른 경기 한 줄. 왼쪽이 오래된 날이다.
  * 결장은 점선 막대, 경기가 없는 날은 빈칸, 홈런 친 경기는 막대 위에 주황 점(좋은 활약 색).
  */
-export default function GameBars({ slots, role, days }: Props) {
+export default function GameBars({ slots, role, days, minors = false }: Props) {
   const [selected, setSelected] = useState(() => defaultIndex(slots));
   const pitcher = role === "PITCHER";
   const values = slots.map((slot) => (slot.game?.played ? barValue(slot.game, role) : null));
@@ -150,10 +152,12 @@ export default function GameBars({ slots, role, days }: Props) {
             홈런
           </span>
         )}
-        <span className="inline-flex items-center gap-1">
-          <span aria-hidden className="h-2 w-2.5 rounded-[2px] border-[1.5px] border-dashed border-muted" />
-          {pitcher ? "등판 없음" : "결장"}
-        </span>
+        {!minors && (
+          <span className="inline-flex items-center gap-1">
+            <span aria-hidden className="h-2 w-2.5 rounded-[2px] border-[1.5px] border-dashed border-muted" />
+            {pitcher ? "등판 없음" : "결장"}
+          </span>
+        )}
         <span>빈칸은 경기 없는 날</span>
       </p>
 
@@ -161,12 +165,16 @@ export default function GameBars({ slots, role, days }: Props) {
       <div aria-live="polite" className="mt-3 rounded-xl bg-surface-2 px-3 py-2.5">
         {current ? (
           <>
-            <p className="flex items-center gap-1.5 text-[0.8125rem] text-muted">
-              <span className="tabular-nums">{`${formatShortDate(current.startTimeKst)}(${formatWeekday(current.startTimeKst)})`}</span>
+            {/* 카드가 좁고 상대 팀 이름이 길면(시카고 화이트삭스, 마이너 팀 영어 이름) 점수·결과를 다음 줄로 넘긴다 */}
+            <p className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[0.8125rem] text-muted">
+              <span className="whitespace-nowrap tabular-nums">{`${formatShortDate(current.startTimeKst)}(${formatWeekday(current.startTimeKst)})`}</span>
               <span>{`vs ${current.opponentKo}`}</span>
               {formatLineup(current) && <span>{`· ${formatLineup(current)}`}</span>}
-              <ScoreText line={current} className="text-[0.9375rem] font-extrabold text-foreground" />
-              <ResultPill result={current.result} className="ml-auto" />
+              {/* 점수와 승패는 한 묶음으로 넘어가고, 남은 너비를 채워 승패를 오른쪽 끝에 둔다 */}
+              <span className="flex grow items-center gap-1.5">
+                <ScoreText line={current} className="text-[0.9375rem] font-extrabold text-foreground" />
+                <ResultPill result={current.result} className="ml-auto" />
+              </span>
             </p>
             <p
               className={`mt-0.5 text-[0.9375rem] leading-[1.45] text-pretty ${current.played ? "font-semibold" : "font-medium text-muted"}`}

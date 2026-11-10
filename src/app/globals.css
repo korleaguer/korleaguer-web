@@ -50,6 +50,9 @@
   --hot-soft: #ffeee3;
   --hot-on: #ffffff; /* 채운 주황 위 글자 */
 
+  /* 소속 팀이 없는 선수(FA)의 무대 색 */
+  --no-team: #8a919c;
+
   --shadow-card: 0 1px 2px rgb(16 24 40 / 0.06), 0 1px 1px rgb(16 24 40 / 0.03);
   --shadow-card-hover: 0 4px 14px rgb(16 24 40 / 0.1), 0 1px 2px rgb(16 24 40 / 0.06);
 }
@@ -88,6 +91,7 @@
     --hot-ink: #ffa36b;
     --hot-soft: #3b1f10;
     --hot-on: #ffffff;
+    --no-team: #59606b;
 
     /* 어두운 바탕에서는 그림자 대신 아주 옅은 테두리로 카드 가장자리를 잡는다 */
     --shadow-card: 0 0 0 1px rgb(255 255 255 / 0.05);

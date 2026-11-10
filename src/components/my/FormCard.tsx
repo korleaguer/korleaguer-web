@@ -1,14 +1,15 @@
 import type { CSSProperties, ReactNode } from "react";
 import Link from "next/link";
 import type { HitterPeriod, MyPlayer, PitcherPeriod } from "@/lib/api";
-import { formatDateRange, formatEra, formatRate } from "@/lib/format";
+import { formatEra, formatRate } from "@/lib/format";
 import { teamColor } from "@/lib/teams";
 import { GameRow } from "@/components/player/GameLog";
-import LevelChip from "@/components/LevelChip";
 import BandPhoto from "./BandPhoto";
+import { Numbers, SeasonNumbers, StatusBadge, SummaryLines } from "./FormSummary";
 import GameBars from "./GameBars";
 import MyPlayerToggle from "./MyPlayerToggle";
 import { barSlots } from "./columns";
+import { metaLine, periodLabel, periodNote } from "./formLabels";
 
 interface Props {
   entry: MyPlayer;
@@ -16,28 +17,26 @@ interface Props {
   statsAvailable: boolean;
 }
 
-/** 띠 왼쪽 위 딱지: 2경기 이상 이어질 때만 */
-function streakText(entry: MyPlayer): string | null {
-  if (entry.streak == null || entry.streak < 2) return null;
-  return entry.player.role === "PITCHER" ? `${entry.streak}경기 연속 무실점` : `${entry.streak}경기 연속 안타`;
-}
-
-/** 내 선수 한 명의 카드: 팀 색 띠와 사진 → 이름 → 큰 숫자와 작은 숫자 셋 → 경기별 막대 → 경기별 기록 모두 보기 */
+/**
+ * 내 선수 한 명의 카드: 팀 색 무대(상태 배지 + 사진) → 이름 → 출전 줄·한 줄 소식 → 큰 숫자와 작은 숫자 셋 →
+ * 경기별 막대 → 경기별 기록 모두 보기. 마이너에 있으면 숫자·막대가 마이너 기록이고(이름표에 단계),
+ * 비시즌·FA면 기간 대신 시즌 합계를 보인다(이슈 #13).
+ */
 export default function FormCard({ entry, days, statsAvailable }: Props) {
-  const { player, games, fromKst, toKst, isFallback } = entry;
-  const streak = streakText(entry);
-  const meta = [player.teamKo, player.positionKo].filter(Boolean).join(" · ");
+  const { player, games, fromKst, toKst, basis, level } = entry;
+  const meta = metaLine(entry);
+  const note = periodNote(entry, days);
   const period = entry.hitting ?? entry.pitching;
+  const pitcher = player.role === "PITCHER";
+  // FA는 소속 팀이 없으니 팀 색 대신 무채색 무대
+  const team = entry.status?.kind === "FA" ? "var(--no-team)" : teamColor(player.teamAbbr);
+  const minors = level != null && level !== "MLB";
+  const showsGames = statsAvailable && basis !== "SEASON" && basis !== "NONE" && games.length > 0;
 
   return (
     <li className="card flex flex-col overflow-hidden">
-      <div className="player-stage h-[5.75rem]" style={{ "--team": teamColor(player.teamAbbr) } as CSSProperties}>
-        {streak && (
-          <span className="absolute left-3.5 top-3 z-10 inline-flex items-center gap-1.5 rounded-full bg-surface px-2.5 py-0.5 text-xs font-bold leading-5 shadow-[var(--shadow-card)]">
-            <span aria-hidden className="size-[7px] rounded-full bg-hot" />
-            {streak}
-          </span>
-        )}
+      <div className="player-stage h-[5.75rem]" style={{ "--team": team } as CSSProperties}>
+        {entry.status && <StatusBadge status={entry.status} />}
         <BandPhoto nameKo={player.nameKo} photoUrl={player.photoUrl} teamAbbr={player.teamAbbr} />
       </div>
 
@@ -50,32 +49,38 @@ export default function FormCard({ entry, days, statsAvailable }: Props) {
               </Link>
             </h2>
             {meta && <p className="text-[0.8125rem] text-muted">{meta}</p>}
-            {/* 최근 기간에 경기가 없어 이 선수가 마지막으로 뛴 날까지로 당긴 카드: 어느 기간인지 적는다 */}
-            {isFallback && (
-              <p className="mt-0.5 text-xs text-muted">{`마지막으로 뛴 ${days}일 · ${formatDateRange(fromKst, toKst)}`}</p>
-            )}
-            {/* 마이너에 있거나 FA면 이름 아래에 바로 알린다. 메이저는 기본이라 카드에서는 따로 쓰지 않는다 */}
-            {(player.level === "MINORS" || player.freeAgent) && (
-              <LevelChip player={player} className="mt-1.5 max-w-full" />
-            )}
+            {/* 기간을 당긴 카드(마지막으로 뛴·다치기 전): 어느 기간인지 적는다 */}
+            {note && statsAvailable && <p className="mt-0.5 text-xs text-muted">{note}</p>}
           </div>
           <MyPlayerToggle playerId={player.id} nameKo={player.nameKo} initialOn variant="icon" className="-mr-2 -mt-1" />
         </div>
 
-        {statsAvailable && period ? (
+        {statsAvailable && <SummaryLines entry={entry} />}
+
+        {!statsAvailable ? (
+          <Notice>아직 경기별 기록을 받지 못했습니다.</Notice>
+        ) : basis === "SEASON" && entry.seasonTotals ? (
+          <SeasonNumbers totals={entry.seasonTotals} pitcher={pitcher} />
+        ) : basis === "NONE" ? (
+          entry.status?.kind === "IL" && <Notice>이번 시즌 아직 메이저 경기가 없습니다.</Notice>
+        ) : period ? (
           <>
-            {entry.hitting && <HitterNumbers period={periodLabel(days, isFallback)} hitting={entry.hitting} />}
-            {entry.pitching && <PitcherNumbers period={periodLabel(days, isFallback)} pitching={entry.pitching} />}
+            {entry.hitting && <HitterNumbers period={periodLabel(basis, level, days)} hitting={entry.hitting} />}
+            {entry.pitching && <PitcherNumbers period={periodLabel(basis, level, days)} pitching={entry.pitching} />}
             {/* 기간이 바뀌면 막대 자리도 바뀌므로 고른 막대를 처음부터 다시 정한다(key) */}
-            <GameBars key={`${fromKst}~${toKst}`} slots={barSlots(fromKst, toKst, games)} role={player.role} days={days} />
+            <GameBars
+              key={`${fromKst}~${toKst}`}
+              slots={barSlots(fromKst, toKst, games)}
+              role={player.role}
+              days={days}
+              minors={minors}
+            />
           </>
         ) : (
-          <p className="mt-3 rounded-xl bg-surface-2 px-3 py-2.5 text-sm text-muted">
-            {statsAvailable ? "아직 이 선수의 기록을 연결하지 못했습니다." : "아직 경기별 기록을 받지 못했습니다."}
-          </p>
+          <Notice>아직 이 선수의 기록을 연결하지 못했습니다.</Notice>
         )}
 
-        {games.length > 0 && (
+        {showsGames && (
           <details className="group mt-auto pt-3">
             <summary className="flex cursor-pointer list-none items-center justify-center gap-1 rounded-lg py-2 text-[0.8125rem] font-semibold text-accent-ink [&::-webkit-details-marker]:hidden">
               {`경기별 기록 ${games.length}개 모두 보기`}
@@ -93,40 +98,8 @@ export default function FormCard({ entry, days, statsAvailable }: Props) {
   );
 }
 
-/** 큰 숫자 하나(왼쪽) + 회색 칸 작은 숫자 셋(오른쪽) */
-function Numbers({
-  label,
-  value,
-  note,
-  small,
-}: {
-  label: string;
-  value: string;
-  note: ReactNode;
-  small: [string, string | number][];
-}) {
-  return (
-    <div className="mt-3.5 grid grid-cols-[auto_minmax(0,1fr)] items-end gap-4">
-      <dl>
-        <dt className="text-xs text-muted">{label}</dt>
-        <dd className="mt-1 text-[2.75rem] font-extrabold leading-none tracking-[-0.03em] tabular-nums">{value}</dd>
-        <dd className="mt-1.5 text-xs font-semibold text-muted">{note}</dd>
-      </dl>
-      <dl className="grid grid-cols-3 rounded-xl bg-surface-2 py-2 text-center">
-        {small.map(([k, v]) => (
-          <div key={k} className="min-w-0">
-            <dt className="text-xs text-muted">{k}</dt>
-            <dd className="text-xl font-extrabold leading-tight tabular-nums">{v}</dd>
-          </div>
-        ))}
-      </dl>
-    </div>
-  );
-}
-
-/** 큰 숫자 이름 앞부분: "최근 7일", 당긴 카드는 "마지막 7일" */
-function periodLabel(days: number, isFallback: boolean): string {
-  return `${isFallback ? "마지막" : "최근"} ${days}일`;
+function Notice({ children }: { children: ReactNode }) {
+  return <p className="mt-3 rounded-xl bg-surface-2 px-3 py-2.5 text-sm text-muted">{children}</p>;
 }
 
 function HitterNumbers({ period, hitting }: { period: string; hitting: HitterPeriod }) {
