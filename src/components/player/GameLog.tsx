@@ -4,20 +4,44 @@ import ResultPill from "@/components/ResultPill";
 import Highlights from "@/components/Highlights";
 import ScoreText from "@/components/ScoreText";
 import Section from "@/components/Section";
+import ShowMore from "@/components/ShowMore";
 import TeamName from "@/components/TeamName";
 
-/** 경기 기록 (최신 경기부터). 카드 한 장 안에 경기마다 한 줄: 왼쪽 날짜, 오른쪽 상대·점수·결과와 한 줄 기록 */
+/** 처음에 보여 줄 경기 수(최근부터). 나머지는 '더 보기'로 펼친다 */
+const VISIBLE = 10;
+
+/**
+ * 경기 기록 (최신 경기부터). 카드 한 장 안에 경기마다 한 줄: 왼쪽 날짜, 오른쪽 상대·점수·결과와 한 줄 기록.
+ * 시즌 전체(160경기 넘게)를 한 번에 펼치면 휴대폰에서 아래의 선수 정보·이동 기록이 한참 밀리므로
+ * 최근 10경기만 먼저 보여 준다. 나머지 줄도 서버 HTML에는 그대로 있다(숨김 상태).
+ */
 export default function GameLog({ games }: { games: GameLine[] }) {
+  const shown = games.slice(0, VISIBLE);
+  const rest = games.slice(VISIBLE);
+
   return (
     <Section id="games-title" title="경기 기록" aside={`${games.length}경기`}>
       {games.length === 0 ? (
         <p className="card px-4 py-5 text-sm text-muted">경기 기록이 없습니다.</p>
       ) : (
-        <ul className="card divide-y divide-line">
-          {games.map((g) => (
-            <GameRow key={g.gameId} game={g} />
-          ))}
-        </ul>
+        <div className="card">
+          <ul className="divide-y divide-line">
+            {shown.map((g) => (
+              <GameRow key={g.gameId} game={g} />
+            ))}
+          </ul>
+          {/* 펼치면 나머지 경기가 버튼 위에 붙고, 버튼은 맨 아래에서 '접기'가 된다 */}
+          {rest.length > 0 && (
+            <ShowMore moreLabel={`${rest.length}경기 더 보기`} buttonClassName="border-t border-line py-2.5">
+              {/* 펼쳐도 화면이 끝없이 늘지 않게 일정 높이 안에서 스크롤한다(이동 기록과 같은 방식) */}
+              <ul className="max-h-[36rem] divide-y divide-line overflow-y-auto overscroll-contain border-t border-line">
+                {rest.map((g) => (
+                  <GameRow key={g.gameId} game={g} />
+                ))}
+              </ul>
+            </ShowMore>
+          )}
+        </div>
       )}
     </Section>
   );
