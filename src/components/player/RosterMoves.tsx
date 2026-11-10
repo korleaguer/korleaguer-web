@@ -34,7 +34,8 @@ export default function RosterMoves({ moves }: { moves: RosterMove[] }) {
           {/* 펼치면 나머지 줄이 버튼 위에 붙고, 버튼은 맨 아래에서 '접기'가 된다 */}
           {rest.length > 0 && (
             <ShowMore moreLabel={`${rest.length}건 더 보기`} buttonClassName="border-t border-line py-2.5">
-              <ol className="divide-y divide-line border-t border-line">
+              {/* 이동이 많은 선수(20건 넘게)도 화면이 아래로 끝없이 늘지 않게, 펼친 줄은 일정 높이 안에서 스크롤한다 */}
+              <ol className="max-h-[26rem] divide-y divide-line overflow-y-auto overscroll-contain border-t border-line">
                 {rest.map((move, i) => (
                   <MoveRow key={`${move.date}-${move.typeCode}-r${i}`} move={move} />
                 ))}
