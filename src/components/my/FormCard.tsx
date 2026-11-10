@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import Link from "next/link";
 import type { HitterPeriod, MyPlayer, PitcherPeriod } from "@/lib/api";
-import { formatEra, formatRate } from "@/lib/format";
+import { formatDateRange, formatEra, formatRate } from "@/lib/format";
 import { teamColor } from "@/lib/teams";
 import { GameRow } from "@/components/player/GameLog";
 import LevelChip from "@/components/LevelChip";
@@ -13,8 +13,6 @@ import { barSlots } from "./columns";
 interface Props {
   entry: MyPlayer;
   days: number;
-  fromKst: string;
-  toKst: string;
   statsAvailable: boolean;
 }
 
@@ -25,8 +23,8 @@ function streakText(entry: MyPlayer): string | null {
 }
 
 /** 내 선수 한 명의 카드: 팀 색 띠와 사진 → 이름 → 큰 숫자와 작은 숫자 셋 → 경기별 막대 → 경기별 기록 모두 보기 */
-export default function FormCard({ entry, days, fromKst, toKst, statsAvailable }: Props) {
-  const { player, games } = entry;
+export default function FormCard({ entry, days, statsAvailable }: Props) {
+  const { player, games, fromKst, toKst, isFallback } = entry;
   const streak = streakText(entry);
   const meta = [player.teamKo, player.positionKo].filter(Boolean).join(" · ");
   const period = entry.hitting ?? entry.pitching;
@@ -52,6 +50,10 @@ export default function FormCard({ entry, days, fromKst, toKst, statsAvailable }
               </Link>
             </h2>
             {meta && <p className="text-[0.8125rem] text-muted">{meta}</p>}
+            {/* 최근 기간에 경기가 없어 이 선수가 마지막으로 뛴 날까지로 당긴 카드: 어느 기간인지 적는다 */}
+            {isFallback && (
+              <p className="mt-0.5 text-xs text-muted">{`마지막으로 뛴 ${days}일 · ${formatDateRange(fromKst, toKst)}`}</p>
+            )}
             {/* 마이너에 있으면 이름 아래에 바로 알린다. 메이저는 기본이라 카드에서는 따로 쓰지 않는다 */}
             {player.level === "MINORS" && <LevelChip player={player} className="mt-1.5 max-w-full" />}
           </div>
@@ -60,14 +62,14 @@ export default function FormCard({ entry, days, fromKst, toKst, statsAvailable }
 
         {statsAvailable && period ? (
           <>
-            {entry.hitting && <HitterNumbers days={days} hitting={entry.hitting} />}
-            {entry.pitching && <PitcherNumbers days={days} pitching={entry.pitching} />}
+            {entry.hitting && <HitterNumbers period={periodLabel(days, isFallback)} hitting={entry.hitting} />}
+            {entry.pitching && <PitcherNumbers period={periodLabel(days, isFallback)} pitching={entry.pitching} />}
             {/* 기간이 바뀌면 막대 자리도 바뀌므로 고른 막대를 처음부터 다시 정한다(key) */}
             <GameBars key={`${fromKst}~${toKst}`} slots={barSlots(fromKst, toKst, games)} role={player.role} days={days} />
           </>
         ) : (
           <p className="mt-3 rounded-xl bg-surface-2 px-3 py-2.5 text-sm text-muted">
-            {statsAvailable ? "아직 이 선수의 기록을 연결하지 못했습니다." : "요금제가 없어 경기별 기록을 받지 못했습니다."}
+            {statsAvailable ? "아직 이 선수의 기록을 연결하지 못했습니다." : "아직 경기별 기록을 받지 못했습니다."}
           </p>
         )}
 
@@ -120,10 +122,15 @@ function Numbers({
   );
 }
 
-function HitterNumbers({ days, hitting }: { days: number; hitting: HitterPeriod }) {
+/** 큰 숫자 이름 앞부분: "최근 7일", 당긴 카드는 "마지막 7일" */
+function periodLabel(days: number, isFallback: boolean): string {
+  return `${isFallback ? "마지막" : "최근"} ${days}일`;
+}
+
+function HitterNumbers({ period, hitting }: { period: string; hitting: HitterPeriod }) {
   return (
     <Numbers
-      label={`최근 ${days}일 타율`}
+      label={`${period} 타율`}
       value={formatRate(hitting.avg)}
       note={<RateDelta value={hitting.avg} season={hitting.seasonAvg} played={hitting.games > 0} />}
       small={[
@@ -135,10 +142,10 @@ function HitterNumbers({ days, hitting }: { days: number; hitting: HitterPeriod 
   );
 }
 
-function PitcherNumbers({ days, pitching }: { days: number; pitching: PitcherPeriod }) {
+function PitcherNumbers({ period, pitching }: { period: string; pitching: PitcherPeriod }) {
   return (
     <Numbers
-      label={`최근 ${days}일 평균자책점`}
+      label={`${period} 평균자책점`}
       value={formatEra(pitching.era)}
       note={pitching.games === 0 ? "이 기간 등판 없음" : `시즌 ${formatEra(pitching.seasonEra)}`}
       small={[

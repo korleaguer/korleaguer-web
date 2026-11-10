@@ -17,7 +17,7 @@ related_targets: ["src/app/players/page.tsx","src/app/players/[id]/page.tsx"]
 ## Audience, job, constraints
 
 - 휴대폰으로 출근길·점심에 훑는 야구 팬, 한 선수를 챙기는 팬. 비교 대상: 네이버 스포츠, FotMob.
-- 샘플 데이터 띠, 요금제 없음 안내, 빈 기록 안내는 반드시 눈에 띄게 유지한다.
+- 샘플 데이터 띠, 기록 미수신 안내, 빈 기록 안내는 반드시 눈에 띄게 유지한다.
 - 사진·로고는 꺼질 수 있다(이니셜 + 팀 색으로 대체). 다크 모드는 OS 설정을 따른다.
 
 ## Direction contract

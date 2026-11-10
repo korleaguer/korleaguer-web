@@ -23,7 +23,7 @@
   --neutral-pill: #e5e7eb;
   --neutral-pill-fg: #374151;
 
-  /* 샘플 데이터·요금제 안내 (호박색) */
+  /* 샘플 데이터·기록 미수신 안내 (호박색) */
   --notice-bg: #fff4dc;
   --notice-fg: #6b4300;
   --notice-mark: #b45309;

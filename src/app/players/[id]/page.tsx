@@ -77,7 +77,7 @@ async function PlayerContent({ params }: Pick<Props, "params">) {
         {/* 오른쪽 칸: 선수 정보 + 이동 기록(메이저·마이너 오간 날짜) */}
         <div className="min-w-0 space-y-7">
           <PlayerInfo player={player} />
-          <RosterMoves moves={moves} />
+          {moves && <RosterMoves moves={moves} />}
         </div>
       </div>
     </div>

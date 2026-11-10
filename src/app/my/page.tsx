@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { getHome, getMyPlayers, getPlayers } from "@/lib/api";
-import { formatDate, formatDateRange } from "@/lib/format";
+import { formatDateRange } from "@/lib/format";
 import { readMyPlayers } from "@/lib/myPlayers";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import DataBanners from "@/components/DataBanners";
@@ -67,19 +67,12 @@ async function MyContent({ searchParams }: Pick<PageProps<"/my">, "searchParams"
           <PeriodTabs days={days} />
           {my.isFallback && (
             <p className="px-1 text-[0.8125rem] text-muted">
-              {`최근 ${days}일에는 경기가 없어, 마지막 경기일 ${formatDate(my.toKst)}까지 ${days}일을 보여 줍니다.`}
+              {`최근 ${days}일에 경기가 없는 선수는 그 선수가 마지막으로 뛴 날까지 ${days}일을 보여 줍니다.`}
             </p>
           )}
           <ul className="grid items-start gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {picked.map((entry) => (
-              <FormCard
-                key={entry.player.id}
-                entry={entry}
-                days={my.days}
-                fromKst={my.fromKst}
-                toKst={my.toKst}
-                statsAvailable={my.statsAvailable}
-              />
+              <FormCard key={entry.player.id} entry={entry} days={my.days} statsAvailable={my.statsAvailable} />
             ))}
           </ul>
         </>
