@@ -28,6 +28,12 @@
   --notice-fg: #6b4300;
   --notice-mark: #b45309;
 
+  /* 부상 상태에만: 부상자 명단 등재·이동(빨강), 해제(초록). 승패에는 쓰지 않는다 */
+  --injury-bg: #fde8e7;
+  --injury-fg: #b42318;
+  --recover-bg: #e2f5e9;
+  --recover-fg: #13703a;
+
   --shadow-card: 0 1px 2px rgb(16 24 40 / 0.06), 0 1px 1px rgb(16 24 40 / 0.03);
   --shadow-card-hover: 0 4px 14px rgb(16 24 40 / 0.1), 0 1px 2px rgb(16 24 40 / 0.06);
 }
@@ -54,6 +60,11 @@
     --notice-fg: #ffe2a3;
     --notice-mark: #f5b94a;
 
+    --injury-bg: #3a1615;
+    --injury-fg: #ffa39b;
+    --recover-bg: #0f2c1b;
+    --recover-fg: #80dea4;
+
     /* 어두운 바탕에서는 그림자 대신 아주 옅은 테두리로 카드 가장자리를 잡는다 */
     --shadow-card: 0 0 0 1px rgb(255 255 255 / 0.05);
     --shadow-card-hover: 0 0 0 1px rgb(255 255 255 / 0.12), 0 6px 18px rgb(0 0 0 / 0.4);
@@ -78,6 +89,10 @@
   --color-notice-bg: var(--notice-bg);
   --color-notice-fg: var(--notice-fg);
   --color-notice-mark: var(--notice-mark);
+  --color-injury-bg: var(--injury-bg);
+  --color-injury-fg: var(--injury-fg);
+  --color-recover-bg: var(--recover-bg);
+  --color-recover-fg: var(--recover-fg);
   --shadow-card: var(--shadow-card);
   --shadow-card-hover: var(--shadow-card-hover);
   /* Pretendard는 layout.tsx에서 불러온다(우리 서버가 주고, 화면에 쓴 글자 조각만 받는다) */

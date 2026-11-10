@@ -11,7 +11,8 @@ function dotDate(date: string): string {
 
 /**
  * 선수 이동 기록(최신부터): 날짜 · 무엇(알약) · 어디서 어디로.
- * 알약 색은 옮겨 간 곳: 메이저면 연파랑, 마이너면 회색, 모르면 옅은 회색.
+ * 알약 색: 부상자 명단 등재·이동(아직 부상 중)은 빨강, 해제는 초록.
+ * 그 밖에는 옮겨 간 곳: 메이저면 연파랑, 마이너면 회색, 모르면 옅은 회색.
  */
 export default function RosterMoves({ moves }: { moves: RosterMove[] }) {
   const shown = moves.slice(0, VISIBLE);
@@ -58,13 +59,20 @@ export default function RosterMoves({ moves }: { moves: RosterMove[] }) {
   );
 }
 
+/** 서버가 붙이는 부상자 명단 이름(MoveLabels): 등재 / 이동(10일→60일 등, 아직 부상 중) / 해제 */
+const INJURY_LABEL = "부상자 명단";
+
+function moveTone(move: RosterMove): string {
+  if (move.labelKo?.startsWith(INJURY_LABEL)) {
+    return move.labelKo.endsWith("해제") ? "bg-recover-bg text-recover-fg" : "bg-injury-bg text-injury-fg";
+  }
+  if (move.toLevel === "MLB") return "bg-accent-soft text-accent-ink";
+  if (move.toLevel === "MINORS") return "bg-neutral-pill text-neutral-pill-fg";
+  return "bg-surface-2 text-neutral-pill-fg";
+}
+
 function MoveRow({ move }: { move: RosterMove }) {
-  const tone =
-    move.toLevel === "MLB"
-      ? "bg-accent-soft text-accent-ink"
-      : move.toLevel === "MINORS"
-        ? "bg-neutral-pill text-neutral-pill-fg"
-        : "bg-surface-2 text-neutral-pill-fg";
+  const tone = moveTone(move);
   const route = [move.fromTeam, move.toTeam].filter(Boolean).join(" → ");
 
   return (
