@@ -616,7 +616,7 @@
       "name": "안내 띠",
       "kind": "custom",
       "refersTo": "notice-banner",
-      "description": "샘플 데이터·요금제 한계 안내 전용. 호박색 카드 + 앞 알약.",
+      "description": "샘플 데이터·기록 미수신 안내 전용. 호박색 카드 + 앞 알약.",
       "html": "<div class=\"ds-notice\" role=\"status\"><span class=\"ds-notice-mark\">샘플</span><div><p class=\"ds-notice-title\">샘플 데이터 — 실제 기록이 아닙니다</p><p class=\"ds-notice-body\">API 키 없이 실행 중이라 지어낸 숫자를 보여 주고 있습니다.</p></div></div>",
       "css": ".ds-notice{font-family:var(--font-sans, \"Pretendard Variable\", Pretendard, -apple-system, system-ui, \"Apple SD Gothic Neo\", sans-serif);display:flex;align-items:flex-start;gap:12px;border-radius:16px;background:var(--notice-bg,#fff4dc);color:var(--notice-fg,#6b4300);padding:12px 16px} .ds-notice-mark{flex-shrink:0;margin-top:1px;border-radius:9999px;background:var(--notice-mark,#b45309);color:var(--notice-bg,#fff4dc);padding:2px 10px;font-size:.75rem;font-weight:700;line-height:1.125rem} .ds-notice-title{margin:0;font-size:.9375rem;font-weight:700;line-height:1.375} .ds-notice-body{margin:2px 0 0;font-size:.8125rem;opacity:.9}"
     },
@@ -676,7 +676,7 @@
       },
       {
         "name": "The Amber Is For Honesty Rule",
-        "body": "호박색은 샘플 데이터·요금제 한계 안내에만 쓴다. 꾸밈이나 강조에 빌려 쓰지 않는다.",
+        "body": "호박색은 샘플 데이터·기록 미수신 안내에만 쓴다. 꾸밈이나 강조에 빌려 쓰지 않는다.",
         "section": "colors"
       },
       {
