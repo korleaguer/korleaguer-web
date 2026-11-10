@@ -158,7 +158,8 @@ export default function GameBars({ slots, role, days, minors = false }: Props) {
             {pitcher ? "등판 없음" : "결장"}
           </span>
         )}
-        <span>빈칸은 경기 없는 날</span>
+        {/* 마이너 기록에는 본인이 뛴 경기만 있어, 빈칸에는 팀만 경기한 날도 섞인다 */}
+        <span>{minors ? "빈칸은 뛰지 않은 날" : "빈칸은 경기 없는 날"}</span>
       </p>
 
       {/* 고른 경기 한 줄. 막대를 바꾸면 화면 낭독기가 새 줄을 읽는다 */}

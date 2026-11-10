@@ -1,15 +1,15 @@
-import type { CSSProperties, ReactNode } from "react";
+import type { CSSProperties } from "react";
 import Link from "next/link";
 import type { HitterPeriod, MyPlayer, PitcherPeriod } from "@/lib/api";
 import { formatEra, formatRate } from "@/lib/format";
 import { teamColor } from "@/lib/teams";
 import { GameRow } from "@/components/player/GameLog";
 import BandPhoto from "./BandPhoto";
-import { Numbers, SeasonNumbers, StatusBadge, SummaryLines } from "./FormSummary";
+import { Notice, Numbers, SeasonNumbers, StatusBadge, SummaryLines } from "./FormSummary";
 import GameBars from "./GameBars";
 import MyPlayerToggle from "./MyPlayerToggle";
 import { barSlots } from "./columns";
-import { metaLine, periodLabel, periodNote } from "./formLabels";
+import { metaLine, periodLabel, periodNote, statusLine } from "./formLabels";
 
 interface Props {
   entry: MyPlayer;
@@ -28,8 +28,9 @@ export default function FormCard({ entry, days, statsAvailable }: Props) {
   const note = periodNote(entry, days);
   const period = entry.hitting ?? entry.pitching;
   const pitcher = player.role === "PITCHER";
-  // FA는 소속 팀이 없으니 팀 색 대신 무채색 무대
-  const team = entry.status?.kind === "FA" ? "var(--no-team)" : teamColor(player.teamAbbr);
+  // FA는 소속 팀이 없으니 팀 색 대신 무채색 무대(사진이 없을 때 이니셜 원도 팀 색을 쓰지 않는다)
+  const freeAgent = entry.status?.kind === "FA";
+  const team = freeAgent ? "var(--no-team)" : teamColor(player.teamAbbr);
   const minors = level != null && level !== "MLB";
   const showsGames = statsAvailable && basis !== "SEASON" && basis !== "NONE" && games.length > 0;
 
@@ -37,7 +38,7 @@ export default function FormCard({ entry, days, statsAvailable }: Props) {
     <li className="card flex flex-col overflow-hidden">
       <div className="player-stage h-[5.75rem]" style={{ "--team": team } as CSSProperties}>
         {entry.status && <StatusBadge status={entry.status} />}
-        <BandPhoto nameKo={player.nameKo} photoUrl={player.photoUrl} teamAbbr={player.teamAbbr} />
+        <BandPhoto nameKo={player.nameKo} photoUrl={player.photoUrl} teamAbbr={freeAgent ? null : player.teamAbbr} />
       </div>
 
       <div className="flex flex-1 flex-col px-4 pb-2 pt-3">
@@ -62,11 +63,20 @@ export default function FormCard({ entry, days, statsAvailable }: Props) {
         ) : basis === "SEASON" && entry.seasonTotals ? (
           <SeasonNumbers totals={entry.seasonTotals} pitcher={pitcher} />
         ) : basis === "NONE" ? (
-          entry.status?.kind === "IL" && <Notice>이번 시즌 아직 메이저 경기가 없습니다.</Notice>
+          // 새 마이너 팀 합류처럼 상태 줄이 이미 까닭을 말하면 더 쓰지 않는다
+          entry.status?.kind === "IL" ? (
+            <Notice>이번 시즌 아직 메이저 경기가 없습니다.</Notice>
+          ) : (
+            !statusLine(entry) && <Notice>이번 시즌 아직 경기 기록이 없습니다.</Notice>
+          )
         ) : period ? (
           <>
-            {entry.hitting && <HitterNumbers period={periodLabel(basis, level, days)} hitting={entry.hitting} />}
-            {entry.pitching && <PitcherNumbers period={periodLabel(basis, level, days)} pitching={entry.pitching} />}
+            {entry.hitting && (
+              <HitterNumbers period={periodLabel(basis, level, days, entry.isFallback)} hitting={entry.hitting} />
+            )}
+            {entry.pitching && (
+              <PitcherNumbers period={periodLabel(basis, level, days, entry.isFallback)} pitching={entry.pitching} />
+            )}
             {/* 기간이 바뀌면 막대 자리도 바뀌므로 고른 막대를 처음부터 다시 정한다(key) */}
             <GameBars
               key={`${fromKst}~${toKst}`}
@@ -96,10 +106,6 @@ export default function FormCard({ entry, days, statsAvailable }: Props) {
       </div>
     </li>
   );
-}
-
-function Notice({ children }: { children: ReactNode }) {
-  return <p className="mt-3 rounded-xl bg-surface-2 px-3 py-2.5 text-sm text-muted">{children}</p>;
 }
 
 function HitterNumbers({ period, hitting }: { period: string; hitting: HitterPeriod }) {

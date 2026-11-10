@@ -54,13 +54,14 @@ export function SummaryLines({ entry }: { entry: MyPlayer }) {
   return (
     <>
       {hitter && play?.recent && (
-        <p className="mt-2 flex items-center gap-2" aria-label={`${hitter.label}: ${hitter.counts}`}>
+        // 칸은 눈으로만 보고, 화면 낭독기는 옆 글자("팀 최근 10경기 선발 9 · 교체 1 · 결장 0")를 읽는다
+        <p className="mt-2 flex items-center gap-2">
           <span aria-hidden className="inline-flex shrink-0 gap-[3px]">
             {play.recent.map((code, i) => (
               <span key={i} className={`size-[9px] rounded-[2.5px] ${STRIP[code]}`} />
             ))}
           </span>
-          <span aria-hidden className="flex min-w-0 flex-col leading-tight">
+          <span className="flex min-w-0 flex-col leading-tight">
             <span className="text-[0.6875rem] text-muted">{hitter.label}</span>
             <span className="text-[0.8125rem] font-semibold tabular-nums">{hitter.counts}</span>
           </span>
@@ -94,7 +95,7 @@ export function SeasonNumbers({ totals, pitcher }: { totals: SeasonTotals; pitch
   const main = totals.primary === "MINORS" ? totals.minors : totals.mlb;
   const other = totals.primary === "MINORS" ? totals.mlb : totals.minors;
   if (!main) {
-    return <p className="mt-3 rounded-xl bg-surface-2 px-3 py-2.5 text-sm text-muted">이번 시즌 기록이 없습니다.</p>;
+    return <Notice>이번 시즌 기록이 없습니다.</Notice>;
   }
   const label = `${totals.season} ${levelKo(main.level)} ${pitcher ? "평균자책점" : "타율"}`;
   const small: [string, string | number][] = pitcher
@@ -114,6 +115,11 @@ export function SeasonNumbers({ totals, pitcher }: { totals: SeasonTotals; pitch
       {other && <p className="mt-2.5 text-[0.8125rem] text-muted tabular-nums">{otherTotalsLine(other, pitcher)}</p>}
     </>
   );
+}
+
+/** 숫자·막대 자리의 회색 칸 안내 한 줄(기록이 없거나 못 받았을 때) */
+export function Notice({ children }: { children: ReactNode }) {
+  return <p className="mt-3 rounded-xl bg-surface-2 px-3 py-2.5 text-sm text-muted">{children}</p>;
 }
 
 /** 큰 숫자 하나(왼쪽) + 회색 칸 작은 숫자 셋(오른쪽). 기간 카드와 시즌 합계가 같이 쓴다 */

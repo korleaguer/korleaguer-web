@@ -330,7 +330,7 @@ export interface FormFact {
  * RECENT 오늘까지 · LAST_PLAYED 마지막으로 뛴 날까지 · BEFORE_INJURY 다치기 전 ·
  * SEASON 시즌 합계(seasonTotals) · NONE 보여 줄 기록 없음
  */
-export type CardBasis = "RECENT" | "LAST_PLAYED" | "BEFORE_INJURY" | "SEASON" | "NONE";
+export type CardBasis = "RECENT" | "LAST_PLAYED" | "BEFORE_INJURY" | "REHAB" | "SEASON" | "NONE";
 
 /** 한 단계의 시즌 합계. 타자는 atBats·hits·homeRuns·avg, 투수는 outs·inningsText·era·strikeouts·saves·holds */
 export interface LevelTotals {

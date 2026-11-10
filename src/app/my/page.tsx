@@ -56,6 +56,10 @@ async function MyContent({ searchParams }: Pick<PageProps<"/my">, "searchParams"
   // "비시즌이라"는 시즌 끝 카드가 있을 때만 쓴다(시즌 중에 FA 선수만 골랐을 수도 있다).
   const seasonView = picked.length > 0 && picked.every((e) => e.basis === "SEASON");
   const offSeason = picked.some((e) => e.status?.kind === "SEASON_OVER");
+  // '마지막으로 뛴 날까지' 안내는 실제로 그 기간을 보이는 카드가 있을 때만(마이너·부상자 명단 카드는 제 기간을 따로 적는다)
+  const showFallbackNote = picked.some(
+    (e) => e.basis === "LAST_PLAYED" || (e.basis === "REHAB" && e.isFallback),
+  );
   const subtitle = !my
     ? "좋아하는 선수를 골라 두면 최근 경기를 한곳에서 봅니다"
     : seasonView
@@ -71,7 +75,7 @@ async function MyContent({ searchParams }: Pick<PageProps<"/my">, "searchParams"
       {my && picked.length > 0 ? (
         <>
           {!seasonView && <PeriodTabs days={days} />}
-          {!seasonView && my.isFallback && (
+          {!seasonView && showFallbackNote && (
             <p className="px-1 text-[0.8125rem] text-muted">
               {`최근 ${days}일에 경기가 없는 선수는 그 선수가 마지막으로 뛴 날까지 ${days}일을 보여 줍니다.`}
             </p>
