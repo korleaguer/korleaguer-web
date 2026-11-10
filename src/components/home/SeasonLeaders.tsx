@@ -1,6 +1,6 @@
 import type { HitterSeason, RankingMinimums } from "@/lib/api";
 import { formatRate } from "@/lib/format";
-import { rankedHitter, topBy } from "@/lib/stats";
+import { rankedHitter, splitByMinors, topBy } from "@/lib/stats";
 import PlayerLink from "@/components/PlayerLink";
 import Section from "@/components/Section";
 
@@ -28,6 +28,7 @@ const LEADERS: Leader[] = [
 
 /**
  * 시즌 1위 카드 네 장(타율·홈런·OPS·타점). 공동 1위면 "이정후 외 2명".
+ * 올해 주로 마이너에서 뛴 선수는 빼고 메이저 선수끼리 비교한다.
  * 타율·OPS는 몇 타석만 뛴 선수가 1위가 되지 않게 순위 기준(최소 타석)을 채운 선수 중에서 고른다.
  */
 export default function SeasonLeaders({ season, statsAvailable, ranking, hitters }: Props) {
@@ -56,7 +57,8 @@ function LeaderCard({
   hitters: HitterSeason[];
 }) {
   const filtered = leader.ranked && ranking != null;
-  const candidates = filtered ? hitters.filter(rankedHitter(ranking)) : hitters;
+  const { majors } = splitByMinors(hitters);
+  const candidates = filtered ? majors.filter(rankedHitter(ranking)) : majors;
   // 값이 0보다 큰 선수 중 1위(공동 포함)
   const firsts = topBy(candidates, leader.pick, candidates.length).filter((r) => r.rank === 1);
   const first = firsts[0];

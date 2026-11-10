@@ -72,6 +72,10 @@ export interface HitterSeason {
   teamAbbr: string | null;
   photoUrl: string | null;
   games: number;
+  /** 같은 시즌 마이너(트리플A ~ 루키)에서 뛴 경기 수. 모르거나 오래된 api면 0 */
+  minorGames: number;
+  /** 올해 마이너 경기가 메이저 경기(games)보다 많다. 표에서 따로 묶고 1위 비교에서 뺀다 */
+  mainlyMinors: boolean;
   /** 타석. 순위 기준(RankingMinimums)과 비교한다 */
   plateAppearances: number;
   atBats: number;
@@ -95,6 +99,10 @@ export interface PitcherSeason {
   teamAbbr: string | null;
   photoUrl: string | null;
   games: number;
+  /** 같은 시즌 마이너(트리플A ~ 루키) 등판 경기 수. 모르거나 오래된 api면 0 */
+  minorGames: number;
+  /** 올해 마이너 등판이 메이저 등판(games)보다 많다. 표에서 따로 묶고 1위 비교에서 뺀다 */
+  mainlyMinors: boolean;
   outs: number;
   /** "5⅔" 처럼 api가 만든 이닝 표기 */
   inningsText: string;
@@ -135,9 +143,9 @@ export interface HomeResponse {
   };
   /** 순위 기준. 없으면(오래된 api) null이고, 그때는 거르지 않는다 */
   ranking: RankingMinimums | null;
-  /** 순위 기준을 채운 선수 먼저 타율 순, 그다음 못 채운 선수 타율 순 */
+  /** 주로 메이저인 선수 먼저(주로 마이너는 맨 아래). 묶음 안에서는 순위 기준을 채운 선수 먼저 타율 순, 그다음 못 채운 선수 타율 순 */
   hitters: HitterSeason[];
-  /** 순위 기준을 채운 투수 먼저 평균자책점 낮은 순, 그다음 못 채운 투수 평균자책점 낮은 순 */
+  /** 주로 메이저인 투수 먼저(주로 마이너는 맨 아래). 묶음 안에서는 순위 기준을 채운 투수 먼저 평균자책점 낮은 순 */
   pitchers: PitcherSeason[];
 }
 
@@ -291,13 +299,22 @@ function normalizeLine(line: GameLine): GameLine {
 
 /** 시즌 성적 한 줄(타자·투수 공통) */
 function normalizeSeason<
-  T extends { teamKo: string | null; teamAbbr: string | null; photoUrl: string | null },
+  T extends {
+    teamKo: string | null;
+    teamAbbr: string | null;
+    photoUrl: string | null;
+    minorGames: number;
+    mainlyMinors: boolean;
+  },
 >(row: T): T {
   return {
     ...row,
     teamKo: row.teamKo ?? null,
     teamAbbr: row.teamAbbr ?? null,
     photoUrl: httpUrl(row.photoUrl),
+    // 마이너 경기 수를 주지 않는 오래된 api면 모두 메이저 선수로 본다(지금처럼 한 묶음)
+    minorGames: row.minorGames ?? 0,
+    mainlyMinors: row.mainlyMinors === true,
   };
 }
 
