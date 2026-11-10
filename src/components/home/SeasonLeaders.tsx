@@ -34,7 +34,7 @@ export default function SeasonLeaders({ season, statsAvailable, hitters }: Props
           ))}
         </ul>
       ) : (
-        <p className="card px-4 py-5 text-sm text-muted">요금제가 없어 시즌 기록을 받지 못했습니다.</p>
+        <p className="card px-4 py-5 text-sm text-muted">아직 시즌 기록을 받지 못했습니다.</p>
       )}
     </Section>
   );

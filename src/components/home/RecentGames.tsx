@@ -17,7 +17,7 @@ interface Props {
   asOf: string;
 }
 
-/** 경기 상태(balldontlie status_state) → 점수 아래 작은 글씨. 모르는 상태는 비운다 */
+/** 경기 상태 → 점수 아래 작은 글씨. 모르는 상태는 비운다 */
 const STATUS: Record<string, string> = {
   final: "종료",
   in_progress: "경기 중",

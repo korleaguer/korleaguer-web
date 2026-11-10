@@ -2,7 +2,8 @@
 import { cache } from "react";
 import { connection } from "next/server";
 
-export type DataMode = "sample" | "bdl";
+/** mlb: MLB 공식 Stats API에서 받은 실제 데이터, sample: 테스트·오프라인용 지어낸 데이터 */
+export type DataMode = "sample" | "mlb";
 export type Role = "HITTER" | "PITCHER";
 export type GameResult = "W" | "L" | "T" | null;
 
@@ -28,7 +29,7 @@ export interface GameLine {
   opponentScore: number | null;
   /** 경기 전·중이면 null */
   result: GameResult;
-  /** balldontlie status_state 그대로 (scheduled, in_progress, final ...) */
+  /** 경기 상태 (scheduled, in_progress, final, postponed ...) */
   gameStatus: string;
   played: boolean;
   /** api가 만든 한국어 한 줄 기록. 안 뛰었으면 이유("결장", "경기 전" ...) */
