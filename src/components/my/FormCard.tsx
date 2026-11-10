@@ -34,7 +34,7 @@ export default function FormCard({ entry, days, statsAvailable }: Props) {
       <div className="player-stage h-[5.75rem]" style={{ "--team": teamColor(player.teamAbbr) } as CSSProperties}>
         {streak && (
           <span className="absolute left-3.5 top-3 z-10 inline-flex items-center gap-1.5 rounded-full bg-surface px-2.5 py-0.5 text-xs font-bold leading-5 shadow-[var(--shadow-card)]">
-            <span aria-hidden className="size-[7px] rounded-full bg-accent" />
+            <span aria-hidden className="size-[7px] rounded-full bg-hot" />
             {streak}
           </span>
         )}
@@ -110,7 +110,7 @@ function Numbers({
       <dl>
         <dt className="text-xs text-muted">{label}</dt>
         <dd className="mt-1 text-[2.75rem] font-extrabold leading-none tracking-[-0.03em] tabular-nums">{value}</dd>
-        <dd className="mt-1.5 text-xs font-semibold text-accent-ink">{note}</dd>
+        <dd className="mt-1.5 text-xs font-semibold text-muted">{note}</dd>
       </dl>
       <dl className="grid grid-cols-3 rounded-xl bg-surface-2 py-2 text-center">
         {small.map(([k, v]) => (
@@ -149,7 +149,7 @@ function PitcherNumbers({ period, pitching }: { period: string; pitching: Pitche
     <Numbers
       label={`${period} 평균자책점`}
       value={formatEra(pitching.era)}
-      note={pitching.games === 0 ? "이 기간 등판 없음" : `시즌 ${formatEra(pitching.seasonEra)}`}
+      note={<EraDelta value={pitching.era} season={pitching.seasonEra} played={pitching.games > 0} />}
       small={[
         ["등판", pitching.games],
         ["이닝", pitching.inningsText],
@@ -164,18 +164,38 @@ function RateDelta({ value, season, played }: { value: number | null; season: nu
   if (!played) return <>이 기간 출전 없음</>;
   if (value == null) return <>이 기간 타수 없음</>;
   if (season == null) return null;
-  // 소수 셋째 자리에서 비교해 화면 숫자와 어긋나지 않게 한다.
+  // 소수 셋째 자리에서 비교해 화면 숫자와 어긋나지 않게 한다. 타율은 높을수록 좋다
   const diff = Math.round(value * 1000) - Math.round(season * 1000);
-  if (diff === 0) return <>{`시즌 ${formatRate(season)} · 차이 없음`}</>;
+  return <Delta seasonText={formatRate(season)} diff={diff} better={diff > 0} amount={formatRate(Math.abs(diff) / 1000)} />;
+}
+
+/** "시즌 3.12보다 ▼0.85". 평균자책점은 낮을수록 좋다. 등판이 없거나 시즌 기록이 없으면 그 사실만 */
+function EraDelta({ value, season, played }: { value: number | null; season: number | null; played: boolean }) {
+  if (!played) return <>이 기간 등판 없음</>;
+  if (season == null) return null;
+  if (value == null) return <>{`시즌 ${formatEra(season)}`}</>;
+  // 소수 둘째 자리(화면 숫자)에서 비교한다
+  const diff = Math.round(value * 100) - Math.round(season * 100);
+  return <Delta seasonText={formatEra(season)} diff={diff} better={diff < 0} amount={(Math.abs(diff) / 100).toFixed(2)} />;
+}
+
+/**
+ * 시즌과 비교한 차이. 화살표는 숫자가 오른 쪽(▲)·내린 쪽(▼), 색은 좋아짐(불꽃 주황)·나빠짐(진한 파랑).
+ * 한국 중계·증권 화면처럼 오름 빨강 계열, 내림 파랑 계열로 읽힌다(타율 기준). 화면 낭독기는 "좋아짐/나빠짐"도 읽는다.
+ */
+function Delta({ seasonText, diff, better, amount }: { seasonText: string; diff: number; better: boolean; amount: string }) {
+  if (diff === 0) return <>{`시즌 ${seasonText} · 차이 없음`}</>;
   const up = diff > 0;
   return (
     <span className="inline-flex items-center gap-0.5">
-      {`시즌 ${formatRate(season)}보다`}
-      <svg aria-hidden viewBox="0 0 10 10" className={`ml-0.5 size-2.5 fill-current ${up ? "" : "rotate-180"}`}>
-        <path d="M5 1.5 9 8.5H1z" />
-      </svg>
-      <span className="sr-only">{up ? "높음" : "낮음"}</span>
-      <span className="tabular-nums">{formatRate(Math.abs(diff) / 1000)}</span>
+      {`시즌 ${seasonText}보다`}
+      <span className={`ml-0.5 inline-flex items-center gap-0.5 ${better ? "text-hot-ink" : "text-accent-ink"}`}>
+        <svg aria-hidden viewBox="0 0 10 10" className={`size-2.5 fill-current ${up ? "" : "rotate-180"}`}>
+          <path d="M5 1.5 9 8.5H1z" />
+        </svg>
+        <span className="sr-only">{`${up ? "높음" : "낮음"}, ${better ? "좋아짐" : "나빠짐"}`}</span>
+        <span className="tabular-nums">{amount}</span>
+      </span>
     </span>
   );
 }
