@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# impeccable 작업 중 임시 파일 (검토용 캡처, 시안, 빌드 상태, 개인 설정)
+# PRODUCT.md, DESIGN.md, .impeccable/design.json, .impeccable/surfaces/ 는 커밋한다
+.impeccable/review/
+.impeccable/mocks/
+.impeccable/build/
+.impeccable/config.local.json

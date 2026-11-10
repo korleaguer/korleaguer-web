@@ -1,99 +1,64 @@
 import type { GameLine } from "@/lib/api";
-import { formatDate, formatScore, formatTime } from "@/lib/format";
-import ResultBadge from "@/components/ResultBadge";
+import { formatDate, formatLineup, formatShortDate, formatSummary, formatTime, formatWeekday } from "@/lib/format";
+import ResultPill from "@/components/ResultPill";
+import ScoreText from "@/components/ScoreText";
 import Section from "@/components/Section";
-import { TableScroll, Td, Th } from "@/components/table";
+import TeamName from "@/components/TeamName";
 
-/** 경기 기록 (최신 경기부터). 좁은 화면은 목록, 넓은 화면은 표로 보여 준다. */
+/** 경기 기록 (최신 경기부터). 카드 한 장 안에 경기마다 한 줄: 왼쪽 날짜, 오른쪽 상대·점수·결과와 한 줄 기록 */
 export default function GameLog({ games }: { games: GameLine[] }) {
   return (
-    <Section title="경기 기록" aside={`${games.length}경기`}>
+    <Section id="games-title" title="경기 기록" aside={`${games.length}경기`}>
       {games.length === 0 ? (
-        <p className="px-4 py-6 text-sm text-muted">경기 기록이 없습니다.</p>
+        <p className="card px-4 py-5 text-sm text-muted">경기 기록이 없습니다.</p>
       ) : (
-        <>
-          <GameList games={games} />
-          <GameTable games={games} />
-        </>
+        <ul className="card divide-y divide-line">
+          {games.map((g) => (
+            <GameRow key={g.gameId} game={g} />
+          ))}
+        </ul>
       )}
     </Section>
   );
 }
 
-function dateTimeText(game: GameLine): string {
-  return `${formatDate(game.startTimeKst)} ${formatTime(game.startTimeKst)}`;
-}
+/** 경기 한 줄(선수 페이지 경기 기록, 내 선수 카드의 '모두 보기'가 같이 쓴다) */
+export function GameRow({ game: g }: { game: GameLine }) {
+  const hasScore = g.teamScore != null && g.opponentScore != null;
+  const lineup = formatLineup(g);
 
-function opponentText(game: GameLine): string {
-  return `${game.home ? "vs" : "@"} ${game.opponentKo}`;
-}
-
-/** 모바일: 한 경기 = 두 줄. 점수가 없으면(경기 전) 점수 부분을 뺀다. */
-function GameList({ games }: { games: GameLine[] }) {
   return (
-    <ul className="divide-y divide-line sm:hidden">
-      {games.map((g) => {
-        const info = [
-          dateTimeText(g),
-          `${opponentText(g)} (${g.home ? "홈" : "원정"})`,
-          formatScore(g),
-        ].filter(Boolean);
-
-        return (
-          <li key={g.gameId} className="flex gap-3 px-4 py-2.5">
-            <ResultBadge result={g.result} />
-            <div className="min-w-0 flex-1">
-              <p className="text-xs text-muted tabular-nums">{info.join(" · ")}</p>
-              <p className={`mt-0.5 text-sm ${g.played ? "" : "text-muted"}`}>{g.summary}</p>
-            </div>
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
-
-/** 넓은 화면: 날짜 · 상대 · 결과 · 기록 표 */
-function GameTable({ games }: { games: GameLine[] }) {
-  return (
-    <div className="hidden sm:block">
-      <TableScroll>
-        <thead>
-          <tr>
-            <Th align="left">날짜</Th>
-            <Th align="left">상대</Th>
-            <Th align="left">결과</Th>
-            <Th align="left">기록</Th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-line">
-          {games.map((g) => {
-            const score = formatScore(g);
-            return (
-              <tr key={g.gameId}>
-                <Td align="left">{dateTimeText(g)}</Td>
-                <Td align="left">
-                  {opponentText(g)}
-                  <span className="ml-1.5 text-xs text-muted">{g.home ? "홈" : "원정"}</span>
-                </Td>
-                <Td align="left">
-                  <span className="inline-flex items-center gap-1.5">
-                    <ResultBadge result={g.result} />
-                    {score && <span className="text-xs text-muted">{score}</span>}
-                  </span>
-                </Td>
-                {/* 기록 문장은 길 수 있어서 줄바꿈을 허용한다 */}
-                <Td
-                  align="left"
-                  className={`w-full whitespace-normal ${g.played ? "" : "text-muted"}`}
-                >
-                  {g.summary}
-                </Td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </TableScroll>
-    </div>
+    <li className="flex gap-3 p-3.5">
+      {/* 눈에는 "9.27 / 일", 화면 낭독기에는 "9월 27일(일)". 10~12월("10.16")도 한 줄에 들어가는 너비 */}
+      <p className="w-12 shrink-0 text-center">
+        <span aria-hidden className="block whitespace-nowrap text-base font-bold leading-snug tabular-nums">
+          {formatShortDate(g.startTimeKst)}
+        </span>
+        <span aria-hidden className="block text-xs text-muted">
+          {formatWeekday(g.startTimeKst)}
+        </span>
+        <span className="sr-only">{formatDate(g.startTimeKst)}</span>
+      </p>
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[0.8125rem] text-muted">
+          <span>vs</span>
+          <TeamName teamKo={g.opponentKo} teamAbbr={g.opponentAbbr} />
+          <span>{`· ${g.home ? "홈" : "원정"}`}</span>
+          {lineup && <span>{`· ${lineup}`}</span>}
+          {/* 경기 전이면 점수 대신 시작 시각 */}
+          {hasScore ? (
+            <ScoreText line={g} className="text-sm font-bold text-foreground" />
+          ) : (
+            <span className="tabular-nums">{`· ${formatTime(g.startTimeKst)}`}</span>
+          )}
+          <ResultPill result={g.result} className="ml-auto" />
+        </div>
+        <p
+          className={`mt-1 text-[0.9375rem] leading-[1.45] text-pretty ${g.played ? "font-semibold" : "font-medium text-muted"}`}
+        >
+          {formatSummary(g.summary)}
+        </p>
+      </div>
+    </li>
   );
 }

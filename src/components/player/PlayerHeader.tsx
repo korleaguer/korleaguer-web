@@ -1,96 +1,41 @@
-import type { ReactNode } from "react";
+import type { CSSProperties } from "react";
 import type { PlayerDetail } from "@/lib/api";
-import { formatAge, formatBirthDate, formatBody } from "@/lib/format";
+import { teamColor } from "@/lib/teams";
+import InfoChips from "@/components/InfoChips";
 import PlayerAvatar from "@/components/PlayerAvatar";
-import TeamName from "@/components/TeamName";
+import MyPlayerToggle from "@/components/my/MyPlayerToggle";
 
-interface Info {
-  label: string;
-  value: string;
-  /** 값이 길면 두 칸을 쓴다 */
-  wide?: boolean;
-}
-
-/** 정보 칸. 값이 없는 항목은 만들지 않는다. */
-function infoItems(player: PlayerDetail): Info[] {
-  const age = formatAge(player.age);
-  const birth = formatBirthDate(player.birthDate);
-  // "만 28세 (1998.08.20)". 하나만 있으면 그것만.
-  const ageText = age && birth ? `${age} (${birth})` : (age ?? birth);
-  const body = formatBody(player.heightCm, player.weightKg);
-
-  const items: (Info | null)[] = [
-    player.positionKo ? { label: "포지션", value: player.positionKo } : null,
-    player.jersey ? { label: "등번호", value: `#${player.jersey}` } : null,
-    ageText ? { label: "나이", value: ageText } : null,
-    body ? { label: "키·몸무게", value: body } : null,
-    player.batsThrowsKo ? { label: "투타", value: player.batsThrowsKo } : null,
-    player.debutYear != null ? { label: "MLB 데뷔", value: `${player.debutYear}년` } : null,
-    player.birthPlace ? { label: "출생지", value: player.birthPlace, wide: true } : null,
-    player.careerKo ? { label: "한국 시절", value: player.careerKo, wide: true } : null,
-  ];
-  return items.filter((item): item is Info => item !== null);
-}
-
-/** 선수 사진·이름·팀과 정보 칸. 매칭 전이라 비어 있는 항목은 숨긴다. */
-export default function PlayerHeader({ player }: { player: PlayerDetail }) {
-  const items = infoItems(player);
+/**
+ * 선수 페이지 머리 카드. 위쪽 팀 색 띠에 흰 테두리 원형 사진이 걸치고, 아래에 이름 · 영문 이름 · 기본 정보 알약.
+ * 사진 오른쪽에 '내 선수' 넣기 버튼. 띠 색은 globals.css의 .team-band가 정한다(다크 모드에서는 어두운 팀 색을 밝힌다).
+ */
+export default function PlayerHeader({ player, isMine }: { player: PlayerDetail; isMine: boolean }) {
+  const color = teamColor(player.teamAbbr);
 
   return (
-    <div className="rounded-xl border border-line bg-surface p-4">
-      <div className="flex items-center gap-4">
-        <PlayerAvatar
-          size="lg"
-          nameKo={player.nameKo}
-          photoUrl={player.photoUrl}
-          teamAbbr={player.teamAbbr}
-        />
-        <div className="min-w-0">
-          <h1 className="flex flex-wrap items-baseline gap-x-2">
-            <span className="text-2xl font-extrabold tracking-tight">{player.nameKo}</span>
-            {player.nameEn && <span className="text-sm text-muted">{player.nameEn}</span>}
-          </h1>
-          {player.teamKo && (
-            <p className="mt-1.5 flex flex-wrap items-center gap-x-1.5 text-sm font-medium">
-              <TeamName teamKo={player.teamKo} teamAbbr={player.teamAbbr} size="md" />
-              {player.teamEn && <span className="text-muted">{`(${player.teamEn})`}</span>}
-            </p>
-          )}
-          {player.mlbUrl && (
-            <p className="mt-2 text-sm">
-              <a
-                href={player.mlbUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-semibold text-accent hover:underline"
-              >
-                MLB 공식 페이지 ↗<span className="sr-only"> (새 탭에서 열림)</span>
-              </a>
-            </p>
-          )}
-          {!player.teamKo && !player.positionKo && (
-            <p className="mt-1 text-xs text-muted">아직 선수 정보를 연결하지 못했습니다.</p>
-          )}
+    <section aria-labelledby="player-name" className="card overflow-hidden">
+      <div aria-hidden className="team-band h-[68px]" style={{ "--team": color } as CSSProperties} />
+      <div className="-mt-11 px-4 pb-4 sm:px-5 sm:pb-5">
+        <div className="flex items-end justify-between gap-3">
+          <PlayerAvatar
+            size={96}
+            ring
+            nameKo={player.nameKo}
+            photoUrl={player.photoUrl}
+            teamAbbr={player.teamAbbr}
+          />
+          <MyPlayerToggle playerId={player.id} nameKo={player.nameKo} initialOn={isMine} variant="pill" />
         </div>
+        <h1 id="player-name" className="mt-2 text-2xl font-extrabold leading-tight tracking-[-0.02em]">
+          {player.nameKo}
+        </h1>
+        {player.nameEn && (
+          <p className="mt-0.5 text-[0.6875rem] font-medium uppercase tracking-[0.08em] text-muted">
+            {player.nameEn}
+          </p>
+        )}
+        <InfoChips player={player} className="mt-3" />
       </div>
-      {items.length > 0 && (
-        <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-line pt-4 text-sm sm:grid-cols-3 lg:grid-cols-4">
-          {items.map((item) => (
-            <Meta key={item.label} label={item.label} wide={item.wide}>
-              {item.value}
-            </Meta>
-          ))}
-        </dl>
-      )}
-    </div>
-  );
-}
-
-function Meta({ label, wide, children }: { label: string; wide?: boolean; children: ReactNode }) {
-  return (
-    <div className={`min-w-0 ${wide ? "col-span-2" : ""}`}>
-      <dt className="text-xs text-muted">{label}</dt>
-      <dd className="mt-0.5 break-words font-medium">{children}</dd>
-    </div>
+    </section>
   );
 }

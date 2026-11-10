@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { getPlayer } from "@/lib/api";
+import { readMyPlayers } from "@/lib/myPlayers";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import DataBanners from "@/components/DataBanners";
 import LoadingBlock from "@/components/LoadingBlock";
 import NotFoundNotice from "@/components/NotFoundNotice";
 import GameLog from "@/components/player/GameLog";
 import PlayerHeader from "@/components/player/PlayerHeader";
+import PlayerInfo from "@/components/player/PlayerInfo";
+import RosterMoves from "@/components/player/RosterMoves";
 import SeasonSummary from "@/components/player/SeasonSummary";
 
 type Props = PageProps<"/players/[id]">;
@@ -16,7 +19,7 @@ function parseId(id: string): number | null {
   return /^[1-9]\d{0,9}$/.test(id) ? Number(id) : null;
 }
 
-// <title>: "이정후 2026 기록 · 코리거" (뒷부분은 layout의 template이 붙인다)
+// <title>: "이정후 2026 기록 · KOR Leaguer" (뒷부분은 layout의 template이 붙인다)
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const id = parseId((await params).id);
   const result = id == null ? null : await getPlayer(id);
@@ -49,24 +52,34 @@ async function PlayerContent({ params }: Pick<Props, "params">) {
   const id = parseId((await params).id);
   if (id == null) return <NotFoundNotice />;
 
-  const result = await getPlayer(id);
+  const [result, myIds] = await Promise.all([getPlayer(id), readMyPlayers()]);
   if (!result.ok) {
     if (result.failure === "notFound") return <NotFoundNotice />;
     return <ApiErrorNotice failure={result.failure} />;
   }
 
-  const { dataMode, statsAvailable, season, player, hitting, pitching, games } = result.data;
+  const { dataMode, statsAvailable, season, player, hitting, pitching, games, moves } = result.data;
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 sm:space-y-5">
       <DataBanners dataMode={dataMode} statsAvailable={statsAvailable} />
-      <PlayerHeader player={player} />
-      <SeasonSummary
-        season={season}
-        statsAvailable={statsAvailable}
-        hitting={hitting}
-        pitching={pitching}
-      />
-      <GameLog games={games} />
+      <PlayerHeader player={player} isMine={myIds.includes(player.id)} />
+      {/* 넓은 화면: 왼쪽 시즌 성적·경기 기록 | 오른쪽 선수 정보 */}
+      <div className="space-y-7 pt-2 lg:grid lg:grid-cols-[minmax(0,1fr)_21.25rem] lg:items-start lg:gap-x-4 lg:space-y-0">
+        <div className="min-w-0 space-y-7">
+          <SeasonSummary
+            season={season}
+            statsAvailable={statsAvailable}
+            hitting={hitting}
+            pitching={pitching}
+          />
+          <GameLog games={games} />
+        </div>
+        {/* 오른쪽 칸: 선수 정보 + 이동 기록(메이저·마이너 오간 날짜) */}
+        <div className="min-w-0 space-y-7">
+          <PlayerInfo player={player} />
+          {moves && <RosterMoves moves={moves} />}
+        </div>
+      </div>
     </div>
   );
 }

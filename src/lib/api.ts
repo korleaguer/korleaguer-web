@@ -2,7 +2,8 @@
 import { cache } from "react";
 import { connection } from "next/server";
 
-export type DataMode = "sample" | "bdl";
+/** mlb: MLB 공식 Stats API에서 받은 실제 데이터, sample: 테스트·오프라인용 지어낸 데이터 */
+export type DataMode = "sample" | "mlb";
 export type Role = "HITTER" | "PITCHER";
 export type GameResult = "W" | "L" | "T" | null;
 
@@ -28,11 +29,41 @@ export interface GameLine {
   opponentScore: number | null;
   /** 경기 전·중이면 null */
   result: GameResult;
-  /** balldontlie status_state 그대로 (scheduled, in_progress, final ...) */
+  /** 경기 상태 (scheduled, in_progress, final, postponed ...) */
   gameStatus: string;
   played: boolean;
   /** api가 만든 한국어 한 줄 기록. 안 뛰었으면 이유("결장", "경기 전" ...) */
   summary: string;
+  /** 이 경기 타격 숫자. 안 뛰었거나 기록을 못 받았으면 null */
+  batting: GameBatting | null;
+  /** 이 경기 투구 숫자. 안 던졌거나 기록을 못 받았으면 null */
+  pitching: GamePitching | null;
+  /** 선발(STARTER)인지 교체(SUB)로 나왔는지. 안 뛰었거나 모르면 null (MLB 공식 박스스코어 기준) */
+  lineup: Lineup | null;
+}
+
+export type Lineup = "STARTER" | "SUB";
+
+export interface GameBatting {
+  atBats: number;
+  hits: number;
+  homeRuns: number;
+  rbi: number;
+  walks: number;
+  stolenBases: number;
+}
+
+export interface GamePitching {
+  /** 잡은 아웃 수. 모르면 null */
+  outs: number | null;
+  /** "1⅔". 아웃 수를 모르면 null */
+  inningsText: string | null;
+  runs: number;
+  earnedRuns: number;
+  strikeouts: number;
+  win: boolean;
+  loss: boolean;
+  save: boolean;
 }
 
 export interface HitterSeason {
@@ -42,6 +73,12 @@ export interface HitterSeason {
   teamAbbr: string | null;
   photoUrl: string | null;
   games: number;
+  /** 같은 시즌 마이너(트리플A ~ 루키)에서 뛴 경기 수. 모르거나 오래된 api면 0 */
+  minorGames: number;
+  /** 올해 마이너 경기가 메이저 경기(games)보다 많다. 표에서 따로 묶고 1위 비교에서 뺀다 */
+  mainlyMinors: boolean;
+  /** 타석. 순위 기준(RankingMinimums)과 비교한다 */
+  plateAppearances: number;
   atBats: number;
   hits: number;
   doubles: number;
@@ -63,6 +100,10 @@ export interface PitcherSeason {
   teamAbbr: string | null;
   photoUrl: string | null;
   games: number;
+  /** 같은 시즌 마이너(트리플A ~ 루키) 등판 경기 수. 모르거나 오래된 api면 0 */
+  minorGames: number;
+  /** 올해 마이너 등판이 메이저 등판(games)보다 많다. 표에서 따로 묶고 1위 비교에서 뺀다 */
+  mainlyMinors: boolean;
   outs: number;
   /** "5⅔" 처럼 api가 만든 이닝 표기 */
   inningsText: string;
@@ -73,6 +114,19 @@ export interface PitcherSeason {
   strikeouts: number;
   walks: number;
   hitsAllowed: number;
+}
+
+/**
+ * 시즌 순위(타율·OPS·평균자책점)에 넣는 최소 표본. 몇 타석만 뛴 선수가 1위가 되지 않게 거른다.
+ * 타자는 팀 경기 수 × 0.5타석(최소 10), 투수는 팀 경기 수 × 0.2이닝(최소 5이닝). 홈런·타점처럼 쌓이는 기록에는 쓰지 않는다.
+ */
+export interface RankingMinimums {
+  /** 시즌이 얼마나 지났는지(우리 선수 구단 중 끝난 정규시즌 경기가 가장 많은 구단의 경기 수) */
+  teamGames: number;
+  minPlateAppearances: number;
+  minOuts: number;
+  /** "32⅔" 처럼 api가 만든 이닝 표기 */
+  minInningsText: string;
 }
 
 /** GET /api/home */
@@ -88,9 +142,11 @@ export interface HomeResponse {
     /** 선수당 한 줄 */
     lines: GameLine[];
   };
-  /** 타율 높은 순 */
+  /** 순위 기준. 없으면(오래된 api) null이고, 그때는 거르지 않는다 */
+  ranking: RankingMinimums | null;
+  /** 주로 메이저인 선수 먼저(주로 마이너는 맨 아래). 묶음 안에서는 순위 기준을 채운 선수 먼저 타율 순, 그다음 못 채운 선수 타율 순 */
   hitters: HitterSeason[];
-  /** 평균자책점 낮은 순 */
+  /** 주로 메이저인 투수 먼저(주로 마이너는 맨 아래). 묶음 안에서는 순위 기준을 채운 투수 먼저 평균자책점 낮은 순 */
   pitchers: PitcherSeason[];
 }
 
@@ -110,6 +166,26 @@ export interface PlayerSummary {
   age: number | null;
   /** 등번호. 숫자가 아닐 수도 있어서 문자열 */
   jersey: string | null;
+  /** 지금 메이저인지 마이너인지(MLB 공식 API 기준). 소속이 없거나 모르면 null */
+  level: Level | null;
+  /** MLB 공식 API가 알려 준 지금 소속 팀 이름. 마이너면 "St. Paul Saints"처럼 영어 */
+  levelTeam: string | null;
+}
+
+export type Level = "MLB" | "MINORS";
+
+/** 선수 이동 기록 한 줄(콜업, 마이너 강등, 부상자 명단 등) */
+export interface RosterMove {
+  /** "2026-08-30" */
+  date: string;
+  /** MLB 거래 종류 코드(OPT, CU, OUT ...) */
+  typeCode: string;
+  /** "마이너 강등(옵션)"처럼 api가 만든 짧은 한국어 */
+  labelKo: string;
+  fromTeam: string | null;
+  toTeam: string | null;
+  /** 옮겨 간 곳이 메이저인지 마이너인지. 모르면 null */
+  toLevel: Level | null;
 }
 
 export interface PlayerDetail extends PlayerSummary {
@@ -138,6 +214,68 @@ export interface PlayerResponse {
   pitching: PitcherSeason | null;
   /** 최신 경기부터 */
   games: GameLine[];
+  /** 이동 기록, 최신부터. 이동 기록을 주지 않는 오래된 api면 null(없다고 단정하지 않는다) */
+  moves: RosterMove[] | null;
+}
+
+/** 내 선수 카드의 기간 합계(타자). avg는 타수가 없으면 null */
+export interface HitterPeriod {
+  games: number;
+  atBats: number;
+  hits: number;
+  homeRuns: number;
+  rbi: number;
+  walks: number;
+  stolenBases: number;
+  avg: number | null;
+  /** 이번 정규시즌 타율(비교용) */
+  seasonAvg: number | null;
+}
+
+/** 내 선수 카드의 기간 합계(투수). era는 이닝이 없으면 null */
+export interface PitcherPeriod {
+  games: number;
+  outs: number;
+  inningsText: string;
+  earnedRuns: number;
+  era: number | null;
+  strikeouts: number;
+  wins: number;
+  losses: number;
+  saves: number;
+  /** 이번 정규시즌 평균자책점(비교용) */
+  seasonEra: number | null;
+}
+
+/** 내 선수 한 명: 선수 정보 + 기간 합계 + 연속 기록 + 기간 안 경기(최신부터) */
+export interface MyPlayer {
+  player: PlayerSummary;
+  /** 이 선수 카드의 기간 첫날·마지막 날(한국 날짜). 보통은 맨 위 기간과 같다 */
+  fromKst: string;
+  toKst: string;
+  /** 최근 기간에 구단 경기도 본인 출전도 없어(구단 시즌 끝·마이너) 마지막으로 뛴 날까지로 당겼으면 true */
+  isFallback: boolean;
+  hitting: HitterPeriod | null;
+  pitching: PitcherPeriod | null;
+  /** 타자는 연속 안타, 투수는 연속 무실점 경기 수. 기록을 못 받았으면 null */
+  streak: number | null;
+  games: GameLine[];
+}
+
+/** GET /api/my?ids=1,2&days=7 */
+export interface MyPlayersResponse {
+  dataMode: DataMode;
+  statsAvailable: boolean;
+  season: number;
+  generatedAt: string;
+  days: number;
+  /** 최근 days일의 첫날·마지막 날(한국 날짜, "2026-09-21"). 선수마다 기간은 MyPlayer에 있다 */
+  fromKst: string;
+  toKst: string;
+  /** 한 명이라도 마지막으로 뛴 날까지로 기간을 당겼으면 true */
+  isFallback: boolean;
+  /** 고른 순서대로. 없는 선수는 빠진다 */
+  players: MyPlayer[];
 }
 
 // ---- 응답 보정 ----
@@ -159,18 +297,30 @@ function normalizeLine(line: GameLine): GameLine {
     opponentScore: line.opponentScore ?? null,
     result: line.result ?? null,
     summary: line.summary ?? "",
+    batting: line.batting ?? null,
+    pitching: line.pitching ?? null,
+    lineup: line.lineup === "STARTER" || line.lineup === "SUB" ? line.lineup : null,
   };
 }
 
 /** 시즌 성적 한 줄(타자·투수 공통) */
 function normalizeSeason<
-  T extends { teamKo: string | null; teamAbbr: string | null; photoUrl: string | null },
+  T extends {
+    teamKo: string | null;
+    teamAbbr: string | null;
+    photoUrl: string | null;
+    minorGames: number;
+    mainlyMinors: boolean;
+  },
 >(row: T): T {
   return {
     ...row,
     teamKo: row.teamKo ?? null,
     teamAbbr: row.teamAbbr ?? null,
     photoUrl: httpUrl(row.photoUrl),
+    // 마이너 경기 수를 주지 않는 오래된 api면 모두 메이저 선수로 본다(지금처럼 한 묶음)
+    minorGames: row.minorGames ?? 0,
+    mainlyMinors: row.mainlyMinors === true,
   };
 }
 
@@ -182,6 +332,7 @@ function normalizeHome(raw: HomeResponse): HomeResponse {
       dateKst: raw.recent?.dateKst ?? null,
       lines: (raw.recent?.lines ?? []).map(normalizeLine),
     },
+    ranking: raw.ranking ?? null,
     hitters: (raw.hitters ?? []).map(normalizeSeason),
     pitchers: (raw.pitchers ?? []).map(normalizeSeason),
   };
@@ -199,6 +350,8 @@ function normalizeSummary<T extends PlayerSummary>(p: T): T {
     photoUrl: httpUrl(p.photoUrl),
     age: p.age ?? null,
     jersey: String(p.jersey ?? "").trim() || null,
+    level: p.level === "MLB" || p.level === "MINORS" ? p.level : null,
+    levelTeam: p.levelTeam ?? null,
   };
 }
 
@@ -225,6 +378,26 @@ function normalizePlayer(raw: PlayerResponse): PlayerResponse {
     hitting: raw.hitting ? normalizeSeason(raw.hitting) : null,
     pitching: raw.pitching ? normalizeSeason(raw.pitching) : null,
     games: (raw.games ?? []).map(normalizeLine),
+    moves: raw.moves ?? null,
+  };
+}
+
+function normalizeMy(raw: MyPlayersResponse): MyPlayersResponse {
+  return {
+    ...raw,
+    isFallback: raw.isFallback ?? false,
+    players: (raw.players ?? []).map((p) => ({
+      ...p,
+      // 선수별 기간이 없으면(오래된 api) 모두 맨 위 기간을 같이 쓴다(당겼는지도 맨 위 값)
+      fromKst: p.fromKst ?? raw.fromKst,
+      toKst: p.toKst ?? raw.toKst,
+      isFallback: p.isFallback ?? raw.isFallback ?? false,
+      player: normalizeSummary(p.player),
+      hitting: p.hitting ?? null,
+      pitching: p.pitching ?? null,
+      streak: p.streak ?? null,
+      games: (p.games ?? []).map(normalizeLine),
+    })),
   };
 }
 
@@ -273,3 +446,13 @@ export const getPlayers = cache(() => fetchApi("/api/players", normalizePlayers)
 export const getPlayer = cache((id: number) =>
   fetchApi(`/api/players/${id}`, normalizePlayer),
 );
+
+/** GET /api/my: 고른 선수들의 최근 days일 경기. ids는 "1,5,2"처럼 1명 이상(빈 목록은 api가 400) */
+const getMyPlayersCached = cache((ids: string, days: number) =>
+  fetchApi(`/api/my?ids=${ids}&days=${days}`, normalizeMy),
+);
+
+// cache는 인자를 값이 아니라 참조로 비교하므로, 배열을 문자열로 바꿔 넘긴다.
+export function getMyPlayers(ids: readonly number[], days: number) {
+  return getMyPlayersCached(ids.join(","), days);
+}
