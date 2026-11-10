@@ -45,6 +45,8 @@ api가 꺼져 있어도 화면은 뜬다. 이때는 "데이터 서버에 연결�
 iOS·안드로이드 앱([korleaguer-app](https://github.com/korleaguer/korleaguer-app), Expo)은 이 웹을 웹뷰로 띄운다. 앱은 문서를 그리기 전에 `<html data-app="ios|android">`를 붙이고, User-Agent 끝에 `KORLeaguerApp/<버전> (<기기>)`를 덧붙인다.
 
 - `in-app:` Tailwind 변형(`globals.css`)은 앱 안에서만 켜진다. 예: 위쪽 메뉴는 `in-app:hidden`(앱 아래 탭이 대신한다).
+- 앱에는 브라우저의 뒤로 버튼이 없어서, 탭 첫 화면(`/`·`/players`·`/my`)이 아닌 화면(선수 페이지 등)의 머리글 왼쪽에 '뒤로' 버튼을 둔다(`components/AppBackButton.tsx`, 앱 안에서만 보임). 돌아갈 기록이 없으면 선수 목록이나 홈으로 간다.
+- 앱 안에서는 로고를 누를 수 없다(`in-app:pointer-events-none`). 홈은 앱 아래 '홈' 탭이 맡고, 다른 탭에서 로고로 홈을 열면 탭 표시와 화면이 어긋난다.
 - 앱 안에서는 누를 때 회색 번쩍임, 길게 눌러 뜨는 메뉴, 글자 선택을 끈다(입력칸 제외). 화면 확대는 앱이 막는다.
 - 앱 이벤트(`window`의 `korleaguer:app`, `components/AppBridge.tsx`): 다른 탭에 다녀오면 `{type:"focus"}` → `router.refresh()`로 최신 데이터(스크롤 유지). 보고 있는 탭을 또 누르면 `{type:"tab-root", path}` → 그 탭 첫 화면이면 맨 위로, 아니면 첫 화면으로.
 - 앱이 React보다 먼저 `<html>` 속성을 바꾸므로 `<html>`에 `suppressHydrationWarning`을 둔다.
