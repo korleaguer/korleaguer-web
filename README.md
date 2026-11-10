@@ -47,13 +47,14 @@ api가 꺼져 있어도 화면은 뜬다. 이때는 "데이터 서버에 연결�
 
 ## 배포
 
-GitHub Release를 만들면 Actions(`.github/workflows/deploy.yml`)가 이미지(`Dockerfile`, Next.js `standalone` 출력)를 만들어
-GHCR(`ghcr.io/korleaguer/korleaguer-web`)에 올리고, SSH로 서버(pigeon.ddns.net)에 접속해 새 컨테이너로 바꾼다(끊김 없이, 실패하면 옛 버전 유지).
+develop에 병합되면 Actions(`.github/workflows/deploy.yml`)가 검사 → 버전 정하기 → 이미지(`Dockerfile`, Next.js `standalone` 출력,
+GHCR `ghcr.io/korleaguer/korleaguer-web`) → SSH로 서버(pigeon.ddns.net)에 접속해 새 컨테이너로 바꾸기(끊김 없이, 실패하면 옛 버전 유지) →
+공개 주소의 `/healthz`가 새 버전을 주는지 확인 → 태그·릴리스 노트까지 알아서 한다(지속 배포).
 서버 구성(Caddy·web·api·MySQL), 처음 준비, 되돌리기는 korleaguer-server 저장소의 `deploy/README.md`.
 
 - 서버에서는 `API_BASE_URL=http://api:8080`(Docker 내부망)으로 API를 부른다. 브라우저는 API를 직접 부르지 않는다.
-- 컨테이너 헬스체크는 `/healthz`(API 상태와 상관없이 웹 서버가 떠 있으면 200).
-- 팀 로고를 끄려면 저장소 Actions variable `NEXT_PUBLIC_TEAM_LOGOS`를 `off`로 두고 다시 Release(또는 같은 버전 재빌드)한다. 빌드할 때 박히는 값이라 수동 재배포(롤백)만으로는 바뀌지 않는다.
+- 컨테이너 헬스체크는 `/healthz`(API 상태와 상관없이 웹 서버가 떠 있으면 200, 본문은 `ok 0.2.0`처럼 배포 버전. 개발 서버는 `ok dev`).
+- 팀 로고를 끄려면 저장소 Actions variable `NEXT_PUBLIC_TEAM_LOGOS`를 `off`로 두고 다음 병합으로 새로 배포한다. 빌드할 때 박히는 값이라 수동 재배포(롤백)만으로는 바뀌지 않는다.
 
 ```bash
 docker build -t korleaguer-web:local .   # 이미지만 만들어 보기
