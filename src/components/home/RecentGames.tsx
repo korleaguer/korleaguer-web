@@ -134,7 +134,7 @@ function GameCard({ line, index }: { line: GameLine; index: number }) {
           >
             {formatSummary(line.summary)}
           </p>
-          <Highlights batting={line.batting} pitching={line.pitching} className="mt-1.5" />
+          <Highlights line={line} className="mt-1.5" />
         </div>
       </div>
     </li>

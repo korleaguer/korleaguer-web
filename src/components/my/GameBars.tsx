@@ -173,7 +173,7 @@ export default function GameBars({ slots, role, days }: Props) {
             >
               {formatSummary(current.summary)}
             </p>
-            <Highlights batting={current.batting} pitching={current.pitching} className="mt-1.5" />
+            <Highlights line={current} className="mt-1.5" />
           </>
         ) : (
           <p className="text-sm text-muted">이 기간에는 경기가 없습니다.</p>

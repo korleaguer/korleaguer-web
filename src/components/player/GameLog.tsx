@@ -59,7 +59,7 @@ export function GameRow({ game: g }: { game: GameLine }) {
         >
           {formatSummary(g.summary)}
         </p>
-        <Highlights batting={g.batting} pitching={g.pitching} className="mt-1.5" />
+        <Highlights line={g} className="mt-1.5" />
       </div>
     </li>
   );
