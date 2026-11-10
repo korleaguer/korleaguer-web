@@ -77,6 +77,8 @@ export interface HitterSeason {
   minorGames: number;
   /** 올해 마이너 경기가 메이저 경기(games)보다 많다. 표에서 따로 묶고 1위 비교에서 뺀다 */
   mainlyMinors: boolean;
+  /** 마이너 시즌 성적 줄이면 단계("트리플A" 등, teamKo는 마지막 마이너 팀). 메이저 줄이면 null */
+  levelKo: string | null;
   /** 타석. 순위 기준(RankingMinimums)과 비교한다 */
   plateAppearances: number;
   atBats: number;
@@ -104,6 +106,8 @@ export interface PitcherSeason {
   minorGames: number;
   /** 올해 마이너 등판이 메이저 등판(games)보다 많다. 표에서 따로 묶고 1위 비교에서 뺀다 */
   mainlyMinors: boolean;
+  /** 마이너 시즌 성적 줄이면 단계("트리플A" 등, teamKo는 마지막 마이너 팀). 메이저 줄이면 null */
+  levelKo: string | null;
   outs: number;
   /** "5⅔" 처럼 api가 만든 이닝 표기 */
   inningsText: string;
@@ -148,6 +152,9 @@ export interface HomeResponse {
   hitters: HitterSeason[];
   /** 주로 메이저인 투수 먼저(주로 마이너는 맨 아래). 묶음 안에서는 순위 기준을 채운 투수 먼저 평균자책점 낮은 순 */
   pitchers: PitcherSeason[];
+  /** 마이너 시즌 성적(마이너 경기별 기록 합산), 마이너 경기 많은 순. 오래된 api면 빈 배열 */
+  minorHitters: HitterSeason[];
+  minorPitchers: PitcherSeason[];
 }
 
 /** GET /api/players 의 한 항목. 매칭 전 선수는 이름(한글)·역할 말고는 null일 수 있다 */
@@ -406,6 +413,8 @@ function normalizeSeason<
     photoUrl: string | null;
     minorGames: number;
     mainlyMinors: boolean;
+  /** 마이너 시즌 성적 줄이면 단계("트리플A" 등, teamKo는 마지막 마이너 팀). 메이저 줄이면 null */
+  levelKo: string | null;
   },
 >(row: T): T {
   return {
@@ -416,6 +425,7 @@ function normalizeSeason<
     // 마이너 경기 수를 주지 않는 오래된 api면 모두 메이저 선수로 본다(지금처럼 한 묶음)
     minorGames: row.minorGames ?? 0,
     mainlyMinors: row.mainlyMinors === true,
+    levelKo: row.levelKo ?? null,
   };
 }
 
@@ -430,6 +440,8 @@ function normalizeHome(raw: HomeResponse): HomeResponse {
     ranking: raw.ranking ?? null,
     hitters: (raw.hitters ?? []).map(normalizeSeason),
     pitchers: (raw.pitchers ?? []).map(normalizeSeason),
+    minorHitters: (raw.minorHitters ?? []).map(normalizeSeason),
+    minorPitchers: (raw.minorPitchers ?? []).map(normalizeSeason),
   };
 }
 
