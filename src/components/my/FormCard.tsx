@@ -4,6 +4,7 @@ import type { HitterPeriod, MyPlayer, PitcherPeriod } from "@/lib/api";
 import { formatEra, formatRate } from "@/lib/format";
 import { teamColor } from "@/lib/teams";
 import { GameRow } from "@/components/player/GameLog";
+import LevelChip from "@/components/LevelChip";
 import BandPhoto from "./BandPhoto";
 import GameBars from "./GameBars";
 import MyPlayerToggle from "./MyPlayerToggle";
@@ -51,6 +52,8 @@ export default function FormCard({ entry, days, fromKst, toKst, statsAvailable }
               </Link>
             </h2>
             {meta && <p className="text-[0.8125rem] text-muted">{meta}</p>}
+            {/* 마이너에 있으면 이름 아래에 바로 알린다. 메이저는 기본이라 카드에서는 따로 쓰지 않는다 */}
+            {player.level === "MINORS" && <LevelChip player={player} className="mt-1.5 max-w-full" />}
           </div>
           <MyPlayerToggle playerId={player.id} nameKo={player.nameKo} initialOn variant="icon" className="-mr-2 -mt-1" />
         </div>
