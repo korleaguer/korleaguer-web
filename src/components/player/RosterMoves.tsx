@@ -11,8 +11,9 @@ function dotDate(date: string): string {
 
 /**
  * 선수 이동 기록(최신부터): 날짜 · 무엇(알약) · 어디서 어디로.
- * 알약 색: 부상자 명단 등재·이동(아직 부상 중)은 빨강, 해제는 초록.
- * 그 밖에는 옮겨 간 곳: 메이저면 연파랑, 마이너면 회색, 모르면 옅은 회색.
+ * 알약 색: 위기(부상자 명단 등재·이동, DFA, 방출, 출장 정지)는 빨강, 복귀·계약(명단 해제, 정지 해제, 계약)은 초록,
+ * 소속이 바뀌는 일(FA 선언, 트레이드, 웨이버 클레임)은 보라.
+ * 그 밖에는 옮겨 간 곳: 메이저(콜업 등)면 연파랑, 마이너(강등·이관·재활)면 회색, 모르면 옅은 회색.
  */
 export default function RosterMoves({ moves }: { moves: RosterMove[] }) {
   const shown = moves.slice(0, VISIBLE);
@@ -59,16 +60,43 @@ export default function RosterMoves({ moves }: { moves: RosterMove[] }) {
   );
 }
 
-/** 서버가 붙이는 부상자 명단 이름(MoveLabels): 등재 / 이동(10일→60일 등, 아직 부상 중) / 해제 */
-const INJURY_LABEL = "부상자 명단";
+const TONE = {
+  danger: "bg-danger-bg text-danger-fg",
+  success: "bg-success-bg text-success-fg",
+  fa: "bg-fa-bg text-fa-fg",
+  majors: "bg-accent-soft text-accent-ink",
+  minors: "bg-neutral-pill text-neutral-pill-fg",
+  other: "bg-surface-2 text-neutral-pill-fg",
+} as const;
+
+/**
+ * 이동 종류(MLB 코드)별 색. 이름은 서버(MoveLabels)가 붙인다.
+ * DES 지명 할당 · REL 방출 → 위기, SFA·SGN 계약 → 새 출발, DFA(FA 선언) · TR 트레이드 · CLW 웨이버 클레임 → 소속이 바뀜
+ */
+const TONE_BY_CODE: Record<string, keyof typeof TONE> = {
+  DES: "danger",
+  REL: "danger",
+  SFA: "success",
+  SGN: "success",
+  DFA: "fa",
+  TR: "fa",
+  CLW: "fa",
+};
+
+/** 부상자 명단(등재·이동·해제)과 출장 정지(·해제)는 코드가 아니라 서버가 붙인 이름으로 가른다 */
+const SETBACK_LABELS = ["부상자 명단", "출장 정지"];
 
 function moveTone(move: RosterMove): string {
-  if (move.labelKo?.startsWith(INJURY_LABEL)) {
-    return move.labelKo.endsWith("해제") ? "bg-recover-bg text-recover-fg" : "bg-injury-bg text-injury-fg";
+  const label = move.labelKo ?? "";
+  if (SETBACK_LABELS.some((head) => label.startsWith(head))) {
+    return TONE[label.endsWith("해제") ? "success" : "danger"];
   }
-  if (move.toLevel === "MLB") return "bg-accent-soft text-accent-ink";
-  if (move.toLevel === "MINORS") return "bg-neutral-pill text-neutral-pill-fg";
-  return "bg-surface-2 text-neutral-pill-fg";
+  if (label === "계약") return TONE.success;
+  const byCode = TONE_BY_CODE[move.typeCode?.toUpperCase() ?? ""];
+  if (byCode) return TONE[byCode];
+  if (move.toLevel === "MLB") return TONE.majors;
+  if (move.toLevel === "MINORS") return TONE.minors;
+  return TONE.other;
 }
 
 function MoveRow({ move }: { move: RosterMove }) {
