@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import AppBackButton from "./AppBackButton";
 import SiteNav, { NavLinks } from "./SiteNav";
 
 /** 맨 위 흰 머리글. 파란 'K' 상자 + KOR Leaguer, 알약 모양 메뉴 */
@@ -7,7 +8,12 @@ export default function SiteHeader() {
   return (
     <header className="bg-surface shadow-[0_1px_0_var(--line)]">
       <div className="mx-auto flex h-14 max-w-[67.5rem] items-center gap-3 px-4 sm:px-6">
-        <Link href="/" className="flex items-center gap-[7px] rounded-lg">
+        {/* 앱(웹뷰) 안의 하위 화면에서만 보이는 '뒤로'. 현재 주소를 읽으므로 SiteNav처럼 Suspense 안에 둔다. */}
+        <Suspense fallback={null}>
+          <AppBackButton />
+        </Suspense>
+        {/* 앱 안에서는 누를 수 없다. 홈은 앱 아래 '홈' 탭이 맡고, 다른 탭에서 누르면 탭 표시와 화면이 어긋난다. */}
+        <Link href="/" className="flex items-center gap-[7px] rounded-lg in-app:pointer-events-none">
           <span
             aria-hidden
             className="grid size-[26px] place-items-center rounded-lg bg-accent text-sm font-extrabold text-accent-fg"
