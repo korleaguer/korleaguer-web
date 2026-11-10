@@ -58,7 +58,9 @@ function LeaderCard({
 }) {
   const filtered = leader.ranked && ranking != null;
   const { majors } = splitByMinors(hitters);
-  const candidates = filtered ? majors.filter(rankedHitter(ranking)) : majors;
+  // 표의 1위 표시와 같은 규칙: 메이저 선수가 2명 이상일 때만 1위를 고른다
+  const comparable = majors.length >= 2 ? majors : [];
+  const candidates = filtered ? comparable.filter(rankedHitter(ranking)) : comparable;
   // 값이 0보다 큰 선수 중 1위(공동 포함)
   const firsts = topBy(candidates, leader.pick, candidates.length).filter((r) => r.rank === 1);
   const first = firsts[0];
@@ -86,10 +88,15 @@ function LeaderCard({
           </p>
         </>
       ) : (
-        <p className="mt-1.5 text-sm text-muted">
-          {filtered && hitters.length > 0 ? "아직 기준을 채운 선수가 없습니다." : "아직 기록이 없습니다."}
-        </p>
+        <p className="mt-1.5 text-sm text-muted">{emptyMessage(hitters.length, majors.length, filtered)}</p>
       )}
     </li>
   );
+}
+
+/** 1위가 없을 때 이유 한 줄. 표와 같은 기준(메이저 선수 2명 이상, 비율 기록은 최소 타석)으로 말한다 */
+function emptyMessage(hitterCount: number, majorCount: number, filtered: boolean): string {
+  if (hitterCount === 0) return "아직 기록이 없습니다.";
+  if (majorCount < 2) return "비교할 메이저 선수가 아직 2명이 안 됩니다.";
+  return filtered ? "아직 기준을 채운 선수가 없습니다." : "아직 기록이 없습니다.";
 }
