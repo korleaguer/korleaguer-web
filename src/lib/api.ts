@@ -242,6 +242,11 @@ export interface PitcherPeriod {
 /** 내 선수 한 명: 선수 정보 + 기간 합계 + 연속 기록 + 기간 안 경기(최신부터) */
 export interface MyPlayer {
   player: PlayerSummary;
+  /** 이 선수 카드의 기간 첫날·마지막 날(한국 날짜). 보통은 맨 위 기간과 같다 */
+  fromKst: string;
+  toKst: string;
+  /** 최근 기간에 구단 경기도 본인 출전도 없어(구단 시즌 끝·마이너) 마지막으로 뛴 날까지로 당겼으면 true */
+  isFallback: boolean;
   hitting: HitterPeriod | null;
   pitching: PitcherPeriod | null;
   /** 타자는 연속 안타, 투수는 연속 무실점 경기 수. 기록을 못 받았으면 null */
@@ -256,10 +261,10 @@ export interface MyPlayersResponse {
   season: number;
   generatedAt: string;
   days: number;
-  /** 기간 첫날·마지막 날(한국 날짜, "2026-09-21") */
+  /** 최근 days일의 첫날·마지막 날(한국 날짜, "2026-09-21"). 선수마다 기간은 MyPlayer에 있다 */
   fromKst: string;
   toKst: string;
-  /** 최근 days일에 경기가 없어 마지막 경기일로 기간을 당겼으면 true(비시즌) */
+  /** 한 명이라도 마지막으로 뛴 날까지로 기간을 당겼으면 true */
   isFallback: boolean;
   /** 고른 순서대로. 없는 선수는 빠진다 */
   players: MyPlayer[];
@@ -366,6 +371,10 @@ function normalizeMy(raw: MyPlayersResponse): MyPlayersResponse {
     isFallback: raw.isFallback ?? false,
     players: (raw.players ?? []).map((p) => ({
       ...p,
+      // 선수별 기간이 없으면(오래된 api) 모두 맨 위 기간을 같이 쓴다(당겼는지도 맨 위 값)
+      fromKst: p.fromKst ?? raw.fromKst,
+      toKst: p.toKst ?? raw.toKst,
+      isFallback: p.isFallback ?? raw.isFallback ?? false,
       player: normalizeSummary(p.player),
       hitting: p.hitting ?? null,
       pitching: p.pitching ?? null,
