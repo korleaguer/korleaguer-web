@@ -53,6 +53,7 @@ GHCR(`ghcr.io/korleaguer/korleaguer-web`)에 올리고, SSH로 서버(pigeon.ddn
 
 - 서버에서는 `API_BASE_URL=http://api:8080`(Docker 내부망)으로 API를 부른다. 브라우저는 API를 직접 부르지 않는다.
 - 컨테이너 헬스체크는 `/healthz`(API 상태와 상관없이 웹 서버가 떠 있으면 200).
+- 팀 로고를 끄려면 저장소 Actions variable `NEXT_PUBLIC_TEAM_LOGOS`를 `off`로 두고 다시 Release(또는 같은 버전 재빌드)한다. 빌드할 때 박히는 값이라 수동 재배포(롤백)만으로는 바뀌지 않는다.
 
 ```bash
 docker build -t korleaguer-web:local .   # 이미지만 만들어 보기

@@ -10,7 +10,10 @@ RUN --mount=type=cache,target=/root/.npm npm ci --no-audit --no-fund
 
 FROM node:24-alpine AS build
 WORKDIR /app
-ENV NEXT_TELEMETRY_DISABLED=1
+# NEXT_PUBLIC_ 값은 빌드할 때 코드에 박힌다. 팀 로고를 끄려면 off(배포 워크플로는 저장소 variable에서 넘긴다).
+ARG NEXT_PUBLIC_TEAM_LOGOS=""
+ENV NEXT_TELEMETRY_DISABLED=1 \
+    NEXT_PUBLIC_TEAM_LOGOS=${NEXT_PUBLIC_TEAM_LOGOS}
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build

@@ -8,6 +8,7 @@
 #   variable DEPLOY_KNOWN_HOSTS   서버 호스트 키 한 줄(server-setup.sh가 출력). 처음 보는 서버에는 접속하지 않는다
 #   variable DEPLOY_PORT          SSH 포트(없으면 22)
 #   variable DEPLOY_PLATFORM      서버 CPU(linux/amd64 또는 linux/arm64, 없으면 linux/amd64)
+#   variable NEXT_PUBLIC_TEAM_LOGOS  off면 팀 로고 대신 팀 색 점(빌드할 때 코드에 박힌다). 없으면 로고를 쓴다
 name: deploy
 
 on:
@@ -72,6 +73,8 @@ jobs:
           platforms: ${{ vars.DEPLOY_PLATFORM || 'linux/amd64' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            NEXT_PUBLIC_TEAM_LOGOS=${{ vars.NEXT_PUBLIC_TEAM_LOGOS }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
