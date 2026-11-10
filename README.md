@@ -45,6 +45,19 @@ api가 꺼져 있어도 화면은 뜬다. 이때는 "데이터 서버에 연결�
 - 공식 선수 사진·팀 로고(MLB 이미지 서버)는 허락을 받았는지 확인한다. 허락이 없으면 로고는 `NEXT_PUBLIC_TEAM_LOGOS=off`로 끄고 다시 빌드한다. 선수 사진은 api가 주는 `photoUrl`을 비우면 쓰이지 않는다.
 - 바닥글의 권리 문구("선수 사진과 팀 로고의 권리는 MLB와 각 구단에 있습니다.")를 유지한다.
 
+## 배포
+
+GitHub Release를 만들면 Actions(`.github/workflows/deploy.yml`)가 이미지(`Dockerfile`, Next.js `standalone` 출력)를 만들어
+GHCR(`ghcr.io/korleaguer/korleaguer-web`)에 올리고, SSH로 서버(pigeon.ddns.net)에 접속해 새 컨테이너로 바꾼다(끊김 없이, 실패하면 옛 버전 유지).
+서버 구성(Caddy·web·api·MySQL), 처음 준비, 되돌리기는 korleaguer-server 저장소의 `deploy/README.md`.
+
+- 서버에서는 `API_BASE_URL=http://api:8080`(Docker 내부망)으로 API를 부른다. 브라우저는 API를 직접 부르지 않는다.
+- 컨테이너 헬스체크는 `/healthz`(API 상태와 상관없이 웹 서버가 떠 있으면 200).
+
+```bash
+docker build -t korleaguer-web:local .   # 이미지만 만들어 보기
+```
+
 ## 구조
 
 ```
