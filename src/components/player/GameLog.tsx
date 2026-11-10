@@ -1,5 +1,5 @@
 import type { GameLine } from "@/lib/api";
-import { formatDate, formatShortDate, formatSummary, formatTime, formatWeekday } from "@/lib/format";
+import { formatDate, formatLineup, formatShortDate, formatSummary, formatTime, formatWeekday } from "@/lib/format";
 import ResultPill from "@/components/ResultPill";
 import ScoreText from "@/components/ScoreText";
 import Section from "@/components/Section";
@@ -25,6 +25,7 @@ export default function GameLog({ games }: { games: GameLine[] }) {
 /** 경기 한 줄(선수 페이지 경기 기록, 내 선수 카드의 '모두 보기'가 같이 쓴다) */
 export function GameRow({ game: g }: { game: GameLine }) {
   const hasScore = g.teamScore != null && g.opponentScore != null;
+  const lineup = formatLineup(g);
 
   return (
     <li className="flex gap-3 p-3.5">
@@ -43,6 +44,7 @@ export function GameRow({ game: g }: { game: GameLine }) {
           <span>vs</span>
           <TeamName teamKo={g.opponentKo} teamAbbr={g.opponentAbbr} />
           <span>{`· ${g.home ? "홈" : "원정"}`}</span>
+          {lineup && <span>{`· ${lineup}`}</span>}
           {/* 경기 전이면 점수 대신 시작 시각 */}
           {hasScore ? (
             <ScoreText line={g} className="text-sm font-bold text-foreground" />
