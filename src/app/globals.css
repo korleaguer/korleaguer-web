@@ -137,6 +137,12 @@
 }
 
 /*
+ * 앱(korleaguer-app, 웹뷰) 안에서만 켜는 모양. 앱이 문서를 그리기 전에 <html data-app="ios|android">를 붙인다.
+ * 예: className="in-app:hidden" → 앱 안에서는 숨김(아래 네이티브 탭이 같은 일을 한다). 일반 브라우저에는 영향 없음.
+ */
+@custom-variant in-app (&:where([data-app] *));
+
+/*
  * 아래 규칙은 @layer base / components 안에 둔다.
  * 레이어 밖에 두면 Tailwind 클래스(focus-visible:outline-none 등)보다 항상 이겨 버린다.
  */
@@ -154,6 +160,22 @@
     accent-color: var(--accent);
     caret-color: var(--accent);
     scrollbar-color: color-mix(in oklab, var(--muted) 45%, transparent) var(--background);
+  }
+
+  /*
+   * 앱 안: 브라우저 티가 나는 동작을 끈다(누를 때 회색 번쩍임, 길게 눌러 뜨는 링크·사진 메뉴, 글자 선택).
+   * 입력칸은 글자를 고칠 수 있게 그대로 둔다.
+   */
+  html[data-app] {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  html[data-app] :is(input, textarea, [contenteditable="true"]) {
+    -webkit-user-select: text;
+    user-select: text;
   }
 
   ::selection {
