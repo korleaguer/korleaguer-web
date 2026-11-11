@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import type { PostingPast, PostingPlayer, PostingStatus, PostingSummary } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import { pinSummary, uniqueByUrl } from "@/lib/news";
@@ -13,6 +14,13 @@ const WINDOW_DAYS = 30;
 const NEAR_DEADLINE = 4;
 /** 포스팅 선수가 여러 명일 때 함께 보여 줄 관련 기사 수 */
 const NEWS_LIMIT = 6;
+/**
+ * 역대 계약 순위 막대의 길이 규칙: 금액이 2배면 막대는 1.5배(사용자 결정 11-11).
+ * 정비례면 1위(이정후 1억 1,300만 달러) 말고는 막대가 짧아 아래 선수끼리 차이가 안 보인다. 길이 = (금액 / 1위 금액)^지수
+ */
+const BAR_EXPONENT = Math.log2(1.5);
+/** 아무리 작은 계약도 막대가 점처럼 사라지지 않게 */
+const BAR_MIN_SHARE = 0.04;
 
 const STATUS: Record<PostingStatus, { label: string; className: string }> = {
   UPCOMING: { label: "협상 시작 전", className: "bg-fa-bg text-fa-fg" },
@@ -102,6 +110,8 @@ interface Signing {
   days: number;
   /** 보장 연수 */
   years: number;
+  /** 보장액(달러). 순위와 막대 길이에 쓴다 */
+  amount: number;
   /** "1억 1,300만 달러" */
   usd: string;
   /** 합의일 환율로 어림한 원화 "약 1,480억 원". 환율을 모르면 null(달러만 보인다) */
@@ -112,11 +122,11 @@ interface Signing {
 }
 
 /** 계약 규모: 연수, 달러 보장액, 합의일 환율로 어림한 원화 */
-function money(years: number, usd: number, krwPerUsd: number | null): Pick<Signing, "years" | "usd" | "krw"> {
-  return { years, usd: formatUsd(usd), krw: krwPerUsd ? `약 ${formatKrw(usd * krwPerUsd)}` : null };
+function money(years: number, usd: number, krwPerUsd: number | null): Pick<Signing, "years" | "amount" | "usd" | "krw"> {
+  return { years, amount: usd, usd: formatUsd(usd), krw: krwPerUsd ? `약 ${formatKrw(usd * krwPerUsd)}` : null };
 }
 
-/** 지금 제도(2018~)의 지난 포스팅 계약. 결렬은 넣지 않는다(사용자 결정 11-11) */
+/** 지난 포스팅 계약(2012~, 제도를 나누지 않는다). 결렬은 넣지 않는다(사용자 결정 11-11) */
 function pastSignings(history: PostingPast[]): Signing[] {
   return history.flatMap((h) => {
     const d = h.deal;
@@ -179,15 +189,16 @@ function rank(p: PostingPlayer): number {
 /**
  * 비시즌 홈 맨 위: 이번 겨울 MLB에 도전하는(포스팅된) KBO 선수.
  * 포스팅 선수가 몇 명이든 카드 한 장에 모은다(사용자 결정 11-11 "한 카드 안에서 다 같이").
- * 카드 안 한 줄 그래프에 지금 제도에서 계약한 선수들이 마감 며칠 전에 계약했는지를 막대 위 얼굴 한 줄로 세우고(이슈 #105),
- * 그 아래(PC는 오른쪽) 목록에 같은 동그라미로 계약 내용을 늘 보여 준다(누르지 않아도 보이게).
+ * 카드 안 그래프는 포스팅 중인 선수가 협상 기간 어디쯤인지('지금')와 역대 계약이 몰린 마지막 며칠만 보이고,
+ * 그 아래(PC는 오른쪽) '역대 포스팅 계약'은 보장액 순위 목록이다(사용자 결정 11-11, 이슈 #118).
  * 관련 기사는 카드 안에서 한국어 제목·요약(또는 기사 앞부분)으로 읽히고, 원문(언론사)은 작은 링크로 남는다.
  */
 export default function MlbChallenge({ posting }: { posting: PostingSummary }) {
   if (posting.players.length === 0) return null;
   const players = [...posting.players].sort((a, b) => rank(a) - rank(b) || (a.daysLeft ?? 99) - (b.daysLeft ?? 99));
+  // 보장액 순위. 같으면 최근 계약이 위
   const signings = [...thisYearSignings(players), ...pastSignings(posting.history)].sort(
-    (a, b) => b.days - a.days || Number(b.thisYear) - Number(a.thisYear) || b.season - a.season,
+    (a, b) => b.amount - a.amount || b.season - a.season,
   );
   const single = players.length === 1 ? players[0] : null;
   return (
@@ -320,7 +331,10 @@ function RowResult({ player: p }: { player: PostingPlayer }) {
   return <div className="shrink-0">{pill}</div>;
 }
 
-/** 한 줄 그래프와 그 뜻을 한 문장으로 */
+/**
+ * '계약까지 얼마나 걸릴까': 포스팅 중인 선수의 '지금' 그래프와 역대 계약 시점 요약 한 문장.
+ * '보통 마감 직전에 계약해요'는 역대 계약의 절반 넘게가 마지막 며칠에 몰렸을 때만 쓴다(데이터가 말할 때만).
+ */
 function Timeline({
   players,
   single,
@@ -334,98 +348,104 @@ function Timeline({
   if (signings.length === 0 && now.length === 0) return null;
   const past = signings.filter((s) => !s.thisYear);
   const near = past.filter((s) => s.days <= NEAR_DEADLINE).length;
+  const mostlyLate = near * 2 > past.length;
   const openDays = single && isOpen(single) ? single.daysLeft : null;
-  const earlier = openDays != null ? past.filter((s) => s.days > openDays) : null;
+  // 지금보다 일찍 계약한 선수(마감까지 남은 날이 지금보다 많을 때 계약). 빠른 순
+  const earlier = openDays != null ? past.filter((s) => s.days > openDays).sort((a, b) => b.days - a.days) : null;
   return (
     <div className="mt-5">
-      {signings.length > 0 && (
-        <p className="mb-2 flex items-baseline justify-between gap-2 text-[0.8125rem] font-bold">
-          역대 계약은 마감 며칠 전이었나
-          <span className="shrink-0 text-[0.6875rem] font-normal text-muted">지금 제도(2018~)</span>
-        </p>
-      )}
+      <p className="mb-2 flex items-baseline justify-between gap-2 text-[0.8125rem] font-bold">
+        계약까지 얼마나 걸릴까
+        {past.length > 0 && (
+          <span className="shrink-0 text-[0.6875rem] font-normal text-muted tabular-nums">역대 포스팅 {past.length}건</span>
+        )}
+      </p>
       <PostingTimeline
-        dots={signings.map((s) => ({ key: s.key, nameKo: s.nameKo, days: s.days, photoUrl: s.photoUrl }))}
         now={now}
         fill={single?.status === "NEGOTIATING"}
         startLabel={single ? `${kstDay(single.windowOpensAt)} 시작` : "협상 시작"}
         endLabel={single ? `${kstDay(single.deadlineAt)} 마감` : "마감"}
         lateDays={NEAR_DEADLINE}
+        lateNote={past.length > 0 ? `${past.length}명 중 ${near}명` : null}
       />
       {past.length > 0 && (
         <p className="mt-2 text-[0.8125rem] leading-relaxed text-neutral-pill-fg">
-          {earlier == null ? (
-            <>
-              {past.length}명 중{" "}
-              <b className="font-bold text-foreground">
-                {near}명은 마감 {NEAR_DEADLINE}일 안에
-              </b>{" "}
-              계약했어요.
-            </>
-          ) : (
-            <>
-              {earlier.length === 0 ? (
-                "아직 이맘때 계약한 선수는 없어요. "
-              ) : (
-                <>
-                  지금보다 먼저 계약한 선수는{" "}
-                  <b className="font-bold text-foreground">{earlier.map((s) => s.nameKo).join("·")}</b>
-                  {earlier.length === 1 ? "뿐이고, " : ` ${earlier.length}명이고, `}
-                </>
-              )}
-              {past.length}명 중{" "}
-              <b className="font-bold text-foreground">
-                {near}명은 마감 {NEAR_DEADLINE}일 안에
-              </b>{" "}
-              계약했어요.
-            </>
-          )}
+          {mostlyLate && "보통 마감 직전에 계약해요. "}
+          <b className="font-bold text-foreground">
+            {past.length}명 중 {near}명이 마지막 {NEAR_DEADLINE}일 안에
+          </b>{" "}
+          계약했어요.
+          {earlier != null &&
+            (earlier.length === 0 ? (
+              " 지금보다 일찍 계약한 선수는 없었어요."
+            ) : (
+              <>
+                {" "}지금({openDays === 0 ? "오늘 마감" : `D-${openDays}`})보다 빨랐던 건{" "}
+                {/* 이름과 끝말('뿐이에요')이 줄바꿈으로 떨어지지 않게 묶는다 */}
+                <span className="whitespace-nowrap">
+                  <b className="font-bold text-foreground">
+                    {earlier.map((s) => `${s.nameKo}(D-${s.days})`).join("·")}
+                  </b>
+                  {earlier.length === 1 ? "뿐이에요." : ` ${earlier.length}명이에요.`}
+                </span>
+              </>
+            ))}
         </p>
       )}
     </div>
   );
 }
 
-/** 역대 계약 목록: 그래프와 같은 동그라미 · 이름 · 연도·구단 | 마감 며칠 전 · 보장액. 누르지 않아도 늘 보인다 */
+/**
+ * '역대 포스팅 계약' 보장액 순위: 얼굴 · 이름 · 연도·구단 · 마감 며칠 전 / 잉크 막대 + 금액(달러↔원화).
+ * 막대는 위 '지금' 진행 막대와 헷갈리지 않게 바탕 줄 없이, 왼쪽이 거의 투명하고 금액 쪽으로 진해지는 글자색 막대다
+ * (`.ink-bar`). 파랑·신호색·팀 색을 쓰지 않는다(The One Blue Rule, 어두운 화면에서 갈색·남색 팀 색이 묻힘).
+ * 길이는 금액이 2배면 1.5배(BAR_EXPONENT).
+ */
 function SigningList({ signings }: { signings: Signing[] }) {
+  const top = Math.max(...signings.map((s) => s.amount));
   return (
-    <div className="mt-3 lg:mt-0">
-      <p className="mb-1 hidden items-baseline justify-between gap-2 text-[0.8125rem] font-bold lg:flex">
-        역대 계약
-        <span className="shrink-0 text-[0.6875rem] font-normal text-muted">합의 보도 날짜(미국) 기준</span>
+    <div className="mt-4 border-t border-line pt-3 lg:mt-0 lg:border-t-0 lg:pt-0">
+      <p className="mb-1 flex items-baseline justify-between gap-2 text-[0.8125rem] font-bold">
+        역대 포스팅 계약
+        <span className="shrink-0 text-[0.6875rem] font-normal text-muted">보장액 순</span>
       </p>
       <ul className="money-flip-pause divide-y divide-line">
-        {signings.map((s) => (
-          <li key={s.key} className="flex items-center gap-3 py-2.5">
-            <PostingDot nameKo={s.nameKo} photoUrl={s.photoUrl} size={30} />
-            <div className="min-w-0 flex-1">
-              <p className="flex items-center gap-1.5 text-sm font-bold leading-5">
-                {s.nameKo}
-                {s.thisYear && (
-                  <span className="shrink-0 rounded-full bg-success-bg px-1.5 text-[0.625rem] font-bold leading-4 text-success-fg">
-                    올해
+        {signings.map((s) => {
+          // 1위 금액이 0이면(보장액 0만 있는 경우) 나눗셈이 NaN이 되지 않게 모두 최소 길이
+          const share = top > 0 ? Math.max(BAR_MIN_SHARE, Math.pow(s.amount / top, BAR_EXPONENT)) : BAR_MIN_SHARE;
+          return (
+            <li key={s.key} className="flex items-center gap-3 py-2.5">
+              <PostingDot nameKo={s.nameKo} photoUrl={s.photoUrl} size={30} />
+              <div className="min-w-0 flex-1">
+                <p className="flex items-baseline gap-1.5">
+                  <span className="shrink-0 text-sm font-bold leading-5">{s.nameKo}</span>
+                  {s.thisYear && (
+                    <span className="shrink-0 self-center rounded-full bg-success-bg px-1.5 text-[0.625rem] font-bold leading-4 text-success-fg">
+                      올해
+                    </span>
+                  )}
+                  <span className="truncate text-xs text-muted tabular-nums">
+                    {s.season}
+                    {s.teamKo ? ` · ${s.teamKo}` : ""}
                   </span>
-                )}
-              </p>
-              <p className="truncate text-xs text-muted tabular-nums">
-                {s.season}
-                {s.teamKo ? ` · ${s.teamKo}` : ""}
-              </p>
-            </div>
-            <div className="shrink-0 text-right">
-              <p className="text-[0.8125rem] font-bold leading-5 tabular-nums">
-                {s.days === 0 ? "마감 당일" : `D-${s.days}`}
-              </p>
-              <p className="text-xs text-neutral-pill-fg tabular-nums">
-                <DealMoney years={s.years} usd={s.usd} krw={s.krw} />
-              </p>
-            </div>
-          </li>
-        ))}
+                  <span className="ml-auto shrink-0 text-xs text-muted tabular-nums">
+                    {s.days === 0 ? "마감 당일" : `마감 ${s.days}일 전`}
+                  </span>
+                </p>
+                <div className="mt-1.5 flex items-center gap-2">
+                  <i aria-hidden className="ink-bar" style={{ "--share": share.toFixed(4) } as CSSProperties} />
+                  <span className="text-[0.8125rem] font-bold tabular-nums">
+                    <DealMoney years={s.years} usd={s.usd} krw={s.krw} align="start" />
+                  </span>
+                </div>
+              </div>
+            </li>
+          );
+        })}
       </ul>
       <p className="mt-1.5 text-[0.6875rem] leading-relaxed text-muted">
-        금액은 보장액(옵션·인센티브 제외), 원화는 계약 당시 환율 기준, 날짜는 합의 보도 기준(미국).
-        출처: MLB Trade Rumors·ECB 등
+        보장액(옵션 제외) · 원화는 계약 당시 환율 · 막대는 금액 2배면 1.5배 길이. 출처: MLB Trade Rumors·ECB 등
       </p>
     </div>
   );
@@ -437,12 +457,23 @@ function SigningList({ signings }: { signings: Signing[] }) {
  * (연수를 칸 밖에 두면 짧은 원화일 때 연수와 금액 사이가 벌어진다). 화면 읽기 프로그램에는 두 값을 한 번에 읽힌다.
  * 모든 줄이 한꺼번에 바뀐다. 목록에 마우스를 올리면 멈춘다(.money-flip-pause).
  */
-function DealMoney({ years, usd, krw }: { years: number; usd: string; krw: string | null }) {
+function DealMoney({
+  years,
+  usd,
+  krw,
+  align = "end",
+}: {
+  years: number;
+  usd: string;
+  krw: string | null;
+  /** 두 값을 겹친 칸 안 정렬. 막대 끝에 붙일 때는 왼쪽(start) */
+  align?: "start" | "end";
+}) {
   if (!krw) return <>{`${years}년 ${usd}`}</>;
   return (
     <>
       <span className="sr-only">{`${years}년 ${usd}, 원화로 ${krw}`}</span>
-      <span aria-hidden className="money-flip">
+      <span aria-hidden className={align === "start" ? "money-flip money-flip-start" : "money-flip"}>
         <span>{`${years}년 ${usd}`}</span>
         <span>{`${years}년 ${krw}`}</span>
       </span>
