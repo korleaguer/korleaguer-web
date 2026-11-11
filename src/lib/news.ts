@@ -11,6 +11,9 @@ function balancedQuotes(s: string): boolean {
   return open === close && straight % 2 === 0;
 }
 
+/** 앞부분 맨 앞의 괄호·대괄호 기자 표시 */
+const BYLINE = /^[(\[［【][^)\]］】]{1,40}(?:기자|특파원|통신원)[)\]］】]\s*/;
+
 /** 짝이 맞는 문장 끝으로 볼 만큼 짧은 앞부분의 최소 글자 수(이보다 짧게 자르면 120자 뒤 문장 끝을 쓴다) */
 const MIN_LEAD = 40;
 
@@ -23,7 +26,8 @@ const MIN_LEAD = 40;
  *   알맞은 문장 끝이 없으면 그대로 둔다.
  */
 export function readableLead(lead: string, title: string): string {
-  let text = lead.trim();
+  // 맨 앞 기자 표시: (엑스포츠뉴스 이우진 기자), [OSEN=홍길동 특파원] 등. 언론사는 화면에 따로 보인다
+  let text = lead.trim().replace(BYLINE, "").trim();
   const quote = /^[“"][^”"]{2,120}[”"](?:\s+|$)/.exec(text);
   if (quote && /^[“"]/.test(title.trim()) && text.length > quote[0].length) {
     text = text.slice(quote[0].length).trim();
