@@ -157,6 +157,60 @@ export interface HomeResponse {
   minorPitchers: PitcherSeason[];
   /** 비시즌일 때만 있다(다음 개막일 등). 시즌 중이거나 오래된 api면 null */
   offseason: OffSeason | null;
+  /** 이번 겨울 KBO 포스팅(MLB 도전). 비시즌일 때만 있다. 시즌 중이거나 오래된 api면 null */
+  posting: PostingSummary | null;
+}
+
+/** 포스팅 선수 상태: 협상 시작 전·협상 중·계약·결렬·마감 지남(결과 확인 중) */
+export type PostingStatus = "UPCOMING" | "NEGOTIATING" | "SIGNED" | "NO_DEAL" | "CLOSED";
+
+export interface PostingDeal {
+  mlbTeamId: number | null;
+  mlbTeamKo: string | null;
+  /** 합의가 처음 보도된 미국 날짜 */
+  agreedOn: string | null;
+  years: number | null;
+  /** 보장액(달러). 옵션·인센티브 제외 */
+  guaranteedUsd: number | null;
+}
+
+export interface NewsHeadline {
+  title: string;
+  /** 원문(언론사) 주소 */
+  url: string;
+  publisher: string;
+  publishedAt: string;
+}
+
+export interface PostingPlayer {
+  nameKo: string;
+  kboTeam: string;
+  positionKo: string;
+  birthYear: number | null;
+  status: PostingStatus;
+  windowOpensAt: string;
+  deadlineAt: string;
+  /** 한국 날짜로 마감일까지 남은 날(마감 당일 0). 협상 시작 전·협상 중일 때만 */
+  daysLeft: number | null;
+  /** 협상 기간 중 지난 비율 0~1 */
+  elapsedRatio: number;
+  deal: PostingDeal | null;
+  /** 관련 기사 제목(늦은 순, 최대 5건) */
+  news: NewsHeadline[];
+}
+
+/** 지금 포스팅 제도(2018~)의 지난 기록. 결렬이면 deal·daysBeforeDeadline이 null */
+export interface PostingPast {
+  nameKo: string;
+  season: number;
+  deadline: string;
+  daysBeforeDeadline: number | null;
+  deal: PostingDeal | null;
+}
+
+export interface PostingSummary {
+  players: PostingPlayer[];
+  history: PostingPast[];
 }
 
 /**
@@ -466,6 +520,12 @@ function normalizeHome(raw: HomeResponse): HomeResponse {
           nextOpeningDay: raw.offseason.nextOpeningDay ?? null,
           daysToOpening: raw.offseason.daysToOpening ?? null,
           playerIds: raw.offseason.playerIds ?? [],
+        }
+      : null,
+    posting: raw.posting
+      ? {
+          players: (raw.posting.players ?? []).map((p) => ({ ...p, news: p.news ?? [], deal: p.deal ?? null })),
+          history: raw.posting.history ?? [],
         }
       : null,
   };

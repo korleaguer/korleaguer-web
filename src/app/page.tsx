@@ -4,6 +4,7 @@ import { formatDate, formatTime } from "@/lib/format";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import DataBanners from "@/components/DataBanners";
 import LoadingBlock from "@/components/LoadingBlock";
+import MlbChallenge from "@/components/home/MlbChallenge";
 import OffseasonPlayers from "@/components/home/OffseasonPlayers";
 import RecentGames from "@/components/home/RecentGames";
 import SeasonLeaders from "@/components/home/SeasonLeaders";
@@ -33,7 +34,11 @@ async function HomeContent() {
       <DataBanners dataMode={home.dataMode} statsAvailable={home.statsAvailable} />
       {/* 비시즌: 지난 경기 한 줄과 '시즌 1위' 카드 대신 선수 전원의 시즌 카드 */}
       {home.offseason ? (
-        <OffseasonPlayers offseason={home.offseason} />
+        <>
+          {/* 포스팅 시즌: 이번 겨울 MLB에 도전하는 KBO 선수와 선배들의 계약 시기 */}
+          {home.posting && <MlbChallenge posting={home.posting} />}
+          <OffseasonPlayers offseason={home.offseason} />
+        </>
       ) : (
         <>
           <RecentGames recent={home.recent} asOf={asOf} />
