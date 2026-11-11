@@ -3,7 +3,6 @@
 import type { ReactNode } from "react";
 import type { CardStatus, FormFact, MyPlayer, PlayCode, SeasonTotals } from "@/lib/api";
 import { formatEra, formatRate } from "@/lib/format";
-import RollingNumber from "@/components/RollingNumber";
 import {
   type BadgeTone,
   levelKo,
@@ -140,7 +139,7 @@ export function Numbers({
       <dl>
         <dt className="text-xs text-muted">{label}</dt>
         <dd className="mt-1 text-[2.75rem] font-extrabold leading-none tracking-[-0.03em] tabular-nums">
-          <RollingNumber value={value} />
+          {value}
         </dd>
         {note != null && <dd className="mt-1.5 text-xs font-semibold text-muted">{note}</dd>}
       </dl>
@@ -150,7 +149,7 @@ export function Numbers({
           <div key={k} className="whitespace-nowrap">
             <dt className="text-xs text-muted">{k}</dt>
             <dd className="text-xl font-extrabold leading-tight tabular-nums">
-              <RollingNumber value={String(v)} />
+              {v}
             </dd>
           </div>
         ))}

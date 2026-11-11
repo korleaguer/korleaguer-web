@@ -42,7 +42,8 @@ export default function ShowMore({ moreLabel, lessLabel = "접기", children, bu
 
   return (
     <>
-      <div id={contentId} hidden={!open}>
+      {/* reveal: 펼칠 때마다(hidden이 풀릴 때) 새로 나온 줄이 살짝 내려오며 나타난다 */}
+      <div id={contentId} hidden={!open} className="reveal">
         {rendered ? children : null}
       </div>
       <button
