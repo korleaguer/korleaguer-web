@@ -873,8 +873,8 @@
       "name": "정보 칩",
       "kind": "chip",
       "refersTo": "info-chip",
-      "description": "선수 팀·포지션·등번호·나이. 회색 알약.",
-      "html": "<ul class=\"ds-chips\"><li class=\"ds-chip\">샌프란시스코</li><li class=\"ds-chip\">중견수</li><li class=\"ds-chip\">#51</li><li class=\"ds-chip\">28세</li></ul>",
+      "description": "선수 팀·포지션·나이. 회색 알약. 등번호는 영문 이름 옆 흐린 글자.",
+      "html": "<ul class=\"ds-chips\"><li class=\"ds-chip\">샌프란시스코</li><li class=\"ds-chip\">중견수</li><li class=\"ds-chip\">28세</li></ul>",
       "css": ".ds-chips{font-family:var(--font-sans, \"Pretendard Variable\", Pretendard, -apple-system, system-ui, \"Apple SD Gothic Neo\", sans-serif);display:flex;flex-wrap:wrap;gap:6px;list-style:none;margin:0;padding:0} .ds-chip{display:inline-flex;align-items:center;gap:6px;border-radius:9999px;background:var(--surface-2,#f4f5f7);color:var(--neutral-pill-fg,#374151);padding:4px 10px;font-size:.8125rem;font-weight:600;line-height:1.25rem}"
     },
     {
