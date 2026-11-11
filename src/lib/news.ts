@@ -30,25 +30,25 @@ const MIN_LEAD = 40;
  * - 제목과 앞부분이 둘 다 인용구로 시작하면(마이데일리처럼 제목의 인용구로 기사를 여는 경우) 그 인용구 문장은 뺀다.
  *   닫는 따옴표 바로 뒤에 글자가 붙으면(“…”고 말했다) 문장의 일부라 빼지 않는다.
  * - 문장 끝(마침표, 닫는 따옴표까지) 가운데 따옴표 짝이 맞는 곳에서만 자른다(따옴표 안에서 자르지 않게).
- *   LEAD_CHARS 안의 마지막 문장 끝을 쓰고, 그것이 너무 짧거나 없으면 LEAD_CHARS 뒤의 첫 문장 끝을 쓴다(줄 수 제한에 맡김).
+ *   limit(기본 LEAD_CHARS) 안의 마지막 문장 끝을 쓰고, 그것이 너무 짧거나 없으면 limit 뒤의 첫 문장 끝을 쓴다(줄 수 제한에 맡김).
  *   알맞은 문장 끝이 없으면 그대로 둔다.
  */
-export function readableLead(lead: string, title: string): string {
+export function readableLead(lead: string, title: string, limit: number = LEAD_CHARS): string {
   // 맨 앞 기자 표시: (엑스포츠뉴스 이우진 기자), [OSEN=홍길동 특파원] 등. 언론사는 화면에 따로 보인다
   let text = BYLINES.reduce((s, byline) => s.replace(byline, "").trim(), lead.trim());
   const quote = /^[“"][^”"]{2,120}[”"](?:\s+|$)/.exec(text);
   if (quote && /^[“"]/.test(title.trim()) && text.length > quote[0].length) {
     text = text.slice(quote[0].length).trim();
   }
-  if (text.length <= LEAD_CHARS && balancedQuotes(text)) return text;
+  if (text.length <= limit && balancedQuotes(text)) return text;
   const ends: number[] = [];
   for (const m of text.matchAll(/\.[”"]?(?=\s|$)/g)) {
     const end = m.index + m[0].length;
     if (balancedQuotes(text.slice(0, end))) ends.push(end);
   }
-  const within = ends.filter((end) => end <= LEAD_CHARS).at(-1);
+  const within = ends.filter((end) => end <= limit).at(-1);
   if (within !== undefined && within >= MIN_LEAD) return text.slice(0, within);
-  const after = ends.find((end) => end > LEAD_CHARS);
+  const after = ends.find((end) => end > limit);
   if (after !== undefined) return text.slice(0, after);
   return within !== undefined ? text.slice(0, within) : text;
 }

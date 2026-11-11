@@ -1,0 +1,76 @@
+import Link from "next/link";
+import type { NewsHeadline } from "@/lib/api";
+import { formatDate } from "@/lib/format";
+import ExternalLinkIcon from "@/components/ExternalLinkIcon";
+
+export interface NewsTitleItem extends NewsHeadline {
+  /** 여러 선수의 기사를 모았을 때 누구 기사인지. 한 명이면 null */
+  who?: string | null;
+}
+
+/**
+ * 기사 제목 목록. 줄마다 누구 기사 · 언론사 · 날짜와 제목만 둔다
+ * (사용자 11-11: "기사 제목만 가져오고 클릭하면 새로운 페이지에서 썸네일과 요약").
+ * 누르면 우리 기사 페이지(/news/{id})로 간다. 기사 번호가 없는 옛 API면 원문을 새 탭으로 연다.
+ * twoColumns면 PC(lg)에서 두 칸으로 나눈다(줄은 왼쪽에서 오른쪽으로 찬다).
+ */
+export default function NewsTitleList({ items, twoColumns = false }: { items: NewsTitleItem[]; twoColumns?: boolean }) {
+  return (
+    <ul className={twoColumns ? "lg:grid lg:grid-cols-2 lg:gap-x-8" : undefined}>
+      {items.map((n, i) => (
+        // 줄 사이에만 선을 긋는다. 두 칸이면 첫 줄 두 칸 모두 위 선이 없다
+        <li
+          key={n.id ?? n.url}
+          className={i === 0 ? undefined : `border-t border-line ${twoColumns && i === 1 ? "lg:border-t-0" : ""}`}
+        >
+          <NewsTitleRow item={n} />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function NewsTitleRow({ item: n }: { item: NewsTitleItem }) {
+  const content = (
+    // 화면 낭독기는 제목부터 읽고(글 순서), 눈에는 출처 줄이 위에 보인다(flex-col-reverse)
+    <span className="flex min-w-0 flex-1 flex-col-reverse">
+      <span className="mt-0.5 line-clamp-2 text-[0.9375rem] font-semibold leading-snug tracking-[-0.01em] group-hover:underline">
+        {n.titleKo ?? n.title}
+      </span>
+      <span className="text-xs text-muted tabular-nums">
+        {n.who ? `${n.who} · ` : ""}
+        {n.publisher} · {formatDate(n.publishedAt)}
+      </span>
+    </span>
+  );
+  const rowClass = "press-soft group flex items-center gap-3 py-3";
+
+  if (n.id == null) {
+    return (
+      <a href={n.url} target="_blank" rel="noopener noreferrer" className={rowClass}>
+        {content}
+        <span className="text-muted">
+          <ExternalLinkIcon />
+          <span className="sr-only">(원문, 새 탭)</span>
+        </span>
+      </a>
+    );
+  }
+  return (
+    <Link href={`/news/${n.id}`} className={rowClass}>
+      {content}
+      <svg
+        aria-hidden
+        viewBox="0 0 16 16"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="size-4 shrink-0 text-muted"
+      >
+        <path d="M6 3.5 10.5 8 6 12.5" />
+      </svg>
+    </Link>
+  );
+}
