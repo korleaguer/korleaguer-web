@@ -425,8 +425,8 @@ function SigningList({ signings }: { signings: Signing[] }) {
         ))}
       </ul>
       <p className="mt-1.5 text-[0.6875rem] leading-relaxed text-muted">
-        금액은 보장액(옵션·인센티브 제외), 원화는 합의일 환율(ECB 기준)로 어림한 값, 날짜는 합의 보도 기준(미국).
-        출처: MLB Trade Rumors 등
+        금액은 보장액(옵션·인센티브 제외), 원화는 계약 당시 환율 기준, 날짜는 합의 보도 기준(미국).
+        출처: MLB Trade Rumors·ECB 등
       </p>
     </div>
   );
