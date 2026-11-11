@@ -19,6 +19,17 @@ function parseId(id: string): number | null {
 }
 
 /**
+ * 요약이 없을 때 보일 기사 앞부분(문장마다 한 단락). 피드가 문장 가운데서 끊어 준 앞부분(…것과 달리, 어메)은
+ * 덜 끝난 마지막 문장을 빼고, 문장이 하나뿐이면 끝에 '…'을 붙여 잘린 글로 보이게 한다.
+ */
+function leadParagraphs(lead: string, title: string): string[] {
+  const paragraphs = splitSentences(readableLead(lead, title));
+  const last = paragraphs.at(-1);
+  if (last === undefined || /[.!?…”"’')\]]$/.test(last)) return paragraphs;
+  return paragraphs.length > 1 ? paragraphs.slice(0, -1) : [`${last}…`];
+}
+
+/**
  * 기사 페이지는 검색에 넣지 않는다. 언론사 기사를 요약한 페이지라 검색에는 원문이 나오게 한다.
  * API가 잠깐 멈춰 오류 안내가 보일 때도 같다(오류 화면이 색인되지 않게).
  */
@@ -92,8 +103,7 @@ async function NewsContent({ params }: Pick<Props, "params">) {
  */
 function Article({ news }: { news: NewsPage }) {
   const summary = splitSentences(news.summary);
-  const body =
-    summary.length > 0 ? summary : news.lead ? splitSentences(readableLead(news.lead, news.title)) : [];
+  const body = summary.length > 0 ? summary : news.lead ? leadParagraphs(news.lead, news.title) : [];
   const kind = summary.length > 0 ? "AI 요약" : body.length > 0 ? "기사 앞부분" : null;
   return (
     <article className="card min-w-0 p-4 sm:p-6">
