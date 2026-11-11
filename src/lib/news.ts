@@ -11,8 +11,16 @@ function balancedQuotes(s: string): boolean {
   return open === close && straight % 2 === 0;
 }
 
-/** 앞부분 맨 앞의 괄호·대괄호 기자 표시 */
-const BYLINE = /^[(\[［【][^)\]］】]{1,40}(?:기자|특파원|통신원)[)\]］】]\s*/;
+/**
+ * 앞부분 맨 앞의 기자 표시. 둘 다 빼 본다.
+ * - 괄호 안에 기자가 있는 꼴: (엑스포츠뉴스 이우진 기자), [OSEN=홍길동 특파원], (홍길동 기자 hong@…)
+ * - 통신사 꼴: (서울=연합뉴스) 홍길동 기자 = , 【서울=뉴시스】홍길동 기자 =
+ * [기자수첩]·(사진=한화 이글스 제공) 같은 말머리·사진 설명은 남는다.
+ */
+const BYLINES = [
+  /^[(\[［【（][^)\]］】）]{1,40}(?:기자|특파원|통신원)[^)\]］】）]{0,40}[)\]］】）]\s*/,
+  /^[(\[［【（][^)\]］】）]{1,20}=[^)\]］】）]{1,20}[)\]］】）]\s*(?:[가-힣A-Za-z]{2,10}\s*){0,3}(?:기자|특파원|통신원)\s*=\s*/,
+];
 
 /** 짝이 맞는 문장 끝으로 볼 만큼 짧은 앞부분의 최소 글자 수(이보다 짧게 자르면 120자 뒤 문장 끝을 쓴다) */
 const MIN_LEAD = 40;
@@ -27,7 +35,7 @@ const MIN_LEAD = 40;
  */
 export function readableLead(lead: string, title: string): string {
   // 맨 앞 기자 표시: (엑스포츠뉴스 이우진 기자), [OSEN=홍길동 특파원] 등. 언론사는 화면에 따로 보인다
-  let text = lead.trim().replace(BYLINE, "").trim();
+  let text = BYLINES.reduce((s, byline) => s.replace(byline, "").trim(), lead.trim());
   const quote = /^[“"][^”"]{2,120}[”"](?:\s+|$)/.exec(text);
   if (quote && /^[“"]/.test(title.trim()) && text.length > quote[0].length) {
     text = text.slice(quote[0].length).trim();
