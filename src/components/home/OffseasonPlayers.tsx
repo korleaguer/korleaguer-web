@@ -9,11 +9,18 @@ import FormCard from "@/components/my/FormCard";
 /** 비시즌 카드는 시즌 합계라 기간이 뜻이 없다. /api/my가 요구하는 기간만 채운다 */
 const DAYS = 7;
 
-/** 카드 순서: 내 선수 → FA(최근에 FA가 된 선수부터) → 나머지(명단 순서) */
+/** 올해 메이저 출전(타자 경기·투수 등판). 사람들이 더 챙겨 보는 선수일수록 많다 */
+function majorGames(e: MyPlayer): number {
+  return e.seasonTotals?.mlb?.games ?? 0;
+}
+
+/**
+ * 카드 순서: 내 선수 → 올해 메이저에서 많이 뛴 선수 → 명단 순서. 국내 리그로 돌아간 선수는 맨 끝(이제 해외파가 아니다).
+ * FA인지는 순서에 넣지 않는다(배지로 보인다). 그래서 메이저 4경기 FA가 143경기 선수보다 앞서지 않는다.
+ */
 function order(entries: MyPlayer[], myIds: number[]): MyPlayer[] {
-  const rank = (e: MyPlayer) => (myIds.includes(e.player.id) ? 0 : e.status?.kind === "FA" ? 1 : 2);
-  const faDays = (e: MyPlayer) => (e.status?.kind === "FA" ? (e.status.days ?? Number.MAX_SAFE_INTEGER) : 0);
-  return [...entries].sort((a, b) => rank(a) - rank(b) || faDays(a) - faDays(b));
+  const rank = (e: MyPlayer) => (e.status?.kind === "KBO" ? 2 : myIds.includes(e.player.id) ? 0 : 1);
+  return [...entries].sort((a, b) => rank(a) - rank(b) || majorGames(b) - majorGames(a));
 }
 
 /** 머리 알약: "2027 개막 D-134", "FA 3명" */
@@ -62,7 +69,8 @@ export default async function OffseasonPlayers({ offseason }: { offseason: OffSe
       ) : !my || entries.length === 0 ? (
         <p className="card px-4 py-6 text-sm text-muted">선수 기록이 모이면 선수별 시즌 카드가 여기에 나옵니다.</p>
       ) : (
-        <ul className="grid items-start gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid items-stretch gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {/* 같은 줄 카드는 높이를 맞춘다(시즌 합계 카드는 펼치는 목록이 없다). 숫자 묶음은 카드 아래에 붙는다 */}
           {entries.map((entry) => (
             <FormCard
               key={entry.player.id}

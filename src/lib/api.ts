@@ -253,6 +253,8 @@ export interface PlayerSummary {
   levelTeam: string | null;
   /** MLB 이동 기록상 FA(마지막 'FA 선언' 뒤 새 팀 기록 없음). 그러면 level·levelTeam은 null이고 팀 칸은 마지막 팀이다 */
   freeAgent: boolean;
+  /** 국내 리그로 돌아간 팀(명단에 사람이 적은 값, 예: "LG 트윈스"). 해외에서 뛰면 null. 있으면 FA·단계 알약 대신 '… 복귀' */
+  returnedKo: string | null;
 }
 
 export type Level = "MLB" | "MINORS";
@@ -359,7 +361,8 @@ export interface MyPlayer {
 
 /**
  * 상태 배지 종류. IL 부상자 명단 · RETURNED 부상 복귀(7일 안) · CALLED_UP 콜업(7일 안) · MINORS 마이너 ·
- * MINORS_IL 마이너 부상자 명단 · SUSPENDED 출장 정지 · DFA 지명 할당 · FA · SEASON_OVER 시즌 끝
+ * MINORS_IL 마이너 부상자 명단 · SUSPENDED 출장 정지 · DFA 지명 할당 · FA · SEASON_OVER 시즌 끝 ·
+ * KBO 국내 리그로 돌아감(teamName에 그 팀, lastGameDate·lastGameLevel은 해외 마지막 경기)
  */
 export type CardStatusKind =
   | "IL"
@@ -370,7 +373,8 @@ export type CardStatusKind =
   | "SUSPENDED"
   | "DFA"
   | "FA"
-  | "SEASON_OVER";
+  | "SEASON_OVER"
+  | "KBO";
 
 export interface CardStatus {
   kind: CardStatusKind;
@@ -554,6 +558,7 @@ function normalizeSummary<T extends PlayerSummary>(p: T): T {
     levelTeam: p.levelTeam ?? null,
     // FA를 주지 않는 오래된 api면 FA가 아닌 것으로 본다(지금처럼 단계 알약만)
     freeAgent: p.freeAgent === true,
+    returnedKo: p.returnedKo ?? null,
   };
 }
 

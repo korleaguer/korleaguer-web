@@ -87,28 +87,29 @@ export default function MlbChallenge({ posting }: { posting: PostingSummary }) {
   if (posting.players.length === 0) return null;
   const negotiating = posting.players.filter((p) => p.status === "NEGOTIATING" || p.status === "UPCOMING");
   const now = negotiating[0];
+  // PC(lg)에서는 선수 카드와 선배 그래프를 나란히 둔다(카드 한 장이 넓은 화면의 절반만 쓰고 오른쪽이 비지 않게)
   return (
-    <>
+    <div className="grid items-start gap-7 lg:grid-cols-2 lg:gap-6">
       <Section id="mlb-challenge-title" title="이번 겨울 MLB 도전">
         <ul className="-mt-0.5 mb-2 flex flex-wrap gap-1.5 px-1">
           <li className="rounded-full bg-surface px-2.5 py-0.5 text-[0.8125rem] font-semibold leading-5 text-neutral-pill-fg tabular-nums">
             포스팅 {posting.players.length}명
           </li>
         </ul>
-        <ul className="grid items-start gap-3 lg:grid-cols-2">
+        <ul className="grid gap-3">
           {posting.players.map((p) => (
             <PostingCard key={p.nameKo} player={p} history={posting.history} />
           ))}
         </ul>
       </Section>
       {posting.history.some((h) => h.deal != null) && <HistoryChart history={posting.history} now={now} />}
-    </>
+    </div>
   );
 }
 
 function PostingCard({ player: p, history }: { player: PostingPlayer; history: PostingPast[] }) {
   const status = STATUS[p.status] ?? STATUS.CLOSED;
-  const color = KBO_COLORS[p.kboTeam] ?? "var(--no-team)";
+  const color = KBO_COLORS[p.kboTeam] ?? "#8a919c";
   const open = p.status === "NEGOTIATING" || p.status === "UPCOMING";
   const signed = history.filter((h) => h.daysBeforeDeadline != null);
   const near = signed.filter((h) => (h.daysBeforeDeadline ?? 99) <= NEAR_DEADLINE).length;
@@ -239,7 +240,7 @@ function HistoryChart({ history, now }: { history: PostingPast[]; now?: PostingP
           )}
         </ul>
         <div className="relative mt-3" aria-hidden>
-          <div className="grid grid-cols-[4.75rem_1fr] gap-2">
+          <div className="grid grid-cols-[6.5rem_1fr] gap-2">
             <div />
             <div className="relative h-4 text-[0.6875rem] text-muted tabular-nums">
               {[30, 20, 10, 0].map((d) => (
@@ -259,10 +260,10 @@ function HistoryChart({ history, now }: { history: PostingPast[]; now?: PostingP
             const right = pos <= 12;
             const style: CSSProperties = { left: x(pos) };
             return (
-              <div key={`${r.nameKo}-${r.season}`} className="grid grid-cols-[4.75rem_1fr] items-center gap-2 border-t border-line py-1.5">
+              <div key={`${r.nameKo}-${r.season}`} className="grid grid-cols-[6.5rem_1fr] items-center gap-2 border-t border-line py-1.5">
                 <p className="text-[0.8125rem] font-bold leading-tight">
                   {r.nameKo}
-                  <span className="block text-[0.6875rem] font-normal text-muted tabular-nums">
+                  <span className="block truncate whitespace-nowrap text-[0.6875rem] font-normal text-muted tabular-nums">
                     {r.season}
                     {r.deal?.mlbTeamKo ? ` · ${r.deal.mlbTeamKo}` : ""}
                   </span>
@@ -288,7 +289,7 @@ function HistoryChart({ history, now }: { history: PostingPast[]; now?: PostingP
           {today != null && (
             <i
               className="absolute bottom-0 top-4 z-[1] w-0.5 bg-foreground/85"
-              style={{ left: `calc(4.75rem + 0.5rem + (100% - 5.25rem) * ${(WINDOW_DAYS - Math.min(WINDOW_DAYS, today)) / WINDOW_DAYS})` }}
+              style={{ left: `calc(6.5rem + 0.5rem + (100% - 7rem) * ${(WINDOW_DAYS - Math.min(WINDOW_DAYS, today)) / WINDOW_DAYS})` }}
             />
           )}
         </div>
