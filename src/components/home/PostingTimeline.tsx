@@ -27,6 +27,8 @@ export interface TimelineDot {
   days: number;
   /** 올해 계약한 포스팅 선수 */
   thisYear: boolean;
+  /** 포스팅 당시 KBO 공식 등록 사진 */
+  photoUrl: string | null;
 }
 
 export interface TimelineNow {
@@ -44,11 +46,6 @@ interface Props {
   now: TimelineNow[];
   /** 막대를 '지금'까지 칠한다(협상 중인 선수 한 명일 때) */
   fill: boolean;
-  /**
-   * '지금'을 사진으로 보일지. 선수가 한 명이면 사진, 여러 명이면 누가 누군지 바로 읽히게
-   * 선배 동그라미처럼 이름 두 글자 원(KBO 구단 색)으로 보인다
-   */
-  photos: boolean;
   startLabel: string;
   endLabel: string;
   /** '마지막 N일' 칸 */
@@ -73,7 +70,7 @@ function stack<T extends { days: number }>(items: T[], x: (d: number) => number,
  * 마감 직전 며칠은 회색 칸으로 묶어 '막판에 몰린다'가 한눈에 보이게 한다.
  * 화면 읽기는 카드의 글(남은 날·계약 목록)이 맡으므로 그래프는 읽지 않는다.
  */
-export default function PostingTimeline({ dots, now, fill, photos, startLabel, endLabel, lateDays }: Props) {
+export default function PostingTimeline({ dots, now, fill, startLabel, endLabel, lateDays }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(FIRST_WIDTH);
   useEffect(() => {
@@ -119,7 +116,7 @@ export default function PostingTimeline({ dots, now, fill, photos, startLabel, e
       )}
       {placed.map(({ item, x: px, level }) => (
         <span key={item.key} className="absolute" style={{ left: px - DOT / 2, top: base - DOT - level * STEP }}>
-          <PostingDot nameKo={item.nameKo} color={item.color} thisYear={item.thisYear} size={DOT} />
+          <PostingDot nameKo={item.nameKo} color={item.color} thisYear={item.thisYear} photoUrl={item.photoUrl} size={DOT} />
         </span>
       ))}
       <div className="absolute inset-x-0 overflow-hidden rounded-full bg-surface-2" style={{ top: trackTop, height: TRACK }}>
@@ -131,7 +128,7 @@ export default function PostingTimeline({ dots, now, fill, photos, startLabel, e
           className="absolute z-10"
           style={{ left: px - FACE / 2, top: trackTop + TRACK / 2 - FACE / 2 + level * (FACE - 4) }}
         >
-          <NowFace now={item} photo={photos} />
+          <NowFace now={item} />
         </span>
       ))}
       <div className="absolute inset-x-0 flex justify-between text-xs text-muted tabular-nums" style={{ top: endsTop }}>
@@ -143,10 +140,10 @@ export default function PostingTimeline({ dots, now, fill, photos, startLabel, e
 }
 
 /** 포스팅 중인 선수의 '지금': 사진(여러 명이거나 사진이 없으면 구단 색 원 + 이름 두 글자)에 진한 테두리 */
-function NowFace({ now, photo }: { now: TimelineNow; photo: boolean }) {
+function NowFace({ now }: { now: TimelineNow }) {
   const { failed, ref, onError } = useImageFailed(now.photoUrl);
   const ring = "0 0 0 2px var(--surface), 0 0 0 4px var(--foreground)";
-  if (!photo || !now.photoUrl || failed) {
+  if (!now.photoUrl || failed) {
     return (
       <span
         className="posting-dot grid place-items-center rounded-full text-[0.6875rem] font-extrabold leading-none tracking-[-0.04em] text-white"
