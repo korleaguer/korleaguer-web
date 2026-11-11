@@ -18,7 +18,7 @@ export interface GameLine {
   teamKo: string;
   /** 팀 약어(SF, LAD ...). 팀 색·로고를 찾을 때 쓴다 */
   teamAbbr: string | null;
-  /** 선수 사진 주소(MLB 이미지 서버). 없으면 null */
+  /** 선수 사진 주소(우리가 호스팅, /photos/mlb-808982). 없으면 null */
   photoUrl: string | null;
   opponentKo: string;
   /** 상대 팀 약어. 상대 팀 로고를 찾을 때 쓴다 */

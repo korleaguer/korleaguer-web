@@ -27,7 +27,7 @@ export default function BandPhoto({ nameKo, photoUrl, teamAbbr }: Props) {
   }
 
   return (
-    // 브라우저가 MLB 이미지 서버에서 직접 받는다(PlayerAvatar와 같은 이유로 next/image를 쓰지 않는다).
+    // 우리가 호스팅하는 사진(/photos/…)이다(PlayerAvatar와 같은 이유로 next/image를 쓰지 않는다).
     // eslint-disable-next-line @next/next/no-img-element -- 우리 서버를 거치지 않고 브라우저가 직접 받는다
     <img
       ref={ref}
