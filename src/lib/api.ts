@@ -187,6 +187,8 @@ export interface PostingPlayer {
   kboTeam: string;
   positionKo: string;
   birthYear: number | null;
+  /** 프로필 사진(현 소속 KBO 구단 공식 사진). 없으면 null */
+  photoUrl: string | null;
   status: PostingStatus;
   windowOpensAt: string;
   deadlineAt: string;
@@ -524,7 +526,12 @@ function normalizeHome(raw: HomeResponse): HomeResponse {
       : null,
     posting: raw.posting
       ? {
-          players: (raw.posting.players ?? []).map((p) => ({ ...p, news: p.news ?? [], deal: p.deal ?? null })),
+          players: (raw.posting.players ?? []).map((p) => ({
+            ...p,
+            photoUrl: p.photoUrl ?? null,
+            news: p.news ?? [],
+            deal: p.deal ?? null,
+          })),
           history: raw.posting.history ?? [],
         }
       : null,
