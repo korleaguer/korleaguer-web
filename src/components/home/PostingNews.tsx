@@ -28,6 +28,15 @@ export function readableLead(lead: string, title: string): string {
   return end >= LEAD_CHARS / 2 ? head.slice(0, head.indexOf(" ", end + 1)).trim() : text;
 }
 
+/**
+ * AI 요약 기사(영어 기사의 한국어 요약)가 있으면 가장 최근 것 하나를 맨 앞에 둔다. 국내 기사가 하루에도 여러 건이라
+ * 늦은 순으로만 두면 요약 기사가 '더 보기' 안에 숨는다(사용자가 원한 것이 이 요약이다). 나머지는 늦은 순 그대로다.
+ */
+export function pinSummary<T extends { summary: string | null }>(items: T[]): T[] {
+  const i = items.findIndex((n) => n.summary);
+  return i > 0 ? [items[i], ...items.slice(0, i), ...items.slice(i + 1)] : items;
+}
+
 export interface PostingNewsItem extends NewsHeadline {
   /** 여러 선수의 기사를 모았을 때 누구 기사인지. 한 명이면 null */
   who: string | null;
@@ -37,13 +46,14 @@ export interface PostingNewsItem extends NewsHeadline {
  * MLB 도전 카드의 관련 기사. 링크 목록 대신 카드 안에서 읽히게 제목 아래에 읽을 거리를 펼쳐 둔다
  * (사용자 11-11: "링크 바로가기는 별로", 누르지 않아도 보이게).
  * 언론사가 허락한 만큼만 보인다: MLB Trade Rumors는 Claude가 쓴 한국어 제목·요약과 대표 사진(영어 원제는 출처로),
- * 마이데일리는 기사 앞부분(피드가 준 글자)만. 원문은 맨 아래 작은 링크다.
+ * 마이데일리는 기사 앞부분(피드가 준 글자)만. 원문은 맨 아래 작은 링크다. AI 요약 기사 하나는 맨 앞에 둔다(pinSummary).
  */
 export default function PostingNews({ items }: { items: PostingNewsItem[] }) {
   const [open, setOpen] = useState(false);
   if (items.length === 0) return null;
-  const shown = open ? items : items.slice(0, VISIBLE);
-  const rest = items.length - shown.length;
+  const ordered = pinSummary(items);
+  const shown = open ? ordered : ordered.slice(0, VISIBLE);
+  const rest = ordered.length - shown.length;
   const anyAi = items.some((n) => n.summary);
   return (
     <div className="mt-4 border-t border-line pt-3 lg:col-span-2 lg:mt-5">
