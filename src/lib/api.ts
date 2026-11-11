@@ -155,6 +155,24 @@ export interface HomeResponse {
   /** 마이너 시즌 성적(마이너 경기별 기록 합산), 마이너 경기 많은 순. 오래된 api면 빈 배열 */
   minorHitters: HitterSeason[];
   minorPitchers: PitcherSeason[];
+  /** 비시즌일 때만 있다(다음 개막일 등). 시즌 중이거나 오래된 api면 null */
+  offseason: OffSeason | null;
+}
+
+/**
+ * 비시즌 정보(GET /api/home의 offseason). 최근 7일 안에 시작한 우리 선수 구단 경기가 없고
+ * 정규시즌 기간도 아니면 api가 채운다(시즌 끝, 스프링캠프, 포스트시즌 탈락).
+ */
+export interface OffSeason {
+  /** 끝난 시즌 */
+  season: number;
+  nextSeason: number;
+  /** 다음 정규시즌 개막일, 미국 날짜 "2027-03-25". 발표 전이면 null */
+  nextOpeningDay: string | null;
+  /** 오늘(미국 날짜)부터 개막일까지 남은 날. 개막일을 모르면 null */
+  daysToOpening: number | null;
+  /** 명단의 선수 번호. 이 번호로 /api/my를 불러 선수별 상태·시즌 합계를 받는다 */
+  playerIds: number[];
 }
 
 /** GET /api/players 의 한 항목. 매칭 전 선수는 이름(한글)·역할 말고는 null일 수 있다 */
@@ -442,6 +460,14 @@ function normalizeHome(raw: HomeResponse): HomeResponse {
     pitchers: (raw.pitchers ?? []).map(normalizeSeason),
     minorHitters: (raw.minorHitters ?? []).map(normalizeSeason),
     minorPitchers: (raw.minorPitchers ?? []).map(normalizeSeason),
+    offseason: raw.offseason
+      ? {
+          ...raw.offseason,
+          nextOpeningDay: raw.offseason.nextOpeningDay ?? null,
+          daysToOpening: raw.offseason.daysToOpening ?? null,
+          playerIds: raw.offseason.playerIds ?? [],
+        }
+      : null,
   };
 }
 
