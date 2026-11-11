@@ -1,4 +1,3 @@
-import type { CSSProperties } from "react";
 import type { PostingPast, PostingPlayer, PostingStatus, PostingSummary } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import ExternalLinkIcon from "@/components/ExternalLinkIcon";
@@ -234,64 +233,69 @@ function HistoryChart({ history, now }: { history: PostingPast[]; now?: PostingP
           </li>
           {today != null && now && (
             <li className="inline-flex items-center gap-1.5">
-              <i className="h-3 w-0.5 bg-foreground" />
+              <i className="h-3.5 w-0.5 rounded-full bg-foreground/70" />
               {now.nameKo} 지금(D-{today})
             </li>
           )}
         </ul>
-        <div className="relative mt-3" aria-hidden>
-          <div className="grid grid-cols-[6.5rem_1fr] gap-2">
-            <div />
-            <div className="relative h-4 text-[0.6875rem] text-muted tabular-nums">
-              {[30, 20, 10, 0].map((d) => (
-                <span
-                  key={d}
-                  className="absolute"
-                  style={{ left: x(d), transform: d === 0 ? "translateX(-100%)" : d === 30 ? "none" : "translateX(-50%)" }}
-                >
-                  {d === 0 ? "마감" : `D-${d}`}
-                </span>
-              ))}
+        {/*
+          선수 한 명 = 두 줄. 1줄: 이름 | 30일 막대 위 점, 2줄: 연도·팀 | 금액(오른쪽 정렬, 숫자 칸 맞춤).
+          점·축 눈금·오늘 눈금은 막대 안쪽 폭(양쪽 점 반지름 6px 안쪽)의 같은 좌표를 쓴다.
+          오늘 표시는 막대마다 같은 자리 눈금이라 글자와 겹치지 않는다.
+        */}
+        <div className="mt-3" aria-hidden>
+          <div className="grid grid-cols-[6.5rem_1fr] gap-x-3">
+            <span />
+            <div className="relative h-4">
+              <div className="absolute inset-x-1.5 inset-y-0">
+                {[30, 20, 10, 0].map((d) => (
+                  <span
+                    key={d}
+                    className="absolute top-0 -translate-x-1/2 whitespace-nowrap text-[0.6875rem] leading-4 text-muted tabular-nums"
+                    style={{ left: x(d) }}
+                  >
+                    {d === 0 ? "마감" : `D-${d}`}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
-          {rows.map((r) => {
-            const d = r.daysBeforeDeadline;
-            const pos = d ?? 0;
-            const right = pos <= 12;
-            const style: CSSProperties = { left: x(pos) };
-            return (
-              <div key={`${r.nameKo}-${r.season}`} className="grid grid-cols-[6.5rem_1fr] items-center gap-2 border-t border-line py-1.5">
-                <p className="text-[0.8125rem] font-bold leading-tight">
-                  {r.nameKo}
-                  <span className="block truncate whitespace-nowrap text-[0.6875rem] font-normal text-muted tabular-nums">
+          <ul className="mt-1.5">
+            {rows.map((r) => {
+              const d = r.daysBeforeDeadline ?? 0;
+              return (
+                <li
+                  key={`${r.nameKo}-${r.season}`}
+                  className="grid grid-cols-[6.5rem_1fr] items-center gap-x-3 gap-y-0.5 border-t border-line py-2.5"
+                >
+                  <p className="truncate text-[0.8125rem] font-bold leading-5">{r.nameKo}</p>
+                  <div className="relative h-5">
+                    <i className="absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-surface-2" />
+                    <div className="absolute inset-x-1.5 inset-y-0">
+                      {today != null && (
+                        <i
+                          className="absolute top-1/2 h-3.5 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground/70"
+                          style={{ left: x(today) }}
+                        />
+                      )}
+                      <i
+                        className="absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent shadow-[0_0_0_2px_var(--surface)]"
+                        style={{ left: x(d) }}
+                      />
+                    </div>
+                  </div>
+                  <p className="truncate whitespace-nowrap text-[0.6875rem] leading-4 text-muted tabular-nums">
                     {r.season}
                     {r.deal?.mlbTeamKo ? ` · ${r.deal.mlbTeamKo}` : ""}
-                  </span>
-                </p>
-                <div className="relative h-8">
-                  <i className="absolute inset-x-0 top-2.5 h-px bg-line" />
-                  <i
-                    className="absolute top-1 z-[3] size-3 -translate-x-1/2 rounded-full bg-accent shadow-[0_0_0_2px_var(--surface)]"
-                    style={style}
-                  />
-                  <span
-                    className={`absolute top-[1.125rem] z-[2] whitespace-nowrap bg-surface px-0.5 text-[0.6875rem] tabular-nums ${
-                      right ? "-translate-x-full" : "translate-x-[-0.375rem]"
-                    }`}
-                    style={style}
-                  >
-                    {`${d === 0 ? "마감 당일" : `D-${d}`} · ${dealText(r)}`}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
-          {today != null && (
-            <i
-              className="absolute bottom-0 top-4 z-[1] w-0.5 bg-foreground/85"
-              style={{ left: `calc(6.5rem + 0.5rem + (100% - 7rem) * ${(WINDOW_DAYS - Math.min(WINDOW_DAYS, today)) / WINDOW_DAYS})` }}
-            />
-          )}
+                  </p>
+                  <p className="truncate text-right text-[0.6875rem] leading-4 tabular-nums">
+                    <span className="font-semibold">{d === 0 ? "마감 당일" : `D-${d}`}</span>
+                    {` · ${dealText(r)}`}
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
         </div>
         <table className="sr-only">
           <caption>지난 포스팅: 마감 며칠 전 계약했나</caption>
