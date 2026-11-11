@@ -70,3 +70,19 @@ export function rankedHitter(ranking: RankingMinimums | null) {
 export function rankedPitcher(ranking: RankingMinimums | null) {
   return (p: PitcherSeason) => ranking == null || p.outs >= ranking.minOuts;
 }
+
+/**
+ * 시즌 기록 표의 줄 묶음(이슈 #88). 메이저 선수마다 같은 선수의 마이너 기록을 짝지어 바로 밑에 두고,
+ * 메이저 줄이 없는(마이너에서만 뛴) 선수는 따로 모은다. 순서는 각 목록 그대로다.
+ */
+export function pairWithMinors<T extends { playerId: number }>(
+  majors: T[],
+  minors: T[],
+): { pairs: { major: T; minor: T | null }[]; minorsOnly: T[] } {
+  const majorIds = new Set(majors.map((row) => row.playerId));
+  const minorById = new Map(minors.map((row) => [row.playerId, row]));
+  return {
+    pairs: majors.map((major) => ({ major, minor: minorById.get(major.playerId) ?? null })),
+    minorsOnly: minors.filter((row) => !majorIds.has(row.playerId)),
+  };
+}
