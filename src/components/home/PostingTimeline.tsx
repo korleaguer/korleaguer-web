@@ -2,6 +2,7 @@
 
 import { type CSSProperties, useEffect, useRef, useState } from "react";
 import { PostingDot, shortName } from "@/components/home/PostingDot";
+import { useMoveWhenSeen } from "@/components/RollingNumber";
 import { useImageFailed } from "@/lib/useImageFailed";
 
 /** 지금 포스팅 제도의 협상 기간(일). 왼쪽 D-30 → 오른쪽 마감 */
@@ -80,6 +81,8 @@ export default function PostingTimeline({ dots, now, fill, startLabel, endLabel,
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
+  // 그래프가 그려지듯 나타나는 움직임(globals.css의 grow-x·slide-from)은 화면에 보일 때 시작한다
+  useMoveWhenSeen(ref);
 
   const pad = DOT / 2 + 1;
   const x = (d: number) => pad + ((WINDOW_DAYS - Math.min(WINDOW_DAYS, Math.max(0, d))) / WINDOW_DAYS) * (width - pad * 2);
@@ -114,19 +117,32 @@ export default function PostingTimeline({ dots, now, fill, startLabel, endLabel,
           </span>
         </div>
       )}
-      {placed.map(({ item, x: px, level }) => (
-        <span key={item.key} className="absolute" style={{ left: px - DOT / 2, top: base - DOT - level * STEP }}>
+      {/* 선배 동그라미는 '협상 시작'(왼쪽 끝)에서 계약한 날 자리로 미끄러져 퍼진다 */}
+      {placed.map(({ item, x: px, level }, i) => (
+        <span
+          key={item.key}
+          className="slide-from absolute"
+          style={{ left: px - DOT / 2, top: base - DOT - level * STEP, "--slide": `${pad - px}px`, "--i": i } as CSSProperties}
+        >
           <PostingDot nameKo={item.nameKo} color={item.color} thisYear={item.thisYear} photoUrl={item.photoUrl} size={DOT} />
         </span>
       ))}
       <div className="absolute inset-x-0 overflow-hidden rounded-full bg-surface-2" style={{ top: trackTop, height: TRACK }}>
-        {fillTo > 0 && <i className="absolute inset-y-0 left-0 rounded-full bg-accent" style={{ width: fillTo }} />}
+        {/* 협상 시작부터 지금까지 차오른다 */}
+        {fillTo > 0 && <i className="grow-x absolute inset-y-0 left-0 rounded-full bg-accent" style={{ width: fillTo }} />}
       </div>
+      {/* 포스팅 선수 사진은 차오르는 막대 끝을 타고 지금 자리로 온다 */}
       {faces.map(({ item, x: px, level }) => (
         <span
           key={item.key}
-          className="absolute z-10"
-          style={{ left: px - FACE / 2, top: trackTop + TRACK / 2 - FACE / 2 + level * (FACE - 4) }}
+          className="slide-from absolute z-10"
+          style={
+            {
+              left: px - FACE / 2,
+              top: trackTop + TRACK / 2 - FACE / 2 + level * (FACE - 4),
+              "--slide": `${pad - px}px`,
+            } as CSSProperties
+          }
         >
           <NowFace now={item} />
         </span>
