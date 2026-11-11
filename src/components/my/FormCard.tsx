@@ -33,9 +33,8 @@ export default function FormCard({ entry, days, statsAvailable, isMine = true, n
   const note = periodNote(entry, days);
   const period = entry.hitting ?? entry.pitching;
   const pitcher = player.role === "PITCHER";
-  // FA는 소속 팀이 없으니 팀 색 대신 무채색 무대(사진이 없을 때 이니셜 원도 팀 색을 쓰지 않는다)
-  const freeAgent = entry.status?.kind === "FA";
-  const team = freeAgent ? "var(--no-team)" : teamColor(player.teamAbbr);
+  // FA·국내 복귀도 직전 MLB 팀 색(사진 모자와 같은 팀). 팀을 모르면 teamColor가 회색 기본값을 준다
+  const team = teamColor(player.teamAbbr);
   const minors = level != null && level !== "MLB";
   const showsGames = statsAvailable && basis !== "SEASON" && basis !== "NONE" && games.length > 0;
 
@@ -43,7 +42,7 @@ export default function FormCard({ entry, days, statsAvailable, isMine = true, n
     <li className="card flex flex-col overflow-hidden">
       <div className="player-stage h-[5.75rem]" style={{ "--team": team } as CSSProperties}>
         {entry.status && <StatusBadge status={entry.status} />}
-        <BandPhoto nameKo={player.nameKo} photoUrl={player.photoUrl} teamAbbr={freeAgent ? null : player.teamAbbr} />
+        <BandPhoto nameKo={player.nameKo} photoUrl={player.photoUrl} teamAbbr={player.teamAbbr} />
       </div>
 
       <div className="flex flex-1 flex-col px-4 pb-2 pt-3">

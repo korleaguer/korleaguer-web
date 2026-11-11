@@ -40,15 +40,18 @@ export function statusBadge(status: CardStatus): { text: string; tone: BadgeTone
       return { text: `FA${days}`, tone: "fa" };
     case "SEASON_OVER":
       return { text: "시즌 끝", tone: "neutral" };
+    case "KBO":
+      return { text: `${status.teamName ?? "KBO"} 복귀`, tone: "neutral" };
     default:
       return null;
   }
 }
 
-/** 이름 아래 팀 줄: FA면 직전 소속 */
+/** 이름 아래 팀 줄: FA면 직전 소속, 국내 리그로 돌아갔으면 그 팀 */
 export function metaLine(entry: MyPlayer): string {
-  const team = entry.player.teamKo;
-  const parts = [entry.status?.kind === "FA" && team ? `직전 ${team}` : team, entry.player.positionKo];
+  const status = entry.status;
+  const team = status?.kind === "KBO" && status.teamName ? status.teamName : entry.player.teamKo;
+  const parts = [status?.kind === "FA" && team ? `직전 ${team}` : team, entry.player.positionKo];
   return parts.filter(Boolean).join(" · ");
 }
 
@@ -59,7 +62,8 @@ function monthDay(date: string): string {
 }
 
 /**
- * 상태 줄(출전 줄 자리에 한 줄): 마이너면 소속 팀, 메이저 부상자 명단에서 재활 중이면 재활 팀, FA면 마지막 경기.
+ * 상태 줄(출전 줄 자리에 한 줄): 마이너면 소속 팀, 메이저 부상자 명단에서 재활 중이면 재활 팀, FA면 마지막 경기,
+ * 국내 리그로 돌아갔으면 미국에서 뛴 마지막 경기.
  * 메이저 출전 줄(playText)이 있으면 쓰지 않는다.
  */
 export function statusLine(entry: MyPlayer): string | null {
@@ -73,6 +77,9 @@ export function statusLine(entry: MyPlayer): string | null {
   }
   if (status.kind === "FA" && status.lastGameDate) {
     return `마지막 경기 ${monthDay(status.lastGameDate)} ${levelKo(status.lastGameLevel)}`;
+  }
+  if (status.kind === "KBO" && status.lastGameDate) {
+    return `미국 마지막 경기 ${monthDay(status.lastGameDate)} ${levelKo(status.lastGameLevel)}`;
   }
   return null;
 }
