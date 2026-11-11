@@ -209,13 +209,40 @@
     box-shadow: var(--shadow-card);
   }
 
-  /* 누르면 다른 화면으로 가는 카드: 마우스를 올리면 그림자가 짙어진다 */
+  /*
+   * 누르면 다른 화면으로 가는 카드: 마우스를 올리면 그림자가 짙어지고, 누르면 살짝(2%) 작아졌다 돌아온다(눌림 반응).
+   * 카드 안 버튼(별)을 누를 때는 카드가 따라 줄지 않는다.
+   */
   .card-link {
-    transition: box-shadow 160ms cubic-bezier(0.16, 1, 0.3, 1);
+    transition:
+      box-shadow 160ms cubic-bezier(0.16, 1, 0.3, 1),
+      scale 150ms cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .card-link:hover {
     box-shadow: var(--shadow-card-hover);
+  }
+
+  .card-link:active:not(:has(button:active)) {
+    scale: 0.98;
+  }
+
+  /*
+   * 눌림 반응(토스처럼): 버튼·탭·칩을 누르면 살짝 작아졌다 돌아와서 눌렸다는 것을 손끝에 알린다.
+   * 작은 것은 4%(press), 줄 전체를 차지하는 넓은 버튼은 2%(press-soft). transform과 따로 노는 scale 속성을 써서
+   * 회전 같은 다른 움직임과 겹치지 않는다. 색 전환이 있는 요소는 Tailwind transition(scale 포함)을 함께 쓴다.
+   */
+  .press,
+  .press-soft {
+    transition: scale 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .press:active {
+    scale: 0.96;
+  }
+
+  .press-soft:active {
+    scale: 0.98;
   }
 
   /*
@@ -283,14 +310,53 @@
     animation-delay: calc(min(var(--i, 0), 10) * 30ms);
   }
 
+  /*
+   * 굴러 올라가는 숫자(RollingNumber). 자리마다 0~9 띠를 두고, 처음 보일 때 0에서 제 숫자까지 굴러 올라간다(토스 금액처럼).
+   * 자리 크기와 기준선은 보이지 않는 진짜 숫자가 잡고, 띠는 그 위에 겹쳐 한 줄만 보이게 자른다(clip-path라 기준선이 흔들리지 않는다).
+   * --d = 이 자리 숫자, --i = 자리 순서. 값이 바뀌면(새로 받은 기록) 바뀐 자리가 새 숫자로 굴러간다.
+   */
+  .rolling-digit {
+    position: relative;
+    display: inline-block;
+    clip-path: inset(0);
+  }
+
+  .rolling-strip {
+    position: absolute;
+    inset: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    transform: translateY(calc(var(--d) * -10%));
+    transition: transform 500ms cubic-bezier(0.16, 1, 0.3, 1);
+    animation: digit-roll 700ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+    animation-delay: calc(var(--i, 0) * 45ms);
+  }
+
+  /* 처음 그려질 때 화면 밖이던 숫자는 보일 때까지 굴리지 않는다(RollingNumber가 붙였다가 보이면 뗀다) */
+  [data-roll="wait"] .rolling-strip {
+    animation: none;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .card-rise,
-    .bar-rise {
+    .bar-rise,
+    .rolling-strip {
       animation: none;
     }
 
-    .card-link {
+    .card-link,
+    .press,
+    .press-soft,
+    .rolling-strip {
       transition: none;
+    }
+
+    /* 크기를 바꾸는 대신 잠깐 흐려져서 눌렸다는 것만 알린다 */
+    .card-link:active:not(:has(button:active)),
+    .press:active,
+    .press-soft:active {
+      scale: none;
+      opacity: 0.7;
     }
   }
 
@@ -325,5 +391,12 @@
   }
   to {
     transform: none;
+  }
+}
+
+/* 0에서 제 숫자(띠의 기본 위치)까지 */
+@keyframes digit-roll {
+  from {
+    transform: translateY(0);
   }
 }

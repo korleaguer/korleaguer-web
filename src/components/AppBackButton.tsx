@@ -24,7 +24,7 @@ export default function AppBackButton() {
       // 앱의 탭은 첫 화면에서 시작하므로 보통은 기록이 있다. 없으면(주소로 바로 연 경우) 상위 목록으로 간다.
       onClick={() => (window.history.length > 1 ? router.back() : router.push(parentOf(pathname)))}
       // 누르는 자리는 44px(iOS 최소 크기). 화살표가 머리글 왼쪽 여백 선에 오도록 왼쪽으로 당기고, 로고는 버튼 끝에 붙인다.
-      className="-mr-3 -ml-3 hidden size-11 shrink-0 place-items-center rounded-full text-foreground active:bg-surface-2 in-app:grid"
+      className="press -mr-3 -ml-3 hidden size-11 shrink-0 place-items-center rounded-full text-foreground active:bg-surface-2 in-app:grid"
     >
       <svg
         aria-hidden

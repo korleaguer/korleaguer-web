@@ -43,7 +43,7 @@ export default function ShowMore({ moreLabel, lessLabel = "접기", children, bu
         aria-expanded={open}
         aria-controls={contentId}
         onClick={toggle}
-        className={`flex w-full cursor-pointer items-center justify-center gap-1 text-[0.8125rem] font-semibold text-accent-ink ${buttonClassName}`}
+        className={`press-soft flex w-full cursor-pointer items-center justify-center gap-1 text-[0.8125rem] font-semibold text-accent-ink ${buttonClassName}`}
       >
         {open ? lessLabel : moreLabel}
         <svg

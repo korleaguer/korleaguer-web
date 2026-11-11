@@ -118,7 +118,7 @@ export default function PhotoStage({
                   type="button"
                   aria-pressed={active}
                   onClick={() => setIndex(i)}
-                  className={`inline-flex min-h-8 items-center gap-1.5 rounded-full px-2.5 text-[0.8125rem] font-semibold leading-5 transition-colors duration-150 motion-reduce:transition-none ${
+                  className={`press inline-flex min-h-8 items-center gap-1.5 rounded-full px-2.5 text-[0.8125rem] font-semibold leading-5 transition duration-150 motion-reduce:transition-none ${
                     active ? "bg-accent-soft text-accent-ink" : "bg-surface-2 text-muted hover:text-foreground"
                   }`}
                 >
