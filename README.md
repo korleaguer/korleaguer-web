@@ -59,9 +59,10 @@ iOS·안드로이드 앱([korleaguer-app](https://github.com/korleaguer/korleagu
 
 ## 배포
 
-develop에 병합되면 Actions(`.github/workflows/deploy.yml`)가 검사 → 이미지(`Dockerfile`, Next.js `standalone` 출력,
-GHCR `ghcr.io/korleaguer/korleaguer-web:sha-<커밋>`) → SSH로 서버(pigeon.ddns.net)에 접속해 새 컨테이너로 바꾸기(끊김 없이, 새 것이 정상이 안 되면 옛 것 유지) →
+develop에 병합되면 Actions(`.github/workflows/deploy.yml`)가 검사와 이미지(`Dockerfile`, Next.js `standalone` 출력,
+GHCR `ghcr.io/korleaguer/korleaguer-web:sha-<커밋>`)를 동시에 만들고 → SSH로 서버(pigeon.ddns.net)에 접속해 새 컨테이너로 바꾸기(끊김 없이, 새 것이 정상이 안 되면 옛 것 유지) →
 공개 주소의 `/healthz`가 그 커밋을 주는지 확인까지 알아서 한다(지속 배포, 버전 번호 없이 커밋 해시로 구분).
+PR에서 검사를 통과한 코드와 병합한 코드가 똑같으면 검사를 다시 돌리지 않는다. 배포 차례가 왔을 때 develop에 더 새 배포 대상 커밋이 있으면 그 커밋이 함께 내보내므로 건너뛴다(최신만 배포).
 서버 구성(Caddy·web·api·MySQL), 처음 준비, 되돌리기는 korleaguer-server 저장소의 `deploy/README.md`.
 
 - 서버에서는 `API_BASE_URL=http://api:8080`(Docker 내부망)으로 API를 부른다. 브라우저는 API를 직접 부르지 않는다.
