@@ -12,6 +12,24 @@ function parentOf(pathname: string): string {
   return pathname.startsWith("/players/") ? "/players" : "/";
 }
 
+/** 앱이 문서를 그리기 전에 넣어 두는 값(korleaguer-app src/lib/site.ts의 APP_BOOT_SCRIPT). 옛 앱에는 features가 없다 */
+type AppWindow = Window & {
+  KORLeaguerApp?: { features?: unknown };
+  ReactNativeWebView?: { postMessage(message: string): void };
+};
+
+/**
+ * 하위 화면을 네이티브로 쌓는 앱(features에 "stack")이면 앱에 이 화면을 닫아 달라고 하고 true.
+ * 그 앱에서 선수 화면은 자기만의 웹뷰라 웹 기록이 없어서, 웹 안에서 돌아가면 목록이 같은 화면에 다시 열린다.
+ */
+function closeAppScreen(): boolean {
+  const { KORLeaguerApp, ReactNativeWebView } = window as AppWindow;
+  const features = KORLeaguerApp?.features;
+  if (!Array.isArray(features) || !features.includes("stack") || !ReactNativeWebView) return false;
+  ReactNativeWebView.postMessage(JSON.stringify({ type: "back" }));
+  return true;
+}
+
 export default function AppBackButton() {
   const pathname = usePathname();
   const router = useRouter();
@@ -21,8 +39,13 @@ export default function AppBackButton() {
     <button
       type="button"
       aria-label="뒤로"
-      // 앱의 탭은 첫 화면에서 시작하므로 보통은 기록이 있다. 없으면(주소로 바로 연 경우) 상위 목록으로 간다.
-      onClick={() => (window.history.length > 1 ? router.back() : router.push(parentOf(pathname)))}
+      // 새 앱은 앱이 화면을 닫는다. 옛 앱(탭마다 웹뷰 하나)은 웹 기록으로 돌아가고,
+      // 기록이 없으면(주소로 바로 연 경우) 상위 목록으로 간다.
+      onClick={() => {
+        if (closeAppScreen()) return;
+        if (window.history.length > 1) router.back();
+        else router.push(parentOf(pathname));
+      }}
       // 누르는 자리는 44px(iOS 최소 크기). 화살표가 머리글 왼쪽 여백 선에 오도록 왼쪽으로 당기고, 로고는 버튼 끝에 붙인다.
       className="press -mr-3 -ml-3 hidden size-11 shrink-0 place-items-center rounded-full text-foreground active:bg-surface-2 in-app:grid"
     >
