@@ -1,5 +1,6 @@
 import type { PostingPast, PostingPlayer, PostingStatus, PostingSummary } from "@/lib/api";
 import { formatDate } from "@/lib/format";
+import { kboTeamColor } from "@/lib/teams";
 import ExternalLinkIcon from "@/components/ExternalLinkIcon";
 import Section from "@/components/Section";
 import KboAvatar from "@/components/home/KboAvatar";
@@ -9,19 +10,6 @@ const WINDOW_DAYS = 30;
 /** '마감 직전'으로 묶는 날 수(선배 통계 한 줄) */
 const NEAR_DEADLINE = 4;
 
-/** KBO 구단 대표 색(원 바탕). 모르는 구단이면 회색 */
-const KBO_COLORS: Record<string, string> = {
-  "한화 이글스": "#FC4E00",
-  "LG 트윈스": "#C30452",
-  "키움 히어로즈": "#570514",
-  "SSG 랜더스": "#CE0E2D",
-  "KIA 타이거즈": "#EA0029",
-  "삼성 라이온즈": "#074CA1",
-  "두산 베어스": "#131230",
-  "롯데 자이언츠": "#041E42",
-  "NC 다이노스": "#315288",
-  "KT 위즈": "#000000",
-};
 
 const STATUS: Record<PostingStatus, { label: string; className: string }> = {
   UPCOMING: { label: "협상 시작 전", className: "bg-fa-bg text-fa-fg" },
@@ -108,7 +96,7 @@ export default function MlbChallenge({ posting }: { posting: PostingSummary }) {
 
 function PostingCard({ player: p, history }: { player: PostingPlayer; history: PostingPast[] }) {
   const status = STATUS[p.status] ?? STATUS.CLOSED;
-  const color = KBO_COLORS[p.kboTeam] ?? "#8a919c";
+  const color = kboTeamColor(p.kboTeam);
   const open = p.status === "NEGOTIATING" || p.status === "UPCOMING";
   const signed = history.filter((h) => h.daysBeforeDeadline != null);
   const near = signed.filter((h) => (h.daysBeforeDeadline ?? 99) <= NEAR_DEADLINE).length;

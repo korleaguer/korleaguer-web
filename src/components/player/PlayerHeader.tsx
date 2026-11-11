@@ -1,38 +1,49 @@
-import type { CSSProperties } from "react";
 import type { PlayerDetail } from "@/lib/api";
-import { teamColor } from "@/lib/teams";
+import { kboTeamColor, teamColor } from "@/lib/teams";
 import InfoChips from "@/components/InfoChips";
 import PlayerSubline from "@/components/PlayerSubline";
-import PlayerAvatar from "@/components/PlayerAvatar";
 import MyPlayerToggle from "@/components/my/MyPlayerToggle";
+import PhotoStage, { type Shot } from "@/components/player/PhotoStage";
 
 /**
  * 선수 페이지 머리 카드. 위쪽 팀 색 띠에 흰 테두리 원형 사진이 걸치고, 아래에 이름 · 영문 이름 · 기본 정보 알약.
  * 사진 오른쪽에 '내 선수' 넣기 버튼. 띠 색은 globals.css의 .team-band가 정한다(다크 모드에서는 어두운 팀 색을 밝힌다).
+ * 과거 소속팀(KBO) 시절 사진이 있으면 '소속팀 사진' 알약으로 넘겨 본다(오래된 팀 → 지금 팀, 처음에는 지금 팀).
  */
 export default function PlayerHeader({ player, isMine }: { player: PlayerDetail; isMine: boolean }) {
-  const color = teamColor(player.teamAbbr);
+  const shots: Shot[] = [
+    ...player.careerPhotos.map((c, i) => ({
+      key: `past-${i}`,
+      label: c.teamKo,
+      years: c.years,
+      photoUrl: c.photoUrl,
+      color: kboTeamColor(c.teamKo),
+      kind: "kbo" as const,
+    })),
+    {
+      key: "now",
+      label: player.teamKo ?? "지금",
+      years: null,
+      photoUrl: player.photoUrl,
+      color: teamColor(player.teamAbbr),
+      kind: "mlb" as const,
+    },
+  ];
 
   return (
     <section aria-labelledby="player-name" className="card overflow-hidden">
-      <div aria-hidden className="team-band h-[68px]" style={{ "--team": color } as CSSProperties} />
-      <div className="-mt-11 px-4 pb-4 sm:px-5 sm:pb-5">
-        <div className="flex items-end justify-between gap-3">
-          <PlayerAvatar
-            size={96}
-            ring
-            nameKo={player.nameKo}
-            photoUrl={player.photoUrl}
-            teamAbbr={player.teamAbbr}
-          />
-          <MyPlayerToggle playerId={player.id} nameKo={player.nameKo} initialOn={isMine} variant="pill" />
-        </div>
+      <PhotoStage
+        nameKo={player.nameKo}
+        shots={shots}
+        initial={shots.length - 1}
+        toggle={<MyPlayerToggle playerId={player.id} nameKo={player.nameKo} initialOn={isMine} variant="pill" />}
+      >
         <h1 id="player-name" className="mt-2 text-2xl font-extrabold leading-tight tracking-[-0.02em]">
           {player.nameKo}
         </h1>
         <PlayerSubline player={player} className="mt-0.5" />
         <InfoChips player={player} className="mt-3" />
-      </div>
+      </PhotoStage>
     </section>
   );
 }
