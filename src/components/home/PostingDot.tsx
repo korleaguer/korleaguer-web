@@ -33,17 +33,37 @@ export function PostingDot({
     ? "0 0 0 2px var(--surface), 0 0 0 4px var(--success-fg)"
     : "0 0 0 2px var(--surface)";
   if (photoUrl && !failed) {
-    // MLB 공식 헤드샷(/photos/mlb-…, 2:3 세로, 모두 같은 틀)은 얼굴(모자~턱)이 원 가운데 같은 크기로 오게
-    // 위에서 20% 지점을 맞춘다. 그 밖의 사진(KBO 등록 사진)은 위쪽에 맞춘다
-    const fit = photoUrl.startsWith("/photos/mlb-") ? "object-[50%_20%]" : "object-top";
+    // MLB 공식 증명사진(/photos/mlb-…, 2:3 세로, 모두 같은 틀)은 얼굴이 사진 폭의 70%로 꽉 찍혀 있다. 원을 채우면 얼굴이 꽉 차고
+    // 모자 위가 잘려서, 원보다 작게(74%) 넣어 KBO 공식 사진(노시환, 얼굴이 원의 절반 남짓)과 얼굴 크기를 맞춘다.
+    // 남는 둘레는 같은 사진을 흐리게 넓혀 깔아 채운다(증명사진마다 배경 회색이 달라 한 색으로 못 채운다).
+    // 그 밖의 사진(KBO 등록 사진)은 원을 채우고 위쪽에 맞춘다.
+    const headshot = photoUrl.startsWith("/photos/mlb-");
     return (
       <span
         aria-hidden
-        className="block shrink-0 overflow-hidden rounded-full bg-avatar-bg"
-        style={{ width: size, height: size, boxShadow: ring, outline: `2px solid ${color}`, outlineOffset: -2 }}
+        className="relative block shrink-0 overflow-hidden rounded-full bg-avatar-bg"
+        style={{ width: size, height: size, boxShadow: ring }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element -- 우리 서버가 호스팅하는 선수 사진, 크기 고정 */}
-        <img ref={ref} src={photoUrl} alt="" onError={onError} className={`size-full object-cover ${fit}`} loading="lazy" />
+        {headshot ? (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element -- 같은 사진을 흐리게 깐 바탕 */}
+            <img src={photoUrl} alt="" className="absolute inset-0 size-full scale-130 object-cover blur-[3px]" loading="lazy" />
+            {/* eslint-disable-next-line @next/next/no-img-element -- 우리 서버가 호스팅하는 선수 사진, 크기 고정 */}
+            <img
+              ref={ref}
+              src={photoUrl}
+              alt=""
+              onError={onError}
+              className="absolute top-[8%] left-1/2 w-[74%] max-w-none -translate-x-1/2"
+              loading="lazy"
+            />
+          </>
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element -- 우리 서버가 호스팅하는 선수 사진, 크기 고정
+          <img ref={ref} src={photoUrl} alt="" onError={onError} className="size-full object-cover object-top" loading="lazy" />
+        )}
+        {/* 계약 구단 색 안쪽 테두리. 사진 위에 그려야 보인다 */}
+        <span className="absolute inset-0 rounded-full" style={{ boxShadow: `inset 0 0 0 2px ${color}` }} />
       </span>
     );
   }
