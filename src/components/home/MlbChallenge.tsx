@@ -2,7 +2,6 @@ import type { CSSProperties } from "react";
 import type { PostingPast, PostingPlayer, PostingStatus, PostingSummary } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import { pinSummary, uniqueByUrl } from "@/lib/news";
-import { kboTeamColor, teamColorById } from "@/lib/teams";
 import Section from "@/components/Section";
 import KboAvatar from "@/components/home/KboAvatar";
 import { PostingDot } from "@/components/home/PostingDot";
@@ -100,8 +99,6 @@ interface Signing {
   nameKo: string;
   season: number;
   teamKo: string | null;
-  /** 계약한 MLB 구단 색(동그라미) */
-  color: string;
   /** 마감 며칠 전에 합의했나(미국 날짜, 마감 당일 0) */
   days: number;
   /** 보장 연수 */
@@ -111,7 +108,7 @@ interface Signing {
   /** 합의일 환율로 어림한 원화 "약 1,480억 원". 환율을 모르면 null(달러만 보인다) */
   krw: string | null;
   thisYear: boolean;
-  /** 지난 선수는 계약 구단 시절 MLB 사진의 흰 바탕 편집본(/photos/posting-…), 올해 계약한 선수는 KBO 공식 사진. 없으면 null(구단 색 원 + 이름) */
+  /** 지난 선수는 계약 구단 시절 MLB 사진의 흰 바탕 편집본(/photos/posting-…), 올해 계약한 선수는 KBO 공식 사진. 없으면 null(회색 원 + 이름) */
   photoUrl: string | null;
 }
 
@@ -131,7 +128,6 @@ function pastSignings(history: PostingPast[]): Signing[] {
         nameKo: h.nameKo,
         season: h.season,
         teamKo: d.mlbTeamKo,
-        color: teamColorById(d.mlbTeamId),
         days: h.daysBeforeDeadline,
         ...money(d.years, d.guaranteedUsd, d.krwPerUsd),
         thisYear: false,
@@ -154,7 +150,6 @@ function thisYearSignings(players: PostingPlayer[]): Signing[] {
         nameKo: p.nameKo,
         season: Number(etDate(p.windowOpensAt).slice(0, 4)),
         teamKo: d.mlbTeamKo,
-        color: teamColorById(d.mlbTeamId),
         days,
         ...money(d.years, d.guaranteedUsd, d.krwPerUsd),
         thisYear: true,
@@ -173,7 +168,6 @@ function nowFaces(players: PostingPlayer[]): TimelineNow[] {
       nameKo: p.nameKo,
       days: Math.min(WINDOW_DAYS, Math.max(0, p.daysLeft ?? 0)),
       photoUrl: p.photoUrl,
-      color: kboTeamColor(p.kboTeam),
     }));
 }
 
@@ -186,7 +180,7 @@ function rank(p: PostingPlayer): number {
 /**
  * 비시즌 홈 맨 위: 이번 겨울 MLB에 도전하는(포스팅된) KBO 선수.
  * 포스팅 선수가 몇 명이든 카드 한 장에 모은다(사용자 결정 11-11 "한 카드 안에서 다 같이").
- * 카드 안 한 줄 그래프에 지금 제도에서 계약한 선수들이 마감 며칠 전에 계약했는지를 구단 색 동그라미로 쌓고,
+ * 카드 안 한 줄 그래프에 지금 제도에서 계약한 선수들이 마감 며칠 전에 계약했는지를 막대 위 얼굴 한 줄로 세우고(이슈 #105),
  * 그 아래(PC는 오른쪽) 목록에 같은 동그라미로 계약 내용을 늘 보여 준다(누르지 않아도 보이게).
  * 관련 기사는 카드 안에서 한국어 제목·요약(또는 기사 앞부분)으로 읽히고, 원문(언론사)은 작은 링크로 남는다.
  */
@@ -224,7 +218,7 @@ function PlayerHead({ player: p }: { player: PostingPlayer }) {
   return (
     <>
       <div className="flex items-center gap-3">
-        <KboAvatar nameKo={p.nameKo} photoUrl={p.photoUrl} color={kboTeamColor(p.kboTeam)} />
+        <KboAvatar nameKo={p.nameKo} photoUrl={p.photoUrl} />
         <div className="min-w-0">
           <h3 className="text-xl font-extrabold leading-tight tracking-[-0.02em]">{p.nameKo}</h3>
           {/* 좁은 휴대폰에서는 상태 알약에 밀려 두 줄이 된다(말줄임으로 '년생'이 잘리지 않게) */}
@@ -273,7 +267,7 @@ function PlayerRows({ players }: { players: PostingPlayer[] }) {
         const signed = p.status === "SIGNED" && p.deal?.mlbTeamKo;
         return (
           <li key={p.nameKo} className="flex items-center gap-3 py-2.5 first:pt-0">
-            <KboAvatar nameKo={p.nameKo} photoUrl={p.photoUrl} color={kboTeamColor(p.kboTeam)} size={40} />
+            <KboAvatar nameKo={p.nameKo} photoUrl={p.photoUrl} size={40} />
             <div className="min-w-0 flex-1">
               <h3 className="text-base font-extrabold leading-tight tracking-[-0.02em]">{p.nameKo}</h3>
               <p className="truncate text-xs text-muted">
@@ -352,7 +346,7 @@ function Timeline({
         </p>
       )}
       <PostingTimeline
-        dots={signings.map((s) => ({ key: s.key, nameKo: s.nameKo, color: s.color, days: s.days, thisYear: s.thisYear, photoUrl: s.photoUrl }))}
+        dots={signings.map((s) => ({ key: s.key, nameKo: s.nameKo, days: s.days, photoUrl: s.photoUrl }))}
         now={now}
         fill={single?.status === "NEGOTIATING"}
         startLabel={single ? `${kstDay(single.windowOpensAt)} 시작` : "협상 시작"}
@@ -387,7 +381,6 @@ function Timeline({
               계약했어요.
             </>
           )}
-          {signings.some((s) => s.thisYear) && " 초록 테두리는 올해 계약이에요."}
         </p>
       )}
     </div>
@@ -405,7 +398,7 @@ function SigningList({ signings }: { signings: Signing[] }) {
       <ul className="money-flip-pause divide-y divide-line">
         {signings.map((s, i) => (
           <li key={s.key} className="flex items-center gap-3 py-2.5">
-            <PostingDot nameKo={s.nameKo} color={s.color} thisYear={s.thisYear} photoUrl={s.photoUrl} size={30} />
+            <PostingDot nameKo={s.nameKo} photoUrl={s.photoUrl} size={30} />
             <div className="min-w-0 flex-1">
               <p className="flex items-center gap-1.5 text-sm font-bold leading-5">
                 {s.nameKo}
