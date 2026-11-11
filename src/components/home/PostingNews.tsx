@@ -11,6 +11,8 @@ const VISIBLE = 3;
 export interface PostingNewsItem extends NewsHeadline {
   /** 여러 선수의 기사를 모았을 때 누구 기사인지. 한 명이면 null */
   who: string | null;
+  /** 그 기사 선수의 사진(우리가 호스팅). 기사 사진이 없거나 안 뜨면 대신 보인다 */
+  playerPhotoUrl: string | null;
 }
 
 /**
@@ -67,7 +69,7 @@ function NewsItem({ item: n, topLine }: { item: PostingNewsItem; topLine: boolea
             </p>
             <h4 className="mt-0.5 text-[0.9375rem] font-semibold leading-snug tracking-[-0.01em]">{title}</h4>
           </div>
-          {n.imageUrl && <NewsThumb url={n.imageUrl} />}
+          <NewsThumb url={n.imageUrl} fallback={n.playerPhotoUrl} />
         </div>
         {body && (
           <div className="mt-2 rounded-xl bg-background px-3 py-2.5">
