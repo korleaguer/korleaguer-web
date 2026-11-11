@@ -383,8 +383,8 @@
 
   /*
    * MLB 도전 계약 목록 금액: 달러 ↔ 원화(합의일 환율 어림)를 4초마다 번갈아 보인다(사용자 요청 11-11).
-   * 두 값(연수 포함: "6년 1억 1,300만 달러" ↔ "6년 약 1,480억 원")을 한 칸에 겹쳐 두어(넓은 쪽 폭, 오른쪽 맞춤) 바뀌어도 줄이 흔들리지 않는다. 나가는 값은 흐려지며 6px 위로 빠지고,
-   * 들어오는 값은 6px 아래에서 올라온다(400ms). 모든 줄이 같은 박자로 바뀌되 줄마다 60ms 늦어 위에서 아래로 물결친다.
+   * 두 값(연수 포함: "6년 1억 1,300만 달러" ↔ "6년 약 1,480억 원")을 한 칸에 겹쳐 두어(넓은 쪽 폭, 오른쪽 맞춤) 바뀌어도 줄이 흔들리지 않는다. 나가는 값은 흐려지며 4px 위로 빠지고,
+   * 들어오는 값은 4px 아래에서 올라온다(400ms). 모든 줄이 한꺼번에 바뀐다(줄마다 늦추면 정보 없이 움직임만 늘어 산만하다, 사용자 의견 11-11).
    * 동작 줄이기 설정이면 움직이지 않고 흐려졌다 나타나기만 한다.
    */
   .money-flip {
@@ -396,10 +396,9 @@
     grid-area: 1 / 1;
     white-space: nowrap;
     animation: money-flip 8s cubic-bezier(0.4, 0, 0.2, 1) infinite both;
-    animation-delay: calc(var(--i, 0) * 60ms);
   }
 
-  /* 원화는 숨김에서 시작해 달러가 빠질 때 들어온다. 달러와 같은 지연을 써서 처음부터 반 바퀴 어긋난 채로 돈다 */
+  /* 원화는 숨김에서 시작해 달러가 빠질 때 들어온다. 처음부터 반 바퀴 어긋난 채로 돈다 */
   .money-flip > span + span {
     animation-name: money-flip-in;
   }
@@ -482,12 +481,12 @@
   }
   50% {
     opacity: 0;
-    transform: translateY(-6px);
+    transform: translateY(-4px);
   }
   50.01%,
   95% {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(4px);
   }
   100% {
     opacity: 1;
@@ -512,7 +511,7 @@
   0%,
   45% {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(4px);
   }
   50%,
   95% {
@@ -521,7 +520,7 @@
   }
   100% {
     opacity: 0;
-    transform: translateY(-6px);
+    transform: translateY(-4px);
   }
 }
 
