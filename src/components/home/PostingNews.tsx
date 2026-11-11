@@ -82,7 +82,8 @@ function NewsItem({ item: n, topLine }: { item: PostingNewsItem; topLine: boolea
           href={n.url}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label={`${n.title} 원문 보기(${n.publisher}, 새 탭)`}
+          // 보이는 글자로 시작해야 음성 제어로도 누를 수 있다(WCAG 2.5.3)
+          aria-label={n.titleKo ? `원문 ${n.title} (${n.publisher}, 새 탭)` : `원문 보기: ${n.title} (${n.publisher}, 새 탭)`}
           className="mt-2 flex min-w-0 items-center gap-1 text-xs text-muted hover:text-foreground hover:underline"
         >
           {n.titleKo ? (
