@@ -208,6 +208,8 @@ export interface PostingPast {
   deadline: string;
   daysBeforeDeadline: number | null;
   deal: PostingDeal | null;
+  /** 포스팅 당시 KBO 공식 등록 사진(우리 서버 /photos/…). 없으면 null */
+  photoUrl: string | null;
 }
 
 export interface PostingSummary {
@@ -553,7 +555,7 @@ function normalizeHome(raw: HomeResponse): HomeResponse {
             news: p.news ?? [],
             deal: p.deal ?? null,
           })),
-          history: raw.posting.history ?? [],
+          history: (raw.posting.history ?? []).map((h) => ({ ...h, photoUrl: photoUrl(h.photoUrl) })),
         }
       : null,
   };
