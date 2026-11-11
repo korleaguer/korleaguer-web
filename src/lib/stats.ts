@@ -80,11 +80,9 @@ export function pairWithMinors<T extends { playerId: number }>(
   minors: T[],
 ): { pairs: { major: T; minor: T | null }[]; minorsOnly: T[] } {
   const majorIds = new Set(majors.map((row) => row.playerId));
+  const minorById = new Map(minors.map((row) => [row.playerId, row]));
   return {
-    pairs: majors.map((major) => ({
-      major,
-      minor: minors.find((row) => row.playerId === major.playerId) ?? null,
-    })),
+    pairs: majors.map((major) => ({ major, minor: minorById.get(major.playerId) ?? null })),
     minorsOnly: minors.filter((row) => !majorIds.has(row.playerId)),
   };
 }

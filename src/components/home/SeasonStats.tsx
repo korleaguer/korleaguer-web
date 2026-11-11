@@ -58,7 +58,7 @@ export default function SeasonStats({
             lines={[
               ranking &&
                 majorHitters.length > 0 &&
-                `타율·OPS 순위와 1위는 ${ranking.minPlateAppearances}타석 이상인 선수만 셉니다. 못 채운 선수는 아래에 둡니다.`,
+                `타율·OPS 순위와 1위는 ${ranking.minPlateAppearances}타석 이상인 선수만 셉니다. 못 채운 선수는 메이저 줄 아래쪽에 둡니다.`,
             ]}
           />
         </Group>
