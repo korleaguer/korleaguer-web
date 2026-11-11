@@ -396,8 +396,9 @@
     animation-delay: calc(var(--i, 0) * 60ms);
   }
 
+  /* 원화는 숨김에서 시작해 달러가 빠질 때 들어온다. 달러와 같은 지연을 써서 처음부터 반 바퀴 어긋난 채로 돈다 */
   .money-flip > span + span {
-    animation-delay: calc(var(--i, 0) * 60ms - 4s);
+    animation-name: money-flip-in;
   }
 
   /* 금액을 비교하려고 목록에 마우스를 올리면 그 자리에서 멈춘다(자동으로 바뀌는 내용은 멈출 수 있어야 한다) */
@@ -408,6 +409,10 @@
   @media (prefers-reduced-motion: reduce) {
     .money-flip > span {
       animation-name: money-fade;
+    }
+
+    .money-flip > span + span {
+      animation-name: money-fade-in;
     }
   }
 
@@ -465,7 +470,7 @@
   }
 }
 
-/* 8초에 한 바퀴: 0~3.6초 보임 → 0.4초 동안 위로 빠짐 → 3.6초 숨음 → 0.4초 동안 아래에서 올라옴 */
+/* 8초에 한 바퀴. 달러: 0~3.6초 보임 → 0.4초 동안 위로 빠짐 → 3.6초 숨음 → 0.4초 동안 아래에서 올라옴 */
 @keyframes money-flip {
   0%,
   45% {
@@ -496,5 +501,35 @@
   50%,
   95% {
     opacity: 0;
+  }
+}
+
+/* 원화: 달러와 반 바퀴 어긋난다. 0~3.6초 숨음 → 달러가 빠지는 0.4초 동안 아래에서 올라옴 → 3.6초 보임 → 0.4초 동안 위로 빠짐 */
+@keyframes money-flip-in {
+  0%,
+  45% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  50%,
+  95% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes money-fade-in {
+  0%,
+  45%,
+  100% {
+    opacity: 0;
+  }
+  50%,
+  95% {
+    opacity: 1;
   }
 }
