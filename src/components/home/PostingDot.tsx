@@ -33,14 +33,17 @@ export function PostingDot({
     ? "0 0 0 2px var(--surface), 0 0 0 4px var(--success-fg)"
     : "0 0 0 2px var(--surface)";
   if (photoUrl && !failed) {
+    // MLB 공식 헤드샷(/photos/mlb-…, 2:3 세로, 모두 같은 틀)은 얼굴(모자~턱)이 원 가운데 같은 크기로 오게
+    // 위에서 20% 지점을 맞춘다. 그 밖의 사진(KBO 등록 사진)은 위쪽에 맞춘다
+    const fit = photoUrl.startsWith("/photos/mlb-") ? "object-[50%_20%]" : "object-top";
     return (
       <span
         aria-hidden
         className="block shrink-0 overflow-hidden rounded-full bg-avatar-bg"
         style={{ width: size, height: size, boxShadow: ring, outline: `2px solid ${color}`, outlineOffset: -2 }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element -- 우리 서버가 호스팅하는 KBO 사진, 크기 고정 */}
-        <img ref={ref} src={photoUrl} alt="" onError={onError} className="size-full object-cover object-top" loading="lazy" />
+        {/* eslint-disable-next-line @next/next/no-img-element -- 우리 서버가 호스팅하는 선수 사진, 크기 고정 */}
+        <img ref={ref} src={photoUrl} alt="" onError={onError} className={`size-full object-cover ${fit}`} loading="lazy" />
       </span>
     );
   }
