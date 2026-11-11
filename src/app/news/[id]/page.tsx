@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { getNews, type NewsPage } from "@/lib/api";
 import { formatDate, formatTime } from "@/lib/format";
-import { readableLead } from "@/lib/news";
+import { readableLead, splitSentences } from "@/lib/news";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import ExternalLinkIcon from "@/components/ExternalLinkIcon";
 import LoadingBlock from "@/components/LoadingBlock";
@@ -16,14 +16,6 @@ type Props = PageProps<"/news/[id]">;
 /** 주소의 id가 1 이상 15자리 이하 정수가 아니면 null */
 function parseId(id: string): number | null {
   return /^[1-9]\d{0,14}$/.test(id) ? Number(id) : null;
-}
-
-/** AI 요약을 문장(줄)마다 나눈다. 빈 줄은 뺀다 */
-function summaryLines(summary: string | null): string[] {
-  return (summary ?? "")
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean);
 }
 
 /**
@@ -46,7 +38,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const news = result.data;
   return {
     title: news.titleKo ?? news.title,
-    description: summaryLines(news.summary)[0] ?? undefined,
+    description: splitSentences(news.summary)[0] ?? undefined,
     robots: NO_INDEX,
   };
 }
@@ -92,62 +84,54 @@ async function NewsContent({ params }: Pick<Props, "params">) {
   );
 }
 
-/** 기사 한 건: 큰 사진 → 출처 줄 → 제목(영어 기사는 원제도) → AI 요약 → 원문 보기 */
+/**
+ * 기사 한 건: 제목(영어 기사는 원제도) → 출처 줄 → 사진 → 요약 본문 → 원문 보기(사용자가 고른 시안, 이슈 #122).
+ * 요약은 이 페이지의 본문이라 회색 칸에 넣지 않고 흰 카드 위 큰 글자로, 문장마다 한 단락으로 둔다.
+ * 회색 칸 안 작은 글씨는 툴팁처럼 보여 눈이 사진·제목으로 쏠렸다(사용자 의견 11-12).
+ * 'AI 요약'은 출처 줄에 한 번만 적는다. 요약이 아직 없으면 기사 앞부분을 같은 자리·같은 글자로 둔다.
+ */
 function Article({ news }: { news: NewsPage }) {
-  const lines = summaryLines(news.summary);
-  const lead = lines.length === 0 && news.lead ? readableLead(news.lead, news.title) : null;
+  const summary = splitSentences(news.summary);
+  const body =
+    summary.length > 0 ? summary : news.lead ? splitSentences(readableLead(news.lead, news.title)) : [];
+  const kind = summary.length > 0 ? "AI 요약" : body.length > 0 ? "기사 앞부분" : null;
   return (
-    <article className="card min-w-0 overflow-hidden">
-      <NewsPhoto url={news.imageUrl} fallback={news.playerPhotoUrl} credit={news.publisher} />
-      <div className="px-4 pb-4 pt-3.5 sm:px-5 sm:pb-5">
-        <p className="text-xs text-muted tabular-nums">
-          {news.player} 관련 기사 · {news.publisher} · {formatDate(news.publishedAt)} {formatTime(news.publishedAt)}
+    <article className="card min-w-0 p-4 sm:p-6">
+      <h1 className="text-[1.1875rem] font-bold leading-[1.45] tracking-[-0.02em] sm:text-[1.375rem] sm:leading-[1.4]">
+        {news.titleKo ?? news.title}
+      </h1>
+      {news.titleKo && (
+        <p className="mt-1.5 text-[0.8125rem] text-muted">
+          <span className="font-semibold">원제</span> {news.title}
         </p>
-        <h1 className="mt-1 text-[1.25rem] font-extrabold leading-[1.4] tracking-[-0.02em] sm:text-2xl sm:leading-[1.35]">
-          {news.titleKo ?? news.title}
-        </h1>
-        {news.titleKo && (
-          <p className="mt-1.5 text-[0.8125rem] text-muted">
-            <span className="font-semibold">원제</span> {news.title}
-          </p>
-        )}
+      )}
+      <p className="mt-2 text-[0.8125rem] text-muted tabular-nums">
+        {news.publisher} · {formatDate(news.publishedAt)} {formatTime(news.publishedAt)}
+        {kind && ` · ${kind}`}
+      </p>
 
-        {lines.length > 0 ? (
-          <section aria-labelledby="news-summary" className="mt-4 rounded-xl bg-background px-4 py-3.5">
-            <h2 id="news-summary" className="text-xs font-bold text-muted">
-              AI 요약
-            </h2>
-            <div className="mt-1.5 space-y-2 text-[0.9375rem] leading-relaxed">
-              {lines.map((line, i) => (
-                <p key={i}>{line}</p>
-              ))}
-            </div>
-            <p className="mt-3 text-[0.6875rem] text-muted">
-              AI가 기사를 읽고 쓴 요약이에요. 정확한 내용은 원문에서 확인해 주세요.
-            </p>
-          </section>
-        ) : lead ? (
-          <section aria-labelledby="news-lead" className="mt-4 rounded-xl bg-background px-4 py-3.5">
-            <h2 id="news-lead" className="text-xs font-bold text-muted">
-              기사 앞부분
-            </h2>
-            <p className="mt-1.5 text-[0.9375rem] leading-relaxed">{lead}</p>
-          </section>
-        ) : (
-          <p className="mt-4 text-sm text-muted">아직 요약을 만들지 못했어요. 원문에서 읽어 주세요.</p>
-        )}
+      <NewsPhoto url={news.imageUrl} fallback={news.playerPhotoUrl} />
 
-        <a
-          href={news.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="press-soft mt-4 flex min-h-12 w-full items-center justify-center gap-1.5 rounded-xl bg-surface-2 px-4 text-[0.9375rem] font-semibold transition hover:bg-line"
-        >
-          {news.publisher}에서 원문 보기
-          <ExternalLinkIcon />
-          <span className="sr-only">(새 탭)</span>
-        </a>
-      </div>
+      {body.length > 0 ? (
+        <div className="mt-5 space-y-4 text-[1.0625rem] leading-[1.75] tracking-[-0.01em]">
+          {body.map((sentence, i) => (
+            <p key={i}>{sentence}</p>
+          ))}
+        </div>
+      ) : (
+        <p className="mt-5 text-[0.9375rem] text-muted">아직 요약을 만들지 못했어요. 원문에서 읽어 주세요.</p>
+      )}
+
+      <a
+        href={news.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="press-soft mt-6 flex min-h-12 w-full items-center justify-center gap-1.5 rounded-xl bg-surface-2 px-4 text-[0.9375rem] font-semibold transition hover:bg-line"
+      >
+        {news.publisher}에서 원문 보기
+        <ExternalLinkIcon />
+        <span className="sr-only">(새 탭)</span>
+      </a>
     </article>
   );
 }

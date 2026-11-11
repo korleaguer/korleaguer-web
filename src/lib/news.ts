@@ -53,6 +53,20 @@ export function readableLead(lead: string, title: string): string {
   return within !== undefined ? text.slice(0, within) : text;
 }
 
+/**
+ * 요약(또는 기사 앞부분)을 기사 본문처럼 문장마다 한 단락으로 나눈다. 빈 줄은 뺀다.
+ * 요약 모델에 한 줄에 한 문장씩 쓰라고 해도 여러 문장을 한 줄에 붙여 쓰는 일이 많아서(11-12 운영 요약 29건 중 15건)
+ * 줄바꿈과 한국어 문장 끝(한글 + 마침표 + 빈칸) 모두에서 나눈다. 숫자(0.283)·영문 약어(Jr.)·따옴표 안
+ * 마침표(…하겠다." 그는)는 마침표 앞이 한글이 아니거나 뒤가 빈칸이 아니라 나누지 않는다.
+ */
+export function splitSentences(text: string | null): string[] {
+  return (text ?? "")
+    .split("\n")
+    .flatMap((line) => line.split(/(?<=[가-힣]\.)\s+/))
+    .map((sentence) => sentence.trim())
+    .filter(Boolean);
+}
+
 /** 읽을거리가 많은 쪽: 요약 > 앞부분 > 사진 */
 function richness(n: { summary: string | null; lead: string | null; imageUrl: string | null }): number {
   return (n.summary ? 4 : 0) + (n.lead ? 2 : 0) + (n.imageUrl ? 1 : 0);
