@@ -3,7 +3,6 @@ import type { HitterSeason, PitcherSeason, RankingMinimums } from "@/lib/api";
 import Section from "@/components/Section";
 import HitterTable from "./HitterTable";
 import PitcherTable from "./PitcherTable";
-import SeasonTabs from "./SeasonTabs";
 
 interface Props {
   season: number;
@@ -16,8 +15,8 @@ interface Props {
 }
 
 /**
- * 시즌 기록: '메이저 | 마이너' 탭(이슈 #39). 메이저 탭은 메이저 경기에 나온 선수의 메이저 기록,
- * 마이너 탭은 마이너 경기에 나온 선수의 마이너 기록이다. 탭마다 타자 표 + 투수 표를 쌓는다.
+ * 시즌 기록: 타자 표 + 투수 표(이슈 #88). 탭(#39)을 누르지 않아도 되게, 메이저 줄 바로 밑에
+ * 같은 선수의 마이너 기록 줄을 붙이고, 마이너에서만 뛴 선수는 표 맨 아래 따로 묶는다.
  */
 export default function SeasonStats({
   season,
@@ -37,85 +36,60 @@ export default function SeasonStats({
     );
   }
 
-  // 메이저 탭: 이번 시즌 메이저 경기가 있는 선수만
+  // 메이저 줄: 이번 시즌 메이저 경기가 있는 선수만
   const majorHitters = hitters.filter((h) => h.games > 0);
   const majorPitchers = pitchers.filter((p) => p.games > 0);
+  const hasMinors = minorHitters.length + minorPitchers.length > 0;
   // 마이너 경기 수는 아는데 경기별 기록을 아직 못 받은 경우(받기 전)
-  const minorsPending =
-    minorHitters.length + minorPitchers.length === 0 &&
-    [...hitters, ...pitchers].some((row) => row.minorGames > 0);
+  const minorsPending = !hasMinors && [...hitters, ...pitchers].some((row) => row.minorGames > 0);
 
   return (
     <Section id="stats-title" title={`${season} 시즌 기록`}>
-      <SeasonTabs
-        label="시즌 기록 리그"
-        tabs={[
-          {
-            label: "메이저",
-            content: (
-              <div className="space-y-5">
-                <Group title="타자" aside="타율 순 · 파란 숫자 = 1위">
-                  <TableCard>
-                    {majorHitters.length > 0 ? <HitterTable hitters={majorHitters} ranking={ranking} /> : <Empty />}
-                  </TableCard>
-                  <Notes
-                    lines={[
-                      ranking &&
-                        majorHitters.length > 0 &&
-                        `타율·OPS 순위와 1위는 ${ranking.minPlateAppearances}타석 이상인 선수만 셉니다. 못 채운 선수는 아래에 둡니다.`,
-                    ]}
-                  />
-                </Group>
-                <Group title="투수" aside="평균자책점 순">
-                  <TableCard>
-                    {majorPitchers.length > 0 ? <PitcherTable pitchers={majorPitchers} ranking={ranking} /> : <Empty />}
-                  </TableCard>
-                  <Notes
-                    lines={[
-                      ranking &&
-                        majorPitchers.length > 0 &&
-                        `평균자책점 순위와 1위는 ${ranking.minInningsText}이닝 이상인 투수만 셉니다.`,
-                    ]}
-                  />
-                </Group>
-              </div>
-            ),
-          },
-          {
-            label: "마이너",
-            content: minorsPending ? (
-              <p className="card px-4 py-5 text-sm text-muted">마이너 경기별 기록을 받는 중입니다. 하루 한 번 새로 받습니다.</p>
+      <div className="space-y-5">
+        <Group title="타자" aside="타율 순 · 파란 숫자 = 1위">
+          <TableCard>
+            {majorHitters.length + minorHitters.length > 0 ? (
+              <HitterTable hitters={majorHitters} minors={minorHitters} ranking={ranking} />
             ) : (
-              <div className="space-y-5">
-                <Group title="타자" aside="마이너 경기 많은 순">
-                  <TableCard>
-                    {minorHitters.length > 0 ? (
-                      <HitterTable hitters={minorHitters} ranking={null} minors />
-                    ) : (
-                      <Empty />
-                    )}
-                  </TableCard>
-                </Group>
-                <Group title="투수" aside="마이너 등판 많은 순">
-                  <TableCard>
-                    {minorPitchers.length > 0 ? (
-                      <PitcherTable pitchers={minorPitchers} ranking={null} minors />
-                    ) : (
-                      <Empty />
-                    )}
-                  </TableCard>
-                </Group>
-                <Notes lines={["트리플A부터 루키까지 마이너 경기를 모두 더한 기록입니다. 단계가 섞여 1위는 표시하지 않습니다."]} />
-              </div>
-            ),
-          },
-        ]}
-      />
+              <Empty />
+            )}
+          </TableCard>
+          <Notes
+            lines={[
+              ranking &&
+                majorHitters.length > 0 &&
+                `타율·OPS 순위와 1위는 ${ranking.minPlateAppearances}타석 이상인 선수만 셉니다. 못 채운 선수는 메이저 줄 아래쪽에 둡니다.`,
+            ]}
+          />
+        </Group>
+        <Group title="투수" aside="평균자책점 순">
+          <TableCard>
+            {majorPitchers.length + minorPitchers.length > 0 ? (
+              <PitcherTable pitchers={majorPitchers} minors={minorPitchers} ranking={ranking} />
+            ) : (
+              <Empty />
+            )}
+          </TableCard>
+          <Notes
+            lines={[
+              ranking &&
+                majorPitchers.length > 0 &&
+                `평균자책점 순위와 1위는 ${ranking.minInningsText}이닝 이상인 투수만 셉니다.`,
+            ]}
+          />
+        </Group>
+        <Notes
+          lines={[
+            hasMinors && "마이너 기록은 트리플A부터 루키까지 마이너 경기를 모두 더한 것이라, 1위는 표시하지 않습니다.",
+            minorsPending && "마이너 경기별 기록을 받는 중입니다. 하루 한 번 새로 받습니다.",
+          ]}
+        />
+      </div>
     </Section>
   );
 }
 
-/** 탭 안의 작은 묶음(타자·투수): 제목 + 오른쪽 작은 글씨 */
+/** 섹션 안의 작은 묶음(타자·투수): 제목 + 오른쪽 작은 글씨 */
 function Group({ title, aside, children }: { title: string; aside: string; children: ReactNode }) {
   return (
     <div>
