@@ -26,6 +26,12 @@ function summaryLines(summary: string | null): string[] {
     .filter(Boolean);
 }
 
+/**
+ * 기사 페이지는 검색에 넣지 않는다. 언론사 기사를 요약한 페이지라 검색에는 원문이 나오게 한다.
+ * API가 잠깐 멈춰 오류 안내가 보일 때도 같다(오류 화면이 색인되지 않게).
+ */
+const NO_INDEX = { index: false, follow: true } as const;
+
 // <title>: "노시환, 뉴욕 메츠 새 타격코치와의 인연 · KOR Leaguer" (뒷부분은 layout의 template이 붙인다)
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const id = parseId((await params).id);
@@ -34,15 +40,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const missing = result == null || result.failure === "notFound";
     return missing
       ? { title: "기사를 찾을 수 없습니다", robots: { index: false, follow: false } }
-      : { title: "관련 기사" };
+      : { title: "관련 기사", robots: NO_INDEX };
   }
 
   const news = result.data;
   return {
     title: news.titleKo ?? news.title,
     description: summaryLines(news.summary)[0] ?? undefined,
-    // 언론사 기사를 요약한 페이지라 검색에는 원문이 나오게 우리 페이지는 넣지 않는다
-    robots: { index: false, follow: true },
+    robots: NO_INDEX,
   };
 }
 
@@ -66,17 +71,23 @@ async function NewsContent({ params }: Pick<Props, "params">) {
   }
 
   const news = result.data;
+  if (news.more.length === 0) {
+    // 같은 선수의 다른 기사가 없으면 PC에서도 오른쪽 칸을 두지 않고 기사만 가운데에 둔다
+    return (
+      <div className="mx-auto max-w-2xl">
+        <Article news={news} />
+      </div>
+    );
+  }
   return (
     // 휴대폰·태블릿은 한 줄(기사 → 다른 기사), 넓은 화면은 왼쪽 기사 | 오른쪽 다른 기사(선수 페이지와 같은 오른쪽 칸 폭)
     <div className="mx-auto max-w-2xl space-y-7 lg:grid lg:max-w-none lg:grid-cols-[minmax(0,1fr)_21.25rem] lg:items-start lg:gap-x-4 lg:space-y-0">
       <Article news={news} />
-      {news.more.length > 0 && (
-        <Section title={`${news.player} 다른 기사`} id="more-news">
-          <div className="card px-4">
-            <NewsTitleList items={news.more} />
-          </div>
-        </Section>
-      )}
+      <Section title={`${news.player} 다른 기사`} id="more-news">
+        <div className="card px-4">
+          <NewsTitleList items={news.more} />
+        </div>
+      </Section>
     </div>
   );
 }
