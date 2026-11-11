@@ -172,6 +172,8 @@ export interface PostingDeal {
   years: number | null;
   /** 보장액(달러). 옵션·인센티브 제외 */
   guaranteedUsd: number | null;
+  /** 합의일 원/달러 환율(1달러당 원, ECB 기준 환율). 화면이 보장액을 원화로 어림한다. 없으면 null */
+  krwPerUsd: number | null;
 }
 
 export interface NewsHeadline {
@@ -570,12 +572,21 @@ function normalizeHome(raw: HomeResponse): HomeResponse {
               // 기사 사진은 언론사 서버에서 브라우저가 직접 받는다. https 주소만 쓴다
               imageUrl: n.imageUrl?.startsWith("https://") ? n.imageUrl : null,
             })),
-            deal: p.deal ?? null,
+            deal: normalizeDeal(p.deal),
           })),
-          history: (raw.posting.history ?? []).map((h) => ({ ...h, photoUrl: photoUrl(h.photoUrl) })),
+          history: (raw.posting.history ?? []).map((h) => ({
+            ...h,
+            photoUrl: photoUrl(h.photoUrl),
+            deal: normalizeDeal(h.deal),
+          })),
         }
       : null,
   };
+}
+
+/** 계약 내용. 옛 api는 환율(krwPerUsd)을 주지 않는다 */
+function normalizeDeal(deal: PostingDeal | null | undefined): PostingDeal | null {
+  return deal ? { ...deal, krwPerUsd: deal.krwPerUsd ?? null } : null;
 }
 
 /** 목록·상세가 같이 쓰는 선수 정보 */
