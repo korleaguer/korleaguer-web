@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { HitterSeason, PitcherSeason, PlayerSummary } from "@/lib/api";
 import { formatEra, formatRate } from "@/lib/format";
 import InfoChips from "@/components/InfoChips";
+import PlayerSubline from "@/components/PlayerSubline";
 import PlayerAvatar from "@/components/PlayerAvatar";
 import MyPlayerToggle from "@/components/my/MyPlayerToggle";
 
@@ -55,11 +56,7 @@ export default function PlayerCard({ player, hitting, pitching, isMine }: Props)
           >
             {player.nameKo}
           </Link>
-          {player.nameEn && (
-            <p className="truncate text-[0.6875rem] font-medium uppercase tracking-[0.08em] text-muted">
-              {player.nameEn}
-            </p>
-          )}
+          <PlayerSubline player={player} />
         </div>
         {/* 카드 전체 링크(after) 위에 올려야 눌린다 */}
         <MyPlayerToggle
