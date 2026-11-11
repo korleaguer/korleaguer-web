@@ -3,6 +3,7 @@ import type { PostingPast, PostingPlayer, PostingStatus, PostingSummary } from "
 import { formatDate } from "@/lib/format";
 import ExternalLinkIcon from "@/components/ExternalLinkIcon";
 import Section from "@/components/Section";
+import KboAvatar from "@/components/home/KboAvatar";
 
 /** 지금 포스팅 제도의 협상 기간(일). 그래프 가로축 끝 */
 const WINDOW_DAYS = 30;
@@ -100,7 +101,7 @@ export default function MlbChallenge({ posting }: { posting: PostingSummary }) {
           ))}
         </ul>
       </Section>
-      {posting.history.length > 0 && <HistoryChart history={posting.history} now={now} />}
+      {posting.history.some((h) => h.deal != null) && <HistoryChart history={posting.history} now={now} />}
     </>
   );
 }
@@ -117,13 +118,7 @@ function PostingCard({ player: p, history }: { player: PostingPlayer; history: P
   return (
     <li className="card p-4">
       <div className="flex items-center gap-3">
-        <div
-          aria-hidden
-          className="grid size-13 shrink-0 place-items-center rounded-full text-[1.1875rem] font-extrabold text-white"
-          style={{ background: color }}
-        >
-          {p.nameKo.slice(0, 1)}
-        </div>
+        <KboAvatar nameKo={p.nameKo} photoUrl={p.photoUrl} color={color} />
         <div className="min-w-0">
           <h3 className="text-xl font-extrabold leading-tight tracking-[-0.02em]">{p.nameKo}</h3>
           <p className="truncate text-[0.8125rem] text-muted">{sub}</p>
@@ -220,9 +215,10 @@ function PostingCard({ player: p, history }: { player: PostingPlayer; history: P
 const x = (d: number) => `${((WINDOW_DAYS - Math.min(WINDOW_DAYS, Math.max(0, d))) / WINDOW_DAYS) * 100}%`;
 
 function HistoryChart({ history, now }: { history: PostingPast[]; now?: PostingPlayer }) {
-  const rows = [...history].sort(
-    (a, b) => (b.daysBeforeDeadline ?? -1) - (a.daysBeforeDeadline ?? -1) || b.season - a.season,
-  );
+  // 결렬은 넣지 않는다(사용자 결정 11-11)
+  const rows = history
+    .filter((h) => h.deal != null && h.daysBeforeDeadline != null)
+    .sort((a, b) => (b.daysBeforeDeadline ?? 0) - (a.daysBeforeDeadline ?? 0) || b.season - a.season);
   const today = now?.daysLeft ?? null;
   return (
     <Section id="posting-history-title" title="선배들은 마감 며칠 전에 계약했나">
@@ -234,10 +230,6 @@ function HistoryChart({ history, now }: { history: PostingPast[]; now?: PostingP
           <li className="inline-flex items-center gap-1.5">
             <i className="size-2.5 rounded-full bg-accent" />
             계약
-          </li>
-          <li className="inline-flex items-center gap-1.5">
-            <i className="size-2.5 rounded-full border-2 border-[var(--no-team)] bg-surface" />
-            결렬
           </li>
           {today != null && now && (
             <li className="inline-flex items-center gap-1.5">
@@ -278,9 +270,7 @@ function HistoryChart({ history, now }: { history: PostingPast[]; now?: PostingP
                 <div className="relative h-8">
                   <i className="absolute inset-x-0 top-2.5 h-px bg-line" />
                   <i
-                    className={`absolute top-1 z-[3] size-3 -translate-x-1/2 rounded-full shadow-[0_0_0_2px_var(--surface)] ${
-                      d == null ? "border-2 border-[var(--no-team)] bg-surface" : "bg-accent"
-                    }`}
+                    className="absolute top-1 z-[3] size-3 -translate-x-1/2 rounded-full bg-accent shadow-[0_0_0_2px_var(--surface)]"
                     style={style}
                   />
                   <span
@@ -289,7 +279,7 @@ function HistoryChart({ history, now }: { history: PostingPast[]; now?: PostingP
                     }`}
                     style={style}
                   >
-                    {d == null ? "결렬" : `${d === 0 ? "마감 당일" : `D-${d}`} · ${dealText(r)}`}
+                    {`${d === 0 ? "마감 당일" : `D-${d}`} · ${dealText(r)}`}
                   </span>
                 </div>
               </div>
@@ -318,8 +308,8 @@ function HistoryChart({ history, now }: { history: PostingPast[]; now?: PostingP
               <tr key={`${r.nameKo}-${r.season}`}>
                 <td>{r.nameKo}</td>
                 <td>{r.season}</td>
-                <td>{r.deal?.mlbTeamKo ?? "결렬"}</td>
-                <td>{r.daysBeforeDeadline == null ? "결렬" : `${r.daysBeforeDeadline}일`}</td>
+                <td>{r.deal?.mlbTeamKo}</td>
+                <td>{r.daysBeforeDeadline}일</td>
                 <td>{dealText(r)}</td>
               </tr>
             ))}
