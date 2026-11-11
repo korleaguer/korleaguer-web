@@ -2,7 +2,7 @@
 
 import { type CSSProperties, useEffect, useRef, useState } from "react";
 import { PostingDot, shortName } from "@/components/home/PostingDot";
-import { useMoveWhenSeen } from "@/components/RollingNumber";
+import { useMoveWhenSeen } from "@/components/useMoveWhenSeen";
 import { useImageFailed } from "@/lib/useImageFailed";
 
 /** 지금 포스팅 제도의 협상 기간(일). 왼쪽 D-30 → 오른쪽 마감 */

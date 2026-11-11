@@ -7,7 +7,6 @@ import KboAvatar from "@/components/home/KboAvatar";
 import { PostingDot } from "@/components/home/PostingDot";
 import PostingNews from "@/components/home/PostingNews";
 import PostingTimeline, { type TimelineNow } from "@/components/home/PostingTimeline";
-import RollingNumber from "@/components/RollingNumber";
 
 /** 지금 포스팅 제도의 협상 기간(일) */
 const WINDOW_DAYS = 30;
@@ -220,7 +219,7 @@ function PlayerHead({ player: p }: { player: PostingPlayer }) {
           <div>
             <p className="text-[0.8125rem] text-muted">협상 마감까지</p>
             <p className="text-[2.75rem] font-extrabold leading-none tracking-[-0.03em] tabular-nums">
-              <RollingNumber value={p.daysLeft === 0 ? "오늘" : `D-${p.daysLeft}`} />
+              {p.daysLeft === 0 ? "오늘" : `D-${p.daysLeft}`}
             </p>
           </div>
           <p className="text-right text-[0.8125rem] font-semibold leading-snug tabular-nums">
@@ -278,7 +277,7 @@ function RowResult({ player: p }: { player: PostingPlayer }) {
     return (
       <div className="shrink-0 text-right">
         <p className="text-[1.375rem] font-extrabold leading-none tracking-[-0.02em] tabular-nums">
-          <RollingNumber value={p.daysLeft === 0 ? "오늘" : `D-${p.daysLeft}`} />
+          {p.daysLeft === 0 ? "오늘" : `D-${p.daysLeft}`}
         </p>
         <p className="mt-1 text-[0.6875rem] text-muted tabular-nums">{kstDay(p.deadlineAt)} 마감</p>
       </div>
