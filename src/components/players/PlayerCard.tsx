@@ -4,6 +4,7 @@ import { formatEra, formatRate } from "@/lib/format";
 import InfoChips from "@/components/InfoChips";
 import PlayerSubline from "@/components/PlayerSubline";
 import PlayerAvatar from "@/components/PlayerAvatar";
+import RollingNumber from "@/components/RollingNumber";
 import MyPlayerToggle from "@/components/my/MyPlayerToggle";
 
 interface Props {
@@ -75,7 +76,9 @@ export default function PlayerCard({ player, hitting, pitching, isMine }: Props)
             {stats.map(({ label, value }) => (
               <div key={label} className="min-w-0">
                 <dt className="text-xs text-muted">{label}</dt>
-                <dd className="mt-0.5 text-xl font-extrabold tracking-[-0.02em] tabular-nums">{value}</dd>
+                <dd className="mt-0.5 text-xl font-extrabold tracking-[-0.02em] tabular-nums">
+                  <RollingNumber value={value} />
+                </dd>
               </div>
             ))}
           </dl>

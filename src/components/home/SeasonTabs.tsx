@@ -45,7 +45,7 @@ export default function SeasonTabs({ label, tabs }: { label: string; tabs: Tab[]
               tabIndex={selected ? 0 : -1}
               onClick={() => setActive(i)}
               onKeyDown={onKeyDown}
-              className={`cursor-pointer rounded-full px-4 py-1.5 text-sm font-semibold ${selected ? "bg-surface text-foreground shadow-sm" : "text-muted hover:text-foreground"}`}
+              className={`press cursor-pointer rounded-full px-4 py-1.5 text-sm font-semibold ${selected ? "bg-surface text-foreground shadow-sm" : "text-muted hover:text-foreground"}`}
             >
               {tab.label}
             </button>

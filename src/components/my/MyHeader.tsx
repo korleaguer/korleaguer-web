@@ -39,7 +39,7 @@ export default function MyHeader({ subtitle, players, selectedIds }: Props) {
           aria-expanded={open}
           aria-controls="my-picker"
           onClick={() => setOpen((v) => !v)}
-          className="inline-flex shrink-0 items-center gap-1 rounded-full bg-surface px-3.5 py-1.5 text-[0.8125rem] font-semibold shadow-[var(--shadow-card)] transition-shadow duration-150 hover:shadow-[var(--shadow-card-hover)]"
+          className="inline-flex shrink-0 items-center gap-1 rounded-full bg-surface px-3.5 py-1.5 text-[0.8125rem] font-semibold shadow-[var(--shadow-card)] transition duration-150 hover:shadow-[var(--shadow-card-hover)] press"
         >
           선수 고르기
           <svg
@@ -95,7 +95,7 @@ function PickerRow({ player, initialOn }: { player: PlayerSummary; initialOn: bo
         type="button"
         aria-pressed={on}
         onClick={toggle}
-        className={`flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-left transition-colors duration-150 hover:bg-surface-2 ${pending ? "opacity-70" : ""}`}
+        className={`press-soft flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-left transition duration-150 hover:bg-surface-2 ${pending ? "opacity-70" : ""}`}
       >
         <PlayerAvatar size={28} nameKo={player.nameKo} photoUrl={player.photoUrl} teamAbbr={player.teamAbbr} />
         <span className="min-w-0 flex-1">
