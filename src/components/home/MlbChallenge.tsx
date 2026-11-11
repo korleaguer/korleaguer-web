@@ -93,7 +93,7 @@ interface Signing {
   /** "6년 1억 1,300만 달러" */
   deal: string;
   thisYear: boolean;
-  /** 포스팅 당시 KBO 공식 등록 사진. 없으면 null(구단 색 원 + 이름) */
+  /** 선배는 계약 구단 시절 MLB 사진의 흰 바탕 편집본(/photos/posting-…), 올해 계약한 선수는 KBO 공식 사진. 없으면 null(구단 색 원 + 이름) */
   photoUrl: string | null;
 }
 

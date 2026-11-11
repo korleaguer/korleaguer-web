@@ -28,7 +28,7 @@ export interface TimelineDot {
   days: number;
   /** 올해 계약한 포스팅 선수 */
   thisYear: boolean;
-  /** 포스팅 당시 KBO 공식 등록 사진 */
+  /** 선수 사진(선배는 흰 바탕 편집본 /photos/posting-…) */
   photoUrl: string | null;
 }
 
