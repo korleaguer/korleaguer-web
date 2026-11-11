@@ -9,11 +9,15 @@ const LINKS = [
   { href: "/my", label: "내 선수" },
 ];
 
-/** "page": 지금 이 페이지, "true": 이 메뉴 아래 화면(예: /players/1 은 "선수" 아래), 그 외 undefined */
+/**
+ * "page": 지금 이 페이지, "true": 이 메뉴 아래 화면(예: /players/1 은 "선수" 아래), 그 외 undefined.
+ * 기사 페이지(/news/1)는 홈의 관련 기사에서 들어오므로 "홈" 아래다.
+ */
 function currentOf(href: string, pathname: string | null) {
   if (pathname == null) return undefined;
   if (pathname === href) return "page";
-  return href !== "/" && pathname.startsWith(`${href}/`) ? "true" : undefined;
+  if (href === "/") return pathname.startsWith("/news/") ? "true" : undefined;
+  return pathname.startsWith(`${href}/`) ? "true" : undefined;
 }
 
 /** 상단 메뉴. pathname이 null이면 현재 메뉴 표시 없이 그린다(주소를 알기 전 자리 표시). */
