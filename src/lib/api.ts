@@ -177,13 +177,15 @@ export interface PostingDeal {
 }
 
 export interface NewsHeadline {
+  /** 우리 기사 번호. 제목을 누르면 우리 기사 페이지(/news/{id})로 간다. 옛 API면 null(원문을 새 탭으로 연다) */
+  id: number | null;
   /** 언론사가 붙인 원래 제목(영어 기사면 영어) */
   title: string;
   /** 원문(언론사) 주소 */
   url: string;
   publisher: string;
   publishedAt: string;
-  /** 아래 넷은 언론사가 허락한 만큼만 온다. 옛 API·요약 전이면 null */
+  /** 아래 넷은 옛 API·요약 전이면 null */
   /** 영어 기사 제목을 Claude가 한국어로 옮긴 것 */
   titleKo: string | null;
   /** 기사 첫머리(언론사 피드가 준 글자 200자 안팎) */
@@ -192,6 +194,31 @@ export interface NewsHeadline {
   summary: string | null;
   /** 기사 대표 사진 원본 주소(언론사 서버) */
   imageUrl: string | null;
+}
+
+/** GET /api/news/{id}: 우리 기사 페이지 한 건. 원문은 url(언론사)에 있고, 우리는 제목·대표 사진·요약과 출처만 보여 준다 */
+export interface NewsPage {
+  id: number;
+  /** 이 기사의 선수(한글 이름) */
+  player: string;
+  /** 그 선수 사진(우리가 호스팅). 기사 사진이 없거나 안 뜨면 대신 보인다. 이번 겨울 포스팅 선수가 아니면 null */
+  playerPhotoUrl: string | null;
+  /** 언론사가 붙인 원래 제목(영어 기사면 영어) */
+  title: string;
+  /** 영어 기사 제목을 Claude가 한국어로 옮긴 것. 한국어 기사면 null */
+  titleKo: string | null;
+  /** 원문(언론사) 주소 */
+  url: string;
+  publisher: string;
+  publishedAt: string;
+  /** 기사 대표 사진 원본 주소(언론사 서버, https). 없으면 null */
+  imageUrl: string | null;
+  /** Claude가 쓴 한국어 요약(줄마다 한 문장). 아직 없으면 null */
+  summary: string | null;
+  /** 기사 첫머리(언론사 피드가 준 글자 200자 안팎). 요약이 없을 때 쓴다. 없으면 null */
+  lead: string | null;
+  /** 같은 선수의 다른 기사(늦은 순 5건, 이 기사는 빼고) */
+  more: NewsHeadline[];
 }
 
 export interface PostingPlayer {
@@ -564,14 +591,7 @@ function normalizeHome(raw: HomeResponse): HomeResponse {
           players: (raw.posting.players ?? []).map((p) => ({
             ...p,
             photoUrl: p.photoUrl ?? null,
-            news: (p.news ?? []).map((n) => ({
-              ...n,
-              titleKo: n.titleKo ?? null,
-              lead: n.lead ?? null,
-              summary: n.summary ?? null,
-              // 기사 사진은 언론사 서버에서 브라우저가 직접 받는다. https 주소만 쓴다
-              imageUrl: n.imageUrl?.startsWith("https://") ? n.imageUrl : null,
-            })),
+            news: (p.news ?? []).flatMap((n) => normalizeHeadline(n) ?? []),
             deal: normalizeDeal(p.deal),
           })),
           history: (raw.posting.history ?? []).map((h) => ({
@@ -581,6 +601,38 @@ function normalizeHome(raw: HomeResponse): HomeResponse {
           })),
         }
       : null,
+  };
+}
+
+/** 관련 기사 한 건. 옛 API는 번호·요약 칸을 주지 않는다. 원문 주소가 http(s)가 아니면 링크로 쓸 수 없어 뺀다(null) */
+function normalizeHeadline(n: NewsHeadline): NewsHeadline | null {
+  const url = httpUrl(n.url);
+  if (!url) return null;
+  return {
+    ...n,
+    id: typeof n.id === "number" ? n.id : null,
+    url,
+    titleKo: n.titleKo ?? null,
+    lead: n.lead ?? null,
+    summary: n.summary ?? null,
+    // 기사 사진은 언론사 서버에서 브라우저가 직접 받는다. https 주소만 쓴다
+    imageUrl: n.imageUrl?.startsWith("https://") ? n.imageUrl : null,
+  };
+}
+
+function normalizeNewsPage(raw: NewsPage): NewsPage {
+  const url = httpUrl(raw.url);
+  // 원문 링크를 걸 수 없는 기사는 보여 주지 않는다(badResponse)
+  if (!url) throw new Error("원문 주소가 http(s)가 아님");
+  return {
+    ...raw,
+    url,
+    playerPhotoUrl: photoUrl(raw.playerPhotoUrl),
+    titleKo: raw.titleKo ?? null,
+    imageUrl: raw.imageUrl?.startsWith("https://") ? raw.imageUrl : null,
+    summary: raw.summary ?? null,
+    lead: raw.lead ?? null,
+    more: (raw.more ?? []).flatMap((n) => normalizeHeadline(n) ?? []),
   };
 }
 
@@ -709,6 +761,9 @@ export const getPlayers = cache(() => fetchApi("/api/players", normalizePlayers)
 export const getPlayer = cache((id: number) =>
   fetchApi(`/api/players/${id}`, normalizePlayer),
 );
+
+/** GET /api/news/{id}: 우리 기사 페이지 한 건. 없는 기사면 notFound */
+export const getNews = cache((id: number) => fetchApi(`/api/news/${id}`, normalizeNewsPage));
 
 /** GET /api/my: 고른 선수들의 최근 days일 경기. ids는 "1,5,2"처럼 1명 이상(빈 목록은 api가 400) */
 const getMyPlayersCached = cache((ids: string, days: number) =>

@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 import type { PostingPast, PostingPlayer, PostingStatus, PostingSummary } from "@/lib/api";
 import { formatDate } from "@/lib/format";
-import { pinSummary, uniqueByUrl } from "@/lib/news";
+import { uniqueByUrl } from "@/lib/news";
 import Section from "@/components/Section";
 import KboAvatar from "@/components/home/KboAvatar";
 import { PostingDot } from "@/components/home/PostingDot";
@@ -482,17 +482,14 @@ function DealMoney({
 }
 
 /**
- * 관련 기사. 여러 명이면 모두의 기사를 모아(같은 기사는 읽을거리가 많은 사본 하나) 선수 이름을 붙이고 늦은 순으로 둔다.
- * AI 요약 기사 하나는 자르기 전에 맨 앞으로 옮긴다(늦은 순으로 자르면 국내 기사에 밀려 빠진다).
+ * 관련 기사 제목. 여러 명이면 모두의 기사를 모아(같은 기사는 읽을거리가 많은 사본 하나) 선수 이름을 붙이고 늦은 순으로 둔다.
+ * 제목만 보이는 목록이라 늦은 순 그대로 자른다(요약은 누르면 나오는 기사 페이지에 있다).
  */
 function News({ players }: { players: PostingPlayer[] }) {
   const multi = players.length > 1;
-  const merged = uniqueByUrl(
-    players.flatMap((p) => p.news.map((n) => ({ ...n, who: multi ? p.nameKo : null, playerPhotoUrl: p.photoUrl }))),
-  );
-  const items = pinSummary(merged.sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt))).slice(
-    0,
-    multi ? NEWS_LIMIT : 5,
-  );
+  const merged = uniqueByUrl(players.flatMap((p) => p.news.map((n) => ({ ...n, who: multi ? p.nameKo : null }))));
+  const items = merged
+    .sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt))
+    .slice(0, multi ? NEWS_LIMIT : 5);
   return <PostingNews items={items} />;
 }
