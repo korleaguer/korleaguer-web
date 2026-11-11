@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import type { PlayerDetail } from "@/lib/api";
 import { teamColor } from "@/lib/teams";
 import InfoChips from "@/components/InfoChips";
+import PlayerSubline from "@/components/PlayerSubline";
 import PlayerAvatar from "@/components/PlayerAvatar";
 import MyPlayerToggle from "@/components/my/MyPlayerToggle";
 
@@ -29,11 +30,7 @@ export default function PlayerHeader({ player, isMine }: { player: PlayerDetail;
         <h1 id="player-name" className="mt-2 text-2xl font-extrabold leading-tight tracking-[-0.02em]">
           {player.nameKo}
         </h1>
-        {player.nameEn && (
-          <p className="mt-0.5 text-[0.6875rem] font-medium uppercase tracking-[0.08em] text-muted">
-            {player.nameEn}
-          </p>
-        )}
+        <PlayerSubline player={player} className="mt-0.5" />
         <InfoChips player={player} className="mt-3" />
       </div>
     </section>
