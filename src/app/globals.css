@@ -403,6 +403,25 @@
     animation-name: money-flip-in;
   }
 
+  /* 막대 끝에 붙인 금액은 겹친 두 값을 왼쪽에 맞춘다 */
+  .money-flip-start {
+    justify-items: start;
+  }
+
+  /*
+   * MLB 도전 '역대 포스팅 계약' 순위 막대. 위 '지금' 진행 막대(회색 바탕 줄 + 파랑)와 헷갈리지 않게
+   * 바탕 줄 없이, 왼쪽은 거의 투명하고 금액 쪽으로 진해지는 글자색 막대다. 시작은 각지고(2px) 끝은 둥글다.
+   * 길이는 --share(0~1, 1위가 1)에 금액 자리(140px)를 뺀 폭을 곱한다. 글자색을 쓰므로 어두운 화면에서는 밝은 막대가 된다.
+   */
+  .ink-bar {
+    flex: none;
+    display: block;
+    height: 10px;
+    width: calc((100% - 140px) * var(--share, 1));
+    border-radius: 2px 999px 999px 2px;
+    background: linear-gradient(90deg, color-mix(in oklab, var(--foreground), transparent 92%), var(--foreground));
+  }
+
   /* 금액을 비교하려고 목록에 마우스를 올리면 그 자리에서 멈춘다(자동으로 바뀌는 내용은 멈출 수 있어야 한다) */
   .money-flip-pause:hover .money-flip > span {
     animation-play-state: paused;
