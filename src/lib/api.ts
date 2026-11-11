@@ -287,6 +287,18 @@ export interface PlayerDetail extends PlayerSummary {
   debutYear: number | null;
   /** 한국 시절 소속. 예: "넥센·키움 히어로즈 (2017–2023)" */
   careerKo: string | null;
+  /** 과거 소속팀(KBO) 시절 공식 사진(오래된 팀부터). 없으면 빈 배열 */
+  careerPhotos: CareerPhoto[];
+}
+
+/** 과거 소속팀 시절 사진 한 장(그 팀 마지막 시즌 KBO 공식 사진, 우리가 호스팅하는 주소) */
+export interface CareerPhoto {
+  /** "키움 히어로즈" */
+  teamKo: string;
+  /** "2017–2023" */
+  years: string | null;
+  /** "/photos/kbo-67341-2023" */
+  photoUrl: string;
 }
 
 /** GET /api/players/{id} */
@@ -467,11 +479,16 @@ function httpUrl(value: string | null | undefined): string | null {
   return value && /^https?:\/\//i.test(value) ? value : null;
 }
 
+/** 선수 사진 주소: 우리가 호스팅하는 사진(/photos/mlb-808982)이나 http(s) 주소. 그 밖에는 null */
+function photoUrl(value: string | null | undefined): string | null {
+  return value && /^\/photos\/[a-z0-9-]{1,60}$/.test(value) ? value : httpUrl(value);
+}
+
 function normalizeLine(line: GameLine): GameLine {
   return {
     ...line,
     teamAbbr: line.teamAbbr ?? null,
-    photoUrl: httpUrl(line.photoUrl),
+    photoUrl: photoUrl(line.photoUrl),
     opponentAbbr: line.opponentAbbr ?? null,
     teamScore: line.teamScore ?? null,
     opponentScore: line.opponentScore ?? null,
@@ -499,7 +516,7 @@ function normalizeSeason<
     ...row,
     teamKo: row.teamKo ?? null,
     teamAbbr: row.teamAbbr ?? null,
-    photoUrl: httpUrl(row.photoUrl),
+    photoUrl: photoUrl(row.photoUrl),
     // 마이너 경기 수를 주지 않는 오래된 api면 모두 메이저 선수로 본다(지금처럼 한 묶음)
     minorGames: row.minorGames ?? 0,
     mainlyMinors: row.mainlyMinors === true,
@@ -551,7 +568,7 @@ function normalizeSummary<T extends PlayerSummary>(p: T): T {
     positionKo: p.positionKo ?? null,
     teamKo: p.teamKo ?? null,
     teamAbbr: p.teamAbbr ?? null,
-    photoUrl: httpUrl(p.photoUrl),
+    photoUrl: photoUrl(p.photoUrl),
     age: p.age ?? null,
     jersey: String(p.jersey ?? "").trim() || null,
     level: p.level === "MLB" || p.level === "MINORS" ? p.level : null,
@@ -581,6 +598,8 @@ function normalizePlayer(raw: PlayerResponse): PlayerResponse {
       batsThrowsKo: p.batsThrowsKo ?? null,
       debutYear: p.debutYear ?? null,
       careerKo: p.careerKo ?? null,
+      // 오래된 api면 없다. 사진 주소가 없는 줄은 뺀다
+      careerPhotos: (p.careerPhotos ?? []).filter((c) => c && typeof c.photoUrl === "string" && c.teamKo),
     },
     hitting: raw.hitting ? normalizeSeason(raw.hitting) : null,
     pitching: raw.pitching ? normalizeSeason(raw.pitching) : null,

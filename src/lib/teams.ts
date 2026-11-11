@@ -93,3 +93,22 @@ export function textColorOn(hex: string): string {
   const brightness = (r * 299 + g * 587 + b * 114) / 1000;
   return brightness > 160 ? "#111111" : "#ffffff";
 }
+
+// KBO 구단 대표 색(한글 구단 이름으로 찾는다). 포스팅 선수 원·선수 페이지 과거 소속팀 띠에 쓴다.
+const KBO_COLORS: Record<string, string> = {
+  "한화 이글스": "#FC4E00",
+  "LG 트윈스": "#C30452",
+  "키움 히어로즈": "#570514",
+  "SSG 랜더스": "#CE0E2D",
+  "KIA 타이거즈": "#EA0029",
+  "삼성 라이온즈": "#074CA1",
+  "두산 베어스": "#131230",
+  "롯데 자이언츠": "#041E42",
+  "NC 다이노스": "#315288",
+  "KT 위즈": "#000000",
+};
+
+/** KBO 구단 대표 색. 모르는 구단이면 회색 */
+export function kboTeamColor(team: string | null | undefined): string {
+  return (team && KBO_COLORS[team]) || "#8a919c";
+}
