@@ -402,7 +402,7 @@ function SigningList({ signings }: { signings: Signing[] }) {
         선배들의 계약
         <span className="shrink-0 text-[0.6875rem] font-normal text-muted">합의 보도 날짜(미국) 기준</span>
       </p>
-      <ul className="divide-y divide-line">
+      <ul className="money-flip-pause divide-y divide-line">
         {signings.map((s, i) => (
           <li key={s.key} className="flex items-center gap-3 py-2.5">
             <PostingDot nameKo={s.nameKo} color={s.color} thisYear={s.thisYear} photoUrl={s.photoUrl} size={30} />
@@ -442,7 +442,7 @@ function SigningList({ signings }: { signings: Signing[] }) {
 /**
  * 계약 금액: 달러와 원화(합의일 환율 어림)를 4초마다 번갈아 보인다(사용자 요청 11-11, globals.css .money-flip).
  * 두 값을 한 칸에 겹쳐 두어 바뀌어도 줄이 흔들리지 않는다. 화면 읽기 프로그램에는 두 값을 한 번에 읽힌다.
- * index는 줄 순서: 줄마다 조금씩 늦게 바뀌어 위에서 아래로 물결친다.
+ * index는 줄 순서: 줄마다 조금씩 늦게 바뀌어 위에서 아래로 물결친다. 목록에 마우스를 올리면 멈춘다(.money-flip-pause).
  */
 function DealMoney({ usd, krw, index }: { usd: string; krw: string | null; index: number }) {
   if (!krw) return <>{usd}</>;

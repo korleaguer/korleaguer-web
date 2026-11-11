@@ -400,6 +400,11 @@
     animation-delay: calc(var(--i, 0) * 60ms - 4s);
   }
 
+  /* 금액을 비교하려고 목록에 마우스를 올리면 그 자리에서 멈춘다(자동으로 바뀌는 내용은 멈출 수 있어야 한다) */
+  .money-flip-pause:hover .money-flip > span {
+    animation-play-state: paused;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .money-flip > span {
       animation-name: money-fade;
