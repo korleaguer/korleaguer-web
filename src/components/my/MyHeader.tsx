@@ -21,6 +21,8 @@ interface Props {
  */
 export default function MyHeader({ subtitle, players, selectedIds }: Props) {
   const [open, setOpen] = useState(selectedIds.length === 0);
+  // 버튼으로 연 적이 있나. 처음부터 열려 있을 때(아무도 안 골랐을 때)는 움직이지 않고, 눌러서 열 때만 나타나는 움직임을 준다
+  const [opened, setOpened] = useState(false);
   const selected = new Set(selectedIds);
   // 고른 순서대로 선수 정보. 화면 순서 목록에 쓴다
   const ordered = selectedIds
@@ -38,7 +40,10 @@ export default function MyHeader({ subtitle, players, selectedIds }: Props) {
           type="button"
           aria-expanded={open}
           aria-controls="my-picker"
-          onClick={() => setOpen((v) => !v)}
+          onClick={() => {
+            setOpen((v) => !v);
+            setOpened(true);
+          }}
           className="inline-flex shrink-0 items-center gap-1 rounded-full bg-surface px-3.5 py-1.5 text-[0.8125rem] font-semibold shadow-[var(--shadow-card)] transition duration-150 hover:shadow-[var(--shadow-card-hover)] press"
         >
           선수 고르기
@@ -58,7 +63,7 @@ export default function MyHeader({ subtitle, players, selectedIds }: Props) {
       </div>
 
       {open && (
-        <section id="my-picker" aria-label="선수 고르기" className="card mt-3 p-2">
+        <section id="my-picker" aria-label="선수 고르기" className={`card mt-3 p-2 ${opened ? "reveal" : ""}`}>
           {ordered.length >= 2 && (
             <div className="mb-2 border-b border-line pb-2">
               <h2 className="px-2 pb-1 pt-1 text-xs font-semibold text-muted">화면 순서 · 손잡이를 끌어서 바꾸기</h2>
