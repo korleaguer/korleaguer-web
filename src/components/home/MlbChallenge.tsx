@@ -1,15 +1,18 @@
 import type { PostingPast, PostingPlayer, PostingStatus, PostingSummary } from "@/lib/api";
 import { formatDate } from "@/lib/format";
-import { kboTeamColor } from "@/lib/teams";
+import { kboTeamColor, teamColorById } from "@/lib/teams";
 import ExternalLinkIcon from "@/components/ExternalLinkIcon";
 import Section from "@/components/Section";
 import KboAvatar from "@/components/home/KboAvatar";
+import { PostingDot } from "@/components/home/PostingDot";
+import PostingTimeline, { type TimelineNow } from "@/components/home/PostingTimeline";
 
-/** 지금 포스팅 제도의 협상 기간(일). 그래프 가로축 끝 */
+/** 지금 포스팅 제도의 협상 기간(일) */
 const WINDOW_DAYS = 30;
-/** '마감 직전'으로 묶는 날 수(선배 통계 한 줄) */
+/** '마감 직전'으로 묶는 날 수: 그래프의 '마지막 N일' 칸과 선배 통계 한 줄 */
 const NEAR_DEADLINE = 4;
-
+/** 포스팅 선수가 여러 명일 때 함께 보여 줄 관련 기사 수 */
+const NEWS_LIMIT = 6;
 
 const STATUS: Record<PostingStatus, { label: string; className: string }> = {
   UPCOMING: { label: "협상 시작 전", className: "bg-fa-bg text-fa-fg" },
@@ -60,166 +63,6 @@ export function formatUsd(usd: number): string {
   return `${parts.join(" ")} 달러`;
 }
 
-function dealText(p: PostingPast): string {
-  const d = p.deal;
-  if (!d || d.years == null || d.guaranteedUsd == null) return "결렬";
-  return `${d.years}년 ${formatUsd(d.guaranteedUsd)}`;
-}
-
-/**
- * 비시즌 홈 맨 위: 이번 겨울 MLB에 도전하는(포스팅된) KBO 선수와, 지금 제도 선배들이 마감 며칠 전에 계약했는지.
- * 관련 기사는 우리 화면에 제목·언론사·날짜로 보이고 누르면 원문(언론사)으로 간다.
- */
-export default function MlbChallenge({ posting }: { posting: PostingSummary }) {
-  if (posting.players.length === 0) return null;
-  // PC(lg)에서는 선수 카드와 선배 그래프를 나란히 둔다(카드 한 장이 넓은 화면의 절반만 쓰고 오른쪽이 비지 않게)
-  return (
-    <div className="grid items-start gap-7 lg:grid-cols-2 lg:gap-6">
-      <Section id="mlb-challenge-title" title="이번 겨울 MLB 도전">
-        <ul className="-mt-0.5 mb-2 flex flex-wrap gap-1.5 px-1">
-          <li className="rounded-full bg-surface px-2.5 py-0.5 text-[0.8125rem] font-semibold leading-5 text-neutral-pill-fg tabular-nums">
-            포스팅 {posting.players.length}명
-          </li>
-        </ul>
-        <ul className="grid gap-3">
-          {posting.players.map((p) => (
-            <PostingCard key={p.nameKo} player={p} history={posting.history} />
-          ))}
-        </ul>
-      </Section>
-      {posting.history.some((h) => h.deal != null) && (
-        <HistoryChart history={posting.history} players={posting.players} />
-      )}
-    </div>
-  );
-}
-
-function PostingCard({ player: p, history }: { player: PostingPlayer; history: PostingPast[] }) {
-  const status = STATUS[p.status] ?? STATUS.CLOSED;
-  const color = kboTeamColor(p.kboTeam);
-  const open = p.status === "NEGOTIATING" || p.status === "UPCOMING";
-  const signed = history.filter((h) => h.daysBeforeDeadline != null);
-  const near = signed.filter((h) => (h.daysBeforeDeadline ?? 99) <= NEAR_DEADLINE).length;
-  const sub = [p.kboTeam, p.positionKo, p.birthYear ? `${p.birthYear}년생` : null].filter(Boolean).join(" · ");
-  const pct = Math.round(Math.min(1, Math.max(0, p.elapsedRatio)) * 1000) / 10;
-
-  return (
-    <li className="card p-4">
-      <div className="flex items-center gap-3">
-        <KboAvatar nameKo={p.nameKo} photoUrl={p.photoUrl} color={color} />
-        <div className="min-w-0">
-          <h3 className="text-xl font-extrabold leading-tight tracking-[-0.02em]">{p.nameKo}</h3>
-          <p className="truncate text-[0.8125rem] text-muted">{sub}</p>
-        </div>
-        <span
-          className={`ml-auto self-start whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-bold ${status.className}`}
-        >
-          {status.label}
-        </span>
-      </div>
-
-      {open && (
-        <>
-          <div className="mt-4 flex items-end justify-between gap-3">
-            <div>
-              <p className="text-[0.8125rem] text-muted">협상 마감까지</p>
-              <p className="text-[2.75rem] font-extrabold leading-none tracking-[-0.03em]">
-                {p.daysLeft === 0 ? "오늘" : `D-${p.daysLeft}`}
-              </p>
-            </div>
-            <p className="text-right text-[0.8125rem] font-semibold leading-snug tabular-nums">
-              {deadlineKst(p.deadlineAt)}
-              <span className="block text-xs font-normal text-muted">
-                한국 시간 · 미국 {deadlineUs(p.deadlineAt)}
-              </span>
-            </p>
-          </div>
-          <div
-            role="progressbar"
-            aria-label="30일 협상 기간 중 지난 정도"
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={pct}
-            className="relative mt-3.5 h-2 rounded-full bg-surface-2"
-          >
-            <i className="absolute inset-y-0 left-0 rounded-full bg-accent" style={{ width: `${pct}%` }} />
-          </div>
-          <div className="mt-1.5 flex justify-between text-xs text-muted tabular-nums">
-            <span>{kstDay(p.windowOpensAt)} 시작</span>
-            <span>{kstDay(p.deadlineAt)} 마감</span>
-          </div>
-          {signed.length > 0 && (
-            <p className="mt-3.5 rounded-xl bg-surface-2 px-3 py-2.5 text-[0.8125rem] leading-relaxed">
-              지금 제도에서 포스팅 계약 {signed.length}건 중{" "}
-              <b className="font-bold">
-                {near}건이 마감 {NEAR_DEADLINE}일 안에
-              </b>{" "}
-              결론 났어요.
-            </p>
-          )}
-        </>
-      )}
-
-      {p.deal && p.deal.years != null && p.deal.guaranteedUsd != null && (
-        <p className="mt-4 text-[0.9375rem] font-semibold">
-          {p.deal.mlbTeamKo}와 {p.deal.years}년 {formatUsd(p.deal.guaranteedUsd)}
-          {p.deal.agreedOn && (
-            <span className="block text-xs font-normal text-muted">합의 {formatDate(p.deal.agreedOn)} (미국 날짜)</span>
-          )}
-        </p>
-      )}
-      {p.status === "NO_DEAL" && <p className="mt-4 text-sm text-muted">계약하지 못해 {p.kboTeam}에 남아요.</p>}
-
-      {p.news.length > 0 && (
-        <div className="mt-3.5 border-t border-line pt-3">
-          <p className="flex items-baseline justify-between text-[0.8125rem] font-bold">
-            관련 기사
-            <span className="text-[0.6875rem] font-normal text-muted">언론사 제목 · 누르면 원문</span>
-          </p>
-          <ul className="mt-1 divide-y divide-line">
-            {p.news.map((n) => (
-              <li key={n.url}>
-                <a
-                  href={n.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block py-2.5 text-sm font-semibold leading-snug hover:underline"
-                >
-                  {n.title} <ExternalLinkIcon />
-                  <span className="mt-0.5 block text-xs font-normal text-muted tabular-nums">
-                    {n.publisher} · {formatDate(n.publishedAt)}
-                  </span>
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </li>
-  );
-}
-
-/** 마감까지 남은 날 d를 가로 위치(%)로: 왼쪽 D-30 → 오른쪽 마감 */
-const x = (d: number) => `${((WINDOW_DAYS - Math.min(WINDOW_DAYS, Math.max(0, d))) / WINDOW_DAYS) * 100}%`;
-
-/** 그래프 한 줄: 지난 포스팅 기록이나 올해 계약한 선수 */
-interface ChartRow {
-  key: string;
-  nameKo: string;
-  season: number;
-  teamKo: string | null;
-  /** 마감 며칠 전에 합의했나(미국 날짜, 마감 당일 0) */
-  days: number;
-  /** "6년 1억 1,300만 달러" */
-  deal: string;
-  thisYear: boolean;
-}
-
-/** '지금' 이름표 하나. 마감이 2일 안으로 붙은 선수들은 이름표 하나로 묶는다(이름이 겹치지 않게) */
-interface NowMark {
-  names: { nameKo: string; days: number }[];
-}
-
 /** 미국 동부 날짜 "2026-12-01" */
 function etDate(iso: string): string {
   return new Intl.DateTimeFormat("en-CA", {
@@ -234,213 +77,372 @@ function dayDiff(from: string, to: string): number {
   return Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000);
 }
 
+const isOpen = (p: PostingPlayer) => p.status === "NEGOTIATING" || p.status === "UPCOMING";
+
+/** 포스팅으로 계약한 선수 한 명: 지난 겨울의 선배, 또는 올해 계약한 포스팅 선수 */
+interface Signing {
+  key: string;
+  nameKo: string;
+  season: number;
+  teamKo: string | null;
+  /** 계약한 MLB 구단 색(동그라미) */
+  color: string;
+  /** 마감 며칠 전에 합의했나(미국 날짜, 마감 당일 0) */
+  days: number;
+  /** "6년 1억 1,300만 달러" */
+  deal: string;
+  thisYear: boolean;
+}
+
+/** 지금 제도(2018~)의 지난 포스팅 계약. 결렬은 넣지 않는다(사용자 결정 11-11) */
+function pastSignings(history: PostingPast[]): Signing[] {
+  return history.flatMap((h) => {
+    const d = h.deal;
+    if (!d || h.daysBeforeDeadline == null || d.years == null || d.guaranteedUsd == null) return [];
+    return [
+      {
+        key: `${h.nameKo}-${h.season}`,
+        nameKo: h.nameKo,
+        season: h.season,
+        teamKo: d.mlbTeamKo,
+        color: teamColorById(d.mlbTeamId),
+        days: h.daysBeforeDeadline,
+        deal: `${d.years}년 ${formatUsd(d.guaranteedUsd)}`,
+        thisYear: false,
+      },
+    ];
+  });
+}
+
 /** 올해 계약한 포스팅 선수(합의 보도일 → 협상 마감일, 미국 날짜). 결렬·결과 확인 중은 넣지 않는다 */
-function thisYearRows(players: PostingPlayer[]): ChartRow[] {
+function thisYearSignings(players: PostingPlayer[]): Signing[] {
   return players.flatMap((p) => {
-    const deal = p.deal;
-    if (p.status !== "SIGNED" || !deal?.agreedOn || deal.years == null || deal.guaranteedUsd == null) return [];
-    const days = dayDiff(deal.agreedOn, etDate(p.deadlineAt));
+    const d = p.deal;
+    if (p.status !== "SIGNED" || !d?.agreedOn || d.years == null || d.guaranteedUsd == null) return [];
+    const days = dayDiff(d.agreedOn, etDate(p.deadlineAt));
     if (days < 0 || days > WINDOW_DAYS) return [];
     return [
       {
         key: `now-${p.nameKo}`,
         nameKo: p.nameKo,
         season: Number(etDate(p.windowOpensAt).slice(0, 4)),
-        teamKo: deal.mlbTeamKo,
+        teamKo: d.mlbTeamKo,
+        color: teamColorById(d.mlbTeamId),
         days,
-        deal: `${deal.years}년 ${formatUsd(deal.guaranteedUsd)}`,
+        deal: `${d.years}년 ${formatUsd(d.guaranteedUsd)}`,
         thisYear: true,
       },
     ];
   });
 }
 
-/** 협상 중인 선수들의 '지금' 위치(왼쪽 D-30 → 오른쪽 마감 순). 2일 안으로 붙으면 이름표 하나 */
-function nowMarks(players: PostingPlayer[]): NowMark[] {
-  const open = players
-    .filter((p) => (p.status === "NEGOTIATING" || p.status === "UPCOMING") && p.daysLeft != null)
-    .map((p) => ({ nameKo: p.nameKo, days: Math.min(WINDOW_DAYS, Math.max(0, p.daysLeft ?? 0)) }))
-    .sort((a, b) => b.days - a.days);
-  const marks: NowMark[] = [];
-  for (const m of open) {
-    const last = marks[marks.length - 1];
-    if (last && last.names[0].days - m.days <= 2) last.names.push(m);
-    else marks.push({ names: [m] });
-  }
-  return marks;
-}
-
-/** 이름표는 눈금에서 오른쪽으로 쓴다. 마감 쪽(오른쪽 40%)에서는 눈금에서 왼쪽으로 써서 막대 밖으로 넘치지 않게 한다 */
-function anchor(days: number): string {
-  const share = (WINDOW_DAYS - days) / WINDOW_DAYS;
-  return share > 0.6 ? "translate-x-[calc(-100%+0.375rem)]" : "translate-x-[-0.375rem]";
-}
-
-function HistoryChart({ history, players }: { history: PostingPast[]; players: PostingPlayer[] }) {
-  // 결렬은 넣지 않는다(사용자 결정 11-11). 올해 계약한 포스팅 선수도 같은 기준으로 '올해' 표시와 함께 넣는다
-  const past: ChartRow[] = history
-    .filter((h) => h.deal != null && h.daysBeforeDeadline != null)
-    .map((h) => ({
-      key: `${h.nameKo}-${h.season}`,
-      nameKo: h.nameKo,
-      season: h.season,
-      teamKo: h.deal?.mlbTeamKo ?? null,
-      days: h.daysBeforeDeadline ?? 0,
-      deal: dealText(h),
-      thisYear: false,
+/** 협상 중(또는 시작 전)인 선수의 '지금' 자리 */
+function nowFaces(players: PostingPlayer[]): TimelineNow[] {
+  return players
+    .filter((p) => isOpen(p) && p.daysLeft != null)
+    .map((p) => ({
+      key: p.nameKo,
+      nameKo: p.nameKo,
+      days: Math.min(WINDOW_DAYS, Math.max(0, p.daysLeft ?? 0)),
+      photoUrl: p.photoUrl,
+      color: kboTeamColor(p.kboTeam),
     }));
-  const rows = [...thisYearRows(players), ...past].sort((a, b) => b.days - a.days || b.season - a.season);
-  const marks = nowMarks(players);
-  const ticks = [...new Set(marks.flatMap((m) => m.names.map((n) => n.days)))];
-  const anyThisYear = rows.some((r) => r.thisYear);
+}
+
+/** 카드 안 선수 순서: 협상 중·시작 전(마감 가까운 순) → 계약 → 결과 확인 중 → 결렬 */
+function rank(p: PostingPlayer): number {
+  if (isOpen(p)) return 0;
+  return p.status === "SIGNED" ? 1 : p.status === "CLOSED" ? 2 : 3;
+}
+
+/**
+ * 비시즌 홈 맨 위: 이번 겨울 MLB에 도전하는(포스팅된) KBO 선수.
+ * 포스팅 선수가 몇 명이든 카드 한 장에 모은다(사용자 결정 11-11 "한 카드 안에서 다 같이").
+ * 카드 안 한 줄 그래프에 지금 제도 선배들이 마감 며칠 전에 계약했는지를 구단 색 동그라미로 쌓고,
+ * 그 아래(PC는 오른쪽) 목록에 같은 동그라미로 계약 내용을 늘 보여 준다(누르지 않아도 보이게).
+ * 관련 기사는 우리 화면에 제목·언론사·날짜로 보이고 누르면 원문(언론사)으로 간다.
+ */
+export default function MlbChallenge({ posting }: { posting: PostingSummary }) {
+  if (posting.players.length === 0) return null;
+  const players = [...posting.players].sort((a, b) => rank(a) - rank(b) || (a.daysLeft ?? 99) - (b.daysLeft ?? 99));
+  const signings = [...thisYearSignings(players), ...pastSignings(posting.history)].sort(
+    (a, b) => b.days - a.days || Number(b.thisYear) - Number(a.thisYear) || b.season - a.season,
+  );
+  const single = players.length === 1 ? players[0] : null;
   return (
-    <Section id="posting-history-title" title="선배들은 마감 며칠 전에 계약했나">
-      <p className="-mt-1 mb-3 px-1 text-[0.8125rem] text-muted">
-        지금 포스팅 제도(2018~) · 30일 협상 마감 기준, 합의 보도 날짜(미국)
-      </p>
-      <div className="card p-4">
-        <ul className="flex flex-wrap items-center gap-x-3.5 gap-y-1 text-xs" aria-hidden>
-          <li className="inline-flex items-center gap-1.5">
-            <i className="size-2.5 rounded-full bg-accent" />
-            계약
-          </li>
-          {anyThisYear && (
-            <li className="inline-flex items-center gap-1.5">
-              <ThisYearTag />
-              올해 계약
-            </li>
-          )}
-          {ticks.length > 0 && (
-            <li className="inline-flex items-center gap-1.5">
-              <i className="h-3.5 w-0.5 rounded-full bg-foreground/70" />
-              포스팅 중인 선수의 지금
-            </li>
-          )}
-        </ul>
-        {/*
-          선수 한 명 = 두 줄. 1줄: 이름 | 30일 막대 위 점, 2줄: 연도·팀 | 금액(오른쪽 정렬, 숫자 칸 맞춤).
-          점·축 눈금·'지금' 눈금은 막대 안쪽 폭(양쪽 점 반지름 6px 안쪽)의 같은 좌표를 쓴다.
-          '지금'은 협상 중인 선수마다 막대 위 같은 자리 눈금이고, 축 아래 '지금' 줄에 이름표가 붙는다.
-        */}
-        <div className="mt-3" aria-hidden>
-          <div className="grid grid-cols-[6.5rem_1fr] gap-x-3">
-            <span />
-            <div className="relative h-4">
-              <div className="absolute inset-x-1.5 inset-y-0">
-                {[30, 20, 10, 0].map((d) => (
-                  <span
-                    key={d}
-                    className="absolute top-0 -translate-x-1/2 whitespace-nowrap text-[0.6875rem] leading-4 text-muted tabular-nums"
-                    style={{ left: x(d) }}
-                  >
-                    {d === 0 ? "마감" : `D-${d}`}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-          {/* '지금' 이름표: 선수(2일 안으로 붙은 선수는 묶음)마다 한 줄. 눈금 자리에서 시작해 아래 막대의 눈금과 맞는다 */}
-          {marks.length > 0 && (
-            <div className="mt-1 grid grid-cols-[6.5rem_1fr] gap-x-3">
-              <span className="text-[0.6875rem] leading-5 text-muted">지금</span>
-              <div>
-                {marks.map((m) => (
-                  <div key={m.names.map((n) => n.nameKo).join("·")} className="relative h-5">
-                    <div className="absolute inset-x-1.5 inset-y-0">
-                      <span
-                        className={`absolute top-0 whitespace-nowrap text-[0.6875rem] font-semibold leading-5 tabular-nums ${anchor(m.names[0].days)}`}
-                        style={{ left: x(m.names[0].days) }}
-                      >
-                        {m.names.map((n) => `${n.nameKo} ${n.days === 0 ? "오늘 마감" : `D-${n.days}`}`).join(" · ")}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          <ul className="mt-1.5">
-            {rows.map((r) => (
-              <li
-                key={r.key}
-                className="grid grid-cols-[6.5rem_1fr] items-center gap-x-3 gap-y-0.5 border-t border-line py-2.5"
-              >
-                <p className="flex min-w-0 items-center gap-1 text-[0.8125rem] font-bold leading-5">
-                  <span className="truncate">{r.nameKo}</span>
-                  {r.thisYear && <ThisYearTag />}
-                </p>
-                <div className="relative h-5">
-                  <i className="absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-surface-2" />
-                  <div className="absolute inset-x-1.5 inset-y-0">
-                    {ticks.map((t) => (
-                      <i
-                        key={t}
-                        className="absolute top-1/2 h-3.5 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground/70"
-                        style={{ left: x(t) }}
-                      />
-                    ))}
-                    <i
-                      className="absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent shadow-[0_0_0_2px_var(--surface)]"
-                      style={{ left: x(r.days) }}
-                    />
-                  </div>
-                </div>
-                <p className="truncate whitespace-nowrap text-[0.6875rem] leading-4 text-muted tabular-nums">
-                  {r.season}
-                  {r.teamKo ? ` · ${r.teamKo}` : ""}
-                </p>
-                <p className="truncate text-right text-[0.6875rem] leading-4 tabular-nums">
-                  <span className="font-semibold">{r.days === 0 ? "마감 당일" : `D-${r.days}`}</span>
-                  {` · ${r.deal}`}
-                </p>
-              </li>
-            ))}
-          </ul>
+    <Section id="mlb-challenge-title" title="이번 겨울 MLB 도전">
+      <ul className="-mt-0.5 mb-2 flex flex-wrap gap-1.5 px-1">
+        <li className="rounded-full bg-surface px-2.5 py-0.5 text-[0.8125rem] font-semibold leading-5 text-neutral-pill-fg tabular-nums">
+          포스팅 {players.length}명
+        </li>
+      </ul>
+      {/* PC(lg): 왼쪽 선수·그래프, 오른쪽 선배 계약 목록, 아래 관련 기사 두 줄. 휴대폰은 위에서 아래로 */}
+      <div className="card p-4 lg:grid lg:grid-cols-2 lg:gap-x-8 lg:p-5">
+        <div className="min-w-0">
+          {single ? <PlayerHead player={single} /> : <PlayerRows players={players} />}
+          <Timeline players={players} single={single} signings={signings} />
         </div>
-        <table className="sr-only">
-          <caption>포스팅 계약: 마감 며칠 전 계약했나</caption>
-          <thead>
-            <tr>
-              <th>선수</th>
-              <th>겨울</th>
-              <th>구단</th>
-              <th>마감까지 남은 날</th>
-              <th>보장 계약</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.key}>
-                <td>{r.thisYear ? `${r.nameKo}(올해)` : r.nameKo}</td>
-                <td>{r.season}</td>
-                <td>{r.teamKo}</td>
-                <td>{r.days}일</td>
-                <td>{r.deal}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {marks.length > 0 && (
-          <p className="sr-only">
-            {`지금 포스팅 협상 중: ${marks
-              .flatMap((m) => m.names)
-              .map((n) => `${n.nameKo} 마감까지 ${n.days}일`)
-              .join(", ")}`}
-          </p>
-        )}
-        <p className="mt-3 text-xs leading-relaxed text-muted">
-          금액은 보장액(옵션·인센티브 제외). 출처: MLB Trade Rumors 등 계약 보도
-        </p>
+        {signings.length > 0 && <SigningList signings={signings} />}
+        <News players={players} />
       </div>
     </Section>
   );
 }
 
-/** 올해 계약한 선수 표시 */
-function ThisYearTag() {
+/** 포스팅 선수가 한 명일 때: 크게(사진·이름·남은 날·마감 시각) */
+function PlayerHead({ player: p }: { player: PostingPlayer }) {
+  const status = STATUS[p.status] ?? STATUS.CLOSED;
+  const sub = [p.kboTeam, p.positionKo, p.birthYear ? `${p.birthYear}년생` : null].filter(Boolean).join(" · ");
   return (
-    <span className="shrink-0 rounded-full bg-accent-soft px-1.5 text-[0.625rem] font-bold leading-4 text-accent-ink">
-      올해
+    <>
+      <div className="flex items-center gap-3">
+        <KboAvatar nameKo={p.nameKo} photoUrl={p.photoUrl} color={kboTeamColor(p.kboTeam)} />
+        <div className="min-w-0">
+          <h3 className="text-xl font-extrabold leading-tight tracking-[-0.02em]">{p.nameKo}</h3>
+          {/* 좁은 휴대폰에서는 상태 알약에 밀려 두 줄이 된다(말줄임으로 '년생'이 잘리지 않게) */}
+          <p className="text-[0.8125rem] leading-snug text-muted">{sub}</p>
+        </div>
+        <span
+          className={`ml-auto self-start whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-bold ${status.className}`}
+        >
+          {status.label}
+        </span>
+      </div>
+
+      {isOpen(p) && p.daysLeft != null && (
+        <div className="mt-4 flex items-end justify-between gap-3">
+          <div>
+            <p className="text-[0.8125rem] text-muted">협상 마감까지</p>
+            <p className="text-[2.75rem] font-extrabold leading-none tracking-[-0.03em] tabular-nums">
+              {p.daysLeft === 0 ? "오늘" : `D-${p.daysLeft}`}
+            </p>
+          </div>
+          <p className="text-right text-[0.8125rem] font-semibold leading-snug tabular-nums">
+            {deadlineKst(p.deadlineAt)}
+            <span className="block text-xs font-normal text-muted">한국 시간 · 미국 {deadlineUs(p.deadlineAt)}</span>
+          </p>
+        </div>
+      )}
+
+      {p.deal && p.deal.years != null && p.deal.guaranteedUsd != null && (
+        <p className="mt-4 text-[0.9375rem] font-semibold">
+          {p.deal.mlbTeamKo}와 {p.deal.years}년 {formatUsd(p.deal.guaranteedUsd)}
+          {p.deal.agreedOn && (
+            <span className="block text-xs font-normal text-muted">합의 {formatDate(p.deal.agreedOn)} (미국 날짜)</span>
+          )}
+        </p>
+      )}
+      {p.status === "NO_DEAL" && <p className="mt-4 text-sm text-muted">계약하지 못해 {p.kboTeam}에 남아요.</p>}
+    </>
+  );
+}
+
+/** 포스팅 선수가 여러 명일 때: 한 사람 한 줄(사진·이름·구단 | 남은 날이나 결과) */
+function PlayerRows({ players }: { players: PostingPlayer[] }) {
+  return (
+    <ul className="divide-y divide-line">
+      {players.map((p) => {
+        const signed = p.status === "SIGNED" && p.deal?.mlbTeamKo;
+        return (
+          <li key={p.nameKo} className="flex items-center gap-3 py-2.5 first:pt-0">
+            <KboAvatar nameKo={p.nameKo} photoUrl={p.photoUrl} color={kboTeamColor(p.kboTeam)} size={40} />
+            <div className="min-w-0 flex-1">
+              <h3 className="text-base font-extrabold leading-tight tracking-[-0.02em]">{p.nameKo}</h3>
+              <p className="truncate text-xs text-muted">
+                {signed ? `${p.kboTeam} → ${p.deal?.mlbTeamKo}` : `${p.kboTeam} · ${p.positionKo}`}
+              </p>
+            </div>
+            <RowResult player={p} />
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+/** 여러 명 줄의 오른쪽: 협상 중이면 남은 날, 계약이면 계약 규모, 그 밖에는 상태 알약 */
+function RowResult({ player: p }: { player: PostingPlayer }) {
+  const status = STATUS[p.status] ?? STATUS.CLOSED;
+  const pill = (
+    <span className={`whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-bold ${status.className}`}>
+      {status.label}
     </span>
+  );
+  if (p.status === "NEGOTIATING" && p.daysLeft != null) {
+    return (
+      <div className="shrink-0 text-right">
+        <p className="text-[1.375rem] font-extrabold leading-none tracking-[-0.02em] tabular-nums">
+          {p.daysLeft === 0 ? "오늘" : `D-${p.daysLeft}`}
+        </p>
+        <p className="mt-1 text-[0.6875rem] text-muted tabular-nums">{kstDay(p.deadlineAt)} 마감</p>
+      </div>
+    );
+  }
+  if (p.status === "UPCOMING") {
+    return (
+      <div className="shrink-0 text-right">
+        {pill}
+        <p className="mt-1 text-[0.6875rem] text-muted tabular-nums">{kstDay(p.windowOpensAt)} 시작</p>
+      </div>
+    );
+  }
+  if (p.status === "SIGNED" && p.deal?.years != null && p.deal.guaranteedUsd != null) {
+    return (
+      <div className="shrink-0 text-right">
+        {pill}
+        <p className="mt-1 text-xs font-semibold tabular-nums">
+          {p.deal.years}년 {formatUsd(p.deal.guaranteedUsd)}
+        </p>
+      </div>
+    );
+  }
+  return <div className="shrink-0">{pill}</div>;
+}
+
+/** 한 줄 그래프와 그 뜻을 한 문장으로 */
+function Timeline({
+  players,
+  single,
+  signings,
+}: {
+  players: PostingPlayer[];
+  single: PostingPlayer | null;
+  signings: Signing[];
+}) {
+  const now = nowFaces(players);
+  if (signings.length === 0 && now.length === 0) return null;
+  const past = signings.filter((s) => !s.thisYear);
+  const near = past.filter((s) => s.days <= NEAR_DEADLINE).length;
+  const openDays = single && isOpen(single) ? single.daysLeft : null;
+  const earlier = openDays != null ? past.filter((s) => s.days > openDays) : null;
+  return (
+    <div className="mt-5">
+      {signings.length > 0 && (
+        <p className="mb-2 flex items-baseline justify-between gap-2 text-[0.8125rem] font-bold">
+          선배들은 마감 며칠 전에 계약했나
+          <span className="shrink-0 text-[0.6875rem] font-normal text-muted">지금 제도(2018~)</span>
+        </p>
+      )}
+      <PostingTimeline
+        dots={signings.map((s) => ({ key: s.key, nameKo: s.nameKo, color: s.color, days: s.days, thisYear: s.thisYear }))}
+        now={now}
+        fill={single?.status === "NEGOTIATING"}
+        photos={single != null}
+        startLabel={single ? `${kstDay(single.windowOpensAt)} 시작` : "협상 시작"}
+        endLabel={single ? `${kstDay(single.deadlineAt)} 마감` : "마감"}
+        lateDays={NEAR_DEADLINE}
+      />
+      {past.length > 0 && (
+        <p className="mt-2 text-[0.8125rem] leading-relaxed text-neutral-pill-fg">
+          {earlier == null ? (
+            <>
+              선배 {past.length}명 중{" "}
+              <b className="font-bold text-foreground">
+                {near}명은 마감 {NEAR_DEADLINE}일 안에
+              </b>{" "}
+              계약했어요.
+            </>
+          ) : (
+            <>
+              {earlier.length === 0 ? (
+                "아직 이맘때 계약한 선배는 없어요. "
+              ) : (
+                <>
+                  지금보다 먼저 계약한 선배는{" "}
+                  <b className="font-bold text-foreground">{earlier.map((s) => s.nameKo).join("·")}</b>
+                  {earlier.length === 1 ? "뿐이고, " : ` ${earlier.length}명이고, `}
+                </>
+              )}
+              {past.length}명 중{" "}
+              <b className="font-bold text-foreground">
+                {near}명은 마감 {NEAR_DEADLINE}일 안에
+              </b>{" "}
+              계약했어요.
+            </>
+          )}
+          {signings.some((s) => s.thisYear) && " 초록 테두리는 올해 계약이에요."}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** 선배 계약 목록: 그래프와 같은 동그라미 · 이름 · 연도·구단 | 마감 며칠 전 · 보장액. 누르지 않아도 늘 보인다 */
+function SigningList({ signings }: { signings: Signing[] }) {
+  return (
+    <div className="mt-3 lg:mt-0">
+      <p className="mb-1 hidden items-baseline justify-between gap-2 text-[0.8125rem] font-bold lg:flex">
+        선배들의 계약
+        <span className="shrink-0 text-[0.6875rem] font-normal text-muted">합의 보도 날짜(미국) 기준</span>
+      </p>
+      <ul className="divide-y divide-line">
+        {signings.map((s) => (
+          <li key={s.key} className="flex items-center gap-3 py-2.5">
+            <PostingDot nameKo={s.nameKo} color={s.color} thisYear={s.thisYear} size={30} />
+            <div className="min-w-0 flex-1">
+              <p className="flex items-center gap-1.5 text-sm font-bold leading-5">
+                {s.nameKo}
+                {s.thisYear && (
+                  <span className="shrink-0 rounded-full bg-success-bg px-1.5 text-[0.625rem] font-bold leading-4 text-success-fg">
+                    올해
+                  </span>
+                )}
+              </p>
+              <p className="truncate text-xs text-muted tabular-nums">
+                {s.season}
+                {s.teamKo ? ` · ${s.teamKo}` : ""}
+              </p>
+            </div>
+            <div className="shrink-0 text-right">
+              <p className="text-[0.8125rem] font-bold leading-5 tabular-nums">
+                {s.days === 0 ? "마감 당일" : `D-${s.days}`}
+              </p>
+              <p className="text-xs text-neutral-pill-fg tabular-nums">{s.deal}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-1.5 text-[0.6875rem] leading-relaxed text-muted">
+        금액은 보장액(옵션·인센티브 제외), 날짜는 합의 보도 기준(미국). 출처: MLB Trade Rumors 등
+      </p>
+    </div>
+  );
+}
+
+/** 관련 기사. 여러 명이면 모두의 기사를 늦은 순으로 모으고 선수 이름을 붙인다 */
+function News({ players }: { players: PostingPlayer[] }) {
+  const multi = players.length > 1;
+  const seen = new Set<string>();
+  const items = players
+    .flatMap((p) => p.news.map((n) => ({ ...n, who: p.nameKo })))
+    .filter((n) => !seen.has(n.url) && Boolean(seen.add(n.url)))
+    .sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt))
+    .slice(0, multi ? NEWS_LIMIT : 5);
+  if (items.length === 0) return null;
+  return (
+    <div className="mt-4 border-t border-line pt-3 lg:col-span-2 lg:mt-5">
+      <p className="flex items-baseline justify-between text-[0.8125rem] font-bold">
+        관련 기사
+        <span className="text-[0.6875rem] font-normal text-muted">언론사 제목 · 누르면 원문</span>
+      </p>
+      <ul className="mt-1 lg:grid lg:grid-cols-2 lg:gap-x-8">
+        {items.map((n) => (
+          <li key={n.url} className="border-t border-line first:border-t-0 lg:[&:nth-child(2)]:border-t-0">
+            <a
+              href={n.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block py-2.5 text-sm font-semibold leading-snug hover:underline"
+            >
+              {n.title} <ExternalLinkIcon />
+              <span className="mt-0.5 block text-xs font-normal text-muted tabular-nums">
+                {multi ? `${n.who} · ` : ""}
+                {n.publisher} · {formatDate(n.publishedAt)}
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

@@ -73,6 +73,16 @@ export function teamColor(teamAbbr: string | null): string {
   return (teamAbbr && TEAM_COLORS[teamAbbr]) || FALLBACK;
 }
 
+// MLB 팀 번호 → 팀 색. 번호만 아는 곳(포스팅 계약 구단 등)에서 쓴다. 같은 번호의 다른 약어는 색도 같다.
+const COLOR_BY_TEAM_ID: Record<number, string> = Object.fromEntries(
+  Object.entries(MLB_TEAM_IDS).map(([abbr, id]) => [id, TEAM_COLORS[abbr] ?? FALLBACK]),
+);
+
+/** MLB 팀 번호로 팀 색. 모르는 번호면 회색 */
+export function teamColorById(teamId: number | null | undefined): string {
+  return (teamId != null && COLOR_BY_TEAM_ID[teamId]) || FALLBACK;
+}
+
 /**
  * 팀 로고 주소. 모르는 팀이거나 환경변수 NEXT_PUBLIC_TEAM_LOGOS가 "off"이면 null(색 점으로 대신한다).
  * 로고는 MLB 상표라서, 공개하기 전에 허락을 받거나 "off"로 끈다.
