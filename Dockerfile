@@ -20,7 +20,10 @@ ENV NEXT_TELEMETRY_DISABLED=1 \
     APP_COMMIT=${APP_COMMIT}
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npm run build
+# standalone 출력의 node_modules(실행에 필요한 것만 추린 의존성)는 따로 떼어 둔다. 실행 단계에서 따로 복사하면
+# 의존성이 그대로인 배포에서는 그 레이어가 이전과 같아(캐시) 서버가 다시 받지 않는다(앱 코드 레이어만 받는다).
+RUN npm run build \
+    && mv .next/standalone/node_modules /app/standalone-node-modules
 
 FROM node:24-alpine AS run
 WORKDIR /app
@@ -32,11 +35,14 @@ ENV NODE_ENV=production \
     PORT=3000 \
     HOSTNAME=0.0.0.0 \
     APP_COMMIT=${APP_COMMIT}
+# 의존성(자주 안 바뀜) → 앱 코드(배포마다 바뀜) 순서로 담는다.
 # standalone server.js는 .next/static을 직접 복사해 줘야 내보낸다(public 폴더는 지금 없다).
+COPY --from=build --chown=node:node /app/standalone-node-modules ./node_modules
 COPY --from=build --chown=node:node /app/.next/standalone ./
 COPY --from=build --chown=node:node /app/.next/static ./.next/static
 USER node
 EXPOSE 3000
-HEALTHCHECK --interval=10s --timeout=3s --start-period=20s --retries=3 \
+# 뜨는 중(시작 유예 20초)에는 1초마다 확인해 뜨자마자 healthy가 되게 한다(Docker 25+). 그 뒤로는 10초마다.
+HEALTHCHECK --interval=10s --timeout=3s --start-period=20s --start-interval=1s --retries=3 \
     CMD node -e "fetch('http://127.0.0.1:3000/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 CMD ["node", "server.js"]
