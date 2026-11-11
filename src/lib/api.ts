@@ -218,7 +218,7 @@ export interface PostingPast {
   deadline: string;
   daysBeforeDeadline: number | null;
   deal: PostingDeal | null;
-  /** 포스팅 당시 KBO 공식 등록 사진(우리 서버 /photos/…). 없으면 null */
+  /** 계약 구단 시절 MLB 사진의 흰 바탕 편집본(/photos/posting-673490-2024), 없으면 포스팅 당시 KBO 공식 사진(/photos/kbo-…). 없으면 null */
   photoUrl: string | null;
 }
 
