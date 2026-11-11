@@ -92,6 +92,8 @@ interface Signing {
   /** "6년 1억 1,300만 달러" */
   deal: string;
   thisYear: boolean;
+  /** 포스팅 당시 KBO 공식 등록 사진. 없으면 null(구단 색 원 + 이름) */
+  photoUrl: string | null;
 }
 
 /** 지금 제도(2018~)의 지난 포스팅 계약. 결렬은 넣지 않는다(사용자 결정 11-11) */
@@ -109,6 +111,7 @@ function pastSignings(history: PostingPast[]): Signing[] {
         days: h.daysBeforeDeadline,
         deal: `${d.years}년 ${formatUsd(d.guaranteedUsd)}`,
         thisYear: false,
+        photoUrl: h.photoUrl ?? null,
       },
     ];
   });
@@ -131,6 +134,7 @@ function thisYearSignings(players: PostingPlayer[]): Signing[] {
         days,
         deal: `${d.years}년 ${formatUsd(d.guaranteedUsd)}`,
         thisYear: true,
+        photoUrl: p.photoUrl,
       },
     ];
   });
@@ -324,10 +328,9 @@ function Timeline({
         </p>
       )}
       <PostingTimeline
-        dots={signings.map((s) => ({ key: s.key, nameKo: s.nameKo, color: s.color, days: s.days, thisYear: s.thisYear }))}
+        dots={signings.map((s) => ({ key: s.key, nameKo: s.nameKo, color: s.color, days: s.days, thisYear: s.thisYear, photoUrl: s.photoUrl }))}
         now={now}
         fill={single?.status === "NEGOTIATING"}
-        photos={single != null}
         startLabel={single ? `${kstDay(single.windowOpensAt)} 시작` : "협상 시작"}
         endLabel={single ? `${kstDay(single.deadlineAt)} 마감` : "마감"}
         lateDays={NEAR_DEADLINE}
@@ -378,7 +381,7 @@ function SigningList({ signings }: { signings: Signing[] }) {
       <ul className="divide-y divide-line">
         {signings.map((s) => (
           <li key={s.key} className="flex items-center gap-3 py-2.5">
-            <PostingDot nameKo={s.nameKo} color={s.color} thisYear={s.thisYear} size={30} />
+            <PostingDot nameKo={s.nameKo} color={s.color} thisYear={s.thisYear} photoUrl={s.photoUrl} size={30} />
             <div className="min-w-0 flex-1">
               <p className="flex items-center gap-1.5 text-sm font-bold leading-5">
                 {s.nameKo}
