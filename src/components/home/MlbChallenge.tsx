@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import type { PostingPast, PostingPlayer, PostingStatus, PostingSummary } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import { pinSummary, uniqueByUrl } from "@/lib/news";
@@ -64,6 +65,19 @@ export function formatUsd(usd: number): string {
   return `${parts.join(" ")} 달러`;
 }
 
+/**
+ * 원화 어림값: 1억 원 이상은 억 단위로 반올림(1,480억 원 · 1조 2,000억 원), 그보다 작으면 만 단위(5,900만 원).
+ * 합의일 환율로 계산한 '대략'이라 앞에 '약'을 붙여 쓴다.
+ */
+export function formatKrw(won: number): string {
+  if (won < 100_000_000) return `${Math.round(won / 10_000).toLocaleString("ko-KR")}만 원`;
+  const eokTotal = Math.round(won / 100_000_000);
+  const jo = Math.floor(eokTotal / 10_000);
+  const eok = eokTotal % 10_000;
+  const parts = [jo > 0 ? `${jo}조` : "", eok > 0 ? `${eok.toLocaleString("ko-KR")}억` : ""].filter(Boolean);
+  return `${parts.join(" ")} 원`;
+}
+
 /** 미국 동부 날짜 "2026-12-01" */
 function etDate(iso: string): string {
   return new Intl.DateTimeFormat("en-CA", {
@@ -90,11 +104,20 @@ interface Signing {
   color: string;
   /** 마감 며칠 전에 합의했나(미국 날짜, 마감 당일 0) */
   days: number;
-  /** "6년 1억 1,300만 달러" */
-  deal: string;
+  /** 보장 연수 */
+  years: number;
+  /** "1억 1,300만 달러" */
+  usd: string;
+  /** 합의일 환율로 어림한 원화 "약 1,480억 원". 환율을 모르면 null(달러만 보인다) */
+  krw: string | null;
   thisYear: boolean;
   /** 선배는 계약 구단 시절 MLB 사진의 흰 바탕 편집본(/photos/posting-…), 올해 계약한 선수는 KBO 공식 사진. 없으면 null(구단 색 원 + 이름) */
   photoUrl: string | null;
+}
+
+/** 계약 규모: 연수, 달러 보장액, 합의일 환율로 어림한 원화 */
+function money(years: number, usd: number, krwPerUsd: number | null): Pick<Signing, "years" | "usd" | "krw"> {
+  return { years, usd: formatUsd(usd), krw: krwPerUsd ? `약 ${formatKrw(usd * krwPerUsd)}` : null };
 }
 
 /** 지금 제도(2018~)의 지난 포스팅 계약. 결렬은 넣지 않는다(사용자 결정 11-11) */
@@ -110,7 +133,7 @@ function pastSignings(history: PostingPast[]): Signing[] {
         teamKo: d.mlbTeamKo,
         color: teamColorById(d.mlbTeamId),
         days: h.daysBeforeDeadline,
-        deal: `${d.years}년 ${formatUsd(d.guaranteedUsd)}`,
+        ...money(d.years, d.guaranteedUsd, d.krwPerUsd),
         thisYear: false,
         photoUrl: h.photoUrl ?? null,
       },
@@ -133,7 +156,7 @@ function thisYearSignings(players: PostingPlayer[]): Signing[] {
         teamKo: d.mlbTeamKo,
         color: teamColorById(d.mlbTeamId),
         days,
-        deal: `${d.years}년 ${formatUsd(d.guaranteedUsd)}`,
+        ...money(d.years, d.guaranteedUsd, d.krwPerUsd),
         thisYear: true,
         photoUrl: p.photoUrl,
       },
@@ -380,7 +403,7 @@ function SigningList({ signings }: { signings: Signing[] }) {
         <span className="shrink-0 text-[0.6875rem] font-normal text-muted">합의 보도 날짜(미국) 기준</span>
       </p>
       <ul className="divide-y divide-line">
-        {signings.map((s) => (
+        {signings.map((s, i) => (
           <li key={s.key} className="flex items-center gap-3 py-2.5">
             <PostingDot nameKo={s.nameKo} color={s.color} thisYear={s.thisYear} photoUrl={s.photoUrl} size={30} />
             <div className="min-w-0 flex-1">
@@ -401,15 +424,38 @@ function SigningList({ signings }: { signings: Signing[] }) {
               <p className="text-[0.8125rem] font-bold leading-5 tabular-nums">
                 {s.days === 0 ? "마감 당일" : `D-${s.days}`}
               </p>
-              <p className="text-xs text-neutral-pill-fg tabular-nums">{s.deal}</p>
+              <p className="text-xs text-neutral-pill-fg tabular-nums">
+                {s.years}년 <DealMoney usd={s.usd} krw={s.krw} index={i} />
+              </p>
             </div>
           </li>
         ))}
       </ul>
       <p className="mt-1.5 text-[0.6875rem] leading-relaxed text-muted">
-        금액은 보장액(옵션·인센티브 제외), 날짜는 합의 보도 기준(미국). 출처: MLB Trade Rumors 등
+        금액은 보장액(옵션·인센티브 제외), 원화는 합의일 환율(ECB 기준)로 어림한 값, 날짜는 합의 보도 기준(미국).
+        출처: MLB Trade Rumors 등
       </p>
     </div>
+  );
+}
+
+/**
+ * 계약 금액: 달러와 원화(합의일 환율 어림)를 4초마다 번갈아 보인다(사용자 요청 11-11, globals.css .money-flip).
+ * 두 값을 한 칸에 겹쳐 두어 바뀌어도 줄이 흔들리지 않는다. 화면 읽기 프로그램에는 두 값을 한 번에 읽힌다.
+ * index는 줄 순서: 줄마다 조금씩 늦게 바뀌어 위에서 아래로 물결친다.
+ */
+function DealMoney({ usd, krw, index }: { usd: string; krw: string | null; index: number }) {
+  if (!krw) return <>{usd}</>;
+  return (
+    <>
+      <span className="sr-only">
+        {usd}, 원화로 {krw}
+      </span>
+      <span aria-hidden className="money-flip" style={{ "--i": index } as CSSProperties}>
+        <span>{usd}</span>
+        <span>{krw}</span>
+      </span>
+    </>
   );
 }
 

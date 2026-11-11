@@ -379,6 +379,34 @@
   }
 
   /*
+   * MLB 도전 계약 목록 금액: 달러 ↔ 원화(합의일 환율 어림)를 4초마다 번갈아 보인다(사용자 요청 11-11).
+   * 두 값을 한 칸에 겹쳐 두어(넓은 쪽 폭) 바뀌어도 줄이 흔들리지 않는다. 나가는 값은 흐려지며 6px 위로 빠지고,
+   * 들어오는 값은 6px 아래에서 올라온다(400ms). 모든 줄이 같은 박자로 바뀌되 줄마다 60ms 늦어 위에서 아래로 물결친다.
+   * 동작 줄이기 설정이면 움직이지 않고 흐려졌다 나타나기만 한다.
+   */
+  .money-flip {
+    display: inline-grid;
+    justify-items: end;
+  }
+
+  .money-flip > span {
+    grid-area: 1 / 1;
+    white-space: nowrap;
+    animation: money-flip 8s cubic-bezier(0.4, 0, 0.2, 1) infinite both;
+    animation-delay: calc(var(--i, 0) * 60ms);
+  }
+
+  .money-flip > span + span {
+    animation-delay: calc(var(--i, 0) * 60ms - 4s);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .money-flip > span {
+      animation-name: money-fade;
+    }
+  }
+
+  /*
    * 가로로 밀리는 표. 밀 내용이 남아 있는 쪽 끝에 그림자가 생겨 "옆에 더 있다"를 알려 준다.
    * 앞 두 겹(local)은 표와 함께 움직이며 끝에 닿으면 그림자를 덮고, 뒤 두 겹(scroll)이 그림자다.
    */
@@ -429,5 +457,39 @@
   from {
     opacity: 0;
     transform: translateY(-4px);
+  }
+}
+
+/* 8초에 한 바퀴: 0~3.6초 보임 → 0.4초 동안 위로 빠짐 → 3.6초 숨음 → 0.4초 동안 아래에서 올라옴 */
+@keyframes money-flip {
+  0%,
+  45% {
+    opacity: 1;
+    transform: none;
+  }
+  50% {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  50.01%,
+  95% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes money-fade {
+  0%,
+  45%,
+  100% {
+    opacity: 1;
+  }
+  50%,
+  95% {
+    opacity: 0;
   }
 }
