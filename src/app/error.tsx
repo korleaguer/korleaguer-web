@@ -8,7 +8,7 @@ export default function Error({ retry }: { error: unknown; retry: () => void }) 
       <button
         type="button"
         onClick={() => retry()}
-        className="mt-4 rounded-full bg-accent px-4 py-2 text-sm font-semibold text-accent-fg hover:opacity-90"
+        className="press mt-4 rounded-full bg-accent px-4 py-2 text-sm font-semibold text-accent-fg hover:opacity-90"
       >
         다시 시도
       </button>

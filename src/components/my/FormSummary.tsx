@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import type { CardStatus, FormFact, MyPlayer, PlayCode, SeasonTotals } from "@/lib/api";
 import { formatEra, formatRate } from "@/lib/format";
+import RollingNumber from "@/components/RollingNumber";
 import {
   type BadgeTone,
   levelKo,
@@ -138,7 +139,9 @@ export function Numbers({
     <div className="mt-3.5 grid grid-cols-[auto_minmax(0,1fr)] items-end gap-4">
       <dl>
         <dt className="text-xs text-muted">{label}</dt>
-        <dd className="mt-1 text-[2.75rem] font-extrabold leading-none tracking-[-0.03em] tabular-nums">{value}</dd>
+        <dd className="mt-1 text-[2.75rem] font-extrabold leading-none tracking-[-0.03em] tabular-nums">
+          <RollingNumber value={value} />
+        </dd>
         {note != null && <dd className="mt-1.5 text-xs font-semibold text-muted">{note}</dd>}
       </dl>
       {/* 세 칸을 똑같이 나누지 않고 내용 너비대로 고르게 벌린다. 좁은 카드에서 "50⅔"이 "50"/"⅔"로 갈리지 않게 */}
@@ -146,7 +149,9 @@ export function Numbers({
         {small.map(([k, v]) => (
           <div key={k} className="whitespace-nowrap">
             <dt className="text-xs text-muted">{k}</dt>
-            <dd className="text-xl font-extrabold leading-tight tabular-nums">{v}</dd>
+            <dd className="text-xl font-extrabold leading-tight tabular-nums">
+              <RollingNumber value={String(v)} />
+            </dd>
           </div>
         ))}
       </dl>
