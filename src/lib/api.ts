@@ -175,11 +175,21 @@ export interface PostingDeal {
 }
 
 export interface NewsHeadline {
+  /** 언론사가 붙인 원래 제목(영어 기사면 영어) */
   title: string;
   /** 원문(언론사) 주소 */
   url: string;
   publisher: string;
   publishedAt: string;
+  /** 아래 넷은 언론사가 허락한 만큼만 온다. 옛 API·요약 전이면 null */
+  /** 영어 기사 제목을 Claude가 한국어로 옮긴 것 */
+  titleKo: string | null;
+  /** 기사 첫머리(언론사 피드가 준 글자 200자 안팎) */
+  lead: string | null;
+  /** Claude가 쓴 한국어 요약(줄마다 한 문장) */
+  summary: string | null;
+  /** 기사 대표 사진 원본 주소(언론사 서버) */
+  imageUrl: string | null;
 }
 
 export interface PostingPlayer {
@@ -197,7 +207,7 @@ export interface PostingPlayer {
   /** 협상 기간 중 지난 비율 0~1 */
   elapsedRatio: number;
   deal: PostingDeal | null;
-  /** 관련 기사 제목(늦은 순, 최대 5건) */
+  /** 관련 기사(늦은 순, 최대 5건) */
   news: NewsHeadline[];
 }
 
@@ -552,7 +562,14 @@ function normalizeHome(raw: HomeResponse): HomeResponse {
           players: (raw.posting.players ?? []).map((p) => ({
             ...p,
             photoUrl: p.photoUrl ?? null,
-            news: p.news ?? [],
+            news: (p.news ?? []).map((n) => ({
+              ...n,
+              titleKo: n.titleKo ?? null,
+              lead: n.lead ?? null,
+              summary: n.summary ?? null,
+              // 기사 사진은 언론사 서버에서 브라우저가 직접 받는다. https 주소만 쓴다
+              imageUrl: n.imageUrl?.startsWith("https://") ? n.imageUrl : null,
+            })),
             deal: p.deal ?? null,
           })),
           history: (raw.posting.history ?? []).map((h) => ({ ...h, photoUrl: photoUrl(h.photoUrl) })),

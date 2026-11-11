@@ -1,10 +1,10 @@
 import type { PostingPast, PostingPlayer, PostingStatus, PostingSummary } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import { kboTeamColor, teamColorById } from "@/lib/teams";
-import ExternalLinkIcon from "@/components/ExternalLinkIcon";
 import Section from "@/components/Section";
 import KboAvatar from "@/components/home/KboAvatar";
 import { PostingDot } from "@/components/home/PostingDot";
+import PostingNews from "@/components/home/PostingNews";
 import PostingTimeline, { type TimelineNow } from "@/components/home/PostingTimeline";
 import RollingNumber from "@/components/RollingNumber";
 
@@ -165,7 +165,7 @@ function rank(p: PostingPlayer): number {
  * 포스팅 선수가 몇 명이든 카드 한 장에 모은다(사용자 결정 11-11 "한 카드 안에서 다 같이").
  * 카드 안 한 줄 그래프에 지금 제도 선배들이 마감 며칠 전에 계약했는지를 구단 색 동그라미로 쌓고,
  * 그 아래(PC는 오른쪽) 목록에 같은 동그라미로 계약 내용을 늘 보여 준다(누르지 않아도 보이게).
- * 관련 기사는 우리 화면에 제목·언론사·날짜로 보이고 누르면 원문(언론사)으로 간다.
+ * 관련 기사는 카드 안에서 한국어 제목·요약(또는 기사 앞부분)으로 읽히고, 원문(언론사)은 작은 링크로 남는다.
  */
 export default function MlbChallenge({ posting }: { posting: PostingSummary }) {
   if (posting.players.length === 0) return null;
@@ -413,40 +413,14 @@ function SigningList({ signings }: { signings: Signing[] }) {
   );
 }
 
-/** 관련 기사. 여러 명이면 모두의 기사를 늦은 순으로 모으고 선수 이름을 붙인다 */
+/** 관련 기사. 여러 명이면 모두의 기사를 늦은 순으로 모으고(같은 기사는 한 번) 선수 이름을 붙인다 */
 function News({ players }: { players: PostingPlayer[] }) {
   const multi = players.length > 1;
   const seen = new Set<string>();
   const items = players
-    .flatMap((p) => p.news.map((n) => ({ ...n, who: p.nameKo })))
+    .flatMap((p) => p.news.map((n) => ({ ...n, who: multi ? p.nameKo : null })))
     .filter((n) => !seen.has(n.url) && Boolean(seen.add(n.url)))
     .sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt))
     .slice(0, multi ? NEWS_LIMIT : 5);
-  if (items.length === 0) return null;
-  return (
-    <div className="mt-4 border-t border-line pt-3 lg:col-span-2 lg:mt-5">
-      <p className="flex items-baseline justify-between text-[0.8125rem] font-bold">
-        관련 기사
-        <span className="text-[0.6875rem] font-normal text-muted">언론사 제목 · 누르면 원문</span>
-      </p>
-      <ul className="mt-1 lg:grid lg:grid-cols-2 lg:gap-x-8">
-        {items.map((n) => (
-          <li key={n.url} className="border-t border-line first:border-t-0 lg:[&:nth-child(2)]:border-t-0">
-            <a
-              href={n.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block py-2.5 text-sm font-semibold leading-snug hover:underline"
-            >
-              {n.title} <ExternalLinkIcon />
-              <span className="mt-0.5 block text-xs font-normal text-muted tabular-nums">
-                {multi ? `${n.who} · ` : ""}
-                {n.publisher} · {formatDate(n.publishedAt)}
-              </span>
-            </a>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
+  return <PostingNews items={items} />;
 }
