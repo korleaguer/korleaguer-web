@@ -1,41 +1,12 @@
-"use client"; // 기사 더 보기(펼치기)와 기사 사진이 안 뜰 때 숨기기 때문에 클라이언트 컴포넌트다.
-
-import { useState } from "react";
 import type { NewsHeadline } from "@/lib/api";
 import { formatDate } from "@/lib/format";
-import { useImageFailed } from "@/lib/useImageFailed";
+import { readableLead } from "@/lib/news";
 import ExternalLinkIcon from "@/components/ExternalLinkIcon";
+import ShowMore from "@/components/ShowMore";
+import NewsThumb from "@/components/home/NewsThumb";
 
 /** 처음에 펼쳐 두는 기사 수(PC는 한 줄에 셋) */
 const VISIBLE = 3;
-/** 기사 앞부분을 이 글자 수 안에서 문장이 끝나는 곳까지만 보인다(휴대폰 카드에서 4~5줄) */
-const LEAD_CHARS = 120;
-
-/**
- * 기사 앞부분을 카드에 맞게 다듬는다.
- * - 제목과 앞부분이 둘 다 인용구로 시작하면(마이데일리처럼 제목의 인용구로 기사를 여는 경우) 그 인용구 문장은 뺀다.
- * - LEAD_CHARS 안에서 문장이 끝나는 곳까지만 남긴다. 그런 곳이 없으면 그대로 두고 줄 수 제한(…)에 맡긴다.
- */
-export function readableLead(lead: string, title: string): string {
-  let text = lead.trim();
-  const quote = /^[“"][^”"]{2,120}[”"]\s*/.exec(text);
-  if (quote && /^[“"]/.test(title.trim()) && text.length > quote[0].length) {
-    text = text.slice(quote[0].length).trim();
-  }
-  if (text.length <= LEAD_CHARS) return text;
-  const head = text.slice(0, LEAD_CHARS + 1);
-  const end = Math.max(head.lastIndexOf(". "), head.lastIndexOf(".” "), head.lastIndexOf('." '));
-  return end >= LEAD_CHARS / 2 ? head.slice(0, head.indexOf(" ", end + 1)).trim() : text;
-}
-
-/**
- * AI 요약 기사(영어 기사의 한국어 요약)가 있으면 가장 최근 것 하나를 맨 앞에 둔다. 국내 기사가 하루에도 여러 건이라
- * 늦은 순으로만 두면 요약 기사가 '더 보기' 안에 숨는다(사용자가 원한 것이 이 요약이다). 나머지는 늦은 순 그대로다.
- */
-export function pinSummary<T extends { summary: string | null }>(items: T[]): T[] {
-  const i = items.findIndex((n) => n.summary);
-  return i > 0 ? [items[i], ...items.slice(0, i), ...items.slice(i + 1)] : items;
-}
 
 export interface PostingNewsItem extends NewsHeadline {
   /** 여러 선수의 기사를 모았을 때 누구 기사인지. 한 명이면 null */
@@ -46,46 +17,47 @@ export interface PostingNewsItem extends NewsHeadline {
  * MLB 도전 카드의 관련 기사. 링크 목록 대신 카드 안에서 읽히게 제목 아래에 읽을 거리를 펼쳐 둔다
  * (사용자 11-11: "링크 바로가기는 별로", 누르지 않아도 보이게).
  * 언론사가 허락한 만큼만 보인다: MLB Trade Rumors는 Claude가 쓴 한국어 제목·요약과 대표 사진(영어 원제는 출처로),
- * 마이데일리는 기사 앞부분(피드가 준 글자)만. 원문은 맨 아래 작은 링크다. AI 요약 기사 하나는 맨 앞에 둔다(pinSummary).
+ * 마이데일리는 기사 앞부분(피드가 준 글자)만. 원문은 맨 아래 작은 링크다.
+ * 기사 순서는 부르는 쪽이 정한다(AI 요약 기사 하나를 맨 앞에: pinSummary). 처음 VISIBLE건 뒤는 '더 보기'로 펼친다.
  */
 export default function PostingNews({ items }: { items: PostingNewsItem[] }) {
-  const [open, setOpen] = useState(false);
   if (items.length === 0) return null;
-  const ordered = pinSummary(items);
-  const shown = open ? ordered : ordered.slice(0, VISIBLE);
-  const rest = ordered.length - shown.length;
-  const anyAi = items.some((n) => n.summary);
+  const first = items.slice(0, VISIBLE);
+  const rest = items.slice(VISIBLE);
   return (
     <div className="mt-4 border-t border-line pt-3 lg:col-span-2 lg:mt-5">
-      <p className="flex items-baseline justify-between gap-3 text-[0.8125rem] font-bold">
-        관련 기사
-        {anyAi && <span className="text-[0.6875rem] font-normal text-muted">영어 기사는 AI가 한국어로 요약했어요</span>}
-      </p>
+      <div className="flex items-baseline justify-between gap-3">
+        <h3 className="text-[0.8125rem] font-bold">관련 기사</h3>
+        {items.some((n) => n.summary) && (
+          <span className="text-[0.6875rem] text-muted">영어 기사는 AI가 한국어로 요약했어요</span>
+        )}
+      </div>
       <ul className="mt-1 lg:grid lg:grid-cols-3 lg:gap-x-6">
-        {shown.map((n) => (
-          <NewsItem key={n.url} item={n} />
+        {first.map((n, i) => (
+          <NewsItem key={n.url} item={n} topLine={i > 0} />
         ))}
       </ul>
-      {rest > 0 && (
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="mt-1 w-full rounded-xl bg-background py-2.5 text-[0.8125rem] font-semibold text-muted transition-colors hover:text-foreground"
-        >
-          기사 {rest}건 더 보기
-        </button>
+      {rest.length > 0 && (
+        <ShowMore moreLabel={`기사 ${rest.length}건 더 보기`} buttonClassName="border-t border-line py-2.5">
+          <ul className="lg:grid lg:grid-cols-3 lg:gap-x-6">
+            {rest.map((n) => (
+              <NewsItem key={n.url} item={n} topLine />
+            ))}
+          </ul>
+        </ShowMore>
       )}
     </div>
   );
 }
 
-function NewsItem({ item: n }: { item: PostingNewsItem }) {
+/** 기사 한 건. topLine이면 위에 구분선(PC는 칸으로 나뉘어 선을 두지 않는다) */
+function NewsItem({ item: n, topLine }: { item: PostingNewsItem; topLine: boolean }) {
   const title = n.titleKo ?? n.title;
   // AI 요약은 한 줄에 한 문장으로 오지만, 좁은 카드에서는 이어 붙여 읽는 편이 짧다
   const body = n.summary ? n.summary.split("\n").join(" ") : n.lead ? readableLead(n.lead, n.title) : null;
   const label = n.summary ? "AI 요약" : n.lead ? "기사 앞부분" : null;
   return (
-    <li className="border-t border-line py-3 first:border-t-0 lg:border-t-0">
+    <li className={`py-3 ${topLine ? "border-t border-line lg:border-t-0" : ""}`}>
       <article className="flex h-full flex-col">
         <div className="flex gap-3">
           <div className="min-w-0 flex-1">
@@ -93,17 +65,15 @@ function NewsItem({ item: n }: { item: PostingNewsItem }) {
               {n.who ? `${n.who} · ` : ""}
               {n.publisher} · {formatDate(n.publishedAt)}
             </p>
-            <h3 className="mt-0.5 text-[0.9375rem] font-semibold leading-snug tracking-[-0.01em]">{title}</h3>
+            <h4 className="mt-0.5 text-[0.9375rem] font-semibold leading-snug tracking-[-0.01em]">{title}</h4>
           </div>
-          {n.imageUrl && <Thumb url={n.imageUrl} />}
+          {n.imageUrl && <NewsThumb url={n.imageUrl} />}
         </div>
         {body && (
           <div className="mt-2 rounded-xl bg-background px-3 py-2.5">
             <p className="text-[0.6875rem] font-bold text-accent-ink">{label}</p>
             {/* 요약(130자 안팎)은 끝까지 읽혀야 해서 6줄, 앞부분(120자 안에서 문장 끝)은 5줄까지. 넘으면 … */}
-            <p
-              className={`mt-0.5 text-[0.8125rem] leading-relaxed ${n.summary ? "line-clamp-6" : "line-clamp-5"}`}
-            >
+            <p className={`mt-0.5 text-[0.8125rem] leading-relaxed ${n.summary ? "line-clamp-6" : "line-clamp-5"}`}>
               {body}
             </p>
           </div>
@@ -112,6 +82,7 @@ function NewsItem({ item: n }: { item: PostingNewsItem }) {
           href={n.url}
           target="_blank"
           rel="noopener noreferrer"
+          aria-label={`${n.title} 원문 보기(${n.publisher}, 새 탭)`}
           className="mt-2 flex min-w-0 items-center gap-1 text-xs text-muted hover:text-foreground hover:underline"
         >
           {n.titleKo ? (
@@ -126,24 +97,5 @@ function NewsItem({ item: n }: { item: PostingNewsItem }) {
         </a>
       </article>
     </li>
-  );
-}
-
-/** 기사 대표 사진(언론사 서버에서 브라우저가 직접 받는다). 안 뜨면 자리를 비우지 않고 없앤다 */
-function Thumb({ url }: { url: string }) {
-  const { failed, ref, onError } = useImageFailed(url);
-  if (failed) return null;
-  return (
-    // eslint-disable-next-line @next/next/no-img-element -- 언론사 사진 원본 주소, 우리 서버를 거치지 않는다
-    <img
-      ref={ref}
-      src={url}
-      alt=""
-      loading="lazy"
-      decoding="async"
-      referrerPolicy="no-referrer"
-      onError={onError}
-      className="h-[60px] w-[90px] shrink-0 rounded-lg bg-background object-cover"
-    />
   );
 }
