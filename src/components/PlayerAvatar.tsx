@@ -61,8 +61,8 @@ export default function PlayerAvatar({
       className={`inline-block shrink-0 overflow-hidden rounded-full bg-avatar-bg ${ringClass}`}
       style={box}
     >
-      {/* 브라우저가 MLB 이미지 서버에서 직접 받게 한다. next/image를 쓰면 우리 서버가 이미지를 대신 받아 오게 된다. */}
-      {/* eslint-disable-next-line @next/next/no-img-element -- 우리 서버를 거치지 않고 브라우저가 직접 받는다 */}
+      {/* 사진은 우리가 호스팅한다(/photos/…, api가 원본을 한 번 받아 저장). 크기를 고정한 작은 사진이라 next/image는 쓰지 않는다. */}
+      {/* eslint-disable-next-line @next/next/no-img-element -- 우리가 호스팅하는 작은 사진 */}
       <img
         ref={ref}
         src={photoUrl}
