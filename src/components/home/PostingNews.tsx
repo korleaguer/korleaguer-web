@@ -18,8 +18,8 @@ export interface PostingNewsItem extends NewsHeadline {
 /**
  * MLB 도전 카드의 관련 기사. 링크 목록 대신 카드 안에서 읽히게 제목 아래에 읽을 거리를 펼쳐 둔다
  * (사용자 11-11: "링크 바로가기는 별로", 누르지 않아도 보이게).
- * 언론사가 허락한 만큼만 보인다: MLB Trade Rumors는 Claude가 쓴 한국어 제목·요약과 대표 사진(영어 원제는 출처로),
- * 마이데일리는 기사 앞부분(피드가 준 글자)만. 원문은 맨 아래 작은 링크다.
+ * 기사마다 Claude가 쓴 한국어 요약(영어 기사는 한국어 제목도, 영어 원제는 출처로)과 대표 사진을 보인다.
+ * 요약 전이면 기사 앞부분을 보인다. 원문은 맨 아래 작은 링크다.
  * 기사 순서는 부르는 쪽이 정한다(AI 요약 기사 하나를 맨 앞에: pinSummary). 처음 VISIBLE건 뒤는 '더 보기'로 펼친다.
  */
 export default function PostingNews({ items }: { items: PostingNewsItem[] }) {
@@ -31,7 +31,7 @@ export default function PostingNews({ items }: { items: PostingNewsItem[] }) {
       <div className="flex items-baseline justify-between gap-3">
         <h3 className="text-[0.8125rem] font-bold">관련 기사</h3>
         {items.some((n) => n.summary) && (
-          <span className="text-[0.6875rem] text-muted">영어 기사는 AI가 한국어로 요약했어요</span>
+          <span className="text-[0.6875rem] text-muted">AI가 기사를 요약했어요</span>
         )}
       </div>
       <ul className="mt-1 lg:grid lg:grid-cols-3 lg:gap-x-6">
