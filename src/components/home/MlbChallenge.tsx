@@ -1,4 +1,3 @@
-import type { CSSProperties } from "react";
 import type { PostingPast, PostingPlayer, PostingStatus, PostingSummary } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import { pinSummary, uniqueByUrl } from "@/lib/news";
@@ -396,7 +395,7 @@ function SigningList({ signings }: { signings: Signing[] }) {
         <span className="shrink-0 text-[0.6875rem] font-normal text-muted">합의 보도 날짜(미국) 기준</span>
       </p>
       <ul className="money-flip-pause divide-y divide-line">
-        {signings.map((s, i) => (
+        {signings.map((s) => (
           <li key={s.key} className="flex items-center gap-3 py-2.5">
             <PostingDot nameKo={s.nameKo} photoUrl={s.photoUrl} size={30} />
             <div className="min-w-0 flex-1">
@@ -418,7 +417,7 @@ function SigningList({ signings }: { signings: Signing[] }) {
                 {s.days === 0 ? "마감 당일" : `D-${s.days}`}
               </p>
               <p className="text-xs text-neutral-pill-fg tabular-nums">
-                <DealMoney years={s.years} usd={s.usd} krw={s.krw} index={i} />
+                <DealMoney years={s.years} usd={s.usd} krw={s.krw} />
               </p>
             </div>
           </li>
@@ -436,14 +435,14 @@ function SigningList({ signings }: { signings: Signing[] }) {
  * 계약 금액: 달러와 원화(합의일 환율 어림)를 4초마다 번갈아 보인다(사용자 요청 11-11, globals.css .money-flip).
  * 두 값을 한 칸에 겹쳐 두어 바뀌어도 줄이 흔들리지 않는다. 연수("6년")도 함께 바꿔야 둘 다 오른쪽 끝에 붙는다
  * (연수를 칸 밖에 두면 짧은 원화일 때 연수와 금액 사이가 벌어진다). 화면 읽기 프로그램에는 두 값을 한 번에 읽힌다.
- * index는 줄 순서: 줄마다 조금씩 늦게 바뀌어 위에서 아래로 물결친다. 목록에 마우스를 올리면 멈춘다(.money-flip-pause).
+ * 모든 줄이 한꺼번에 바뀐다. 목록에 마우스를 올리면 멈춘다(.money-flip-pause).
  */
-function DealMoney({ years, usd, krw, index }: { years: number; usd: string; krw: string | null; index: number }) {
+function DealMoney({ years, usd, krw }: { years: number; usd: string; krw: string | null }) {
   if (!krw) return <>{`${years}년 ${usd}`}</>;
   return (
     <>
       <span className="sr-only">{`${years}년 ${usd}, 원화로 ${krw}`}</span>
-      <span aria-hidden className="money-flip" style={{ "--i": index } as CSSProperties}>
+      <span aria-hidden className="money-flip">
         <span>{`${years}년 ${usd}`}</span>
         <span>{`${years}년 ${krw}`}</span>
       </span>
