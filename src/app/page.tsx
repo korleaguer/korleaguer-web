@@ -4,6 +4,7 @@ import { formatDate, formatTime } from "@/lib/format";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import DataBanners from "@/components/DataBanners";
 import LoadingBlock from "@/components/LoadingBlock";
+import OffseasonPlayers from "@/components/home/OffseasonPlayers";
 import RecentGames from "@/components/home/RecentGames";
 import SeasonLeaders from "@/components/home/SeasonLeaders";
 import SeasonStats from "@/components/home/SeasonStats";
@@ -30,13 +31,20 @@ async function HomeContent() {
   return (
     <div className="space-y-7">
       <DataBanners dataMode={home.dataMode} statsAvailable={home.statsAvailable} />
-      <RecentGames recent={home.recent} asOf={asOf} />
-      <SeasonLeaders
-        season={home.season}
-        statsAvailable={home.statsAvailable}
-        ranking={home.ranking}
-        hitters={home.hitters}
-      />
+      {/* 비시즌: 지난 경기 한 줄과 '시즌 1위' 카드 대신 선수 전원의 시즌 카드 */}
+      {home.offseason ? (
+        <OffseasonPlayers offseason={home.offseason} />
+      ) : (
+        <>
+          <RecentGames recent={home.recent} asOf={asOf} />
+          <SeasonLeaders
+            season={home.season}
+            statsAvailable={home.statsAvailable}
+            ranking={home.ranking}
+            hitters={home.hitters}
+          />
+        </>
+      )}
       <SeasonStats
         season={home.season}
         statsAvailable={home.statsAvailable}

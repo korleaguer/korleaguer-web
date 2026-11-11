@@ -16,14 +16,18 @@ interface Props {
   entry: MyPlayer;
   days: number;
   statsAvailable: boolean;
+  /** '내 선수'로 골라 둔 선수인지(별 버튼 처음 상태). 내 선수 화면은 모두 골라 둔 선수라 기본값이 true다 */
+  isMine?: boolean;
+  /** 선수 이름의 제목 단계. 내 선수 화면은 h2, 섹션 제목(h2) 아래에 놓는 비시즌 홈은 h3 */
+  nameAs?: "h2" | "h3";
 }
 
 /**
  * 내 선수 한 명의 카드: 팀 색 무대(상태 배지 + 사진) → 이름 → 출전 줄·한 줄 소식 → 큰 숫자와 작은 숫자 셋 →
  * 경기별 막대 → 경기별 기록 모두 보기. 마이너에 있으면 숫자·막대가 마이너 기록이고(이름표에 단계),
- * 비시즌·FA면 기간 대신 시즌 합계를 보인다(이슈 #13).
+ * 비시즌·FA면 기간 대신 시즌 합계를 보인다(이슈 #13). 비시즌 홈도 같은 카드로 선수 6명을 보인다.
  */
-export default function FormCard({ entry, days, statsAvailable }: Props) {
+export default function FormCard({ entry, days, statsAvailable, isMine = true, nameAs: Name = "h2" }: Props) {
   const { player, games, fromKst, toKst, basis, level } = entry;
   const meta = metaLine(entry);
   const note = periodNote(entry, days);
@@ -45,16 +49,22 @@ export default function FormCard({ entry, days, statsAvailable }: Props) {
       <div className="flex flex-1 flex-col px-4 pb-2 pt-3">
         <div className="flex items-start gap-2">
           <div className="min-w-0 flex-1">
-            <h2 className="text-xl font-extrabold leading-snug tracking-[-0.02em]">
+            <Name className="text-xl font-extrabold leading-snug tracking-[-0.02em]">
               <Link href={`/players/${player.id}`} className="hover:text-accent-ink">
                 {player.nameKo}
               </Link>
-            </h2>
+            </Name>
             {meta && <p className="text-[0.8125rem] text-muted">{meta}</p>}
             {/* 기간을 당긴 카드(마지막으로 뛴·다치기 전): 어느 기간인지 적는다 */}
             {note && statsAvailable && <p className="mt-0.5 text-xs text-muted">{note}</p>}
           </div>
-          <MyPlayerToggle playerId={player.id} nameKo={player.nameKo} initialOn variant="icon" className="-mr-2 -mt-1" />
+          <MyPlayerToggle
+            playerId={player.id}
+            nameKo={player.nameKo}
+            initialOn={isMine}
+            variant="icon"
+            className="-mr-2 -mt-1"
+          />
         </div>
 
         {statsAvailable && <SummaryLines entry={entry} />}
