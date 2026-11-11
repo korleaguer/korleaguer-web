@@ -13,9 +13,6 @@ import NewsTitleList from "@/components/news/NewsTitleList";
 
 type Props = PageProps<"/news/[id]">;
 
-/** 기사 페이지에 보이는 앞부분 글자 수(요약이 아직 없을 때). 피드가 주는 앞부분(200자 안팎)을 거의 다 보인다 */
-const PAGE_LEAD_CHARS = 300;
-
 /** 주소의 id가 1 이상 15자리 이하 정수가 아니면 null */
 function parseId(id: string): number | null {
   return /^[1-9]\d{0,14}$/.test(id) ? Number(id) : null;
@@ -60,11 +57,11 @@ export default function NewsArticlePage({ params }: Props) {
 // 없는 기사는 notFound() 대신 안내를 직접 그린다(선수 페이지와 같은 이유: Suspense 안의 notFound는 서버 HTML에 안 나온다).
 async function NewsContent({ params }: Pick<Props, "params">) {
   const id = parseId((await params).id);
-  if (id == null) return <NotFoundNotice />;
+  if (id == null) return <NotFoundNotice message="찾는 기사가 없습니다" />;
 
   const result = await getNews(id);
   if (!result.ok) {
-    if (result.failure === "notFound") return <NotFoundNotice />;
+    if (result.failure === "notFound") return <NotFoundNotice message="찾는 기사가 없습니다" />;
     return <ApiErrorNotice failure={result.failure} />;
   }
 
@@ -87,7 +84,7 @@ async function NewsContent({ params }: Pick<Props, "params">) {
 /** 기사 한 건: 큰 사진 → 출처 줄 → 제목(영어 기사는 원제도) → AI 요약 → 원문 보기 */
 function Article({ news }: { news: NewsPage }) {
   const lines = summaryLines(news.summary);
-  const lead = lines.length === 0 && news.lead ? readableLead(news.lead, news.title, PAGE_LEAD_CHARS) : null;
+  const lead = lines.length === 0 && news.lead ? readableLead(news.lead, news.title) : null;
   return (
     <article className="card min-w-0 overflow-hidden">
       <NewsPhoto url={news.imageUrl} fallback={news.playerPhotoUrl} credit={news.publisher} />
