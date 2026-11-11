@@ -72,8 +72,6 @@ function dealText(p: PostingPast): string {
  */
 export default function MlbChallenge({ posting }: { posting: PostingSummary }) {
   if (posting.players.length === 0) return null;
-  const negotiating = posting.players.filter((p) => p.status === "NEGOTIATING" || p.status === "UPCOMING");
-  const now = negotiating[0];
   // PC(lg)에서는 선수 카드와 선배 그래프를 나란히 둔다(카드 한 장이 넓은 화면의 절반만 쓰고 오른쪽이 비지 않게)
   return (
     <div className="grid items-start gap-7 lg:grid-cols-2 lg:gap-6">
@@ -89,7 +87,9 @@ export default function MlbChallenge({ posting }: { posting: PostingSummary }) {
           ))}
         </ul>
       </Section>
-      {posting.history.some((h) => h.deal != null) && <HistoryChart history={posting.history} now={now} />}
+      {posting.history.some((h) => h.deal != null) && (
+        <HistoryChart history={posting.history} players={posting.players} />
+      )}
     </div>
   );
 }
@@ -202,12 +202,97 @@ function PostingCard({ player: p, history }: { player: PostingPlayer; history: P
 /** 마감까지 남은 날 d를 가로 위치(%)로: 왼쪽 D-30 → 오른쪽 마감 */
 const x = (d: number) => `${((WINDOW_DAYS - Math.min(WINDOW_DAYS, Math.max(0, d))) / WINDOW_DAYS) * 100}%`;
 
-function HistoryChart({ history, now }: { history: PostingPast[]; now?: PostingPlayer }) {
-  // 결렬은 넣지 않는다(사용자 결정 11-11)
-  const rows = history
+/** 그래프 한 줄: 지난 포스팅 기록이나 올해 계약한 선수 */
+interface ChartRow {
+  key: string;
+  nameKo: string;
+  season: number;
+  teamKo: string | null;
+  /** 마감 며칠 전에 합의했나(미국 날짜, 마감 당일 0) */
+  days: number;
+  /** "6년 1억 1,300만 달러" */
+  deal: string;
+  thisYear: boolean;
+}
+
+/** '지금' 이름표 하나. 마감이 2일 안으로 붙은 선수들은 이름표 하나로 묶는다(이름이 겹치지 않게) */
+interface NowMark {
+  names: { nameKo: string; days: number }[];
+}
+
+/** 미국 동부 날짜 "2026-12-01" */
+function etDate(iso: string): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(iso));
+}
+
+function dayDiff(from: string, to: string): number {
+  return Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000);
+}
+
+/** 올해 계약한 포스팅 선수(합의 보도일 → 협상 마감일, 미국 날짜). 결렬·결과 확인 중은 넣지 않는다 */
+function thisYearRows(players: PostingPlayer[]): ChartRow[] {
+  return players.flatMap((p) => {
+    const deal = p.deal;
+    if (p.status !== "SIGNED" || !deal?.agreedOn || deal.years == null || deal.guaranteedUsd == null) return [];
+    const days = dayDiff(deal.agreedOn, etDate(p.deadlineAt));
+    if (days < 0 || days > WINDOW_DAYS) return [];
+    return [
+      {
+        key: `now-${p.nameKo}`,
+        nameKo: p.nameKo,
+        season: Number(etDate(p.windowOpensAt).slice(0, 4)),
+        teamKo: deal.mlbTeamKo,
+        days,
+        deal: `${deal.years}년 ${formatUsd(deal.guaranteedUsd)}`,
+        thisYear: true,
+      },
+    ];
+  });
+}
+
+/** 협상 중인 선수들의 '지금' 위치(왼쪽 D-30 → 오른쪽 마감 순). 2일 안으로 붙으면 이름표 하나 */
+function nowMarks(players: PostingPlayer[]): NowMark[] {
+  const open = players
+    .filter((p) => (p.status === "NEGOTIATING" || p.status === "UPCOMING") && p.daysLeft != null)
+    .map((p) => ({ nameKo: p.nameKo, days: Math.min(WINDOW_DAYS, Math.max(0, p.daysLeft ?? 0)) }))
+    .sort((a, b) => b.days - a.days);
+  const marks: NowMark[] = [];
+  for (const m of open) {
+    const last = marks[marks.length - 1];
+    if (last && last.names[0].days - m.days <= 2) last.names.push(m);
+    else marks.push({ names: [m] });
+  }
+  return marks;
+}
+
+/** 이름표는 눈금에서 오른쪽으로 쓴다. 마감 쪽(오른쪽 40%)에서는 눈금에서 왼쪽으로 써서 막대 밖으로 넘치지 않게 한다 */
+function anchor(days: number): string {
+  const share = (WINDOW_DAYS - days) / WINDOW_DAYS;
+  return share > 0.6 ? "translate-x-[calc(-100%+0.375rem)]" : "translate-x-[-0.375rem]";
+}
+
+function HistoryChart({ history, players }: { history: PostingPast[]; players: PostingPlayer[] }) {
+  // 결렬은 넣지 않는다(사용자 결정 11-11). 올해 계약한 포스팅 선수도 같은 기준으로 '올해' 표시와 함께 넣는다
+  const past: ChartRow[] = history
     .filter((h) => h.deal != null && h.daysBeforeDeadline != null)
-    .sort((a, b) => (b.daysBeforeDeadline ?? 0) - (a.daysBeforeDeadline ?? 0) || b.season - a.season);
-  const today = now?.daysLeft ?? null;
+    .map((h) => ({
+      key: `${h.nameKo}-${h.season}`,
+      nameKo: h.nameKo,
+      season: h.season,
+      teamKo: h.deal?.mlbTeamKo ?? null,
+      days: h.daysBeforeDeadline ?? 0,
+      deal: dealText(h),
+      thisYear: false,
+    }));
+  const rows = [...thisYearRows(players), ...past].sort((a, b) => b.days - a.days || b.season - a.season);
+  const marks = nowMarks(players);
+  const ticks = [...new Set(marks.flatMap((m) => m.names.map((n) => n.days)))];
+  const anyThisYear = rows.some((r) => r.thisYear);
   return (
     <Section id="posting-history-title" title="선배들은 마감 며칠 전에 계약했나">
       <p className="-mt-1 mb-3 px-1 text-[0.8125rem] text-muted">
@@ -219,17 +304,23 @@ function HistoryChart({ history, now }: { history: PostingPast[]; now?: PostingP
             <i className="size-2.5 rounded-full bg-accent" />
             계약
           </li>
-          {today != null && now && (
+          {anyThisYear && (
+            <li className="inline-flex items-center gap-1.5">
+              <ThisYearTag />
+              올해 계약
+            </li>
+          )}
+          {ticks.length > 0 && (
             <li className="inline-flex items-center gap-1.5">
               <i className="h-3.5 w-0.5 rounded-full bg-foreground/70" />
-              {now.nameKo} 지금(D-{today})
+              포스팅 중인 선수의 지금
             </li>
           )}
         </ul>
         {/*
           선수 한 명 = 두 줄. 1줄: 이름 | 30일 막대 위 점, 2줄: 연도·팀 | 금액(오른쪽 정렬, 숫자 칸 맞춤).
-          점·축 눈금·오늘 눈금은 막대 안쪽 폭(양쪽 점 반지름 6px 안쪽)의 같은 좌표를 쓴다.
-          오늘 표시는 막대마다 같은 자리 눈금이라 글자와 겹치지 않는다.
+          점·축 눈금·'지금' 눈금은 막대 안쪽 폭(양쪽 점 반지름 6px 안쪽)의 같은 좌표를 쓴다.
+          '지금'은 협상 중인 선수마다 막대 위 같은 자리 눈금이고, 축 아래 '지금' 줄에 이름표가 붙는다.
         */}
         <div className="mt-3" aria-hidden>
           <div className="grid grid-cols-[6.5rem_1fr] gap-x-3">
@@ -248,45 +339,66 @@ function HistoryChart({ history, now }: { history: PostingPast[]; now?: PostingP
               </div>
             </div>
           </div>
-          <ul className="mt-1.5">
-            {rows.map((r) => {
-              const d = r.daysBeforeDeadline ?? 0;
-              return (
-                <li
-                  key={`${r.nameKo}-${r.season}`}
-                  className="grid grid-cols-[6.5rem_1fr] items-center gap-x-3 gap-y-0.5 border-t border-line py-2.5"
-                >
-                  <p className="truncate text-[0.8125rem] font-bold leading-5">{r.nameKo}</p>
-                  <div className="relative h-5">
-                    <i className="absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-surface-2" />
+          {/* '지금' 이름표: 선수(2일 안으로 붙은 선수는 묶음)마다 한 줄. 눈금 자리에서 시작해 아래 막대의 눈금과 맞는다 */}
+          {marks.length > 0 && (
+            <div className="mt-1 grid grid-cols-[6.5rem_1fr] gap-x-3">
+              <span className="text-[0.6875rem] leading-5 text-muted">지금</span>
+              <div>
+                {marks.map((m) => (
+                  <div key={m.names.map((n) => n.nameKo).join("·")} className="relative h-5">
                     <div className="absolute inset-x-1.5 inset-y-0">
-                      {today != null && (
-                        <i
-                          className="absolute top-1/2 h-3.5 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground/70"
-                          style={{ left: x(today) }}
-                        />
-                      )}
-                      <i
-                        className="absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent shadow-[0_0_0_2px_var(--surface)]"
-                        style={{ left: x(d) }}
-                      />
+                      <span
+                        className={`absolute top-0 whitespace-nowrap text-[0.6875rem] font-semibold leading-5 tabular-nums ${anchor(m.names[0].days)}`}
+                        style={{ left: x(m.names[0].days) }}
+                      >
+                        {m.names.map((n) => `${n.nameKo} ${n.days === 0 ? "오늘 마감" : `D-${n.days}`}`).join(" · ")}
+                      </span>
                     </div>
                   </div>
-                  <p className="truncate whitespace-nowrap text-[0.6875rem] leading-4 text-muted tabular-nums">
-                    {r.season}
-                    {r.deal?.mlbTeamKo ? ` · ${r.deal.mlbTeamKo}` : ""}
-                  </p>
-                  <p className="truncate text-right text-[0.6875rem] leading-4 tabular-nums">
-                    <span className="font-semibold">{d === 0 ? "마감 당일" : `D-${d}`}</span>
-                    {` · ${dealText(r)}`}
-                  </p>
-                </li>
-              );
-            })}
+                ))}
+              </div>
+            </div>
+          )}
+          <ul className="mt-1.5">
+            {rows.map((r) => (
+              <li
+                key={r.key}
+                className="grid grid-cols-[6.5rem_1fr] items-center gap-x-3 gap-y-0.5 border-t border-line py-2.5"
+              >
+                <p className="flex min-w-0 items-center gap-1 text-[0.8125rem] font-bold leading-5">
+                  <span className="truncate">{r.nameKo}</span>
+                  {r.thisYear && <ThisYearTag />}
+                </p>
+                <div className="relative h-5">
+                  <i className="absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-surface-2" />
+                  <div className="absolute inset-x-1.5 inset-y-0">
+                    {ticks.map((t) => (
+                      <i
+                        key={t}
+                        className="absolute top-1/2 h-3.5 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground/70"
+                        style={{ left: x(t) }}
+                      />
+                    ))}
+                    <i
+                      className="absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent shadow-[0_0_0_2px_var(--surface)]"
+                      style={{ left: x(r.days) }}
+                    />
+                  </div>
+                </div>
+                <p className="truncate whitespace-nowrap text-[0.6875rem] leading-4 text-muted tabular-nums">
+                  {r.season}
+                  {r.teamKo ? ` · ${r.teamKo}` : ""}
+                </p>
+                <p className="truncate text-right text-[0.6875rem] leading-4 tabular-nums">
+                  <span className="font-semibold">{r.days === 0 ? "마감 당일" : `D-${r.days}`}</span>
+                  {` · ${r.deal}`}
+                </p>
+              </li>
+            ))}
           </ul>
         </div>
         <table className="sr-only">
-          <caption>지난 포스팅: 마감 며칠 전 계약했나</caption>
+          <caption>포스팅 계약: 마감 며칠 전 계약했나</caption>
           <thead>
             <tr>
               <th>선수</th>
@@ -298,20 +410,37 @@ function HistoryChart({ history, now }: { history: PostingPast[]; now?: PostingP
           </thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={`${r.nameKo}-${r.season}`}>
-                <td>{r.nameKo}</td>
+              <tr key={r.key}>
+                <td>{r.thisYear ? `${r.nameKo}(올해)` : r.nameKo}</td>
                 <td>{r.season}</td>
-                <td>{r.deal?.mlbTeamKo}</td>
-                <td>{r.daysBeforeDeadline}일</td>
-                <td>{dealText(r)}</td>
+                <td>{r.teamKo}</td>
+                <td>{r.days}일</td>
+                <td>{r.deal}</td>
               </tr>
             ))}
           </tbody>
         </table>
+        {marks.length > 0 && (
+          <p className="sr-only">
+            {`지금 포스팅 협상 중: ${marks
+              .flatMap((m) => m.names)
+              .map((n) => `${n.nameKo} 마감까지 ${n.days}일`)
+              .join(", ")}`}
+          </p>
+        )}
         <p className="mt-3 text-xs leading-relaxed text-muted">
           금액은 보장액(옵션·인센티브 제외). 출처: MLB Trade Rumors 등 계약 보도
         </p>
       </div>
     </Section>
+  );
+}
+
+/** 올해 계약한 선수 표시 */
+function ThisYearTag() {
+  return (
+    <span className="shrink-0 rounded-full bg-accent-soft px-1.5 text-[0.625rem] font-bold leading-4 text-accent-ink">
+      올해
+    </span>
   );
 }
