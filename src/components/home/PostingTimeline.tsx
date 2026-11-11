@@ -92,8 +92,10 @@ export default function PostingTimeline({ dots, now, fill, startLabel, endLabel,
   const barTop = hasDots ? faceTop + FACE + STAND_GAP : 4;
   const nowTop = barTop + TRACK + NOW_GAP;
   const height = nowFaces.length > 0 ? nowTop + FACE + 4 : barTop + TRACK + 6;
-  // '마지막 N일' 칸: 마감 직전 얼굴 묶음(밀려난 얼굴 포함)과 막대 끝을 함께 덮는다
-  const lateXs = faces.filter((f) => f.item.days <= lateDays).map((f) => f.x);
+  // '마지막 N일' 칸: 마감 직전 얼굴 묶음(밀려난 얼굴 포함)과 막대 끝을 함께 덮는다.
+  // 칸 바로 앞 날짜 얼굴이 겹쳐 붙어 칸 경계에 걸리면 그 얼굴까지 덮어, 칸이 얼굴 중간에서 끊기지 않게 한다
+  const lateEdge = x(lateDays) - FACE / 2;
+  const lateXs = faces.filter((f) => f.item.days <= lateDays || f.x + FACE / 2 > lateEdge).map((f) => f.x);
   const zoneLeft = Math.min(x(lateDays), ...lateXs) - FACE / 2 - 6;
   const zoneRight = width + 6;
   const fillTo = fill && now.length === 1 ? x(now[0].days) : 0;

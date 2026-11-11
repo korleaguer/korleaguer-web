@@ -37,7 +37,7 @@ export function PostingDot({
         // 지난 선수 사진(/photos/posting-…)은 api가 배경을 지워 흰 바탕에 놓고 얼굴 크기·위치를 KBO 사진(노시환)과
         // 맞춘 정사각형 편집본이다. 그래서 KBO 사진과 똑같이 원을 채우고 위쪽에 맞추면 얼굴 크기와 배경이 같아진다.
         // eslint-disable-next-line @next/next/no-img-element -- 우리 서버가 호스팅하는 선수 사진, 크기 고정
-        <img ref={ref} src={photoUrl} alt="" onError={onError} className="size-full object-cover object-top" loading="lazy" />
+        <img ref={ref} src={photoUrl} alt="" onError={onError} className="size-full object-cover object-top" loading="lazy" referrerPolicy="no-referrer" />
       ) : (
         shortName(nameKo)
       )}
