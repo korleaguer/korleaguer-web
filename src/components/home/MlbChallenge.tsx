@@ -10,7 +10,7 @@ import PostingTimeline, { type TimelineNow } from "@/components/home/PostingTime
 
 /** 지금 포스팅 제도의 협상 기간(일) */
 const WINDOW_DAYS = 30;
-/** '마감 직전'으로 묶는 날 수: 그래프의 '마지막 N일' 칸과 선배 통계 한 줄 */
+/** '마감 직전'으로 묶는 날 수: 그래프의 '마지막 N일' 칸과 역대 계약 통계 한 줄 */
 const NEAR_DEADLINE = 4;
 /** 포스팅 선수가 여러 명일 때 함께 보여 줄 관련 기사 수 */
 const NEWS_LIMIT = 6;
@@ -80,7 +80,7 @@ function dayDiff(from: string, to: string): number {
 
 const isOpen = (p: PostingPlayer) => p.status === "NEGOTIATING" || p.status === "UPCOMING";
 
-/** 포스팅으로 계약한 선수 한 명: 지난 겨울의 선배, 또는 올해 계약한 포스팅 선수 */
+/** 포스팅으로 계약한 선수 한 명: 지난 겨울에 계약한 선수, 또는 올해 계약한 포스팅 선수 */
 interface Signing {
   key: string;
   nameKo: string;
@@ -93,7 +93,7 @@ interface Signing {
   /** "6년 1억 1,300만 달러" */
   deal: string;
   thisYear: boolean;
-  /** 선배는 계약 구단 시절 MLB 사진의 흰 바탕 편집본(/photos/posting-…), 올해 계약한 선수는 KBO 공식 사진. 없으면 null(구단 색 원 + 이름) */
+  /** 지난 선수는 계약 구단 시절 MLB 사진의 흰 바탕 편집본(/photos/posting-…), 올해 계약한 선수는 KBO 공식 사진. 없으면 null(구단 색 원 + 이름) */
   photoUrl: string | null;
 }
 
@@ -163,7 +163,7 @@ function rank(p: PostingPlayer): number {
 /**
  * 비시즌 홈 맨 위: 이번 겨울 MLB에 도전하는(포스팅된) KBO 선수.
  * 포스팅 선수가 몇 명이든 카드 한 장에 모은다(사용자 결정 11-11 "한 카드 안에서 다 같이").
- * 카드 안 한 줄 그래프에 지금 제도 선배들이 마감 며칠 전에 계약했는지를 구단 색 동그라미로 쌓고,
+ * 카드 안 한 줄 그래프에 지금 제도에서 계약한 선수들이 마감 며칠 전에 계약했는지를 구단 색 동그라미로 쌓고,
  * 그 아래(PC는 오른쪽) 목록에 같은 동그라미로 계약 내용을 늘 보여 준다(누르지 않아도 보이게).
  * 관련 기사는 카드 안에서 한국어 제목·요약(또는 기사 앞부분)으로 읽히고, 원문(언론사)은 작은 링크로 남는다.
  */
@@ -181,7 +181,7 @@ export default function MlbChallenge({ posting }: { posting: PostingSummary }) {
           포스팅 {players.length}명
         </li>
       </ul>
-      {/* PC(lg): 왼쪽 선수·그래프, 오른쪽 선배 계약 목록, 아래 관련 기사 두 줄. 휴대폰은 위에서 아래로 */}
+      {/* PC(lg): 왼쪽 선수·그래프, 오른쪽 역대 계약 목록, 아래 관련 기사 두 줄. 휴대폰은 위에서 아래로 */}
       <div className="card p-4 lg:grid lg:grid-cols-2 lg:gap-x-8 lg:p-5">
         <div className="min-w-0">
           {single ? <PlayerHead player={single} /> : <PlayerRows players={players} />}
@@ -324,7 +324,7 @@ function Timeline({
     <div className="mt-5">
       {signings.length > 0 && (
         <p className="mb-2 flex items-baseline justify-between gap-2 text-[0.8125rem] font-bold">
-          선배들은 마감 며칠 전에 계약했나
+          역대 계약은 마감 며칠 전이었나
           <span className="shrink-0 text-[0.6875rem] font-normal text-muted">지금 제도(2018~)</span>
         </p>
       )}
@@ -340,7 +340,7 @@ function Timeline({
         <p className="mt-2 text-[0.8125rem] leading-relaxed text-neutral-pill-fg">
           {earlier == null ? (
             <>
-              선배 {past.length}명 중{" "}
+              {past.length}명 중{" "}
               <b className="font-bold text-foreground">
                 {near}명은 마감 {NEAR_DEADLINE}일 안에
               </b>{" "}
@@ -349,10 +349,10 @@ function Timeline({
           ) : (
             <>
               {earlier.length === 0 ? (
-                "아직 이맘때 계약한 선배는 없어요. "
+                "아직 이맘때 계약한 선수는 없어요. "
               ) : (
                 <>
-                  지금보다 먼저 계약한 선배는{" "}
+                  지금보다 먼저 계약한 선수는{" "}
                   <b className="font-bold text-foreground">{earlier.map((s) => s.nameKo).join("·")}</b>
                   {earlier.length === 1 ? "뿐이고, " : ` ${earlier.length}명이고, `}
                 </>
@@ -371,12 +371,12 @@ function Timeline({
   );
 }
 
-/** 선배 계약 목록: 그래프와 같은 동그라미 · 이름 · 연도·구단 | 마감 며칠 전 · 보장액. 누르지 않아도 늘 보인다 */
+/** 역대 계약 목록: 그래프와 같은 동그라미 · 이름 · 연도·구단 | 마감 며칠 전 · 보장액. 누르지 않아도 늘 보인다 */
 function SigningList({ signings }: { signings: Signing[] }) {
   return (
     <div className="mt-3 lg:mt-0">
       <p className="mb-1 hidden items-baseline justify-between gap-2 text-[0.8125rem] font-bold lg:flex">
-        선배들의 계약
+        역대 계약
         <span className="shrink-0 text-[0.6875rem] font-normal text-muted">합의 보도 날짜(미국) 기준</span>
       </p>
       <ul className="divide-y divide-line">
