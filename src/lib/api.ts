@@ -287,6 +287,18 @@ export interface PlayerDetail extends PlayerSummary {
   debutYear: number | null;
   /** 한국 시절 소속. 예: "넥센·키움 히어로즈 (2017–2023)" */
   careerKo: string | null;
+  /** 과거 소속팀(KBO) 시절 공식 사진(오래된 팀부터). 없으면 빈 배열 */
+  careerPhotos: CareerPhoto[];
+}
+
+/** 과거 소속팀 시절 사진 한 장(그 팀 마지막 시즌 KBO 공식 사진, 우리가 호스팅하는 주소) */
+export interface CareerPhoto {
+  /** "키움 히어로즈" */
+  teamKo: string;
+  /** "2017–2023" */
+  years: string | null;
+  /** "/photos/kbo-67341-2023" */
+  photoUrl: string;
 }
 
 /** GET /api/players/{id} */
@@ -586,6 +598,8 @@ function normalizePlayer(raw: PlayerResponse): PlayerResponse {
       batsThrowsKo: p.batsThrowsKo ?? null,
       debutYear: p.debutYear ?? null,
       careerKo: p.careerKo ?? null,
+      // 오래된 api면 없다. 사진 주소가 없는 줄은 뺀다
+      careerPhotos: (p.careerPhotos ?? []).filter((c) => c && typeof c.photoUrl === "string" && c.teamKo),
     },
     hitting: raw.hitting ? normalizeSeason(raw.hitting) : null,
     pitching: raw.pitching ? normalizeSeason(raw.pitching) : null,
