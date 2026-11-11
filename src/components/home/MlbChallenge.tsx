@@ -380,7 +380,7 @@ function Timeline({
               " 지금보다 일찍 계약한 선수는 없었어요."
             ) : (
               <>
-                {" "}지금(D-{openDays})보다 빨랐던 건{" "}
+                {" "}지금({openDays === 0 ? "오늘 마감" : `D-${openDays}`})보다 빨랐던 건{" "}
                 {/* 이름과 끝말('뿐이에요')이 줄바꿈으로 떨어지지 않게 묶는다 */}
                 <span className="whitespace-nowrap">
                   <b className="font-bold text-foreground">
@@ -412,7 +412,8 @@ function SigningList({ signings }: { signings: Signing[] }) {
       </p>
       <ul className="money-flip-pause divide-y divide-line">
         {signings.map((s) => {
-          const share = Math.max(BAR_MIN_SHARE, Math.pow(s.amount / top, BAR_EXPONENT));
+          // 1위 금액이 0이면(보장액 0만 있는 경우) 나눗셈이 NaN이 되지 않게 모두 최소 길이
+          const share = top > 0 ? Math.max(BAR_MIN_SHARE, Math.pow(s.amount / top, BAR_EXPONENT)) : BAR_MIN_SHARE;
           return (
             <li key={s.key} className="flex items-center gap-3 py-2.5">
               <PostingDot nameKo={s.nameKo} photoUrl={s.photoUrl} size={30} />
