@@ -25,7 +25,7 @@ export default function StateNotice({
         {emoji}
       </span>
       <p className="mt-4 text-base font-bold">{title}</p>
-      {detail && <p className="mt-1.5 text-sm text-muted">{detail}</p>}
+      {detail != null && <p className="mt-1.5 text-sm text-muted">{detail}</p>}
       {action && <div className="mt-5">{action}</div>}
     </div>
   );

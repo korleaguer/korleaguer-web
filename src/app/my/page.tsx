@@ -78,7 +78,7 @@ async function MyContent({ searchParams }: Pick<PageProps<"/my">, "searchParams"
           {!seasonView && <PeriodTabs days={days} />}
           {!seasonView && showFallbackNote && (
             <p className="px-1 text-[0.8125rem] text-muted">
-              {`최근 ${days}일에 경기가 없는 선수는 그 선수가 마지막으로 뛴 날까지 ${days}일을 보여 드려요.`}
+              {`최근 ${days}일에 경기가 없는 선수는 그 선수가 마지막으로 뛴 날까지 ${days}일을 보여 줘요.`}
             </p>
           )}
           <ul className="grid items-start gap-3 sm:grid-cols-2 lg:grid-cols-3">
