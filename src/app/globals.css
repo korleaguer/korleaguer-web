@@ -251,7 +251,7 @@
     box-shadow: var(--shadow-card-hover);
   }
 
-  .card-link:active:not(:has(button:active)) {
+  .card-link:active:not(:has(button:active, [data-no-press]:active)) {
     scale: 0.98;
   }
 
