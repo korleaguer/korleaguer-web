@@ -1,6 +1,7 @@
 "use client"; // 소속팀 사진을 고르는 상태가 있어서 클라이언트 컴포넌트다.
 
 import { useState, type CSSProperties, type ReactNode } from "react";
+import { haptic } from "@/lib/app";
 
 /** 머리 카드에 넘겨 볼 사진 한 장(소속팀 하나) */
 export interface Shot {
@@ -47,7 +48,13 @@ export default function PhotoStage({
   const [failed, setFailed] = useState<ReadonlySet<string>>(new Set());
   const shot = shots[index] ?? shots[0];
   const many = shots.length > 1;
-  const next = () => setIndex((i) => (i + 1) % shots.length);
+  // 사진을 바꿀 때마다 앱 안이면 고르기 틱
+  const pick = (i: number) => {
+    if (i === index) return;
+    haptic("select");
+    setIndex(i);
+  };
+  const next = () => pick((index + 1) % shots.length);
 
   const circle = (
     <span
@@ -117,7 +124,7 @@ export default function PhotoStage({
                   key={s.key}
                   type="button"
                   aria-pressed={active}
-                  onClick={() => setIndex(i)}
+                  onClick={() => pick(i)}
                   className={`press inline-flex min-h-8 items-center gap-1.5 rounded-full px-2.5 text-[0.8125rem] font-semibold leading-5 transition duration-150 motion-reduce:transition-none ${
                     active ? "bg-accent-soft text-accent-ink" : "bg-surface-2 text-muted hover:text-foreground"
                   }`}

@@ -3,6 +3,7 @@
 import { useOptimistic, useRef, useState, useTransition, type KeyboardEvent, type PointerEvent } from "react";
 import { setMyPlayersOrder } from "@/app/my/actions";
 import type { PlayerSummary } from "@/lib/api";
+import { haptic } from "@/lib/app";
 import PlayerAvatar from "@/components/PlayerAvatar";
 
 interface Drag {
@@ -59,6 +60,8 @@ export default function OrderList({ players }: { players: PlayerSummary[] }) {
     const row = rowHeight();
     setDrag({ id, y, grab: y - order.indexOf(id) * row, row });
     setLive(order);
+    // 앱 안이면 잡는 순간 가벼운 톡
+    haptic("tap");
   }
 
   function onPointerMove(e: PointerEvent<HTMLButtonElement>) {
@@ -66,7 +69,11 @@ export default function OrderList({ players }: { players: PlayerSummary[] }) {
     const y = e.clientY - listTop();
     const to = Math.min(live.length - 1, Math.max(0, Math.round((y - drag.grab) / drag.row)));
     const from = live.indexOf(drag.id);
-    if (to !== from) setLive(move(live, from, to));
+    if (to !== from) {
+      setLive(move(live, from, to));
+      // 한 칸 옮길 때마다 고르기 틱(토스처럼 칸을 넘는 것을 손끝에 알린다)
+      haptic("select");
+    }
     setDrag({ ...drag, y });
   }
 

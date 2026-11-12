@@ -3,6 +3,7 @@
 // 앱(웹뷰) 안에서만 보이는 '뒤로' 버튼. 앱에는 브라우저의 뒤로 버튼이 없어서, 탭 첫 화면이 아닌 화면(선수 페이지 등)에 둔다.
 // 일반 브라우저에서는 in-app 변형이 꺼져 있어 보이지 않는다(globals.css의 @custom-variant in-app).
 import { usePathname, useRouter } from "next/navigation";
+import { appHas, postToApp } from "@/lib/app";
 
 /** 앱 아래 탭의 첫 화면(홈·선수·내 선수). 여기서는 뒤로 버튼을 두지 않는다. 앱(korleaguer-app src/app)의 탭과 같다 */
 const TAB_ROOTS = new Set(["/", "/players", "/my"]);
@@ -12,21 +13,13 @@ function parentOf(pathname: string): string {
   return pathname.startsWith("/players/") ? "/players" : "/";
 }
 
-/** 앱이 문서를 그리기 전에 넣어 두는 값(korleaguer-app src/lib/site.ts의 APP_BOOT_SCRIPT). 옛 앱에는 features가 없다 */
-type AppWindow = Window & {
-  KORLeaguerApp?: { features?: unknown };
-  ReactNativeWebView?: { postMessage(message: string): void };
-};
-
 /**
  * 하위 화면을 네이티브로 쌓는 앱(features에 "stack")이면 앱에 이 화면을 닫아 달라고 하고 true.
  * 그 앱에서 선수 화면은 자기만의 웹뷰라 웹 기록이 없어서, 웹 안에서 돌아가면 목록이 같은 화면에 다시 열린다.
  */
 function closeAppScreen(): boolean {
-  const { KORLeaguerApp, ReactNativeWebView } = window as AppWindow;
-  const features = KORLeaguerApp?.features;
-  if (!Array.isArray(features) || !features.includes("stack") || !ReactNativeWebView) return false;
-  ReactNativeWebView.postMessage(JSON.stringify({ type: "back" }));
+  if (!appHas("stack")) return false;
+  postToApp({ type: "back" });
   return true;
 }
 
