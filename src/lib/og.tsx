@@ -4,6 +4,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import sharp from "sharp";
+import { logoSvg } from "@/lib/logo";
 
 /** 카톡·페이스북·X가 권하는 큰 카드 크기(1.91:1) */
 export const OG_SIZE = { width: 1200, height: 630 };
@@ -39,27 +40,16 @@ export function ogFonts() {
   return fonts;
 }
 
-/** 오른쪽 아래 'K KOR Leaguer' 표시(웹 머리글 로고와 같은 모양) */
+/** 로고 상자(혜성 공) 그림. 웹 머리글과 같은 모서리 비율(26px 상자에 8px) */
+const LOGO_DATA_URL = `data:image/svg+xml;base64,${Buffer.from(logoSvg((8 / 26) * 100)).toString("base64")}`;
+
+/** 로고 상자 + 'KOR Leaguer' 표시(웹 머리글 로고와 같은 모양) */
 export function OgBrand({ scale = 1 }: { scale?: number }) {
   const box = 52 * scale;
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 14 * scale }}>
-      <div
-        style={{
-          width: box,
-          height: box,
-          borderRadius: 16 * scale,
-          background: OG_COLORS.accent,
-          color: "#ffffff",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: 30 * scale,
-          fontWeight: 800,
-        }}
-      >
-        K
-      </div>
+      {/* eslint-disable-next-line @next/next/no-img-element -- next/og 그림 안이라 next/image를 쓸 수 없다 */}
+      <img src={LOGO_DATA_URL} width={box} height={box} alt="" />
       <div style={{ fontSize: 36 * scale, fontWeight: 800, letterSpacing: -1 * scale, color: OG_COLORS.foreground }}>
         KOR Leaguer
       </div>
