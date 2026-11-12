@@ -1,4 +1,5 @@
 import type { NewsHeadline } from "@/lib/api";
+import ShowMore from "@/components/ShowMore";
 import NewsTitleList from "@/components/news/NewsTitleList";
 
 export interface PostingNewsItem extends NewsHeadline {
@@ -9,22 +10,41 @@ export interface PostingNewsItem extends NewsHeadline {
 }
 
 /**
- * MLB 도전 카드의 관련 기사. 제목과 썸네일을 줄지어 두고, 누르면 우리 기사 페이지(/news/{id})에서 큰 사진과 AI 요약을
- * 함께 본다(사용자 11-11: "기사 제목만 가져오고 클릭하면 새로운 페이지로 들어가서 썸네일과 우리의 요약 내용이 같이",
- * 11-12: "썸네일 있던 거 사라졌어? 다시 넣어").
- * 기사 순서와 수는 부르는 쪽이 정한다. 제목 줄이 짧아 '더 보기' 없이 모두 보인다(PC는 두 칸).
+ * MLB 도전 카드의 관련 기사. 줄마다 출처·날짜와 제목, 오른쪽에 썸네일을 두고, 누르면 우리 기사 페이지(/news/{id})에서
+ * 큰 사진과 AI 요약을 본다(사용자 11-11·11-12: "썸네일 다시 넣어").
+ * 처음에는 shown건만 보이고 나머지는 '기사 n건 더 보기'로 접는다(사용자 11-12 결정: 휴대폰은 2건, PC는 오른쪽 칸 전체가 기사라 3건).
+ * 기사 순서와 수는 부르는 쪽이 정한다.
+ *
+ * @param flush 위 선·여백 없이 그린다(PC 카드 오른쪽 칸 맨 위)
  */
-export default function PostingNews({ items }: { items: PostingNewsItem[] }) {
+export default function PostingNews({
+  items,
+  shown,
+  flush = false,
+}: {
+  items: PostingNewsItem[];
+  shown: number;
+  flush?: boolean;
+}) {
   if (items.length === 0) return null;
+  const first = items.slice(0, shown);
+  const rest = items.slice(shown);
   return (
-    <div className="mt-4 border-t border-line pt-3 lg:col-span-2 lg:mt-5">
+    <div className={flush ? undefined : "mt-4 border-t border-line pt-3"}>
       <div className="flex items-baseline justify-between gap-3">
         <h3 className="text-[0.8125rem] font-bold">관련 기사</h3>
         {items.some((n) => n.id != null) && (
           <span className="text-[0.6875rem] text-muted">누르면 사진과 AI 요약을 볼 수 있어요</span>
         )}
       </div>
-      <NewsTitleList items={items} twoColumns />
+      <NewsTitleList items={first} />
+      {rest.length > 0 && (
+        <ShowMore moreLabel={`기사 ${rest.length}건 더 보기`} buttonClassName="border-t border-line py-2.5">
+          <div className="border-t border-line">
+            <NewsTitleList items={rest} />
+          </div>
+        </ShowMore>
+      )}
     </div>
   );
 }
