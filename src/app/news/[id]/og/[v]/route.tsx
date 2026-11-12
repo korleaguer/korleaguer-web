@@ -4,14 +4,14 @@ import { getNews } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import { OG_COLORS, OG_SIZE, OgBrand, ogFonts } from "@/lib/og";
 
-export const size = OG_SIZE;
-export const contentType = "image/png";
-export const alt = "KOR Leaguer 관련 기사 요약";
+// 주소: /news/[id]/og/<판 번호>. 판 번호는 배포 커밋(lib/share.ts OG_VERSION)이고 그림에는 쓰지 않는다.
+// 카카오톡이 미리보기 그림을 주소 기준으로 저장해 두어서, 배포마다 주소가 바뀌게 판 번호를 넣는다(이슈 #157).
+// 페이지의 og:image는 page.tsx의 shareMeta가 이 주소를 가리킨다. 요청 때 그린다(데이터가 매일 바뀜).
 
 /** 제목은 세 줄(한 줄에 한글 23자 안팎)까지. 넘치면 잘라 '…'을 붙인다 */
 const MAX_TITLE = 66;
 
-export default async function Image({ params }: { params: Promise<{ id: string }> }) {
+export async function GET(_request: Request, { params }: RouteContext<"/news/[id]/og/[v]">) {
   const { id } = await params;
   const result = /^[1-9]\d{0,14}$/.test(id) ? await getNews(Number(id)) : null;
   const fonts = await ogFonts();
