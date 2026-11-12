@@ -194,6 +194,11 @@ export interface NewsHeadline {
   summary: string | null;
   /** 기사 대표 사진 원본 주소(언론사 서버) */
   imageUrl: string | null;
+  /**
+   * 같은 글을 실은 다른 언론사(낸 순, 이 기사의 언론사는 빼고). 서버가 언론사만 다른 같은 기사를 한 줄로 묶고
+   * 이 기사를 대표로 보낸다(korleaguer-server#113). 묶인 사본이 없거나 옛 API면 빈 목록
+   */
+  alsoBy: string[];
 }
 
 /** GET /api/news/{id}: 우리 기사 페이지 한 건. 원문은 url(언론사)에 있고, 우리는 제목·대표 사진·요약과 출처만 보여 준다 */
@@ -617,6 +622,8 @@ function normalizeHeadline(n: NewsHeadline): NewsHeadline | null {
     summary: n.summary ?? null,
     // 기사 사진은 언론사 서버에서 브라우저가 직접 받는다. https 주소만 쓴다
     imageUrl: n.imageUrl?.startsWith("https://") ? n.imageUrl : null,
+    // 같은 글을 실은 다른 언론사. 옛 API는 이 칸을 주지 않는다
+    alsoBy: Array.isArray(n.alsoBy) ? n.alsoBy.filter((p) => typeof p === "string" && p.trim() !== "") : [],
   };
 }
 
