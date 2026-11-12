@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { getNews, type NewsPage } from "@/lib/api";
 import { formatDate, formatTime } from "@/lib/format";
 import { readableLead, splitSentences } from "@/lib/news";
-import { shareMeta } from "@/lib/share";
+import { newsShareImage, shareMeta } from "@/lib/share";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import ExternalLinkIcon from "@/components/ExternalLinkIcon";
 import LoadingBlock from "@/components/LoadingBlock";
@@ -50,8 +50,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const news = result.data;
   const title = news.titleKo ?? news.title;
   const description = splitSentences(news.summary)[0] ?? undefined;
-  // 공유 카드 그림은 같은 폴더의 opengraph-image.tsx(언론사·제목)
-  return { title, description, robots: NO_INDEX, ...shareMeta(title, description, true) };
+  // 공유 카드 그림은 og/[v]/route.tsx(언론사·제목). 주소에 배포 커밋이 들어가 카톡이 옛 그림을 쓰지 않는다
+  return { title, description, robots: NO_INDEX, ...shareMeta(title, description, newsShareImage(news.id)) };
 }
 
 export default function NewsArticlePage({ params }: Props) {

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { getPlayer } from "@/lib/api";
-import { shareMeta } from "@/lib/share";
+import { playerShareImage, shareMeta } from "@/lib/share";
 import { readMyPlayers } from "@/lib/myPlayers";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import DataBanners from "@/components/DataBanners";
@@ -35,8 +35,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { player, season } = result.data;
   const title = `${player.nameKo} ${season} 기록`;
   const description = `${player.nameKo}${player.nameEn ? `(${player.nameEn})` : ""} ${season} 시즌 성적과 경기별 한 줄 기록`;
-  // 공유 카드 그림은 같은 폴더의 opengraph-image.tsx(사진·핵심 기록)
-  return { title, description, ...shareMeta(title, description, true) };
+  // 공유 카드 그림은 og/[v]/route.tsx(사진·핵심 기록). 주소에 배포 커밋이 들어가 카톡이 옛 그림을 쓰지 않는다
+  return { title, description, ...shareMeta(title, description, playerShareImage(player.id)) };
 }
 
 export default function PlayerPage({ params }: Props) {
