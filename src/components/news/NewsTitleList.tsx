@@ -2,16 +2,19 @@ import Link from "next/link";
 import type { NewsHeadline } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import ExternalLinkIcon from "@/components/ExternalLinkIcon";
+import NewsThumb from "@/components/news/NewsThumb";
 
 export interface NewsTitleItem extends NewsHeadline {
   /** 여러 선수의 기사를 모았을 때 누구 기사인지. 한 명이면 null */
   who?: string | null;
+  /** 그 기사 선수의 사진(우리가 호스팅). 기사 사진이 없거나 안 뜨면 썸네일 자리에 대신 보인다 */
+  playerPhotoUrl?: string | null;
 }
 
 /**
- * 기사 제목 목록. 줄마다 누구 기사 · 언론사 · 날짜와 제목만 둔다
- * (사용자 11-11: "기사 제목만 가져오고 클릭하면 새로운 페이지에서 썸네일과 요약").
- * 누르면 우리 기사 페이지(/news/{id})로 간다. 기사 번호가 없는 옛 API면 원문을 새 탭으로 연다.
+ * 기사 제목 목록. 줄마다 누구 기사 · 언론사 · 날짜와 제목, 오른쪽에 기사 썸네일을 둔다
+ * (사용자 11-11: "기사 제목만 가져오고 클릭하면 새로운 페이지에서 썸네일과 요약", 11-12: "썸네일 다시 넣어").
+ * 요약은 목록에 두지 않고, 누르면 우리 기사 페이지(/news/{id})에서 큰 사진과 함께 본다. 기사 번호가 없는 옛 API면 원문을 새 탭으로 연다.
  * twoColumns면 PC(lg)에서 두 칸으로 나눈다(줄은 왼쪽에서 오른쪽으로 찬다).
  */
 export default function NewsTitleList({ items, twoColumns = false }: { items: NewsTitleItem[]; twoColumns?: boolean }) {
@@ -44,11 +47,14 @@ function NewsTitleRow({ item: n }: { item: NewsTitleItem }) {
     </span>
   );
   const rowClass = "press-soft group flex items-center gap-3 py-3";
+  // 썸네일이 줄 오른쪽 끝을 맡는다(예전 › 자리). 기사 사진이 없거나 안 뜨면 선수 사진, 둘 다 없으면 자리를 두지 않는다
+  const thumb = <NewsThumb url={n.imageUrl} fallback={n.playerPhotoUrl ?? null} />;
 
   if (n.id == null) {
     return (
       <a href={n.url} target="_blank" rel="noopener noreferrer" className={rowClass}>
         {content}
+        {thumb}
         <span className="text-muted">
           <ExternalLinkIcon />
           <span className="sr-only">(원문, 새 탭)</span>
@@ -59,18 +65,7 @@ function NewsTitleRow({ item: n }: { item: NewsTitleItem }) {
   return (
     <Link href={`/news/${n.id}`} className={rowClass}>
       {content}
-      <svg
-        aria-hidden
-        viewBox="0 0 16 16"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.75"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="size-4 shrink-0 text-muted"
-      >
-        <path d="M6 3.5 10.5 8 6 12.5" />
-      </svg>
+      {thumb}
     </Link>
   );
 }
