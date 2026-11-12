@@ -17,12 +17,12 @@ export default function SiteHeader() {
         <Link href="/" className="flex items-center gap-[7px] rounded-lg in-app:pointer-events-none">
           <span
             aria-hidden
-            className="grid size-[26px] place-items-center rounded-lg bg-accent text-sm font-extrabold text-accent-fg"
+            className="grid size-[1.625rem] place-items-center rounded-lg bg-accent text-sm font-extrabold text-accent-fg"
           >
             K
           </span>
           {/* 영어 이름이라 화면 낭독기가 영어로 읽게 lang="en" */}
-          <span lang="en" className="text-lg font-extrabold tracking-[-0.03em]">
+          <span lang="en" className="whitespace-nowrap text-lg font-extrabold tracking-[-0.03em]">
             KOR Leaguer
           </span>
         </Link>

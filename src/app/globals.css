@@ -191,6 +191,14 @@
    * 입력칸은 글자를 고칠 수 있게 그대로 둔다.
    */
   html[data-app] {
+    /*
+     * 큰 글씨: 앱이 기기 글자 크기 배율(아이폰 '더 큰 텍스트')을 --app-font-scale로 넣는다(기본 1).
+     * 글자·여백이 rem이라 화면이 그 배율로 함께 커진다. 1.5배를 넘으면 375px 폭 화면에서 머리글이 넘쳐 0.85~1.5배로 묶는다
+     * (앱도 같은 한도로 보낸다). 웹뷰가 스스로 글자를 키우지 않게 text-size-adjust는 고정.
+     */
+    font-size: calc(100% * clamp(0.85, var(--app-font-scale, 1), 1.5));
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
     -webkit-user-select: none;
