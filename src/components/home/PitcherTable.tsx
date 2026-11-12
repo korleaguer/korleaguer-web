@@ -3,7 +3,7 @@ import { formatEra } from "@/lib/format";
 import { bestOf, isBest, pairWithMinors, rankedPitcher } from "@/lib/stats";
 import PlayerLink from "@/components/PlayerLink";
 import TeamName from "@/components/TeamName";
-import { RowHeader, TableScroll, Td, Th } from "@/components/table";
+import { ROW_LINK, RowHeader, TableScroll, Td, Th } from "@/components/table";
 import { MinorRowLabel, MinorsOnlyHeader } from "./MinorRows";
 import MinorTeam from "./MinorTeam";
 
@@ -69,7 +69,11 @@ export default function PitcherTable({
       </thead>
       {/* 투수 한 명 = 묶음 하나(메이저 줄 + 있으면 마이너 줄). 묶음 사이에만 선을 긋는다 */}
       {pairs.map(({ major, minor }) => (
-        <tbody key={major.playerId} className="border-t border-line first-of-type:border-t-0">
+        <tbody
+          key={major.playerId}
+          data-href={`/players/${major.playerId}`}
+          className={`border-t border-line first-of-type:border-t-0 ${ROW_LINK}`}
+        >
           <tr>
             {nameCell(major)}
             {cells(major, true)}
@@ -88,7 +92,7 @@ export default function PitcherTable({
         <tbody className="divide-y divide-line">
           <MinorsOnlyHeader colSpan={COLUMNS} />
           {minorsOnly.map((p) => (
-            <tr key={p.playerId}>
+            <tr key={p.playerId} data-href={`/players/${p.playerId}`} className={ROW_LINK}>
               {nameCell(p)}
               {cells(p, false)}
             </tr>
