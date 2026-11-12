@@ -19,6 +19,8 @@ export default function Toaster() {
   // 사라지는 동안에도 마지막 알림을 잠깐 그려 둔다
   const [shown, setShown] = useState<{ item: ToastItem; leaving: boolean } | null>(null);
   const startY = useRef<number | null>(null);
+  // 마우스·손가락·키보드 포커스가 알림 위에 있으면 읽거나 누르는 중이라 내리지 않는다(이슈 #164)
+  const [held, setHeld] = useState(false);
 
   if (item && shown?.item.id !== item.id) {
     setShown({ item, leaving: false });
@@ -26,12 +28,12 @@ export default function Toaster() {
     setShown({ item: shown.item, leaving: true });
   }
 
-  // 시간이 다 되면 내린다
+  // 시간이 다 되면 내린다. 붙잡고 있는 동안은 멈췄다가 놓으면 처음부터 다시 센다
   useEffect(() => {
-    if (!item) return;
+    if (!item || held) return;
     const timer = setTimeout(() => dismissToast(item.id), item.action ? SHOW_WITH_ACTION_MS : SHOW_MS);
     return () => clearTimeout(timer);
-  }, [item]);
+  }, [item, held]);
 
   // 사라지는 움직임이 끝나면 그리지 않는다
   useEffect(() => {
@@ -60,6 +62,10 @@ export default function Toaster() {
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={() => (startY.current = null)}
+          onPointerEnter={() => setHeld(true)}
+          onPointerLeave={() => setHeld(false)}
+          onFocus={() => setHeld(true)}
+          onBlur={() => setHeld(false)}
           className={`pointer-events-auto flex max-w-[26rem] touch-none items-center gap-2.5 rounded-2xl bg-toast-bg py-3 pl-4 pr-3 text-[0.9375rem] font-semibold text-toast-fg shadow-[0_8px_24px_rgb(0_0_0/0.18)] ${shown.leaving ? "toast-out" : "toast-in"}`}
         >
           {toastItem.tone !== "info" && <ToneIcon tone={toastItem.tone} />}
@@ -73,7 +79,7 @@ export default function Toaster() {
 
 function ActionButton({ item }: { item: ToastItem }) {
   const action = item.action!;
-  const className = "press shrink-0 rounded-lg px-2 py-1 text-[0.9375rem] font-bold text-toast-action";
+  const className = "press tap-target shrink-0 rounded-lg px-2 py-1 text-[0.9375rem] font-bold text-toast-action";
   const onClick = () => {
     action.onClick?.();
     dismissToast(item.id);

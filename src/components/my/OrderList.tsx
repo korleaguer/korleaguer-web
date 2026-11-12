@@ -125,7 +125,7 @@ export default function OrderList({ players }: { players: PlayerSummary[] }) {
                 onPointerUp={onPointerEnd}
                 onPointerCancel={onPointerEnd}
                 onKeyDown={(e) => onKeyDown(e, id)}
-                className={`grid size-9 shrink-0 touch-none place-items-center rounded-lg text-muted hover:bg-surface-2 hover:text-foreground ${dragging ? "cursor-grabbing" : "cursor-grab"}`}
+                className={`tap-target grid size-9 shrink-0 touch-none place-items-center rounded-lg text-muted hover:bg-surface-2 hover:text-foreground ${dragging ? "cursor-grabbing" : "cursor-grab"}`}
               >
                 <svg aria-hidden viewBox="0 0 16 16" className="size-4 fill-current">
                   <circle cx="5.5" cy="3.5" r="1.25" />

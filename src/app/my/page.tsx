@@ -111,7 +111,7 @@ function PeriodTabs({ days }: { days: Period }) {
             href={d === 7 ? "/my" : `/my?days=${d}`}
             scroll={false}
             aria-current={current ? "page" : undefined}
-            className={`press rounded-full px-3 py-1 text-[0.8125rem] font-semibold ${current ? "bg-accent-soft text-accent-ink" : "bg-surface text-muted hover:text-foreground"}`}
+            className={`press tap-target rounded-full px-3 py-1 text-[0.8125rem] font-semibold ${current ? "bg-accent-soft text-accent-ink" : "bg-surface text-muted hover:text-foreground"}`}
           >
             {d === 7 ? "최근 7일" : `${d}일`}
           </Link>
