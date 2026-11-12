@@ -1,19 +1,17 @@
 import type { CSSProperties } from "react";
-import type { PostingPast, PostingPlayer, PostingStatus, PostingSummary } from "@/lib/api";
+import type { LinkedTeams as LinkedTeamCounts, PostingPast, PostingPlayer, PostingStatus, PostingSummary } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import { uniqueByUrl } from "@/lib/news";
 import Section from "@/components/Section";
+import TeamMark from "@/components/TeamMark";
+import { kboTeamColor, teamColor, teamLogoUrl } from "@/lib/teams";
+import HistoryToggle from "@/components/home/HistoryToggle";
 import KboAvatar from "@/components/home/KboAvatar";
 import { PostingDot } from "@/components/home/PostingDot";
 import PostingNews from "@/components/home/PostingNews";
-import PostingTimeline, { type TimelineNow } from "@/components/home/PostingTimeline";
 
 /** 지금 포스팅 제도의 협상 기간(일) */
 const WINDOW_DAYS = 30;
-/** '마감 직전'으로 묶는 날 수: 그래프의 '마지막 N일' 칸과 역대 계약 통계 한 줄 */
-const NEAR_DEADLINE = 4;
-/** 포스팅 선수가 여러 명일 때 함께 보여 줄 관련 기사 수 */
-const NEWS_LIMIT = 6;
 /**
  * 역대 계약 순위 막대의 길이 규칙: 금액이 2배면 막대는 1.5배(사용자 결정 11-11).
  * 정비례면 1위(이정후 1억 1,300만 달러) 말고는 막대가 짧아 아래 선수끼리 차이가 안 보인다. 길이 = (금액 / 1위 금액)^지수
@@ -167,19 +165,6 @@ function thisYearSignings(players: PostingPlayer[]): Signing[] {
     ];
   });
 }
-
-/** 협상 중(또는 시작 전)인 선수의 '지금' 자리 */
-function nowFaces(players: PostingPlayer[]): TimelineNow[] {
-  return players
-    .filter((p) => isOpen(p) && p.daysLeft != null)
-    .map((p) => ({
-      key: p.nameKo,
-      nameKo: p.nameKo,
-      days: Math.min(WINDOW_DAYS, Math.max(0, p.daysLeft ?? 0)),
-      photoUrl: p.photoUrl,
-    }));
-}
-
 /** 카드 안 선수 순서: 협상 중·시작 전(마감 가까운 순) → 계약 → 결과 확인 중 → 결렬 */
 function rank(p: PostingPlayer): number {
   if (isOpen(p)) return 0;
@@ -189,9 +174,12 @@ function rank(p: PostingPlayer): number {
 /**
  * 비시즌 홈 맨 위: 이번 겨울 MLB에 도전하는(포스팅된) KBO 선수.
  * 포스팅 선수가 몇 명이든 카드 한 장에 모은다(사용자 결정 11-11 "한 카드 안에서 다 같이").
- * 카드 안 그래프는 포스팅 중인 선수가 협상 기간 어디쯤인지('지금')와 역대 계약이 몰린 마지막 며칠만 보이고,
- * 그 아래(PC는 오른쪽) '역대 포스팅 계약'은 보장액 순위 목록이다(사용자 결정 11-11, 이슈 #118).
- * 관련 기사는 카드 안에서 한국어 제목·요약(또는 기사 앞부분)으로 읽히고, 원문(언론사)은 작은 링크로 남는다.
+ * 사용자 결정(11-12, 매일 들어오는 사람에게 같은 화면이 반복되지 않게):
+ * - 한 명이면 원소속 구단 색 띠 + 띠에 걸친 사진 + 이름 + 흐린 한 줄(구단 · 포지션 · 출생 연도).
+ * - '마지막 4일' 그래프 자리에 '행선지로 거론된 구단'(서버가 기사마다 AI로 고른 것, 최근 7일).
+ * - '역대 포스팅 계약'은 휴대폰·PC 모두 접기 줄(매일 같은 목록이라 늘 펼쳐 두지 않는다).
+ * - 관련 기사: 휴대폰은 2건 + '더 보기', PC는 카드 오른쪽 칸 전체가 기사(3건 + '더 보기'). 기사가 없으면 PC 오른쪽은 역대 계약.
+ * 포스팅 선수가 여러 명일 때 모양은 나중에 다듬는다(사용자 11-12 "흔한 상황이 아니라 묻어둘게").
  */
 export default function MlbChallenge({ posting }: { posting: PostingSummary }) {
   if (posting.players.length === 0) return null;
@@ -201,6 +189,11 @@ export default function MlbChallenge({ posting }: { posting: PostingSummary }) {
     (a, b) => b.amount - a.amount || b.season - a.season,
   );
   const single = players.length === 1 ? players[0] : null;
+  const news = newsOf(players);
+  // 기사가 하나도 없으면(협상 초반·덜 알려진 선수) PC 오른쪽 칸이 비지 않게 역대 계약을 펼쳐 둔다
+  const historyOnRight = news.length === 0 && signings.length > 0;
+  // 띠가 있으면 오른쪽 칸을 띠 아래 20px에서 시작한다(띠의 lg:-mt-5가 카드 위 여백을 먹는다)
+  const rightPad = single ? "lg:pt-5" : "";
   return (
     <Section id="mlb-challenge-title" title="이번 겨울 MLB 도전">
       <ul className="-mt-0.5 mb-2 flex flex-wrap gap-1.5 px-1">
@@ -208,37 +201,77 @@ export default function MlbChallenge({ posting }: { posting: PostingSummary }) {
           포스팅 {players.length}명
         </li>
       </ul>
-      {/* PC(lg): 왼쪽 선수·그래프, 오른쪽 역대 계약 목록, 아래 관련 기사 두 줄. 휴대폰은 위에서 아래로 */}
+      {/* PC(lg): 왼쪽 선수·거론 구단·역대 계약 접기, 오른쪽 관련 기사. 휴대폰은 위에서 아래로 */}
       <div className="card p-4 lg:grid lg:grid-cols-2 lg:gap-x-8 lg:p-5">
+        {single && <HeadBand player={single} />}
         <div className="min-w-0">
           {single ? <PlayerHead player={single} /> : <PlayerRows players={players} />}
-          <Timeline players={players} single={single} signings={signings} />
+          {single && isOpen(single) && single.linkedTeams && <LinkedTeams counts={single.linkedTeams} />}
+          {signings.length > 0 && (
+            <div className={historyOnRight ? "lg:hidden" : undefined}>
+              <HistoryToggle
+                title={`역대 포스팅 계약 ${signings.length}건`}
+                hint={`최고 ${signings[0].nameKo} ${signings[0].years}년 ${signings[0].usd} · 보장액 순`}
+              >
+                <SigningList signings={signings} head={false} flush />
+              </HistoryToggle>
+            </div>
+          )}
+          <div className="lg:hidden">
+            <PostingNews items={news} shown={NEWS_SHOWN_PHONE} />
+          </div>
         </div>
-        {signings.length > 0 && <SigningList signings={signings} />}
-        <News players={players} />
+        <div className={`hidden lg:block ${rightPad}`}>
+          {historyOnRight ? (
+            <SigningList signings={signings} />
+          ) : (
+            <PostingNews items={news} shown={NEWS_SHOWN_PC} flush />
+          )}
+        </div>
       </div>
     </Section>
   );
 }
 
-/** 포스팅 선수가 한 명일 때: 크게(사진·이름·남은 날·마감 시각) */
+/** 카드 맨 위 원소속 KBO 구단 색 띠(선수가 한 명일 때). PC에서도 카드 전체 폭을 가로지른다(두 칸 위) */
+function HeadBand({ player: p }: { player: PostingPlayer }) {
+  const status = STATUS[p.status] ?? STATUS.CLOSED;
+  return (
+    <div
+      className="posting-band -mx-4 -mt-4 h-[4.5rem] rounded-t-[1rem] lg:col-span-2 lg:-mx-5 lg:-mt-5"
+      style={{ "--team": kboTeamColor(p.kboTeam) } as CSSProperties}
+    >
+      {/* 휴대폰만. PC는 띠가 넓어 알약이 이름에서 멀리 떨어지므로 이름 옆에 둔다(PlayerHead) */}
+      <span className="absolute right-3 top-3 z-10 rounded-full bg-surface px-2.5 py-0.5 text-xs font-bold text-fa-fg shadow-[var(--shadow-card)] lg:hidden">
+        {status.label}
+      </span>
+    </div>
+  );
+}
+
+/** 포스팅 선수가 한 명일 때: 띠에 걸친 사진 · 이름 · 흐린 한 줄 · 남은 날과 마감 시각(또는 계약·결렬) */
 function PlayerHead({ player: p }: { player: PostingPlayer }) {
   const status = STATUS[p.status] ?? STATUS.CLOSED;
+  // 위계상 이름 다음 곁다리 정보라 알약에 담지 않고 흐린 한 줄로 둔다(사용자 11-12 '띠 한 줄')
   const sub = [p.kboTeam, p.positionKo, p.birthYear ? `${p.birthYear}년생` : null].filter(Boolean).join(" · ");
   return (
     <>
-      <div className="flex items-center gap-3">
-        <KboAvatar nameKo={p.nameKo} photoUrl={p.photoUrl} />
-        <div className="min-w-0">
-          <h3 className="text-xl font-extrabold leading-tight tracking-[-0.02em]">{p.nameKo}</h3>
-          {/* 좁은 휴대폰에서는 상태 알약에 밀려 두 줄이 된다(말줄임으로 '년생'이 잘리지 않게) */}
-          <p className="text-[0.8125rem] leading-snug text-muted">{sub}</p>
-        </div>
-        <span
-          className={`ml-auto self-start whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-bold ${status.className}`}
-        >
-          {status.label}
+      <div className="-mt-9 flex items-start gap-3">
+        <span className="relative z-10 shrink-0 rounded-full ring-4 ring-surface">
+          <KboAvatar nameKo={p.nameKo} photoUrl={p.photoUrl} size={76} />
         </span>
+        {/* 이름·한 줄은 띠 아래에서 시작한다(띠에 걸친 사진 높이 36px + 여백) */}
+        <div className="min-w-0 pt-[2.75rem]">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <h3 className="text-[1.375rem] font-extrabold leading-tight tracking-[-0.02em]">{p.nameKo}</h3>
+            <span
+              className={`hidden whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-bold lg:inline-block ${status.className}`}
+            >
+              {status.label}
+            </span>
+          </div>
+          <p className="mt-0.5 text-[0.8125rem] leading-snug text-muted">{sub}</p>
+        </div>
       </div>
 
       {isOpen(p) && p.daysLeft != null && (
@@ -266,6 +299,54 @@ function PlayerHead({ player: p }: { player: PostingPlayer }) {
       )}
       {p.status === "NO_DEAL" && <p className="mt-4 text-sm text-muted">계약하지 못해 {p.kboTeam}에 남아요.</p>}
     </>
+  );
+}
+
+/** 거론 구단 알약을 몇 개까지 보이나(나머지는 '외 n개 구단') */
+const LINKED_SHOWN = 3;
+/** 반대 전망 한 줄: 한 구단의 반대 전망이 이보다 많고 거론의 절반 이상일 때만 */
+const DOUBT_MIN = 3;
+
+/**
+ * '행선지로 거론된 구단'(사용자 11-12 결정). 서버가 기사마다 AI로 고른 최근 며칠 거론을 센다.
+ * 기획 판단(11-12): 알약의 숫자는 '이 선수의 행선지로 거론한 기사'만 센다. 반대 전망을 같은 칸에 숫자로 섞으면
+ * "그래서 어디 간다는 거지?"가 된다. 다만 숫자를 꾸미지 않도록, 한 구단의 반대 전망이 DOUBT_MIN건 넘고 거론의 절반
+ * 이상이면 아래 한 줄로만 알린다. 반대 기사도 아래 '관련 기사'에는 그대로 나온다. 거론된 구단이 없으면 칸을 그리지 않는다.
+ */
+function LinkedTeams({ counts }: { counts: LinkedTeamCounts }) {
+  const linked = counts.teams.filter((t) => t.linked > 0);
+  if (linked.length === 0) return null;
+  const shown = linked.slice(0, LINKED_SHOWN);
+  const more = linked.length - shown.length;
+  const doubt = [...counts.teams]
+    .filter((t) => t.doubted > DOUBT_MIN && t.doubted * 2 >= t.linked)
+    .sort((a, b) => b.doubted - a.doubted)[0];
+  return (
+    <div className="mt-5">
+      <p className="mb-2 flex items-baseline justify-between gap-2 text-[0.8125rem] font-bold">
+        <span>행선지로 거론된 구단</span>
+        <span className="shrink-0 text-[0.6875rem] font-normal text-muted tabular-nums">최근 {counts.days}일 기사 수</span>
+      </p>
+      <ul className="flex flex-wrap items-center gap-1.5">
+        {shown.map((t) => (
+          <li
+            key={t.abbreviation}
+            className="inline-flex items-center gap-1.5 rounded-full bg-surface-2 py-1 pl-1.5 pr-3 text-[0.8125rem] font-semibold"
+          >
+            <TeamMark logoUrl={teamLogoUrl(t.abbreviation)} color={teamColor(t.abbreviation)} size="sm" />
+            {t.nameKo}
+            <span className="font-bold tabular-nums">{t.linked}건</span>
+            {t.today && <span className="text-xs font-bold text-accent-ink">오늘</span>}
+          </li>
+        ))}
+        {more > 0 && <li className="px-1 text-xs text-muted tabular-nums">외 {more}개 구단</li>}
+      </ul>
+      {doubt && (
+        <p className="mt-2 text-xs text-muted tabular-nums">
+          {doubt.nameKo}는 &apos;필요 없다&apos;는 전망도 {doubt.doubted}건 있었어요
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -332,84 +413,35 @@ function RowResult({ player: p }: { player: PostingPlayer }) {
 }
 
 /**
- * '계약까지 얼마나 걸릴까': 포스팅 중인 선수의 '지금' 그래프와 역대 계약 시점 요약 한 문장.
- * '보통 마감 직전에 계약해요'는 역대 계약의 절반 넘게가 마지막 며칠에 몰렸을 때만 쓴다(데이터가 말할 때만).
- */
-function Timeline({
-  players,
-  single,
-  signings,
-}: {
-  players: PostingPlayer[];
-  single: PostingPlayer | null;
-  signings: Signing[];
-}) {
-  const now = nowFaces(players);
-  if (signings.length === 0 && now.length === 0) return null;
-  const past = signings.filter((s) => !s.thisYear);
-  const near = past.filter((s) => s.days <= NEAR_DEADLINE).length;
-  const mostlyLate = near * 2 > past.length;
-  const openDays = single && isOpen(single) ? single.daysLeft : null;
-  // 지금보다 일찍 계약한 선수(마감까지 남은 날이 지금보다 많을 때 계약). 빠른 순
-  const earlier = openDays != null ? past.filter((s) => s.days > openDays).sort((a, b) => b.days - a.days) : null;
-  return (
-    <div className="mt-5">
-      <p className="mb-2 flex items-baseline justify-between gap-2 text-[0.8125rem] font-bold">
-        계약까지 얼마나 걸릴까
-        {past.length > 0 && (
-          <span className="shrink-0 text-[0.6875rem] font-normal text-muted tabular-nums">역대 포스팅 {past.length}건</span>
-        )}
-      </p>
-      <PostingTimeline
-        now={now}
-        fill={single?.status === "NEGOTIATING"}
-        startLabel={single ? `${kstDay(single.windowOpensAt)} 시작` : "협상 시작"}
-        endLabel={single ? `${kstDay(single.deadlineAt)} 마감` : "마감"}
-        lateDays={NEAR_DEADLINE}
-        lateNote={past.length > 0 ? `${past.length}명 중 ${near}명` : null}
-      />
-      {past.length > 0 && (
-        <p className="mt-2 text-[0.8125rem] leading-relaxed text-neutral-pill-fg">
-          {mostlyLate && "보통 마감 직전에 계약해요. "}
-          <b className="font-bold text-foreground">
-            {past.length}명 중 {near}명이 마지막 {NEAR_DEADLINE}일 안에
-          </b>{" "}
-          계약했어요.
-          {earlier != null &&
-            (earlier.length === 0 ? (
-              " 지금보다 일찍 계약한 선수는 없었어요."
-            ) : (
-              <>
-                {" "}지금({openDays === 0 ? "오늘 마감" : `D-${openDays}`})보다 빨랐던 건{" "}
-                {/* 이름과 끝말('뿐이에요')이 줄바꿈으로 떨어지지 않게 묶는다 */}
-                <span className="whitespace-nowrap">
-                  <b className="font-bold text-foreground">
-                    {earlier.map((s) => `${s.nameKo}(D-${s.days})`).join("·")}
-                  </b>
-                  {earlier.length === 1 ? "뿐이에요." : ` ${earlier.length}명이에요.`}
-                </span>
-              </>
-            ))}
-        </p>
-      )}
-    </div>
-  );
-}
-
-/**
  * '역대 포스팅 계약' 보장액 순위: 얼굴 · 이름 · 연도·구단 · 마감 며칠 전 / 잉크 막대 + 금액(달러↔원화).
  * 막대는 위 '지금' 진행 막대와 헷갈리지 않게 바탕 줄 없이, 왼쪽이 거의 투명하고 금액 쪽으로 진해지는 글자색 막대다
  * (`.ink-bar`). 파랑·신호색·팀 색을 쓰지 않는다(The One Blue Rule, 어두운 화면에서 갈색·남색 팀 색이 묻힘).
  * 길이는 금액이 2배면 1.5배(BAR_EXPONENT).
  */
-function SigningList({ signings }: { signings: Signing[] }) {
-  const top = Math.max(...signings.map((s) => s.amount));
+function SigningList({
+  signings,
+  maxAmount,
+  head = true,
+  foot = true,
+  flush = false,
+}: {
+  signings: Signing[];
+  /** 막대 길이 기준(1위 금액). 목록을 나눠 그릴 때 넘긴다 */
+  maxAmount?: number;
+  head?: boolean;
+  foot?: boolean;
+  /** 위 선·여백 없이(접기 안에 넣을 때) */
+  flush?: boolean;
+}) {
+  const top = maxAmount ?? Math.max(...signings.map((s) => s.amount));
   return (
-    <div className="mt-4 border-t border-line pt-3 lg:mt-0 lg:border-t-0 lg:pt-0">
-      <p className="mb-1 flex items-baseline justify-between gap-2 text-[0.8125rem] font-bold">
-        역대 포스팅 계약
-        <span className="shrink-0 text-[0.6875rem] font-normal text-muted">보장액 순</span>
-      </p>
+    <div className={flush ? "" : "mt-4 border-t border-line pt-3 lg:mt-0 lg:border-t-0 lg:pt-0"}>
+      {head && (
+        <p className="mb-1 flex items-baseline justify-between gap-2 text-[0.8125rem] font-bold">
+          역대 포스팅 계약
+          <span className="shrink-0 text-[0.6875rem] font-normal text-muted">보장액 순</span>
+        </p>
+      )}
       <ul className="money-flip-pause divide-y divide-line">
         {signings.map((s) => {
           // 1위 금액이 0이면(보장액 0만 있는 경우) 나눗셈이 NaN이 되지 않게 모두 최소 길이
@@ -430,7 +462,8 @@ function SigningList({ signings }: { signings: Signing[] }) {
                     {s.teamKo ? ` · ${s.teamKo}` : ""}
                   </span>
                   <span className="ml-auto shrink-0 text-xs text-muted tabular-nums">
-                    {s.days === 0 ? "마감 당일" : `마감 ${s.days}일 전`}
+                    {/* '마감 22일 전'은 위 'D-20'(남은 날)과 같은 축으로 읽혀서, 계약 시점임을 문장으로 쓴다(11-12 PC 평가) */}
+                    {s.days === 0 ? "마감 당일 계약" : `${s.days}일 남기고 계약`}
                   </span>
                 </p>
                 <div className="mt-1.5 flex items-center gap-2">
@@ -444,9 +477,11 @@ function SigningList({ signings }: { signings: Signing[] }) {
           );
         })}
       </ul>
-      <p className="mt-1.5 text-[0.6875rem] leading-relaxed text-muted">
-        보장액(옵션 제외) · 원화는 계약 당시 환율 · 막대는 금액 2배면 1.5배 길이. 출처: MLB Trade Rumors·ECB 등
-      </p>
+      {foot && (
+        <p className="mt-1.5 pb-1 text-[0.6875rem] leading-relaxed text-muted">
+          보장액(옵션 제외) · 원화는 계약 당시 환율 · 막대는 금액 2배면 1.5배 길이. 출처: MLB Trade Rumors·ECB 등
+        </p>
+      )}
     </div>
   );
 }
@@ -481,17 +516,17 @@ function DealMoney({
   );
 }
 
+/** 관련 기사 중 처음부터 보이는 수(사용자 11-12 결정). 나머지는 '기사 n건 더 보기' */
+const NEWS_SHOWN_PHONE = 2;
+const NEWS_SHOWN_PC = 3;
+
 /**
- * 관련 기사 제목. 여러 명이면 모두의 기사를 모아(같은 기사는 읽을거리가 많은 사본 하나) 선수 이름을 붙이고 늦은 순으로 둔다.
- * 제목만 보이는 목록이라 늦은 순 그대로 자른다(요약은 누르면 나오는 기사 페이지에 있다).
+ * 관련 기사. 여러 명이면 모두의 기사를 모아(같은 기사는 읽을거리가 많은 사본 하나) 선수 이름을 붙이고 늦은 순으로 둔다.
+ * 기사 수는 서버가 정한다(선수마다 최대 12건).
  */
-function News({ players }: { players: PostingPlayer[] }) {
+function newsOf(players: PostingPlayer[]) {
   const multi = players.length > 1;
-  const merged = uniqueByUrl(
+  return uniqueByUrl(
     players.flatMap((p) => p.news.map((n) => ({ ...n, who: multi ? p.nameKo : null, playerPhotoUrl: p.photoUrl }))),
-  );
-  const items = merged
-    .sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt))
-    .slice(0, multi ? NEWS_LIMIT : 5);
-  return <PostingNews items={items} />;
+  ).sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt));
 }

@@ -236,8 +236,29 @@ export interface PostingPlayer {
   /** 협상 기간 중 지난 비율 0~1 */
   elapsedRatio: number;
   deal: PostingDeal | null;
-  /** 관련 기사(늦은 순, 최대 5건) */
+  /** 관련 기사(늦은 순, 최대 12건. 옛 api는 5건) */
   news: NewsHeadline[];
+  /** 최근 며칠 기사에서 이 선수의 행선지로 거론된 MLB 구단(AI가 기사마다 고른 것). 옛 api면 없다 */
+  linkedTeams?: LinkedTeams | null;
+}
+
+/** 최근 days일(한국 날짜, 오늘 포함) 기사에서 행선지로 거론된 구단. teams는 거론이 많은 순 → 오늘 → 최근 순 */
+export interface LinkedTeams {
+  days: number;
+  teams: LinkedTeam[];
+}
+
+export interface LinkedTeam {
+  /** MLB 대표 약어(NYM) */
+  abbreviation: string;
+  /** 한글 이름(뉴욕 메츠) */
+  nameKo: string;
+  /** 갈 수 있다·관심 있다는 거론이 나온 기사 수 */
+  linked: number;
+  /** 필요 없다·안 갈 것이라는 전망이 나온 기사 수 */
+  doubted: number;
+  /** 오늘(한국 날짜) 나온 기사에서 거론됐나 */
+  today: boolean;
 }
 
 /** 지금 포스팅 제도(2018~)의 지난 기록. 결렬이면 deal·daysBeforeDeadline이 null */
