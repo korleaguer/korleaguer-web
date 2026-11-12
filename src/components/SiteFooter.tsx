@@ -13,7 +13,7 @@ export default function SiteFooter() {
             href={MLB_NOTICE_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="press inline-flex items-center gap-0.5 underline underline-offset-2 hover:text-foreground"
+            className="press tap-target inline-flex items-center gap-0.5 underline underline-offset-2 hover:text-foreground"
           >
             MLB 이용 고지
             <ExternalLinkIcon />

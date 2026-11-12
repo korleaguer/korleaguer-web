@@ -33,4 +33,4 @@ export default function StateNotice({
 
 /** StateNotice의 버튼 모양(파란 알약). 링크·버튼 어느 쪽에도 붙인다 */
 export const stateActionClass =
-  "press inline-flex h-10 items-center rounded-full bg-accent px-5 text-[0.9375rem] font-bold text-accent-fg hover:opacity-90";
+  "press inline-flex h-11 items-center rounded-full bg-accent px-5 text-[0.9375rem] font-bold text-accent-fg hover:opacity-90";
