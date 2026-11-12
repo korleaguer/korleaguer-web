@@ -2,6 +2,7 @@ import type { HitterSeason, RankingMinimums } from "@/lib/api";
 import { formatRate } from "@/lib/format";
 import { rankedHitter, splitByMinors, topBy } from "@/lib/stats";
 import PlayerLink from "@/components/PlayerLink";
+import RollingNumber from "@/components/RollingNumber";
 import Section from "@/components/Section";
 
 interface Props {
@@ -74,7 +75,7 @@ function LeaderCard({
       {first ? (
         <>
           <p className="mb-2 mt-0.5 text-[1.75rem] font-extrabold leading-tight tracking-[-0.02em] text-accent-ink tabular-nums">
-            {leader.format(first.value)}
+            <RollingNumber value={leader.format(first.value)} />
           </p>
           <p className="flex min-w-0 items-center gap-1 text-sm font-semibold">
             <PlayerLink
