@@ -26,7 +26,8 @@ export async function GET(_request: Request, { params }: RouteContext<"/news/[id
         <div style={{ display: "flex", flexDirection: "column", flex: 1, padding: "72px 80px 56px" }}>
           {news && (
             <div style={{ fontSize: 32, fontWeight: 700, color: OG_COLORS.muted }}>
-              {news.publisher} · {formatDate(news.publishedAt)}
+              {/* 글자 조각이 여러 개면 그림 도구가 display:flex를 요구해서(없으면 그림 실패 → 502) 한 문자열로 넣는다 */}
+              {`${news.publisher} · ${formatDate(news.publishedAt)}`}
             </div>
           )}
           {/* 한국어는 낱말 중간에서 줄을 바꾸지 않는다(웹의 keep-all). 그림 도구는 keep-all을 몰라서 낱말마다 상자로 감싼다 */}
