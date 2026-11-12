@@ -1,6 +1,6 @@
 "use client"; // 막대를 누르면 아래 한 줄을 그 경기로 바꿔야 해서 클라이언트 컴포넌트다.
 
-import { useState, type CSSProperties } from "react";
+import { useRef, useState, type CSSProperties, type PointerEvent } from "react";
 import type { GameLine, Role } from "@/lib/api";
 import { haptic } from "@/lib/app";
 import { formatDate, formatLineup, formatShortDate, formatSummary, formatWeekday } from "@/lib/format";
@@ -70,14 +70,48 @@ export default function GameBars({ slots, role, days, minors = false }: Props) {
   const gameCount = slots.filter((slot) => slot.game).length;
   const current = slots[selected]?.game ?? null;
 
+  // 손가락(마우스)으로 막대 위를 가로로 훑으면 지나는 경기마다 고른다(토스 그래프처럼). 세로로 밀면 화면이 스크롤된다(touch-pan-y)
+  const groupRef = useRef<HTMLDivElement>(null);
+  const scrubbing = useRef(false);
+  // 마지막으로 고른 칸. 손가락이 빨리 움직이면 다시 그리기 전에 같은 칸이 또 와서, state 대신 이것으로 틱이 한 번만 나게 한다
+  const picked = useRef(selected);
+  function pick(i: number) {
+    if (i === picked.current || !slots[i]?.game) return;
+    picked.current = i;
+    // 다른 경기를 고르면 앱 안이면 고르기 틱
+    haptic("select");
+    setSelected(i);
+  }
+  function scrub(e: PointerEvent<HTMLDivElement>) {
+    const el = groupRef.current;
+    if (!scrubbing.current || !el) return;
+    const { left, width } = el.getBoundingClientRect();
+    pick(Math.min(slots.length - 1, Math.max(0, Math.floor(((e.clientX - left) / width) * slots.length))));
+  }
+
   return (
     <div className="mt-4">
       <div className="flex items-baseline justify-between gap-2 text-xs text-muted">
         <h3 className="font-semibold">{pitcher ? "경기별 던진 이닝" : "경기별 안타"}</h3>
-        {gameCount > 1 && <span>막대를 누르면 그 경기</span>}
+        {gameCount > 1 && <span>막대를 누르거나 훑으면 그 경기</span>}
       </div>
 
-      <div role="group" aria-label={pitcher ? "경기별 던진 이닝" : "경기별 안타"} className={`mt-2 grid ${gap}`} style={grid}>
+      <div
+        ref={groupRef}
+        role="group"
+        aria-label={pitcher ? "경기별 던진 이닝" : "경기별 안타"}
+        className={`mt-2 grid touch-pan-y select-none ${gap}`}
+        style={grid}
+        onPointerDown={(e) => {
+          if (e.button !== 0) return;
+          scrubbing.current = true;
+          scrub(e);
+        }}
+        onPointerMove={scrub}
+        onPointerUp={() => (scrubbing.current = false)}
+        onPointerCancel={() => (scrubbing.current = false)}
+        onPointerLeave={() => (scrubbing.current = false)}
+      >
         {slots.map((slot, i) => {
           const day = showsDay(slot, i, slots.length, days);
           const dayText = (
@@ -116,11 +150,8 @@ export default function GameBars({ slots, role, days, minors = false }: Props) {
               type="button"
               aria-pressed={on}
               aria-label={barLabel(game, role)}
-              onClick={() => {
-                // 다른 경기를 고르면 앱 안이면 고르기 틱
-                if (i !== selected) haptic("select");
-                setSelected(i);
-              }}
+              // 키보드(Enter·Space)로 누를 때. 손가락·마우스는 위 훑기가 먼저 고른다
+              onClick={() => pick(i)}
               className="group flex min-w-0 cursor-pointer flex-col gap-1 rounded-md"
             >
               <span className="relative flex h-[4.5rem] w-full items-end justify-center border-b border-line">
