@@ -4,6 +4,8 @@ import type { CardStatus, LevelTotals, MyPlayer, SeasonReport, SeasonTier } from
 import { formatEra, formatRate } from "@/lib/format";
 import { teamColor } from "@/lib/teams";
 import PlayerAvatar from "@/components/PlayerAvatar";
+import ShowMore from "@/components/ShowMore";
+import NewsTitleList from "@/components/news/NewsTitleList";
 import BandPhoto from "@/components/my/BandPhoto";
 import { StatusBadge } from "@/components/my/FormSummary";
 import MyPlayerToggle from "@/components/my/MyPlayerToggle";
@@ -49,6 +51,8 @@ export default function SeasonReportCard({
   const style = TIER_STYLE[report.tier];
   const good = report.tier === "GOOD";
   const meta = metaLine(entry);
+  // 기사 사진이 없거나 안 뜨면 이 선수 사진으로
+  const news = (report.news ?? []).map((n) => ({ ...n, playerPhotoUrl: player.photoUrl }));
   return (
     <li className="card card-link relative flex flex-col overflow-hidden has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-accent">
       {good && (
@@ -107,22 +111,44 @@ export default function SeasonReportCard({
           </ul>
         )}
 
-        {report.winterMoves.length > 0 && (
-          <div className="mt-3 border-t border-line pt-3">
+        {(report.winterMoves.length > 0 || news.length > 0) && (
+          // 링크 위(relative z-10)에 올려 기사 줄·더 보기가 제 동작을 한다(카드 링크는 선수 페이지)
+          <div className="relative z-10 mt-3 border-t border-line pt-3">
             <p className="text-xs font-bold text-muted">이번 겨울</p>
-            <ul>
-              {report.winterMoves.map((m) => (
-                <li key={`${m.date}-${m.label}`} className="mt-1 text-[0.875rem]">
-                  <span className="text-muted tabular-nums">{monthDay(m.date)}</span> <span className="font-bold">{m.label}</span>
-                </li>
-              ))}
-            </ul>
+            {report.winterMoves.length > 0 && (
+              <ul>
+                {report.winterMoves.map((m) => (
+                  <li key={`${m.date}-${m.label}`} className="mt-1 text-[0.875rem]">
+                    <span className="text-muted tabular-nums">{monthDay(m.date)}</span>{" "}
+                    <span className="font-bold">{m.label}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {news.length > 0 && (
+              <>
+                <NewsTitleList items={news.slice(0, WINTER_NEWS_SHOWN)} />
+                {news.length > WINTER_NEWS_SHOWN && (
+                  <ShowMore
+                    moreLabel={`기사 ${news.length - WINTER_NEWS_SHOWN}건 더 보기`}
+                    buttonClassName="border-t border-line py-2.5"
+                  >
+                    <div className="border-t border-line">
+                      <NewsTitleList items={news.slice(WINTER_NEWS_SHOWN)} />
+                    </div>
+                  </ShowMore>
+                )}
+              </>
+            )}
           </div>
         )}
       </div>
     </li>
   );
 }
+
+/** '이번 겨울' 기사 중 처음부터 보이는 수(확정안: 사진+제목 2건, 나머지는 '기사 n건 더 보기') */
+const WINTER_NEWS_SHOWN = 2;
 
 /** "2026-11-03" → "11월 3일" */
 function monthDay(date: string): string {

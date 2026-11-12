@@ -303,6 +303,8 @@ export interface SeasonReport {
   stories: string[];
   /** 시즌이 끝난 뒤 이동(FA 선언 등), 최근 순 */
   winterMoves: { date: string; label: string }[];
+  /** 시즌이 끝난 뒤 나온 이 선수 기사(늦은 순, 같은 기사는 한 줄, 12건까지). 옛 api면 없다 */
+  news?: NewsHeadline[];
 }
 
 /** GET /api/players 의 한 항목. 매칭 전 선수는 이름(한글)·역할 말고는 null일 수 있다 */
