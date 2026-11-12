@@ -63,7 +63,7 @@ export default function ShowMore({ moreLabel, lessLabel = "접기", children, bu
           strokeWidth="1.75"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className={`size-3.5 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          className={`size-3.5 transition-transform duration-200 motion-reduce:transition-none ${open ? "rotate-180" : ""}`}
         >
           <path d="m4 6 4 4 4-4" />
         </svg>
