@@ -2,6 +2,7 @@
 
 import { useState, type CSSProperties } from "react";
 import type { GameLine, Role } from "@/lib/api";
+import { haptic } from "@/lib/app";
 import { formatDate, formatLineup, formatShortDate, formatSummary, formatWeekday } from "@/lib/format";
 import ResultPill from "@/components/ResultPill";
 import Highlights from "@/components/Highlights";
@@ -115,7 +116,11 @@ export default function GameBars({ slots, role, days, minors = false }: Props) {
               type="button"
               aria-pressed={on}
               aria-label={barLabel(game, role)}
-              onClick={() => setSelected(i)}
+              onClick={() => {
+                // 다른 경기를 고르면 앱 안이면 고르기 틱
+                if (i !== selected) haptic("select");
+                setSelected(i);
+              }}
               className="group flex min-w-0 cursor-pointer flex-col gap-1 rounded-md"
             >
               <span className="relative flex h-[4.5rem] w-full items-end justify-center border-b border-line">
