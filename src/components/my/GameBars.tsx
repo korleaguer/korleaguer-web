@@ -225,7 +225,7 @@ export default function GameBars({ slots, role, days, minors = false }: Props) {
             <Highlights line={current} className="mt-1.5" />
           </>
         ) : (
-          <p className="text-sm text-muted">이 기간에는 경기가 없습니다.</p>
+          <p className="text-sm text-muted">이 기간에는 경기가 없어요.</p>
         )}
       </div>
     </div>

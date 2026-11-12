@@ -24,7 +24,7 @@ export default function PlayerLink({
   return (
     <Link
       href={`/players/${playerId}`}
-      className={`group inline-flex min-w-0 items-center gap-2 ${className}`}
+      className={`press group inline-flex min-w-0 items-center gap-2 ${className}`}
     >
       <PlayerAvatar size={avatarSize} nameKo={nameKo} photoUrl={photoUrl} teamAbbr={teamAbbr} />
       <span className="truncate group-hover:text-accent-ink group-hover:underline">{nameKo}</span>

@@ -43,7 +43,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!result?.ok) {
     const missing = result == null || result.failure === "notFound";
     return missing
-      ? { title: "기사를 찾을 수 없습니다", robots: { index: false, follow: false } }
+      ? { title: "기사를 찾을 수 없어요", robots: { index: false, follow: false } }
       : { title: "관련 기사", robots: NO_INDEX };
   }
 
@@ -65,11 +65,11 @@ export default function NewsArticlePage({ params }: Props) {
 // 없는 기사는 notFound() 대신 안내를 직접 그린다(선수 페이지와 같은 이유: Suspense 안의 notFound는 서버 HTML에 안 나온다).
 async function NewsContent({ params }: Pick<Props, "params">) {
   const id = parseId((await params).id);
-  if (id == null) return <NotFoundNotice message="찾는 기사가 없습니다" />;
+  if (id == null) return <NotFoundNotice message="찾는 기사가 없어요" />;
 
   const result = await getNews(id);
   if (!result.ok) {
-    if (result.failure === "notFound") return <NotFoundNotice message="찾는 기사가 없습니다" />;
+    if (result.failure === "notFound") return <NotFoundNotice message="찾는 기사가 없어요" />;
     return <ApiErrorNotice failure={result.failure} />;
   }
 

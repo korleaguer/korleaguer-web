@@ -1,27 +1,44 @@
+import Link from "next/link";
 import type { ApiFailure } from "@/lib/api";
+import ReloadButton from "./ReloadButton";
+import StateNotice, { stateActionClass } from "./StateNotice";
 
-const MESSAGES: Record<ApiFailure, { title: string; detail: string }> = {
+const MESSAGES: Record<ApiFailure, { emoji: string; title: string; detail: string }> = {
   unreachable: {
-    title: "데이터 서버에 연결할 수 없습니다",
-    detail: "잠시 후 새로고침해 주세요. 직접 실행 중이라면 api 서버가 켜져 있는지 확인하세요.",
+    emoji: "📡",
+    title: "기록 서버에 연결하지 못했어요",
+    detail: "잠시 뒤 다시 불러와 주세요.",
   },
   badResponse: {
-    title: "데이터 서버의 응답이 올바르지 않습니다",
-    detail: "잠시 후 새로고침해 주세요.",
+    emoji: "📡",
+    title: "기록을 제대로 받지 못했어요",
+    detail: "잠시 뒤 다시 불러와 주세요.",
   },
   notFound: {
-    title: "데이터를 찾을 수 없습니다",
+    emoji: "🔍",
+    title: "찾는 기록이 없어요",
     detail: "주소가 맞는지 확인해 주세요.",
   },
 };
 
-/** api 호출이 실패했을 때 에러 화면 대신 보여 주는 안내 */
+/** api 호출이 실패했을 때 에러 화면 대신 보여 주는 안내. 없는 것이면 홈으로, 연결 문제면 다시 불러오기 */
 export default function ApiErrorNotice({ failure }: { failure: ApiFailure }) {
-  const { title, detail } = MESSAGES[failure];
+  const { emoji, title, detail } = MESSAGES[failure];
   return (
-    <div role="alert" className="card px-5 py-10 text-center">
-      <p className="text-base font-bold">{title}</p>
-      <p className="mt-2 text-sm text-muted">{detail}</p>
-    </div>
+    <StateNotice
+      alert
+      emoji={emoji}
+      title={title}
+      detail={detail}
+      action={
+        failure === "notFound" ? (
+          <Link href="/" className={stateActionClass}>
+            홈으로 가기
+          </Link>
+        ) : (
+          <ReloadButton />
+        )
+      }
+    />
   );
 }

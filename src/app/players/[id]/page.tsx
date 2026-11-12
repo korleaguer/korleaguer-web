@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     // 없는 선수는 검색에 걸리지 않게 noindex
     const missing = result == null || result.failure === "notFound";
     return missing
-      ? { title: "선수를 찾을 수 없습니다", robots: { index: false, follow: false } }
+      ? { title: "선수를 찾을 수 없어요", robots: { index: false, follow: false } }
       : { title: "선수 기록" };
   }
 
