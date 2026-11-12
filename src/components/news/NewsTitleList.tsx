@@ -12,7 +12,7 @@ export interface NewsTitleItem extends NewsHeadline {
 }
 
 /**
- * 기사 제목 목록. 줄마다 누구 기사 · 언론사 · 날짜와 제목, 오른쪽에 기사 썸네일을 둔다
+ * 기사 제목 목록. 줄마다 누구 기사 · 언론사(외 N곳) · 날짜와 제목, 오른쪽에 기사 썸네일을 둔다
  * (사용자 11-11: "기사 제목만 가져오고 클릭하면 새로운 페이지에서 썸네일과 요약", 11-12: "썸네일 다시 넣어").
  * 요약은 목록에 두지 않고, 누르면 우리 기사 페이지(/news/{id})에서 큰 사진과 함께 본다. 기사 번호가 없는 옛 API면 원문을 새 탭으로 연다.
  * twoColumns면 PC(lg)에서 두 칸으로 나눈다(줄은 왼쪽에서 오른쪽으로 찬다).
@@ -40,9 +40,19 @@ function NewsTitleRow({ item: n }: { item: NewsTitleItem }) {
       <span className="mt-0.5 line-clamp-2 text-[0.9375rem] font-semibold leading-snug tracking-[-0.01em] group-hover:underline">
         {n.titleKo ?? n.title}
       </span>
-      <span className="text-xs text-muted tabular-nums">
-        {n.who ? `${n.who} · ` : ""}
-        {n.publisher} · {formatDate(n.publishedAt)}
+      {/* 출처 줄은 한 줄로 둔다. 좁으면 누구·언론사만 '…'으로 줄이고 '외 N곳'과 날짜는 남긴다 */}
+      <span className="flex min-w-0 whitespace-nowrap text-xs text-muted tabular-nums">
+        <span className="min-w-0 truncate">
+          {n.who ? `${n.who} · ` : ""}
+          {n.publisher}
+        </span>
+        {/* 언론사만 다른 같은 기사는 서버가 한 줄로 묶었다. 같은 글을 실은 다른 언론사 수만 보인다(이름은 PC에서 마우스를 올리면) */}
+        {n.alsoBy.length > 0 && (
+          <span className="shrink-0" title={`같은 기사: ${n.alsoBy.join(", ")}`}>
+            {`\u00a0외 ${n.alsoBy.length}곳`}
+          </span>
+        )}
+        <span className="shrink-0">{`\u00a0· ${formatDate(n.publishedAt)}`}</span>
       </span>
     </span>
   );
