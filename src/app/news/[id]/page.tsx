@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { getNews, type NewsPage } from "@/lib/api";
 import { formatDate, formatTime } from "@/lib/format";
 import { readableLead, splitSentences } from "@/lib/news";
+import { shareMeta } from "@/lib/share";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import ExternalLinkIcon from "@/components/ExternalLinkIcon";
 import LoadingBlock from "@/components/LoadingBlock";
@@ -47,11 +48,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const news = result.data;
-  return {
-    title: news.titleKo ?? news.title,
-    description: splitSentences(news.summary)[0] ?? undefined,
-    robots: NO_INDEX,
-  };
+  const title = news.titleKo ?? news.title;
+  const description = splitSentences(news.summary)[0] ?? undefined;
+  // 공유 카드 그림은 같은 폴더의 opengraph-image.tsx(언론사·제목)
+  return { title, description, robots: NO_INDEX, ...shareMeta(title, description, true) };
 }
 
 export default function NewsArticlePage({ params }: Props) {
