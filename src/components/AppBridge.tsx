@@ -28,9 +28,13 @@ export default function AppBridge() {
         // 그사이 다른 탭에서 '내 선수'를 바꿨을 수 있다. 서버에서 다시 그려 오되 스크롤 위치는 그대로 둔다.
         router.refresh();
       } else if (detail?.type === "tab-root" && isSitePath(detail.path)) {
-        // 탭 첫 화면이면 맨 위로, 아니면 첫 화면으로(새로고침 없이 이동)
-        if (window.location.pathname === detail.path) window.scrollTo({ top: 0, behavior: "smooth" });
-        else router.push(detail.path);
+        // 탭 첫 화면이면 맨 위로(기기의 '동작 줄이기'가 켜져 있으면 미끄러지지 않고 바로), 아니면 첫 화면으로(새로고침 없이 이동)
+        if (window.location.pathname === detail.path) {
+          const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+          window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
+        } else {
+          router.push(detail.path);
+        }
       }
     }
     window.addEventListener(APP_EVENT, onAppEvent);

@@ -55,7 +55,7 @@ export default function MyHeader({ subtitle, players, selectedIds }: Props) {
             strokeWidth="1.75"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className={`size-3.5 text-muted transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+            className={`size-3.5 text-muted transition-transform duration-200 motion-reduce:transition-none ${open ? "rotate-180" : ""}`}
           >
             <path d="m4 6 4 4 4-4" />
           </svg>
