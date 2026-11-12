@@ -487,7 +487,9 @@ function DealMoney({
  */
 function News({ players }: { players: PostingPlayer[] }) {
   const multi = players.length > 1;
-  const merged = uniqueByUrl(players.flatMap((p) => p.news.map((n) => ({ ...n, who: multi ? p.nameKo : null }))));
+  const merged = uniqueByUrl(
+    players.flatMap((p) => p.news.map((n) => ({ ...n, who: multi ? p.nameKo : null, playerPhotoUrl: p.photoUrl }))),
+  );
   const items = merged
     .sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt))
     .slice(0, multi ? NEWS_LIMIT : 5);

@@ -88,7 +88,8 @@ async function NewsContent({ params }: Pick<Props, "params">) {
       <Article news={news} />
       <Section title={`${news.player} 다른 기사`} id="more-news">
         <div className="card px-4">
-          <NewsTitleList items={news.more} />
+          {/* 다른 기사도 같은 선수라 썸네일이 안 뜨면 이 선수 사진으로 바꾼다 */}
+          <NewsTitleList items={news.more.map((n) => ({ ...n, playerPhotoUrl: news.playerPhotoUrl }))} />
         </div>
       </Section>
     </div>
