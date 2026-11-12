@@ -54,7 +54,7 @@ export default function SeasonReportCard({
   // 기사 사진이 없거나 안 뜨면 이 선수 사진으로
   const news = (report.news ?? []).map((n) => ({ ...n, playerPhotoUrl: player.photoUrl }));
   return (
-    <li className="card card-link relative flex flex-col overflow-hidden has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-accent">
+    <li className="card card-link relative flex flex-col overflow-hidden has-[h3_a:focus-visible]:outline-2 has-[h3_a:focus-visible]:outline-offset-2 has-[h3_a:focus-visible]:outline-accent">
       {good && (
         // 잘한 시즌은 팀 색 무대에 사진을 크게(내 선수 카드와 같은 무대). isolate: 배지의 z-10이 무대 안에서만 통하게
         <div className="player-stage isolate h-[6.5rem]" style={{ "--team": teamColor(player.teamAbbr) } as CSSProperties}>
