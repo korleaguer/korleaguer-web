@@ -104,13 +104,14 @@ export default function GameBars({ slots, role, days, minors = false }: Props) {
         style={grid}
         onPointerDown={(e) => {
           if (e.button !== 0) return;
+          // 마우스도 묶음 밖으로 잠깐 나갔다 와도 계속 훑게 손을 뗄 때까지 붙잡는다
+          e.currentTarget.setPointerCapture(e.pointerId);
           scrubbing.current = true;
           scrub(e);
         }}
         onPointerMove={scrub}
         onPointerUp={() => (scrubbing.current = false)}
         onPointerCancel={() => (scrubbing.current = false)}
-        onPointerLeave={() => (scrubbing.current = false)}
       >
         {slots.map((slot, i) => {
           const day = showsDay(slot, i, slots.length, days);
@@ -150,8 +151,11 @@ export default function GameBars({ slots, role, days, minors = false }: Props) {
               type="button"
               aria-pressed={on}
               aria-label={barLabel(game, role)}
-              // 키보드(Enter·Space)로 누를 때. 손가락·마우스는 위 훑기가 먼저 고른다
-              onClick={() => pick(i)}
+              // 키보드(Enter·Space)로 누를 때만(detail 0). 손가락·마우스는 위 훑기가 고르고,
+              // 눌렀다 옆 칸으로 밀고 뗐을 때 처음 칸의 click이 선택을 되돌리지 않게 한다
+              onClick={(e) => {
+                if (e.detail === 0) pick(i);
+              }}
               className="group flex min-w-0 cursor-pointer flex-col gap-1 rounded-md"
             >
               <span className="relative flex h-[4.5rem] w-full items-end justify-center border-b border-line">

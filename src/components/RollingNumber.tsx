@@ -87,7 +87,8 @@ export default function RollingNumber({ value }: { value: string }) {
 
     if (!el || !p || reduce) {
       seen.current = true;
-      current.current = p?.value ?? 0;
+      // 숫자가 아닌 글("-")이면 앞 숫자를 기억해 두었다가, 다시 숫자가 오면 거기서부터 센다
+      if (p) current.current = p.value;
       setShown(value);
     } else if (!seen.current) {
       // 처음: 이미 보이면 그대로, 화면 밖이면 0으로 두었다가 보일 때 센다(화면 밖이라 0은 보이지 않는다)
@@ -123,7 +124,7 @@ export default function RollingNumber({ value }: { value: string }) {
   return (
     <>
       <span className="sr-only">{value}</span>
-      <span ref={ref} aria-hidden>
+      <span ref={ref} aria-hidden className="select-none">
         {shown}
       </span>
     </>
