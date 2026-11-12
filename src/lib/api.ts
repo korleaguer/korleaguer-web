@@ -343,7 +343,7 @@ export interface CareerPhoto {
   teamKo: string;
   /** "2017–2023" */
   years: string | null;
-  /** "/photos/kbo-67341-2023" */
+  /** "/photos/career-67341-2023"(MLB 사진과 같은 틀의 편집본). 옛 api는 "/photos/kbo-67341-2023"(배경 있는 KBO 원본) */
   photoUrl: string;
 }
 

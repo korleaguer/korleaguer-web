@@ -3,9 +3,10 @@
 // 브라우저는 하루 동안 저장해 두고, 그 뒤에는 ETag로 바뀌었는지만 묻는다(바뀌지 않았으면 304).
 import type { NextRequest } from "next/server";
 
-// mlb-808982(지금 MLB 사진), kbo-…(KBO 사진), posting-673490-2024(MLB 도전 선배 사진: 계약 구단 시절 MLB 사진의 흰 바탕 편집본).
+// mlb-808982(지금 MLB 사진), kbo-…(KBO 사진), posting-673490-2024(MLB 도전 선배 사진: 계약 구단 시절 MLB 사진의 흰 바탕 편집본),
+// career-67341-2023(선수 페이지 과거 소속팀 사진: MLB 사진과 같은 틀의 투명 바탕 편집본).
 // mlb-673490-2024(편집 전 그 시즌 MLB 사진)는 옛 api가 주던 이름이라 남겨 둔다
-const KEY = /^(mlb-\d{1,10}(-\d{4})?|kbo-[a-z0-9-]{1,40}|posting-\d{1,10}-\d{4})$/;
+const KEY = /^(mlb-\d{1,10}(-\d{4})?|kbo-[a-z0-9-]{1,40}|posting-\d{1,10}-\d{4}|career-\d{1,10}-\d{4})$/;
 // 처음 요청이면 api가 원본을 받는 동안 기다린다(원본 연결 5초 + 읽기 10초 + 간격)
 const TIMEOUT_MS = 20_000;
 const PASS_HEADERS = ["content-type", "etag", "cache-control", "content-length"];
