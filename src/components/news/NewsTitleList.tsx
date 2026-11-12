@@ -46,10 +46,12 @@ function NewsTitleRow({ item: n }: { item: NewsTitleItem }) {
           {n.who ? `${n.who} · ` : ""}
           {n.publisher}
         </span>
-        {/* 언론사만 다른 같은 기사는 서버가 한 줄로 묶었다. 같은 글을 실은 다른 언론사 수만 보인다(이름은 PC에서 마우스를 올리면) */}
+        {/* 언론사만 다른 같은 기사는 서버가 한 줄로 묶었다. 같은 글을 실은 다른 언론사 수만 보인다
+            (이름은 PC에서 마우스를 올리면 보이고, 마우스를 못 쓰는 화면 낭독기에는 읽어 준다) */}
         {n.alsoBy.length > 0 && (
           <span className="shrink-0" title={`같은 기사: ${n.alsoBy.join(", ")}`}>
             {`\u00a0외 ${n.alsoBy.length}곳`}
+            <span className="sr-only">{`(같은 기사: ${n.alsoBy.join(", ")})`}</span>
           </span>
         )}
         <span className="shrink-0">{`\u00a0· ${formatDate(n.publishedAt)}`}</span>
