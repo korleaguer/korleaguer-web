@@ -67,7 +67,10 @@ function LeaderCard({
   const first = firsts[0];
 
   return (
-    <li className="card min-w-0 p-3.5">
+    // 1위가 있으면 카드 어디를 눌러도 1위 선수 페이지로 간다(이름 링크의 ::after를 카드 전체로, 이슈 #158)
+    <li
+      className={`card min-w-0 p-3.5 ${first ? "card-link relative has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-accent" : ""}`}
+    >
       <h3 className="flex flex-wrap items-baseline gap-x-1.5 text-[0.8125rem] font-semibold text-muted">
         {leader.title}
         {filtered && <span className="text-[0.6875rem] font-medium">{`${ranking.minPlateAppearances}타석 이상`}</span>}
@@ -84,6 +87,7 @@ function LeaderCard({
               photoUrl={first.row.photoUrl}
               teamAbbr={first.row.teamAbbr}
               avatarSize={28}
+              className="after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none"
             />
             {firsts.length > 1 && <span className="shrink-0 text-muted">{`외 ${firsts.length - 1}명`}</span>}
           </p>
