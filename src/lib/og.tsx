@@ -26,10 +26,16 @@ export function ogFonts() {
   fonts ??= Promise.all([
     readFile(join(FONT_DIR, "Pretendard-Bold.otf")),
     readFile(join(FONT_DIR, "Pretendard-ExtraBold.otf")),
-  ]).then(([bold, extraBold]) => [
-    { name: "Pretendard", data: bold, weight: 700 as const, style: "normal" as const },
-    { name: "Pretendard", data: extraBold, weight: 800 as const, style: "normal" as const },
-  ]);
+  ])
+    .then(([bold, extraBold]) => [
+      { name: "Pretendard", data: bold, weight: 700 as const, style: "normal" as const },
+      { name: "Pretendard", data: extraBold, weight: 800 as const, style: "normal" as const },
+    ])
+    .catch((error: unknown) => {
+      // 한 번 실패한 것을 붙들고 있으면 서버를 다시 켤 때까지 모든 그림이 실패한다. 다음 요청에서 다시 읽는다
+      fonts = null;
+      throw error;
+    });
   return fonts;
 }
 
