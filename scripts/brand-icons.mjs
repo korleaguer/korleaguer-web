@@ -10,8 +10,8 @@ const render = (source, size) =>
   sharp(Buffer.from(source), { density: (72 * size) / 100 }).resize(size, size).png({ compressionLevel: 9 }).toBuffer();
 
 // 아이폰은 아이콘 모서리를 스스로 깎으므로 꽉 찬 정사각형, 투명 없이
-const square = svg.replace(/ rx="[\d.]+"/, "");
-const apple = await sharp(await render(square, 180)).flatten({ background: "#1c46d6" }).png().toBuffer();
+const square = svg.replace(/(<rect width="100" height="100") rx="[\d.]+"/, "$1");
+const apple = await sharp(await render(square, 180)).flatten({ background: "#060d22" }).png().toBuffer();
 await writeFile(join(APP_DIR, "apple-icon.png"), apple);
 
 // ICO: PNG를 그대로 담는 형식(요즘 브라우저는 모두 읽는다). 머리 6바이트 + 그림마다 16바이트 목록 + PNG들
