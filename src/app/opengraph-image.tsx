@@ -1,10 +1,12 @@
 // 사이트 기본 미리보기 그림(홈·선수 목록·내 선수 등 따로 그림이 없는 화면). 선수·기사 화면은 각자 그림이 있다.
 import { ImageResponse } from "next/og";
 import { OG_COLORS, OG_SIZE, OgBrand, ogFonts } from "@/lib/og";
+import { SITE_IMAGE_ALT, ogImageMetadata } from "@/lib/share";
 
-export const size = OG_SIZE;
-export const contentType = "image/png";
-export const alt = "KOR Leaguer — 해외파 한국 선수 기록 모아보기";
+// 그림 주소는 /…/opengraph-image/<배포 커밋>이다. 배포마다 주소가 바뀌어 카톡이 옛 그림을 쓰지 않는다(lib/share.ts OG_VERSION).
+export function generateImageMetadata() {
+  return ogImageMetadata(SITE_IMAGE_ALT);
+}
 
 export default async function Image() {
   const fonts = await ogFonts();
