@@ -6,11 +6,15 @@ import ApiErrorNotice from "@/components/ApiErrorNotice";
 import DataBanners from "@/components/DataBanners";
 import LoadingBlock from "@/components/LoadingBlock";
 import PlayerCard from "@/components/players/PlayerCard";
+import { shareMeta } from "@/lib/share";
 
 // <title>: "선수 · KOR Leaguer" (뒷부분은 layout의 template이 붙인다)
+const DESCRIPTION = "한국 MLB 선수 모아보기. 선수별 시즌 성적을 한눈에 봅니다.";
+
 export const metadata: Metadata = {
   title: "선수",
-  description: "한국 MLB 선수 모아보기. 선수별 시즌 성적을 한눈에 봅니다.",
+  description: DESCRIPTION,
+  ...shareMeta("선수 · KOR Leaguer", DESCRIPTION),
 };
 
 // 선수 목록. 데이터는 요청마다 api에서 새로 받는다.

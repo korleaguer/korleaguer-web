@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 // Pretendard 글꼴. 글꼴 파일을 빌드 결과에 넣어 우리 서버가 주고, 한글은 화면에 쓴 글자 조각(unicode-range)만 받는다.
 import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
+import { SITE_NAME, SITE_URL, shareMeta } from "@/lib/share";
 import AppBridge from "@/components/AppBridge";
 import SiteFooter from "@/components/SiteFooter";
 import SiteHeader from "@/components/SiteHeader";
 import "./globals.css";
+
+const DESCRIPTION = "한국 MLB 선수들의 최근 경기 한 줄 기록과 시즌 성적을 모아 봅니다.";
 
 export const metadata: Metadata = {
   title: {
@@ -12,7 +15,12 @@ export const metadata: Metadata = {
     // 하위 페이지 제목 뒤에 붙는다. 예: "이정후 2026 기록 · KOR Leaguer"
     template: "%s · KOR Leaguer",
   },
-  description: "한국 MLB 선수들의 최근 경기 한 줄 기록과 시즌 성적을 모아 봅니다.",
+  description: DESCRIPTION,
+  // 공유 미리보기 그림 주소(og:image)를 절대 주소로 만드는 기준
+  metadataBase: new URL(SITE_URL),
+  // 카톡·SNS에 링크를 보내면 붙는 카드. 그림은 app/opengraph-image.tsx(화면별 그림이 있으면 그것)
+  ...shareMeta(SITE_NAME, DESCRIPTION),
+  twitter: { card: "summary_large_image" },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { HitterSeason, PitcherSeason, PlayerSummary } from "@/lib/api";
-import { formatEra, formatRate } from "@/lib/format";
+import { seasonStats } from "@/lib/seasonStats";
 import InfoChips from "@/components/InfoChips";
 import PlayerSubline from "@/components/PlayerSubline";
 import PlayerAvatar from "@/components/PlayerAvatar";
@@ -13,31 +13,6 @@ interface Props {
   pitching: PitcherSeason | null;
   /** 내 선수로 골라 둔 선수인지 */
   isMine: boolean;
-}
-
-interface Stat {
-  label: string;
-  value: string;
-}
-
-/** 카드 아래 기록 세 칸. 타자끼리, 투수끼리 같은 칸이 같은 자리에 와서 나란히 비교할 수 있다. 기록이 없으면 null */
-function seasonStats(player: PlayerSummary, hitting: HitterSeason | null, pitching: PitcherSeason | null): Stat[] | null {
-  if (player.role === "PITCHER") {
-    return pitching
-      ? [
-          { label: "평균자책점", value: formatEra(pitching.era) },
-          { label: "승-패", value: `${pitching.wins}-${pitching.losses}` },
-          { label: "탈삼진", value: String(pitching.strikeouts) },
-        ]
-      : null;
-  }
-  return hitting
-    ? [
-        { label: "타율", value: formatRate(hitting.avg) },
-        { label: "홈런", value: String(hitting.homeRuns) },
-        { label: "OPS", value: formatRate(hitting.ops) },
-      ]
-    : null;
 }
 
 /** 선수 목록의 카드 한 장. 카드 어디를 눌러도 선수 페이지로 가고, 오른쪽 위 별은 '내 선수' 넣기·빼기다. */
