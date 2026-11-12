@@ -99,6 +99,8 @@ async function NewsContent({ params }: Pick<Props, "params">) {
 /**
  * 기사 한 건: 제목(영어 기사는 원제도) → 출처 줄 → 사진 → 요약 본문 → 원문 보기(사용자가 고른 시안, 이슈 #122).
  * 요약은 이 페이지의 본문이라 회색 칸에 넣지 않고 흰 카드 위 큰 글자로, 문장마다 한 단락으로 둔다.
+ * 휴대폰 첫 화면에 요약과 원문 버튼이 들어오게 촘촘하게 둔다: 글자는 iOS 기본 본문 크기(17)를 지키고 줄·단락 간격과
+ * 사진 비율만 줄였다(사용자가 고른 '촘촘하게' 시안, 이슈 #149).
  * 회색 칸 안 작은 글씨는 툴팁처럼 보여 눈이 사진·제목으로 쏠렸다(사용자 의견 11-12).
  * 'AI 요약'은 출처 줄에 한 번만 적는다. 요약이 아직 없으면 기사 앞부분을 같은 자리·같은 글자로 둔다.
  */
@@ -108,7 +110,7 @@ function Article({ news }: { news: NewsPage }) {
   const kind = summary.length > 0 ? "AI 요약" : body.length > 0 ? "기사 앞부분" : null;
   return (
     <article className="card min-w-0 p-4 sm:p-6">
-      <h1 className="text-[1.1875rem] font-bold leading-[1.45] tracking-[-0.02em] sm:text-[1.375rem] sm:leading-[1.4]">
+      <h1 className="text-[1.125rem] font-bold leading-[1.4] tracking-[-0.02em] sm:text-[1.375rem]">
         {news.titleKo ?? news.title}
       </h1>
       {news.titleKo && (
@@ -124,20 +126,20 @@ function Article({ news }: { news: NewsPage }) {
       <NewsPhoto url={news.imageUrl} fallback={news.playerPhotoUrl} />
 
       {body.length > 0 ? (
-        <div className="mt-5 space-y-4 text-[1.0625rem] leading-[1.75] tracking-[-0.01em]">
+        <div className="mt-3.5 space-y-2 text-[1.0625rem] leading-[1.6] tracking-[-0.01em]">
           {body.map((sentence, i) => (
             <p key={i}>{sentence}</p>
           ))}
         </div>
       ) : (
-        <p className="mt-5 text-[0.9375rem] text-muted">아직 요약을 만들지 못했어요. 원문에서 읽어 주세요.</p>
+        <p className="mt-3.5 text-[0.9375rem] text-muted">아직 요약을 만들지 못했어요. 원문에서 읽어 주세요.</p>
       )}
 
       <a
         href={news.url}
         target="_blank"
         rel="noopener noreferrer"
-        className="press-soft mt-6 flex min-h-12 w-full items-center justify-center gap-1.5 rounded-xl bg-surface-2 px-4 text-[0.9375rem] font-semibold transition hover:bg-line"
+        className="press-soft mt-4 flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl bg-surface-2 px-4 text-[0.9375rem] font-semibold transition hover:bg-line"
       >
         {news.publisher}에서 원문 보기
         <ExternalLinkIcon />
