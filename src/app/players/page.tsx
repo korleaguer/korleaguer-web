@@ -49,7 +49,10 @@ async function PlayersContent() {
           아직 등록된 선수가 없습니다.
         </p>
       ) : (
-        <ul className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+        <ul
+          // grid-cols-1: 칸 폭을 화면에 묶는다(기본 auto 칸은 큰 글씨에서 카드 내용만큼 넓어져 화면 밖으로 나간다)
+          className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3"
+        >
           {players.map((player) => (
             <PlayerCard
               key={player.id}

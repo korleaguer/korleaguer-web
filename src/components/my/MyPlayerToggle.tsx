@@ -42,7 +42,7 @@ export default function MyPlayerToggle({ playerId, nameKo, initialOn, variant, c
         aria-pressed={on}
         aria-label={label}
         onClick={toggle}
-        className={`press inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[0.8125rem] font-semibold transition duration-150 ${on ? "bg-accent-soft text-accent-ink" : "bg-surface-2 text-neutral-pill-fg hover:text-foreground"} ${pending ? "opacity-70" : ""}`}
+        className={`press inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-[0.8125rem] font-semibold transition duration-150 ${on ? "bg-accent-soft text-accent-ink" : "bg-surface-2 text-neutral-pill-fg hover:text-foreground"} ${pending ? "opacity-70" : ""}`}
       >
         <StarIcon filled={on} className="size-4" />
         <span aria-hidden>{on ? "내 선수" : "내 선수에 넣기"}</span>

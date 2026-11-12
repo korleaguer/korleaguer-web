@@ -98,7 +98,8 @@ export default function PhotoStage({
     <>
       <div aria-hidden className="team-band h-[68px]" style={{ "--team": shot.color } as CSSProperties} />
       <div className="-mt-11 px-4 pb-4 sm:px-5 sm:pb-5">
-        <div className="flex items-end justify-between gap-3">
+        {/* 자리가 모자라면(큰 글씨 등) '내 선수' 버튼이 사진 아래로 내려간다 */}
+        <div className="flex flex-wrap items-end justify-between gap-3">
           {many ? (
             <button
               type="button"
