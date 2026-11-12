@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import type { CardStatus, FormFact, MyPlayer, PlayCode, SeasonTotals } from "@/lib/api";
 import { formatEra, formatRate } from "@/lib/format";
+import RollingNumber from "@/components/RollingNumber";
 import {
   type BadgeTone,
   levelKo,
@@ -139,7 +140,8 @@ export function Numbers({
       <dl>
         <dt className="text-xs text-muted">{label}</dt>
         <dd className="mt-1 text-[2.75rem] font-extrabold leading-none tracking-[-0.03em] tabular-nums">
-          {value}
+          {/* 기간을 바꾸거나 화면 밖에서 들어오면 굴러가며 바뀐다 */}
+          <RollingNumber value={value} />
         </dd>
         {note != null && <dd className="mt-1.5 text-xs font-semibold text-muted">{note}</dd>}
       </dl>
