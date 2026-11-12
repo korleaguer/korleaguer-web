@@ -39,8 +39,11 @@ export default function FormCard({ entry, days, statsAvailable, isMine = true, n
   const showsGames = statsAvailable && basis !== "SEASON" && basis !== "NONE" && games.length > 0;
 
   return (
-    <li className="card flex flex-col overflow-hidden">
-      <div className="player-stage h-[5.75rem]" style={{ "--team": team } as CSSProperties}>
+    // 이름 링크를 카드 전체로 넓혀서(after:absolute) 카드 어디를 눌러도 선수 페이지로 간다(이슈 #155, 선수 목록 카드와 같은 방식).
+    // 화면 낭독기는 이름만 읽는다. 별·막대·펼치기는 링크 위(relative z-10)에 올려 제 동작만 한다.
+    <li className="card card-link relative flex flex-col overflow-hidden has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-accent">
+      {/* isolate: 상태 배지의 z-10이 무대 안에서만 통하게 해서, 배지를 눌러도 카드 링크로 간다 */}
+      <div className="player-stage isolate h-[5.75rem]" style={{ "--team": team } as CSSProperties}>
         {entry.status && <StatusBadge status={entry.status} />}
         <BandPhoto nameKo={player.nameKo} photoUrl={player.photoUrl} teamAbbr={player.teamAbbr} />
       </div>
@@ -49,7 +52,10 @@ export default function FormCard({ entry, days, statsAvailable, isMine = true, n
         <div className="flex items-start gap-2">
           <div className="min-w-0 flex-1">
             <Name className="text-xl font-extrabold leading-snug tracking-[-0.02em]">
-              <Link href={`/players/${player.id}`} className="press inline-block hover:text-accent-ink">
+              <Link
+                href={`/players/${player.id}`}
+                className="after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none"
+              >
                 {player.nameKo}
               </Link>
             </Name>
@@ -62,7 +68,7 @@ export default function FormCard({ entry, days, statsAvailable, isMine = true, n
             nameKo={player.nameKo}
             initialOn={isMine}
             variant="icon"
-            className="-mr-2 -mt-1"
+            className="relative z-10 -mr-2 -mt-1"
           />
         </div>
 
@@ -87,14 +93,17 @@ export default function FormCard({ entry, days, statsAvailable, isMine = true, n
             {entry.pitching && (
               <PitcherNumbers period={periodLabel(basis, level, days, entry.isFallback)} pitching={entry.pitching} />
             )}
-            {/* 기간이 바뀌면 막대 자리도 바뀌므로 고른 막대를 처음부터 다시 정한다(key) */}
-            <GameBars
-              key={`${fromKst}~${toKst}`}
-              slots={barSlots(fromKst, toKst, games)}
-              role={player.role}
-              days={days}
-              minors={minors}
-            />
+            {/* 기간이 바뀌면 막대 자리도 바뀌므로 고른 막대를 처음부터 다시 정한다(key).
+                막대 사이 빈틈을 잘못 눌러 페이지가 바뀌지 않게 그래프 묶음 전체를 링크 위에 둔다 */}
+            <div className="relative z-10">
+              <GameBars
+                key={`${fromKst}~${toKst}`}
+                slots={barSlots(fromKst, toKst, games)}
+                role={player.role}
+                days={days}
+                minors={minors}
+              />
+            </div>
           </>
         ) : (
           <Notice>아직 이 선수의 기록을 연결하지 못했어요.</Notice>
@@ -102,7 +111,8 @@ export default function FormCard({ entry, days, statsAvailable, isMine = true, n
 
         {/* 펼치면 경기별 기록이 버튼 위에 붙고, 버튼은 카드 맨 아래에서 '접기'가 된다 */}
         {showsGames && (
-          <div className="mt-auto pt-3">
+          // 펼친 경기 목록도 읽는 곳이라 링크 위에 둔다
+          <div className="relative z-10 mt-auto pt-3">
             <ShowMore moreLabel={`경기별 기록 ${games.length}개 모두 보기`} buttonClassName="rounded-lg py-2">
               <ul className="-mx-4 border-y border-line divide-y divide-line">
                 {games.map((game) => (
