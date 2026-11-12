@@ -21,7 +21,7 @@ export default function SiteHeader() {
         {/* 앱 안에서는 누를 수 없다. 홈은 앱 아래 '홈' 탭이 맡고, 다른 탭에서 누르면 탭 표시와 화면이 어긋난다. */}
         <Link
           href="/"
-          className="flex items-center gap-[7px] rounded-lg transition-opacity duration-200 motion-reduce:transition-none in-app:pointer-events-none group-data-titled:opacity-0"
+          className="flex items-center gap-[7px] rounded-lg transition-[opacity,scale] duration-200 active:scale-[0.96] motion-reduce:transition-none motion-reduce:active:scale-100 motion-reduce:active:opacity-70 in-app:pointer-events-none group-data-titled:opacity-0"
         >
           <LogoMark className="size-[1.625rem] shrink-0" />
           {/* 영어 이름이라 화면 낭독기가 영어로 읽게 lang="en" */}

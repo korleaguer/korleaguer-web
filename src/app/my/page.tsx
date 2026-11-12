@@ -9,11 +9,12 @@ import DataBanners from "@/components/DataBanners";
 import LoadingBlock from "@/components/LoadingBlock";
 import FormCard from "@/components/my/FormCard";
 import MyHeader from "@/components/my/MyHeader";
+import StateNotice from "@/components/StateNotice";
 
 // <title>: "내 선수 · KOR Leaguer". 사람마다 다른 화면이라 검색에는 올리지 않는다.
 export const metadata: Metadata = {
   title: "내 선수",
-  description: "고른 선수들의 최근 경기를 한곳에서 봅니다.",
+  description: "고른 선수들의 최근 경기를 한곳에서 봐요.",
   robots: { index: false, follow: true },
 };
 
@@ -61,7 +62,7 @@ async function MyContent({ searchParams }: Pick<PageProps<"/my">, "searchParams"
     (e) => e.basis === "LAST_PLAYED" || (e.basis === "REHAB" && e.isFallback),
   );
   const subtitle = !my
-    ? "좋아하는 선수를 골라 두면 최근 경기를 한곳에서 봅니다"
+    ? "좋아하는 선수를 골라 두면 최근 경기를 한곳에서 볼 수 있어요"
     : seasonView
       ? `고른 선수 ${picked.length}명 · ${offSeason ? "비시즌이라 " : ""}${my.season} 시즌 합계`
       : `고른 선수 ${picked.length}명 · ${formatDateRange(my.fromKst, my.toKst)}`;
@@ -77,7 +78,7 @@ async function MyContent({ searchParams }: Pick<PageProps<"/my">, "searchParams"
           {!seasonView && <PeriodTabs days={days} />}
           {!seasonView && showFallbackNote && (
             <p className="px-1 text-[0.8125rem] text-muted">
-              {`최근 ${days}일에 경기가 없는 선수는 그 선수가 마지막으로 뛴 날까지 ${days}일을 보여 줍니다.`}
+              {`최근 ${days}일에 경기가 없는 선수는 그 선수가 마지막으로 뛴 날까지 ${days}일을 보여 줘요.`}
             </p>
           )}
           <ul className="grid items-start gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -87,9 +88,12 @@ async function MyContent({ searchParams }: Pick<PageProps<"/my">, "searchParams"
           </ul>
         </>
       ) : (
-        <p className="card px-5 py-8 text-center text-sm text-muted">
-          아직 고른 선수가 없습니다. 위 목록에서 챙겨 볼 선수를 누르면 여기에 선수마다 카드가 생깁니다.
-        </p>
+        // 아무도 안 골랐으면 위 '선수 고르기' 목록이 열려 있어서 따로 버튼을 두지 않는다
+        <StateNotice
+          emoji="⭐"
+          title="아직 고른 선수가 없어요"
+          detail="위 목록에서 챙겨 볼 선수를 누르면 여기에 선수마다 카드가 생겨요."
+        />
       )}
     </div>
   );

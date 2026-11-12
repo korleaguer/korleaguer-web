@@ -42,7 +42,7 @@ export default function SeasonLeaders({ season, statsAvailable, ranking, hitters
           ))}
         </ul>
       ) : (
-        <p className="card px-4 py-5 text-sm text-muted">아직 시즌 기록을 받지 못했습니다.</p>
+        <p className="card px-4 py-5 text-sm text-muted">아직 시즌 기록을 받지 못했어요.</p>
       )}
     </Section>
   );
@@ -97,7 +97,7 @@ function LeaderCard({
 
 /** 1위가 없을 때 이유 한 줄. 표와 같은 기준(메이저 선수 2명 이상, 비율 기록은 최소 타석)으로 말한다 */
 function emptyMessage(hitterCount: number, majorCount: number, filtered: boolean): string {
-  if (hitterCount === 0) return "아직 기록이 없습니다.";
-  if (majorCount < 2) return "비교할 메이저 선수가 아직 2명이 안 됩니다.";
-  return filtered ? "아직 기준을 채운 선수가 없습니다." : "아직 기록이 없습니다.";
+  if (hitterCount === 0) return "아직 기록이 없어요.";
+  if (majorCount < 2) return "비교할 메이저 선수가 아직 2명이 안 돼요.";
+  return filtered ? "아직 기준을 채운 선수가 없어요." : "아직 기록이 없어요.";
 }

@@ -50,14 +50,14 @@ export default function PlayerInfo({ player }: { player: PlayerDetail }) {
             ))}
           </dl>
         ) : (
-          <p className="text-sm text-muted">아직 선수 정보를 연결하지 못했습니다.</p>
+          <p className="text-sm text-muted">아직 선수 정보를 연결하지 못했어요.</p>
         )}
         {player.mlbUrl && (
           <a
             href={player.mlbUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-4 inline-flex items-center gap-1 text-[0.8125rem] font-semibold text-accent-ink hover:underline"
+            className="press mt-4 inline-flex items-center gap-1 text-[0.8125rem] font-semibold text-accent-ink hover:underline"
           >
             MLB 공식 페이지
             <ExternalLinkIcon />

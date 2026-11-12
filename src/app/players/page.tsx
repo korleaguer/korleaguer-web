@@ -6,10 +6,11 @@ import ApiErrorNotice from "@/components/ApiErrorNotice";
 import DataBanners from "@/components/DataBanners";
 import LoadingBlock from "@/components/LoadingBlock";
 import PlayerCard from "@/components/players/PlayerCard";
+import StateNotice from "@/components/StateNotice";
 import { shareMeta } from "@/lib/share";
 
 // <title>: "선수 · KOR Leaguer" (뒷부분은 layout의 template이 붙인다)
-const DESCRIPTION = "한국 MLB 선수 모아보기. 선수별 시즌 성적을 한눈에 봅니다.";
+const DESCRIPTION = "한국 MLB 선수 모아보기. 선수별 시즌 성적을 한눈에 봐요.";
 
 export const metadata: Metadata = {
   title: "선수",
@@ -45,9 +46,7 @@ async function PlayersContent() {
       <DataBanners dataMode={home.dataMode} statsAvailable={home.statsAvailable} />
       <p className="px-1 text-sm font-medium text-muted">{`${players.length}명 · ${home.season} 시즌 기록`}</p>
       {players.length === 0 ? (
-        <p className="card px-5 py-10 text-center text-sm text-muted">
-          아직 등록된 선수가 없습니다.
-        </p>
+        <StateNotice emoji="⚾" title="아직 등록된 선수가 없어요" detail="선수가 등록되면 여기에 선수마다 카드가 생겨요." />
       ) : (
         <ul
           // grid-cols-1: 칸 폭을 화면에 묶는다(기본 auto 칸은 큰 글씨에서 카드 내용만큼 넓어져 화면 밖으로 나간다)

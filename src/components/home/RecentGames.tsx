@@ -29,9 +29,9 @@ const STATUS: Record<string, string> = {
 function heading(recent: Recent): { title: string; note: string | null } {
   if (!recent.isFallback) return { title: "최근 24시간", note: null };
   if (recent.dateKst) {
-    return { title: `${formatDate(recent.dateKst)} 경기`, note: "최근 24시간 경기가 없습니다" };
+    return { title: `${formatDate(recent.dateKst)} 경기`, note: "최근 24시간 경기가 없어요" };
   }
-  return { title: "아직 경기 데이터가 없습니다", note: null };
+  return { title: "아직 경기 기록이 없어요", note: null };
 }
 
 /** ["6명 중 5명 출전", "팀 결과 3승 3패"]. 결과가 난 경기가 없으면 출전 수만, 줄이 없으면 빈 배열 */
@@ -74,7 +74,7 @@ export default function RecentGames({ recent, asOf }: Props) {
 
       {recent.lines.length === 0 ? (
         <p className="card px-4 py-6 text-sm text-muted">
-          {noData ? "경기 기록이 모이면 선수별 최근 경기가 여기에 나옵니다." : "표시할 경기가 없습니다."}
+          {noData ? "경기 기록이 모이면 선수별 최근 경기가 여기에 나와요." : "보여 줄 경기가 없어요."}
         </p>
       ) : (
         <ul className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
