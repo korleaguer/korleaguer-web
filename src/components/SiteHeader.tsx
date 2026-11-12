@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import AppBackButton from "./AppBackButton";
+import ShareButton from "./ShareButton";
 import SiteNav, { NavLinks } from "./SiteNav";
 
 /** 맨 위 흰 머리글. 파란 'K' 상자 + KOR Leaguer, 알약 모양 메뉴 */
@@ -30,6 +31,10 @@ export default function SiteHeader() {
           <SiteNav />
         </Suspense>
         <span className="ml-auto hidden text-xs text-muted md:inline">한국 MLB 선수 경기 기록 모아보기</span>
+        {/* 앱 안에서만 보이는 공유 버튼. 현재 주소를 읽으므로 Suspense 안에 둔다 */}
+        <Suspense fallback={null}>
+          <ShareButton />
+        </Suspense>
       </div>
     </header>
   );

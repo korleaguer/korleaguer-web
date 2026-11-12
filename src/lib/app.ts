@@ -7,8 +7,8 @@ type AppWindow = Window & {
   ReactNativeWebView?: { postMessage(message: string): void };
 };
 
-/** 앱이 할 수 있는 일. "stack" = 화면을 네이티브로 쌓는다(0.2.0~), "haptic" = 손끝 진동(0.2.0 다음 빌드~) */
-export type AppFeature = "stack" | "haptic";
+/** 앱이 할 수 있는 일. "stack" = 화면을 네이티브로 쌓는다(0.2.0~), "haptic" = 손끝 진동, "share" = 기기 공유 창 */
+export type AppFeature = "stack" | "haptic" | "share";
 
 /** 지금 이 웹을 띄운 앱이 그 기능을 갖고 있나. 브라우저나 옛 앱이면 false */
 export function appHas(feature: AppFeature): boolean {
