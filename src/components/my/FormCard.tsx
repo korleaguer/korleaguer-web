@@ -95,7 +95,7 @@ export default function FormCard({ entry, days, statsAvailable, isMine = true, n
             )}
             {/* 기간이 바뀌면 막대 자리도 바뀌므로 고른 막대를 처음부터 다시 정한다(key).
                 막대 사이 빈틈을 잘못 눌러 페이지가 바뀌지 않게 그래프 묶음 전체를 링크 위에 둔다 */}
-            <div className="relative z-10">
+            <div data-no-press className="relative z-10">
               <GameBars
                 key={`${fromKst}~${toKst}`}
                 slots={barSlots(fromKst, toKst, games)}
@@ -112,7 +112,7 @@ export default function FormCard({ entry, days, statsAvailable, isMine = true, n
         {/* 펼치면 경기별 기록이 버튼 위에 붙고, 버튼은 카드 맨 아래에서 '접기'가 된다 */}
         {showsGames && (
           // 펼친 경기 목록도 읽는 곳이라 링크 위에 둔다
-          <div className="relative z-10 mt-auto pt-3">
+          <div data-no-press className="relative z-10 mt-auto pt-3">
             <ShowMore moreLabel={`경기별 기록 ${games.length}개 모두 보기`} buttonClassName="rounded-lg py-2">
               <ul className="-mx-4 border-y border-line divide-y divide-line">
                 {games.map((game) => (
