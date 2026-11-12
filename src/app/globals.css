@@ -197,6 +197,8 @@
      * (앱도 같은 한도로 보낸다). 웹뷰가 스스로 글자를 키우지 않게 text-size-adjust는 고정.
      */
     font-size: calc(100% * clamp(0.85, var(--app-font-scale, 1), 1.5));
+    /* 앱 안 머리글은 위에 붙어 있어서(SiteHeader), 자리를 찾아 스크롤할 때 그 밑으로 숨지 않게 머리글 높이만큼 띄운다 */
+    scroll-padding-top: 3.5rem;
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
     -webkit-tap-highlight-color: transparent;
