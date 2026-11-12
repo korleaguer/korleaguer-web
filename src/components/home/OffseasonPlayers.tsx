@@ -5,6 +5,7 @@ import { readMyPlayers } from "@/lib/myPlayers";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import Section from "@/components/Section";
 import FormCard from "@/components/my/FormCard";
+import SeasonReportCard from "@/components/home/SeasonReportCard";
 
 /** 비시즌 카드는 시즌 합계라 기간이 뜻이 없다. /api/my가 요구하는 기간만 채운다 */
 const DAYS = 7;
@@ -44,15 +45,25 @@ export default async function OffseasonPlayers({ offseason }: { offseason: OffSe
     readMyPlayers(),
   ]);
   const my = myResult?.ok ? myResult.data : null;
-  const entries = my ? order(my.players, myIds) : [];
+  // 서버가 성적표를 주면(사용자 11-12 결정 '시즌 성적표') 그 순서(잘한 순)로, 아니면(옛 api) 예전 순서와 카드로
+  const report = new Map((offseason.report ?? []).map((r, i) => [r.playerId, { r, i }]));
+  const entries = my
+    ? report.size > 0
+      ? [...my.players].sort((a, b) => (report.get(a.player.id)?.i ?? 99) - (report.get(b.player.id)?.i ?? 99))
+      : order(my.players, myIds)
+    : [];
   const opening = offseason.nextOpeningDay
     ? `${offseason.nextSeason} 정규시즌은 미국 날짜로 ${formatDate(offseason.nextOpeningDay)}에 시작해요.`
     : `${offseason.nextSeason} 시즌 개막일은 아직 발표 전이에요.`;
 
   return (
-    <Section id="offseason-title" title={`${offseason.season} 시즌 끝`}>
+    <Section
+      id="offseason-title"
+      title={report.size > 0 ? `${offseason.season} 시즌 성적표` : `${offseason.season} 시즌 끝`}
+      aside={report.size > 0 ? "잘한 순" : undefined}
+    >
       <ul className="-mt-0.5 mb-2 flex flex-wrap gap-1.5 px-1">
-        {pills(offseason, entries).map((part) => (
+        {[...(report.size > 0 ? [`${offseason.season} 시즌 끝`] : []), ...pills(offseason, entries)].map((part) => (
           <li
             key={part}
             className="rounded-full bg-surface px-2.5 py-0.5 text-[0.8125rem] font-semibold leading-5 text-neutral-pill-fg tabular-nums"
@@ -71,7 +82,11 @@ export default async function OffseasonPlayers({ offseason }: { offseason: OffSe
       ) : (
         <ul className="grid items-stretch gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {/* 같은 줄 카드는 높이를 맞춘다(시즌 합계 카드는 펼치는 목록이 없다). 숫자 묶음은 카드 아래에 붙는다 */}
-          {entries.map((entry) => (
+          {entries.map((entry) => {
+            const r = report.get(entry.player.id)?.r;
+            return r ? (
+              <SeasonReportCard key={entry.player.id} entry={entry} report={r} isMine={myIds.includes(entry.player.id)} />
+            ) : (
             <FormCard
               key={entry.player.id}
               entry={entry}
@@ -80,7 +95,8 @@ export default async function OffseasonPlayers({ offseason }: { offseason: OffSe
               isMine={myIds.includes(entry.player.id)}
               nameAs="h3"
             />
-          ))}
+            );
+          })}
         </ul>
       )}
     </Section>
