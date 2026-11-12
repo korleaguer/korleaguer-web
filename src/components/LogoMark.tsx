@@ -1,12 +1,25 @@
-import { LOGO_BALL, LOGO_BG_FROM, LOGO_BG_TO, LOGO_TAIL, LOGO_TAIL_FROM, LOGO_TAIL_TO } from "@/lib/logo";
+import { LOGO_BASE_RADIUS, LOGO_BASE_SIDE, LOGO_BASES, LOGO_BG_FROM, LOGO_BG_TO, LOGO_GLOW } from "@/lib/logo";
 
 /**
- * 머리글의 로고 상자: 파랑 그러데이션 둥근 상자에 쏘아 올린 흰 공(혜성 공). 크기는 className으로 정한다.
+ * 머리글의 로고 상자 '만루': 남색 둥근 상자에 1·2·3루가 모두 켜진 주자 표시. 크기는 className으로 정한다.
  * 모서리는 26px 상자에서 8px(DESIGN.md '로고 상자')과 같은 비율이다.
- * 그라데이션 id가 여러 개 겹쳐도 내용이 같아서 어느 것을 가리켜도 같은 그림이 된다.
+ * 그라데이션·빛 번짐 id가 여러 개 겹쳐도 내용이 같아서 어느 것을 가리켜도 같은 그림이 된다.
  */
 export default function LogoMark({ className }: { className?: string }) {
-  const b = LOGO_BALL;
+  const s = LOGO_BASE_SIDE;
+  const bases = (fill: string) =>
+    LOGO_BASES.map((b) => (
+      <rect
+        key={`${b.x}-${b.y}`}
+        x={b.x - s / 2}
+        y={b.y - s / 2}
+        width={s}
+        height={s}
+        rx={LOGO_BASE_RADIUS}
+        transform={`rotate(45 ${b.x} ${b.y})`}
+        fill={fill}
+      />
+    ));
   return (
     <svg aria-hidden viewBox="0 0 100 100" className={className}>
       <defs>
@@ -14,21 +27,28 @@ export default function LogoMark({ className }: { className?: string }) {
           <stop offset="0" stopColor={LOGO_BG_FROM} />
           <stop offset="1" stopColor={LOGO_BG_TO} />
         </linearGradient>
-        <linearGradient
-          id="kl-logo-tail"
-          x1={LOGO_TAIL_FROM.x}
-          y1={LOGO_TAIL_FROM.y}
-          x2={LOGO_TAIL_TO.x}
-          y2={LOGO_TAIL_TO.y}
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop offset="0" stopColor="#fff" stopOpacity={0.95} />
-          <stop offset="1" stopColor="#fff" stopOpacity={0} />
-        </linearGradient>
+        <filter id="kl-logo-glow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="3.2" />
+        </filter>
       </defs>
       <rect width="100" height="100" rx={(8 / 26) * 100} fill="url(#kl-logo-bg)" />
-      <path d={LOGO_TAIL} fill="url(#kl-logo-tail)" />
-      <circle cx={b.cx} cy={b.cy} r={b.r} fill="#fff" />
+      {/* 어두운 머리글에서는 남색 상자가 바탕에 묻혀서 가장자리에 옅은 흰 테두리를 둔다(밝은 화면에서는 숨김) */}
+      <rect
+        x="1.5"
+        y="1.5"
+        width="97"
+        height="97"
+        rx={(8 / 26) * 100 - 1.5}
+        fill="none"
+        stroke="#fff"
+        strokeOpacity={0.22}
+        strokeWidth="3"
+        className="hidden dark:block"
+      />
+      <g filter="url(#kl-logo-glow)" opacity={0.55}>
+        {bases(LOGO_GLOW)}
+      </g>
+      {bases("#fff")}
     </svg>
   );
 }

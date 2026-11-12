@@ -1,36 +1,47 @@
-// KOR Leaguer 로고 '혜성 공'(11-12 A1): 파랑 그러데이션 바탕에 쏘아 올린 큰 흰 공과 휘어진 꼬리(흰색 → 투명). 100×100 기준 좌표.
+// KOR Leaguer 로고 '만루'(11-12 사용자 결정): 남색 상자에 마름모 세 개. 중계 화면 구석의 주자 표시에서 1·2·3루가 모두 켜진 모양이다.
+// 한국 선수 전원을 한 화면에 모아 보는 서비스를 '만루'로 나타낸다. 켜진 베이스 뒤로 옅은 빛이 번진다. 100×100 기준 좌표.
 // 웹 머리글(LogoMark), 공유 미리보기 그림(og.tsx)이 이 값을 함께 쓴다. 파비콘 원본은 src/app/icon.svg(같은 모양).
 // 앱(korleaguer-app)의 assets/brand/mark.svg도 같은 모양이다. 바꾸면 둘 다 바꾼다.
 
-/** 바탕 그러데이션: 왼쪽 위(밝은 파랑) → 오른쪽 아래(진한 파랑) */
-export const LOGO_BG_FROM = "#4d8bff";
-export const LOGO_BG_TO = "#1c46d6";
-/** 꼬리: 공에 접하는 두 점에서 왼쪽 아래 끝점까지, 위쪽 가장자리가 더 부푼 곡선 */
-export const LOGO_TAIL = "M48 26.6Q25.5 50.1 16 86Q42.7 66.5 74 51.4Z";
-/** 꼬리 그라데이션: 공 쪽(진함) → 왼쪽 아래(투명) */
-export const LOGO_TAIL_FROM = { x: 62, y: 38 };
-export const LOGO_TAIL_TO = { x: 18, y: 84 };
-export const LOGO_BALL = { cx: 61, cy: 39, r: 18 };
+/** 바탕 그러데이션: 왼쪽 위(남색) → 오른쪽 아래(거의 검은 남색) */
+export const LOGO_BG_FROM = "#16306e";
+export const LOGO_BG_TO = "#060d22";
+/** 베이스(45도 돌린 둥근 정사각형) 한 변과 모서리 둥글기 */
+export const LOGO_BASE_SIDE = 19;
+export const LOGO_BASE_RADIUS = 2.28;
+/** 베이스 가운데: 2루(위), 1루(오른쪽), 3루(왼쪽). 사이 간격 3.6, 세 개 묶음이 상자 가운데에 오게 */
+export const LOGO_BASES = [
+  { x: 50, y: 41.76 },
+  { x: 65.24, y: 57 },
+  { x: 34.76, y: 57 },
+] as const;
+/** 켜진 베이스 뒤로 번지는 빛 색(흐림 3.2, 불투명도 0.55) */
+export const LOGO_GLOW = "#7fb0ff";
+
+function baseRects(fill: string): string {
+  const s = LOGO_BASE_SIDE;
+  return LOGO_BASES.map(
+    (b) =>
+      `<rect x="${b.x - s / 2}" y="${b.y - s / 2}" width="${s}" height="${s}" rx="${LOGO_BASE_RADIUS}" ` +
+      `transform="rotate(45 ${b.x} ${b.y})" fill="${fill}"/>`,
+  ).join("");
+}
 
 /**
  * 로고 SVG 문자열. rx는 100 기준 모서리 둥글기(0이면 꽉 찬 정사각형).
  * 공유 미리보기 그림처럼 React 요소를 못 쓰는 곳에서 data: 주소로 넣는다.
  */
 export function logoSvg(rx = 0): string {
-  const f = LOGO_TAIL_FROM;
-  const t = LOGO_TAIL_TO;
-  const b = LOGO_BALL;
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">` +
     `<defs>` +
     `<linearGradient id="bg" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">` +
     `<stop offset="0" stop-color="${LOGO_BG_FROM}"/><stop offset="1" stop-color="${LOGO_BG_TO}"/></linearGradient>` +
-    `<linearGradient id="tail" x1="${f.x}" y1="${f.y}" x2="${t.x}" y2="${t.y}" gradientUnits="userSpaceOnUse">` +
-    `<stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>` +
+    `<filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3.2"/></filter>` +
     `</defs>` +
     `<rect width="100" height="100" rx="${rx}" fill="url(#bg)"/>` +
-    `<path d="${LOGO_TAIL}" fill="url(#tail)"/>` +
-    `<circle cx="${b.cx}" cy="${b.cy}" r="${b.r}" fill="#fff"/>` +
+    `<g filter="url(#glow)" opacity=".55">${baseRects(LOGO_GLOW)}</g>` +
+    baseRects("#fff") +
     `</svg>`
   );
 }
