@@ -12,6 +12,8 @@ import PostingNews from "@/components/home/PostingNews";
 
 /** 지금 포스팅 제도의 협상 기간(일) */
 const WINDOW_DAYS = 30;
+/** '마감 직전'으로 묶는 날 수(화면 읽기용 역대 계약 시점 한 문장) */
+const NEAR_DEADLINE = 4;
 /**
  * 역대 계약 순위 막대의 길이 규칙: 금액이 2배면 막대는 1.5배(사용자 결정 11-11).
  * 정비례면 1위(이정후 1억 1,300만 달러) 말고는 막대가 짧아 아래 선수끼리 차이가 안 보인다. 길이 = (금액 / 1위 금액)^지수
@@ -194,6 +196,11 @@ export default function MlbChallenge({ posting }: { posting: PostingSummary }) {
   const historyOnRight = news.length === 0 && signings.length > 0;
   // 띠가 있으면 오른쪽 칸을 띠 아래 20px에서 시작한다(띠의 lg:-mt-5가 카드 위 여백을 먹는다)
   const rightPad = single ? "lg:pt-5" : "";
+  // 기사도 역대 계약도 없으면 오른쪽 칸 없이 한 칸으로 그린다
+  const twoColumns = news.length > 0 || signings.length > 0;
+  // 역대 계약이 마감 며칠 전에 몰렸는지는 목록이 접혀 있어 화면 읽기용 한 문장으로 알린다(사용자 11-12: 눈에는 뺀 문장)
+  const past = signings.filter((s) => !s.thisYear);
+  const late = past.filter((s) => s.days <= NEAR_DEADLINE).length;
   return (
     <Section id="mlb-challenge-title" title="이번 겨울 MLB 도전">
       <ul className="-mt-0.5 mb-2 flex flex-wrap gap-1.5 px-1">
@@ -202,11 +209,16 @@ export default function MlbChallenge({ posting }: { posting: PostingSummary }) {
         </li>
       </ul>
       {/* PC(lg): 왼쪽 선수·거론 구단·역대 계약 접기, 오른쪽 관련 기사. 휴대폰은 위에서 아래로 */}
-      <div className="card p-4 lg:grid lg:grid-cols-2 lg:gap-x-8 lg:p-5">
+      <div className={`card p-4 lg:p-5 ${twoColumns ? "lg:grid lg:grid-cols-2 lg:gap-x-8" : ""}`}>
         {single && <HeadBand player={single} />}
         <div className="min-w-0">
           {single ? <PlayerHead player={single} /> : <PlayerRows players={players} />}
           {single && isOpen(single) && single.linkedTeams && <LinkedTeams counts={single.linkedTeams} />}
+          {past.length > 0 && (
+            <p className="sr-only">
+              역대 포스팅 계약 {past.length}건 중 {late}건이 마감 {NEAR_DEADLINE}일 안에 맺어졌어요.
+            </p>
+          )}
           {signings.length > 0 && (
             <div className={historyOnRight ? "lg:hidden" : undefined}>
               <HistoryToggle
@@ -221,13 +233,15 @@ export default function MlbChallenge({ posting }: { posting: PostingSummary }) {
             <PostingNews items={news} shown={NEWS_SHOWN_PHONE} />
           </div>
         </div>
-        <div className={`hidden lg:block ${rightPad}`}>
-          {historyOnRight ? (
-            <SigningList signings={signings} />
-          ) : (
-            <PostingNews items={news} shown={NEWS_SHOWN_PC} flush />
-          )}
-        </div>
+        {twoColumns && (
+          <div className={`hidden lg:block ${rightPad}`}>
+            {historyOnRight ? (
+              <SigningList signings={signings} />
+            ) : (
+              <PostingNews items={news} shown={NEWS_SHOWN_PC} flush />
+            )}
+          </div>
+        )}
       </div>
     </Section>
   );
@@ -242,7 +256,11 @@ function HeadBand({ player: p }: { player: PostingPlayer }) {
       style={{ "--team": kboTeamColor(p.kboTeam) } as CSSProperties}
     >
       {/* 휴대폰만. PC는 띠가 넓어 알약이 이름에서 멀리 떨어지므로 이름 옆에 둔다(PlayerHead) */}
-      <span className="absolute right-3 top-3 z-10 rounded-full bg-surface px-2.5 py-0.5 text-xs font-bold text-fa-fg shadow-[var(--shadow-card)] lg:hidden">
+      {/* 화면 읽기는 이름 다음의 알약이 맡는다(이름보다 먼저 읽히지 않게) */}
+      <span
+        aria-hidden
+        className="absolute right-3 top-3 z-10 rounded-full bg-surface px-2.5 py-0.5 text-xs font-bold text-fa-fg shadow-[var(--shadow-card)] lg:hidden"
+      >
         {status.label}
       </span>
     </div>
@@ -265,7 +283,7 @@ function PlayerHead({ player: p }: { player: PostingPlayer }) {
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <h3 className="text-[1.375rem] font-extrabold leading-tight tracking-[-0.02em]">{p.nameKo}</h3>
             <span
-              className={`hidden whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-bold lg:inline-block ${status.className}`}
+              className={`sr-only whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-bold lg:not-sr-only lg:inline-block ${status.className}`}
             >
               {status.label}
             </span>
@@ -519,6 +537,8 @@ function DealMoney({
 /** 관련 기사 중 처음부터 보이는 수(사용자 11-12 결정). 나머지는 '기사 n건 더 보기' */
 const NEWS_SHOWN_PHONE = 2;
 const NEWS_SHOWN_PC = 3;
+/** 여러 명이어도 관련 기사는 이만큼까지(서버는 선수마다 12건) */
+const NEWS_MAX = 12;
 
 /**
  * 관련 기사. 여러 명이면 모두의 기사를 모아(같은 기사는 읽을거리가 많은 사본 하나) 선수 이름을 붙이고 늦은 순으로 둔다.
@@ -528,5 +548,7 @@ function newsOf(players: PostingPlayer[]) {
   const multi = players.length > 1;
   return uniqueByUrl(
     players.flatMap((p) => p.news.map((n) => ({ ...n, who: multi ? p.nameKo : null, playerPhotoUrl: p.photoUrl }))),
-  ).sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt));
+  )
+    .sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt))
+    .slice(0, NEWS_MAX);
 }
