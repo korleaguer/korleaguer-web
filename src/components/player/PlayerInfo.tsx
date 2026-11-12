@@ -57,7 +57,7 @@ export default function PlayerInfo({ player }: { player: PlayerDetail }) {
             href={player.mlbUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="press mt-4 inline-flex items-center gap-1 text-[0.8125rem] font-semibold text-accent-ink hover:underline"
+            className="press tap-target mt-4 inline-flex items-center gap-1 text-[0.8125rem] font-semibold text-accent-ink hover:underline"
           >
             MLB 공식 페이지
             <ExternalLinkIcon />

@@ -296,6 +296,36 @@ export interface OffSeason {
   daysToOpening: number | null;
   /** 명단의 선수 번호. 이 번호로 /api/my를 불러 선수별 상태·시즌 합계를 받는다 */
   playerIds: number[];
+  /** 끝난 시즌의 선수별 성적표(잘한 순). 옛 api면 없다 */
+  report?: SeasonReport[];
+}
+
+/**
+ * 시즌 판정. GOOD 좋은 시즌 · SHORT_GOOD 짧았지만 좋았던 시즌 · SOLID 제 몫 한 시즌 · MINORS 트리플A(마이너)에서 보낸 시즌 ·
+ * SHORT 출전이 적었던 시즌 · POOR 아쉬운 시즌(혹평 대신, 이유 한 줄과 함께)
+ */
+export type SeasonTier = "GOOD" | "SHORT_GOOD" | "SOLID" | "MINORS" | "SHORT" | "POOR";
+
+/** 선수 한 명의 시즌 성적표(GET /api/home의 offseason.report) */
+export interface SeasonReport {
+  playerId: number;
+  tier: SeasonTier;
+  /** 판정 이름("제 몫 한 시즌") */
+  label: string;
+  /** 한 줄 제목("143경기 완주, 타격은 리그 평균") */
+  headline: string;
+  /** 사실 이유 한 줄. 없으면 null */
+  reason: string | null;
+  /** 카드 숫자를 어느 단계 시즌 합계로 보일지 */
+  level: "MLB" | "MINORS";
+  /** 메이저 WAR(소수 한 자리). 좋은·제 몫 시즌에만 보인다 */
+  war: number | null;
+  /** 자랑 알약(시즌 최장 연속 기록·최고 경기). 아쉬운·출전 적었던 시즌은 빈 목록 */
+  stories: string[];
+  /** 시즌이 끝난 뒤 이동(FA 선언 등), 최근 순 */
+  winterMoves: { date: string; label: string }[];
+  /** 시즌이 끝난 뒤 나온 이 선수 기사(늦은 순, 같은 기사는 한 줄, 12건까지). 옛 api면 없다 */
+  news?: NewsHeadline[];
 }
 
 /** GET /api/players 의 한 항목. 매칭 전 선수는 이름(한글)·역할 말고는 null일 수 있다 */
@@ -364,7 +394,7 @@ export interface CareerPhoto {
   teamKo: string;
   /** "2017–2023" */
   years: string | null;
-  /** "/photos/kbo-67341-2023" */
+  /** "/photos/career-67341-2023"(MLB 사진과 같은 틀의 편집본). 옛 api는 "/photos/kbo-67341-2023"(배경 있는 KBO 원본) */
   photoUrl: string;
 }
 

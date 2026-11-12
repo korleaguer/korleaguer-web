@@ -1,5 +1,12 @@
 // 기록 표에서 같이 쓰는 칸(셀) 모양.
 import type { ReactNode } from "react";
+import RowLinks from "./RowLinks";
+
+/**
+ * 누를 수 있는 줄(tbody·tr)의 모양. 줄에 data-href와 함께 붙이면 TableScroll(RowLinks)이 그 줄 어디를 눌러도 href로 보낸다.
+ * 마우스 기기에서는 hover 배경이 깔리고, 이름 칸(sticky)도 같은 색이 되도록 --table-bg를 바꾼다.
+ */
+export const ROW_LINK = "cursor-pointer hover:bg-surface-2 hover:[--table-bg:var(--surface-2)]";
 
 interface CellProps {
   children: ReactNode;
@@ -64,8 +71,8 @@ export function Td({
  */
 export function TableScroll({ children }: { children: ReactNode }) {
   return (
-    <div className="table-scroll relative overflow-x-auto">
+    <RowLinks className="table-scroll relative overflow-x-auto">
       <table className="w-full border-collapse text-sm tabular-nums [&_tr>*:first-child]:pl-4 [&_tr>*:last-child]:pr-4">{children}</table>
-    </div>
+    </RowLinks>
   );
 }

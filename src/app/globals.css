@@ -247,8 +247,29 @@
       scale 150ms cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  .card-link:hover {
-    box-shadow: var(--shadow-card-hover);
+  /* 마우스 기기에서만. 터치 기기는 누른 뒤 돌아와도 :hover가 남아 그림자가 떠 있다 */
+  @media (hover: hover) {
+    .card-link:hover {
+      box-shadow: var(--shadow-card-hover);
+    }
+  }
+
+  /*
+   * 보이는 크기는 그대로 두고 누르는 영역만 44×44px 이상으로 넓힌다(Apple 44pt·WCAG 2.5.5, 이슈 #164).
+   * 작은 알약·글자 링크·아이콘 버튼에 붙인다. 이웃과 겹치지 않을 만큼 간격이 있는 곳에만 쓴다.
+   */
+  .tap-target {
+    position: relative;
+  }
+
+  .tap-target::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    translate: -50% -50%;
   }
 
   .card-link:active:not(:has(button:active, [data-no-press]:active)) {
@@ -396,7 +417,7 @@
     }
 
     /* 크기를 바꾸는 대신 잠깐 흐려져서 눌렸다는 것만 알린다 */
-    .card-link:active:not(:has(button:active)),
+    .card-link:active:not(:has(button:active, [data-no-press]:active)),
     .press:active,
     .press-soft:active {
       scale: none;

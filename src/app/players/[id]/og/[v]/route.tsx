@@ -6,11 +6,11 @@ import { OG_COLORS, OG_SIZE, OgBrand, mixHex, ogFonts, photoDataUrl } from "@/li
 import { seasonStats } from "@/lib/seasonStats";
 import { teamColor } from "@/lib/teams";
 
-export const size = OG_SIZE;
-export const contentType = "image/png";
-export const alt = "KOR Leaguer 선수 기록";
+// 주소: /players/[id]/og/<판 번호>. 판 번호는 배포 커밋(lib/share.ts OG_VERSION)이고 그림에는 쓰지 않는다.
+// 카카오톡이 미리보기 그림을 주소 기준으로 저장해 두어서, 배포마다 주소가 바뀌게 판 번호를 넣는다(이슈 #157).
+// 페이지의 og:image는 page.tsx의 shareMeta가 이 주소를 가리킨다. 요청 때 그린다(데이터가 매일 바뀜).
 
-export default async function Image({ params }: { params: Promise<{ id: string }> }) {
+export async function GET(_request: Request, { params }: RouteContext<"/players/[id]/og/[v]">) {
   const { id } = await params;
   const result = /^[1-9]\d{0,9}$/.test(id) ? await getPlayer(Number(id)) : null;
   const fonts = await ogFonts();
@@ -45,6 +45,7 @@ export default async function Image({ params }: { params: Promise<{ id: string }
             }}
           >
             {photo ? (
+              // eslint-disable-next-line @next/next/no-img-element -- next/og 그림 안이라 next/image를 쓸 수 없다
               <img src={photo} width={240} height={240} style={{ objectFit: "cover" }} alt="" />
             ) : (
               <div style={{ fontSize: 110, fontWeight: 800, color: OG_COLORS.muted }}>{player.nameKo.slice(0, 1)}</div>

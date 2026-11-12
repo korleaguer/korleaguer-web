@@ -14,15 +14,16 @@ export interface Shot {
   /** 그 팀 대표 색(띠·사진이 없을 때 원) */
   color: string;
   /**
-   * mlb: 배경을 지운 MLB 사진(원 안에 조금 작게 아래쪽에 붙인다, PlayerAvatar와 같게)
-   * kbo: KBO 공식 증명사진(배경 있는 세로 사진이라 원을 꽉 채우고 얼굴 쪽에 맞춘다)
+   * silo: 배경 없는 사진(MLB 사진과 api의 과거 소속팀 편집본 /photos/career-…). 둘은 얼굴 크기·위치가 같은 틀이라
+   *       같은 자리(원 안에 조금 작게 아래쪽, PlayerAvatar와 같게)에 둔다
+   * cover: 배경 있는 KBO 증명사진(옛 api가 주던 /photos/kbo-…). 원을 꽉 채우고 얼굴 쪽에 맞춘다
    */
-  kind: "mlb" | "kbo";
+  frame: "silo" | "cover";
 }
 
-const PHOTO_CLASS: Record<Shot["kind"], string> = {
-  mlb: "object-contain object-bottom pl-[8%] pr-[8%] pt-[12%]",
-  kbo: "object-cover object-[50%_22%]",
+const PHOTO_CLASS: Record<Shot["frame"], string> = {
+  silo: "object-contain object-bottom pl-[8%] pr-[8%] pt-[12%]",
+  cover: "object-cover object-[50%_22%]",
 };
 
 /**
@@ -87,7 +88,7 @@ export default function PhotoStage({
             height={96}
             loading={active ? "eager" : "lazy"}
             onError={() => setFailed((f) => new Set(f).add(s.key))}
-            className={`absolute inset-0 block size-full ${PHOTO_CLASS[s.kind]} ${motion} ${visibility}`}
+            className={`absolute inset-0 block size-full ${PHOTO_CLASS[s.frame]} ${motion} ${visibility}`}
           />
         );
       })}
@@ -126,7 +127,7 @@ export default function PhotoStage({
                   type="button"
                   aria-pressed={active}
                   onClick={() => pick(i)}
-                  className={`press inline-flex min-h-8 items-center gap-1.5 rounded-full px-2.5 text-[0.8125rem] font-semibold leading-5 transition duration-150 motion-reduce:transition-none ${
+                  className={`press tap-target inline-flex min-h-8 items-center gap-1.5 rounded-full px-2.5 text-[0.8125rem] font-semibold leading-5 transition duration-150 motion-reduce:transition-none ${
                     active ? "bg-accent-soft text-accent-ink" : "bg-surface-2 text-muted hover:text-foreground"
                   }`}
                 >

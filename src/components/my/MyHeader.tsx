@@ -44,7 +44,7 @@ export default function MyHeader({ subtitle, players, selectedIds }: Props) {
             setOpen((v) => !v);
             setOpened(true);
           }}
-          className="inline-flex shrink-0 items-center gap-1 rounded-full bg-surface px-3.5 py-1.5 text-[0.8125rem] font-semibold shadow-[var(--shadow-card)] transition duration-150 hover:shadow-[var(--shadow-card-hover)] press"
+          className="inline-flex shrink-0 items-center gap-1 rounded-full bg-surface px-3.5 py-1.5 text-[0.8125rem] font-semibold shadow-[var(--shadow-card)] transition duration-150 hover:shadow-[var(--shadow-card-hover)] press tap-target"
         >
           선수 고르기
           <svg
