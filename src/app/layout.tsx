@@ -5,6 +5,7 @@ import { SITE_NAME, SITE_URL, shareMeta } from "@/lib/share";
 import AppBridge from "@/components/AppBridge";
 import SiteFooter from "@/components/SiteFooter";
 import SiteHeader from "@/components/SiteHeader";
+import Toaster from "@/components/Toaster";
 import "./globals.css";
 
 const DESCRIPTION = "한국 MLB 선수들의 최근 경기 한 줄 기록과 시즌 성적을 모아 봅니다.";
@@ -34,6 +35,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           {children}
         </main>
         <SiteFooter />
+        {/* 알림 띠(내 선수 넣기·빼기, 링크 복사 등). 띄우는 쪽은 src/lib/toast.ts */}
+        <Toaster />
       </body>
     </html>
   );

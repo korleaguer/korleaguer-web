@@ -122,3 +122,13 @@ export function formatBody(heightCm: number | null, weightKg: number | null): st
   ].filter(Boolean);
   return parts.length > 0 ? parts.join(" · ") : null;
 }
+
+/**
+ * 이름 뒤에 붙는 '을/를'. 마지막 글자에 받침이 있으면 '을'(고우석을), 없으면 '를'(이정후를).
+ * 한글이 아닌 글자로 끝나면 '를'로 둔다.
+ */
+export function withObjectParticle(word: string): string {
+  const code = word.charCodeAt(word.length - 1) - 0xac00;
+  const hasFinal = code >= 0 && code <= 11171 && code % 28 !== 0;
+  return `${word}${hasFinal ? "을" : "를"}`;
+}
