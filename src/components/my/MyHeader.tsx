@@ -91,7 +91,7 @@ export default function MyHeader({ subtitle, players, selectedIds }: Props) {
 
 /** 고르기 목록 한 줄: 사진 · 이름 · 팀 · 별. 줄 전체가 버튼이다 */
 function PickerRow({ player, initialOn }: { player: PlayerSummary; initialOn: boolean }) {
-  const { on, pending, limited, toggle } = useMyPlayerToggle(player.id, initialOn);
+  const { on, pending, toggle } = useMyPlayerToggle(player.id, initialOn, player.nameKo);
   const meta = [player.teamKo, player.positionKo].filter(Boolean).join(" · ");
 
   return (
@@ -107,11 +107,6 @@ function PickerRow({ player, initialOn }: { player: PlayerSummary; initialOn: bo
           <span className="block text-sm font-bold">{player.nameKo}</span>
           {meta && <span className="block truncate text-xs text-muted">{meta}</span>}
         </span>
-        {limited && (
-          <span role="status" className="text-xs text-muted">
-            20명까지
-          </span>
-        )}
         <StarIcon filled={on} className={`size-5 shrink-0 ${on ? "text-accent-ink" : "text-muted"}`} />
         <span className="sr-only">내 선수</span>
       </button>
