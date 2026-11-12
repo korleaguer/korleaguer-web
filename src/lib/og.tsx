@@ -40,7 +40,7 @@ export function ogFonts() {
   return fonts;
 }
 
-/** 로고 상자(혜성 공) 그림. 웹 머리글과 같은 모서리 비율(26px 상자에 8px) */
+/** 로고 상자('만루') 그림. 웹 머리글과 같은 모서리 비율(26px 상자에 8px) */
 const LOGO_DATA_URL = `data:image/svg+xml;base64,${Buffer.from(logoSvg((8 / 26) * 100)).toString("base64")}`;
 
 /** 로고 상자 + 'KOR Leaguer' 표시(웹 머리글 로고와 같은 모양) */
