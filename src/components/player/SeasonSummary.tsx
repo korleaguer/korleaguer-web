@@ -62,7 +62,7 @@ export default function SeasonSummary({ season, statsAvailable, hitting, pitchin
         )}
         {!hitting && !pitching && (
           <p className="card px-4 py-5 text-sm text-muted">
-            {statsAvailable ? "이번 시즌 기록이 없습니다." : "아직 시즌 기록을 받지 못했습니다."}
+            {statsAvailable ? "이번 시즌 기록이 없어요." : "아직 시즌 기록을 받지 못했어요."}
           </p>
         )}
       </div>

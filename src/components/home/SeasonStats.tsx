@@ -31,7 +31,7 @@ export default function SeasonStats({
   if (!statsAvailable) {
     return (
       <Section id="stats-title" title={`${season} 시즌 기록`}>
-        <p className="card px-4 py-5 text-sm text-muted">아직 시즌 기록을 받지 못했습니다.</p>
+        <p className="card px-4 py-5 text-sm text-muted">아직 시즌 기록을 받지 못했어요.</p>
       </Section>
     );
   }
@@ -58,7 +58,7 @@ export default function SeasonStats({
             lines={[
               ranking &&
                 majorHitters.length > 0 &&
-                `타율·OPS 순위와 1위는 ${ranking.minPlateAppearances}타석 이상인 선수만 셉니다. 못 채운 선수는 메이저 줄 아래쪽에 둡니다.`,
+                `타율·OPS 순위와 1위는 ${ranking.minPlateAppearances}타석 이상인 선수만 세어요. 못 채운 선수는 메이저 줄 아래쪽에 있어요.`,
             ]}
           />
         </Group>
@@ -74,14 +74,14 @@ export default function SeasonStats({
             lines={[
               ranking &&
                 majorPitchers.length > 0 &&
-                `평균자책점 순위와 1위는 ${ranking.minInningsText}이닝 이상인 투수만 셉니다.`,
+                `평균자책점 순위와 1위는 ${ranking.minInningsText}이닝 이상인 투수만 세어요.`,
             ]}
           />
         </Group>
         <Notes
           lines={[
-            hasMinors && "마이너 기록은 트리플A부터 루키까지 마이너 경기를 모두 더한 것이라, 1위는 표시하지 않습니다.",
-            minorsPending && "마이너 경기별 기록을 받는 중입니다. 하루 한 번 새로 받습니다.",
+            hasMinors && "마이너 기록은 트리플A부터 루키까지 마이너 경기를 모두 더한 것이라, 1위는 따로 표시하지 않아요.",
+            minorsPending && "마이너 경기별 기록을 받는 중이에요. 하루 한 번 새로 받아요.",
           ]}
         />
       </div>
@@ -120,5 +120,5 @@ function Notes({ lines }: { lines: (string | false | null)[] }) {
 }
 
 function Empty() {
-  return <p className="px-4 py-4 text-sm text-muted">아직 기록이 없습니다.</p>;
+  return <p className="px-4 py-4 text-sm text-muted">아직 기록이 없어요.</p>;
 }

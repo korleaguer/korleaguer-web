@@ -96,7 +96,7 @@ export default function OrderList({ players }: { players: PlayerSummary[] }) {
   return (
     <>
       <p id="order-help" className="sr-only">
-        위·아래 화살표로 순서를 옮깁니다. 마우스나 손가락으로 손잡이를 끌어도 됩니다.
+        위·아래 화살표로 순서를 옮길 수 있어요. 마우스나 손가락으로 손잡이를 끌어도 돼요.
       </p>
       <ol ref={listRef} className="relative">
         {order.map((id, index) => {

@@ -23,7 +23,7 @@ export default function RosterMoves({ moves }: { moves: RosterMove[] }) {
   return (
     <Section id="moves-title" title="이동 기록" aside={moves.length > 0 ? `${moves.length}건` : undefined}>
       {moves.length === 0 ? (
-        <p className="card px-4 py-5 text-sm text-muted">최근 두 시즌 동안 이동 기록이 없습니다.</p>
+        <p className="card px-4 py-5 text-sm text-muted">최근 두 시즌 동안 이동 기록이 없어요.</p>
       ) : (
         <div className="card">
           <ol className="divide-y divide-line">

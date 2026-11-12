@@ -49,7 +49,7 @@ export default function FormCard({ entry, days, statsAvailable, isMine = true, n
         <div className="flex items-start gap-2">
           <div className="min-w-0 flex-1">
             <Name className="text-xl font-extrabold leading-snug tracking-[-0.02em]">
-              <Link href={`/players/${player.id}`} className="hover:text-accent-ink">
+              <Link href={`/players/${player.id}`} className="press inline-block hover:text-accent-ink">
                 {player.nameKo}
               </Link>
             </Name>
@@ -69,15 +69,15 @@ export default function FormCard({ entry, days, statsAvailable, isMine = true, n
         {statsAvailable && <SummaryLines entry={entry} />}
 
         {!statsAvailable ? (
-          <Notice>아직 경기별 기록을 받지 못했습니다.</Notice>
+          <Notice>아직 경기별 기록을 받지 못했어요.</Notice>
         ) : basis === "SEASON" && entry.seasonTotals ? (
           <SeasonNumbers totals={entry.seasonTotals} pitcher={pitcher} />
         ) : basis === "NONE" ? (
           // 새 마이너 팀 합류처럼 상태 줄이 이미 까닭을 말하면 더 쓰지 않는다
           entry.status?.kind === "IL" ? (
-            <Notice>이번 시즌 아직 메이저 경기가 없습니다.</Notice>
+            <Notice>이번 시즌 아직 메이저 경기가 없어요.</Notice>
           ) : (
-            !statusLine(entry) && <Notice>이번 시즌 아직 경기 기록이 없습니다.</Notice>
+            !statusLine(entry) && <Notice>이번 시즌 아직 경기 기록이 없어요.</Notice>
           )
         ) : period ? (
           <>
@@ -97,7 +97,7 @@ export default function FormCard({ entry, days, statsAvailable, isMine = true, n
             />
           </>
         ) : (
-          <Notice>아직 이 선수의 기록을 연결하지 못했습니다.</Notice>
+          <Notice>아직 이 선수의 기록을 연결하지 못했어요.</Notice>
         )}
 
         {/* 펼치면 경기별 기록이 버튼 위에 붙고, 버튼은 카드 맨 아래에서 '접기'가 된다 */}

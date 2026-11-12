@@ -96,7 +96,7 @@ export function SeasonNumbers({ totals, pitcher }: { totals: SeasonTotals; pitch
   const main = totals.primary === "MINORS" ? totals.minors : totals.mlb;
   const other = totals.primary === "MINORS" ? totals.mlb : totals.minors;
   if (!main) {
-    return <Notice>이번 시즌 기록이 없습니다.</Notice>;
+    return <Notice>이번 시즌 기록이 없어요.</Notice>;
   }
   const label = `${totals.season} ${levelKo(main.level)} ${pitcher ? "평균자책점" : "타율"}`;
   const small: [string, string | number][] = pitcher
