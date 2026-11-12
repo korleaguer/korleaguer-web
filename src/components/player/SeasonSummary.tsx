@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import type { HitterSeason, PitcherSeason } from "@/lib/api";
 import { formatEra, formatRate } from "@/lib/format";
+import RollingNumber from "@/components/RollingNumber";
 import Section from "@/components/Section";
 
 interface Props {
@@ -85,7 +86,8 @@ function StatBlock({ big, line }: { big: Stat[]; line: Stat[] }) {
           <div key={label} className="card min-w-0 px-4 py-3.5">
             <dt className="text-[0.8125rem] text-muted">{label}</dt>
             <dd className="text-[1.75rem] font-extrabold leading-tight tracking-[-0.02em] tabular-nums">
-              {value}
+              {/* 화면 밖에서 들어오면 굴러가며 나타난다 */}
+              <RollingNumber value={String(value)} />
             </dd>
           </div>
         ))}
