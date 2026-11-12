@@ -15,7 +15,7 @@ interface Props {
 
 /** 내 선수 넣기·빼기 별표 버튼. 화면 낭독기는 "이정후 내 선수, 누름"처럼 읽는다. */
 export default function MyPlayerToggle({ playerId, nameKo, initialOn, variant, className = "" }: Props) {
-  const { on, pending, limited, toggle } = useMyPlayerToggle(playerId, initialOn);
+  const { on, pending, toggle } = useMyPlayerToggle(playerId, initialOn, nameKo);
   const label = `${nameKo} 내 선수`;
 
   if (variant === "icon") {
@@ -31,11 +31,6 @@ export default function MyPlayerToggle({ playerId, nameKo, initialOn, variant, c
         >
           <StarIcon filled={on} className="size-5" />
         </button>
-        {limited && (
-          <span role="status" className="text-xs text-muted">
-            20명까지
-          </span>
-        )}
       </span>
     );
   }
@@ -52,11 +47,6 @@ export default function MyPlayerToggle({ playerId, nameKo, initialOn, variant, c
         <StarIcon filled={on} className="size-4" />
         <span aria-hidden>{on ? "내 선수" : "내 선수에 넣기"}</span>
       </button>
-      {limited && (
-        <span role="status" className="text-xs text-muted">
-          내 선수는 20명까지 고를 수 있습니다
-        </span>
-      )}
     </span>
   );
 }

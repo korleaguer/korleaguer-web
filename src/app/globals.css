@@ -28,6 +28,13 @@
   --notice-fg: #6b4300;
   --notice-mark: #b45309;
 
+  /* 알림 띠(토스트): 어떤 화면 위에서도 눈에 띄게 진한 바탕 + 흰 글자, 버튼은 밝은 파랑 */
+  --toast-bg: #191f28;
+  --toast-fg: #ffffff;
+  --toast-action: #8db1ff;
+  --toast-success: #4ade80;
+  --toast-error: #ff8a80;
+
   /*
    * 의미 색. 승패(파랑·회색)에는 쓰지 않는다.
    * 빨강 = 위기(부상자 명단 등재·이동, DFA, 방출, 출장 정지), 초록 = 복귀·계약(명단 해제, 정지 해제, 계약),
@@ -76,6 +83,12 @@
     --notice-fg: #ffe2a3;
     --notice-mark: #f5b94a;
 
+    --toast-bg: #3a404a;
+    --toast-fg: #ffffff;
+    --toast-action: #a9c4ff;
+    --toast-success: #4ade80;
+    --toast-error: #ff8a80;
+
     --danger-bg: #3a1615;
     --danger-fg: #ffa39b;
     --success-bg: #0f2c1b;
@@ -123,6 +136,11 @@
   --color-notice-bg: var(--notice-bg);
   --color-notice-fg: var(--notice-fg);
   --color-notice-mark: var(--notice-mark);
+  --color-toast-bg: var(--toast-bg);
+  --color-toast-fg: var(--toast-fg);
+  --color-toast-action: var(--toast-action);
+  --color-toast-success: var(--toast-success);
+  --color-toast-error: var(--toast-error);
   --color-danger-bg: var(--danger-bg);
   --color-danger-fg: var(--danger-fg);
   --color-success-bg: var(--success-bg);
@@ -552,5 +570,43 @@
   50%,
   95% {
     opacity: 1;
+  }
+}
+
+/*
+ * 알림 띠(Toaster): 위에서 살짝 내려오며 나타나고, 올라가며 옅어진다(토스 Toast처럼 짧게).
+ * '동작 줄이기'면 움직임 없이 옅어지기만 한다. 사라지는 길이는 Toaster.tsx의 LEAVE_MS와 같게 둔다.
+ */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    translate: 0 -10px;
+    scale: 0.98;
+  }
+}
+
+@keyframes toast-out {
+  to {
+    opacity: 0;
+    translate: 0 -8px;
+  }
+}
+
+.toast-in {
+  animation: toast-in 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.toast-out {
+  animation: toast-out 160ms ease-in forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast-in,
+  .toast-out {
+    animation-name: none;
+  }
+
+  .toast-out {
+    opacity: 0;
   }
 }
