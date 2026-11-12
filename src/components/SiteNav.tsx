@@ -33,7 +33,7 @@ export function NavLinks({ pathname }: { pathname: string | null }) {
             key={href}
             href={href}
             aria-current={current}
-            className={`press rounded-full px-3 py-1.5 text-sm font-semibold ${current ? "bg-accent-soft text-accent-ink" : "text-muted hover:bg-surface-2 hover:text-foreground"}`}
+            className={`press tap-target rounded-full px-3 py-1.5 text-sm font-semibold ${current ? "bg-accent-soft text-accent-ink" : "text-muted hover:bg-surface-2 hover:text-foreground"}`}
           >
             {label}
           </Link>
