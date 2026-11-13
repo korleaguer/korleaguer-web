@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import { getNews, type NewsPage } from "@/lib/api";
 import { formatDate, formatTime } from "@/lib/format";
 import { readableLead, splitSentences } from "@/lib/news";
@@ -11,6 +10,7 @@ import NotFoundNotice from "@/components/NotFoundNotice";
 import Section from "@/components/Section";
 import NewsPhoto from "@/components/news/NewsPhoto";
 import NewsTitleList from "@/components/news/NewsTitleList";
+import PageSuspense from "@/components/PageSuspense";
 
 type Props = PageProps<"/news/[id]">;
 
@@ -56,9 +56,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default function NewsArticlePage({ params }: Props) {
   return (
-    <Suspense fallback={<LoadingBlock rows={6} />}>
+    <PageSuspense fallback={<LoadingBlock rows={6} />}>
       <NewsContent params={params} />
-    </Suspense>
+    </PageSuspense>
   );
 }
 

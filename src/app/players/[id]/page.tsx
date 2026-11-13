@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import { getPlayer } from "@/lib/api";
 import { playerShareImage, shareMeta } from "@/lib/share";
 import { readMyPlayers } from "@/lib/myPlayers";
@@ -12,6 +11,7 @@ import PlayerHeader from "@/components/player/PlayerHeader";
 import PlayerInfo from "@/components/player/PlayerInfo";
 import RosterMoves from "@/components/player/RosterMoves";
 import SeasonSummary from "@/components/player/SeasonSummary";
+import PageSuspense from "@/components/PageSuspense";
 
 type Props = PageProps<"/players/[id]">;
 
@@ -41,9 +41,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default function PlayerPage({ params }: Props) {
   return (
-    <Suspense fallback={<LoadingBlock rows={8} />}>
+    <PageSuspense fallback={<LoadingBlock rows={8} />}>
       <PlayerContent params={params} />
-    </Suspense>
+    </PageSuspense>
   );
 }
 

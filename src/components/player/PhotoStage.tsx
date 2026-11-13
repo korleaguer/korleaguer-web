@@ -64,7 +64,7 @@ export default function PhotoStage({
       {shots.map((s, i) => {
         const active = i === index;
         const motion =
-          "transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none";
+          "transition-[opacity,transform] duration-300 ease-out-expo motion-reduce:transition-none";
         const visibility = active ? "opacity-100 scale-100" : "opacity-0 scale-[0.96]";
         if (!s.photoUrl || failed.has(s.key)) {
           return (
