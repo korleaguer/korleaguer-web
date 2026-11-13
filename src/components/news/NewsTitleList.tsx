@@ -60,7 +60,7 @@ function NewsTitleRow({ item: n }: { item: NewsTitleItem }) {
   );
   const rowClass = "press-soft group flex items-center gap-3 py-3";
   // 썸네일이 줄 오른쪽 끝을 맡는다(예전 › 자리). 기사 사진이 없거나 안 뜨면 선수 사진, 둘 다 없으면 자리를 두지 않는다
-  const thumb = <NewsThumb url={n.imageUrl} fallback={n.playerPhotoUrl ?? null} />;
+  const thumb = <NewsThumb newsId={n.id} url={n.imageUrl} fallback={n.playerPhotoUrl ?? null} />;
 
   if (n.id == null) {
     return (

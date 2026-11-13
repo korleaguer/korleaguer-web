@@ -9,6 +9,7 @@ import HistoryToggle from "@/components/home/HistoryToggle";
 import KboAvatar from "@/components/home/KboAvatar";
 import { PostingDot } from "@/components/home/PostingDot";
 import PostingNews from "@/components/home/PostingNews";
+import { cacheLife } from "next/cache";
 
 /** 지금 포스팅 제도의 협상 기간(일) */
 const WINDOW_DAYS = 30;
@@ -183,7 +184,11 @@ function rank(p: PostingPlayer): number {
  * - 관련 기사: 휴대폰은 2건 + '더 보기', PC는 카드 오른쪽 칸 전체가 기사(3건 + '더 보기'). 기사가 없으면 PC 오른쪽은 역대 계약.
  * 포스팅 선수가 여러 명일 때 모양은 나중에 다듬는다(사용자 11-12 "흔한 상황이 아니라 묻어둘게").
  */
-export default function MlbChallenge({ posting }: { posting: PostingSummary }) {
+export default async function MlbChallenge({ posting }: { posting: PostingSummary }) {
+  // 잠깐 재사용: 같은 데이터면 30초 동안 그려 둔 것을 다시 쓴다(쿠키와 상관없는 부품이라 모두에게 같다).
+  // 운영 서버(라즈베리파이 4)는 화면 그리기가 느려서 큰 부품을 매번 그리지 않는다.
+  "use cache";
+  cacheLife({ stale: 30, revalidate: 30, expire: 300 });
   if (posting.players.length === 0) return null;
   const players = [...posting.players].sort((a, b) => rank(a) - rank(b) || (a.daysLeft ?? 99) - (b.daysLeft ?? 99));
   // 보장액 순위. 같으면 최근 계약이 위

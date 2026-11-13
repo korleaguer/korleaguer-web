@@ -123,7 +123,7 @@ function Article({ news }: { news: NewsPage }) {
         {kind && ` · ${kind}`}
       </p>
 
-      <NewsPhoto url={news.imageUrl} fallback={news.playerPhotoUrl} />
+      <NewsPhoto newsId={news.id} url={news.imageUrl} fallback={news.playerPhotoUrl} />
 
       {body.length > 0 ? (
         <div className="mt-3.5 space-y-2 text-[1.0625rem] leading-[1.6] tracking-[-0.01em]">

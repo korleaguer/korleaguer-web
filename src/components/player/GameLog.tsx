@@ -2,6 +2,7 @@ import type { GameLine } from "@/lib/api";
 import Section from "@/components/Section";
 import GameRow from "./GameRow";
 import MoreGames from "./MoreGames";
+import { cacheLife } from "next/cache";
 
 // 내 선수 카드(FormCard)가 이 경로로 가져다 쓴다
 export { default as GameRow } from "./GameRow";
@@ -15,7 +16,11 @@ const VISIBLE = 10;
  * 최근 10경기만 먼저 보여 준다. 나머지는 서버에서 그리지 않고 데이터로만 보내, '더 보기'를 처음 누를 때 브라우저가 그린다
  * (MoreGames). 다 그려 보내면 선수 페이지가 590KB까지 커지고 운영 장비에서 그리는 데만 0.6초 넘게 걸렸다.
  */
-export default function GameLog({ games }: { games: GameLine[] }) {
+export default async function GameLog({ games }: { games: GameLine[] }) {
+  // 잠깐 재사용: 같은 데이터면 30초 동안 그려 둔 것을 다시 쓴다(쿠키와 상관없는 부품이라 모두에게 같다).
+  // 운영 서버(라즈베리파이 4)는 화면 그리기가 느려서 큰 부품을 매번 그리지 않는다.
+  "use cache";
+  cacheLife({ stale: 30, revalidate: 30, expire: 300 });
   const shown = games.slice(0, VISIBLE);
   const rest = games.slice(VISIBLE);
 

@@ -2,6 +2,7 @@ import type { PlayerDetail } from "@/lib/api";
 import { formatAge, formatBirthDate, formatBody, formatSummary } from "@/lib/format";
 import ExternalLinkIcon from "@/components/ExternalLinkIcon";
 import Section from "@/components/Section";
+import { cacheLife } from "next/cache";
 
 interface Field {
   label: string;
@@ -34,7 +35,11 @@ function dataFields(player: PlayerDetail): Field[] {
 }
 
 /** 선수 정보 카드: 기본 정보 항목 + MLB 공식 페이지 링크 */
-export default function PlayerInfo({ player }: { player: PlayerDetail }) {
+export default async function PlayerInfo({ player }: { player: PlayerDetail }) {
+  // 잠깐 재사용: 같은 데이터면 30초 동안 그려 둔 것을 다시 쓴다(쿠키와 상관없는 부품이라 모두에게 같다).
+  // 운영 서버(라즈베리파이 4)는 화면 그리기가 느려서 큰 부품을 매번 그리지 않는다.
+  "use cache";
+  cacheLife({ stale: 30, revalidate: 30, expire: 300 });
   const fields = dataFields(player);
 
   return (

@@ -11,6 +11,7 @@ import GameBars from "./GameBars";
 import MyPlayerToggle from "./MyPlayerToggle";
 import { barSlots } from "./columns";
 import { metaLine, periodLabel, periodNote, statusLine } from "./formLabels";
+import { cacheLife } from "next/cache";
 
 interface Props {
   entry: MyPlayer;
@@ -27,7 +28,11 @@ interface Props {
  * 경기별 막대 → 경기별 기록 모두 보기. 마이너에 있으면 숫자·막대가 마이너 기록이고(이름표에 단계),
  * 비시즌·FA면 기간 대신 시즌 합계를 보인다(이슈 #13). 비시즌 홈도 같은 카드로 선수 6명을 보인다.
  */
-export default function FormCard({ entry, days, statsAvailable, isMine = true, nameAs: Name = "h2" }: Props) {
+export default async function FormCard({ entry, days, statsAvailable, isMine = true, nameAs: Name = "h2" }: Props) {
+  // 잠깐 재사용: 같은 데이터면 30초 동안 그려 둔 것을 다시 쓴다(쿠키와 상관없는 부품이라 모두에게 같다).
+  // 운영 서버(라즈베리파이 4)는 화면 그리기가 느려서 큰 부품을 매번 그리지 않는다.
+  "use cache";
+  cacheLife({ stale: 30, revalidate: 30, expire: 300 });
   const { player, games, fromKst, toKst, basis, level } = entry;
   const meta = metaLine(entry);
   const note = periodNote(entry, days);

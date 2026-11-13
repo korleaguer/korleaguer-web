@@ -1,6 +1,7 @@
 import type { RosterMove } from "@/lib/api";
 import Section from "@/components/Section";
 import ShowMore from "@/components/ShowMore";
+import { cacheLife } from "next/cache";
 
 /** 처음에 보여 줄 줄 수. 나머지는 '더 보기'로 펼친다 */
 const VISIBLE = 6;
@@ -16,7 +17,11 @@ function dotDate(date: string): string {
  * 소속이 바뀌는 일(FA 선언, 트레이드, 웨이버 클레임)은 보라.
  * 그 밖에는 옮겨 간 곳: 메이저(콜업 등)면 연파랑, 마이너(강등·이관·재활)면 회색, 모르면 옅은 회색.
  */
-export default function RosterMoves({ moves }: { moves: RosterMove[] }) {
+export default async function RosterMoves({ moves }: { moves: RosterMove[] }) {
+  // 잠깐 재사용: 같은 데이터면 30초 동안 그려 둔 것을 다시 쓴다(쿠키와 상관없는 부품이라 모두에게 같다).
+  // 운영 서버(라즈베리파이 4)는 화면 그리기가 느려서 큰 부품을 매번 그리지 않는다.
+  "use cache";
+  cacheLife({ stale: 30, revalidate: 30, expire: 300 });
   const shown = moves.slice(0, VISIBLE);
   const rest = moves.slice(VISIBLE);
 
