@@ -22,7 +22,7 @@ function dataFields(player: PlayerDetail): Field[] {
   const team = player.teamKo && player.teamEn ? `${player.teamKo} (${player.teamEn})` : player.teamKo;
 
   // FA·국내 복귀 선수의 팀은 마지막 MLB 팀이다('소속팀 미네소타'는 LG로 돌아간 고우석을 미네소타 소속으로 읽히게 했다)
-  const formerTeam = player.freeAgent || player.returnedKo != null;
+  const formerTeam = player.freeAgent || Boolean(player.returnedKo); // 알약(InfoChips)과 같은 판정
 
   const fields: (Field | null)[] = [
     team ? { label: formerTeam ? "전 소속팀" : "소속팀", value: team, wide: true } : null,
