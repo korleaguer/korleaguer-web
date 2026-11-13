@@ -75,7 +75,7 @@ async function NewsContent({ params }: Pick<Props, "params">) {
 
   const news = result.data;
   if (news.more.length === 0) {
-    // 같은 선수의 다른 기사가 없으면 PC에서도 오른쪽 칸을 두지 않고 기사만 가운데에 둔다
+    // 같은 선수의 관련 기사가 없으면 PC에서도 오른쪽 칸을 두지 않고 기사만 가운데에 둔다
     return (
       <div className="mx-auto max-w-2xl">
         <Article news={news} />
@@ -83,12 +83,13 @@ async function NewsContent({ params }: Pick<Props, "params">) {
     );
   }
   return (
-    // 휴대폰·태블릿은 한 줄(기사 → 다른 기사), 넓은 화면은 왼쪽 기사 | 오른쪽 다른 기사(선수 페이지와 같은 오른쪽 칸 폭)
+    // 휴대폰·태블릿은 한 줄(기사 → 관련 기사), 넓은 화면은 왼쪽 기사 | 오른쪽 관련 기사(선수 페이지와 같은 오른쪽 칸 폭)
     <div className="mx-auto max-w-2xl space-y-7 lg:grid lg:max-w-none lg:grid-cols-[minmax(0,1fr)_21.25rem] lg:items-start lg:gap-x-4 lg:space-y-0">
       <Article news={news} />
-      <Section title={`${news.player} 다른 기사`} id="more-news">
+      {/* 같은 선수의 다른 기사다. 기사 제목마다 선수 이름이 있어 머리말에는 이름을 붙이지 않고, 홈 카드와 같은 말로 부른다(사용자 11-13) */}
+      <Section title="관련 기사" id="more-news">
         <div className="card px-4">
-          {/* 다른 기사도 같은 선수라 썸네일이 안 뜨면 이 선수 사진으로 바꾼다 */}
+          {/* 관련 기사도 같은 선수라 썸네일이 안 뜨면 이 선수 사진으로 바꾼다 */}
           <NewsTitleList items={news.more.map((n) => ({ ...n, playerPhotoUrl: news.playerPhotoUrl }))} />
         </div>
       </Section>
