@@ -3,6 +3,7 @@ import type { HitterSeason, PitcherSeason, RankingMinimums } from "@/lib/api";
 import Section from "@/components/Section";
 import HitterTable from "./HitterTable";
 import PitcherTable from "./PitcherTable";
+import { cacheLife } from "next/cache";
 
 interface Props {
   season: number;
@@ -18,7 +19,7 @@ interface Props {
  * 시즌 기록: 타자 표 + 투수 표(이슈 #88). 탭(#39)을 누르지 않아도 되게, 메이저 줄 바로 밑에
  * 같은 선수의 마이너 기록 줄을 붙이고, 마이너에서만 뛴 선수는 표 맨 아래 따로 묶는다.
  */
-export default function SeasonStats({
+export default async function SeasonStats({
   season,
   statsAvailable,
   ranking,
@@ -27,6 +28,10 @@ export default function SeasonStats({
   minorHitters,
   minorPitchers,
 }: Props) {
+  // 잠깐 재사용: 같은 데이터면 30초 동안 그려 둔 것을 다시 쓴다(쿠키와 상관없는 부품이라 모두에게 같다).
+  // 운영 서버(라즈베리파이 4)는 화면 그리기가 느려서 큰 부품을 매번 그리지 않는다.
+  "use cache";
+  cacheLife({ stale: 30, revalidate: 30, expire: 300 });
   // 선수 기록을 아직 못 받았으면 표 대신 한 줄로 알린다.
   if (!statsAvailable) {
     return (

@@ -1,5 +1,6 @@
 // api 서버와 주고받는 데이터 모양(스펙 2절 'API 계약' v2.1)과 호출 함수를 모아 둔 파일.
 import { cache } from "react";
+import { cacheLife } from "next/cache";
 import { connection } from "next/server";
 
 /** mlb: MLB 공식 Stats API에서 받은 실제 데이터, sample: 테스트·오프라인용 지어낸 데이터 */
@@ -569,7 +570,7 @@ export interface MyPlayersResponse {
 
 // ---- 응답 보정 ----
 // api가 계약과 조금 다르게 보내도(필드 빠짐, 배열 대신 null) 화면이 죽지 않게 빈 값을 채운다.
-// 모양이 아예 틀리면 여기서 예외가 나고, fetchApi가 badResponse로 바꾼다.
+// 모양이 아예 틀리면 여기서 예외가 나고, requestApi가 badResponse로 바꾼다.
 
 /** http(s) 주소만 통과시킨다. 사진·링크 주소로 쓰므로 javascript: 같은 것은 버린다 */
 function httpUrl(value: string | null | undefined): string | null {
@@ -785,15 +786,15 @@ export type ApiResult<T> =
 
 const TIMEOUT_MS = 5000;
 
-async function fetchApi<T>(path: string, normalize: (raw: T) => T): Promise<ApiResult<T>> {
-  // 빌드 때 미리 그리지 않고, 요청이 올 때마다 새로 받는다.
-  // (try 밖에 둬야 한다. Next.js가 여기서 던지는 신호를 삼키면 안 된다.)
-  await connection();
-
+/**
+ * api를 부른다. 결과는 아래 '잠깐 재사용' 함수(use cache)가 30초 동안 서버 메모리에 두고 같은 요청에 다시 쓴다.
+ * 운영 서버(라즈베리파이 4)는 이 Mac보다 계산이 약 9배 느려서, 받은 JSON을 다시 읽고 다듬는 일까지 아끼면 화면이 빨라진다.
+ */
+async function requestApi<T>(path: string, normalize: (raw: T) => T): Promise<ApiResult<T>> {
   let res: Response;
   try {
     const url = new URL(path, process.env.API_BASE_URL ?? "http://localhost:8080");
-    res = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(TIMEOUT_MS) });
+    res = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
   } catch (e) {
     console.warn(`[api] ${path} 연결 실패:`, e instanceof Error ? e.message : e);
     return { ok: false, failure: "unreachable" };
@@ -810,23 +811,77 @@ async function fetchApi<T>(path: string, normalize: (raw: T) => T): Promise<ApiR
   }
 }
 
-// cache: 한 요청 안에서 같은 호출을 여러 번 해도 api는 한 번만 부른다.
-export const getHome = cache(() => fetchApi("/api/home", normalizeHome));
+/*
+ * 잠깐 재사용(use cache): 같은 주소의 api 결과를 30초 동안 서버 메모리에 두고 다시 쓴다(사람마다 같은 데이터만).
+ * - 30초가 지나면 먼저 옛 결과를 주고 뒤에서 새로 받는다. 5분 동안 아무도 안 부르면 버린다.
+ * - 실패(연결 안 됨 등)는 1초만 두어, 서버가 돌아오면 바로 다시 받는다.
+ * - 빌드 때 미리 그리지 않게, 부르는 쪽(get…)에서 먼저 connection()을 부른다(빌드에는 api가 없다).
+ * cacheLife는 함수마다 직접 부른다(Next 권장: 캐시 수명이 그 자리에서 보이게).
+ */
+async function homeFromApi() {
+  "use cache";
+  const result = await requestApi("/api/home", normalizeHome);
+  cacheLife(result.ok ? { stale: 30, revalidate: 30, expire: 300 } : { stale: 0, revalidate: 1, expire: 2 });
+  return result;
+}
+
+async function playersFromApi() {
+  "use cache";
+  const result = await requestApi("/api/players", normalizePlayers);
+  cacheLife(result.ok ? { stale: 30, revalidate: 30, expire: 300 } : { stale: 0, revalidate: 1, expire: 2 });
+  return result;
+}
+
+async function playerFromApi(id: number) {
+  "use cache";
+  const result = await requestApi(`/api/players/${id}`, normalizePlayer);
+  cacheLife(result.ok ? { stale: 30, revalidate: 30, expire: 300 } : { stale: 0, revalidate: 1, expire: 2 });
+  return result;
+}
+
+async function newsFromApi(id: number) {
+  "use cache";
+  const result = await requestApi(`/api/news/${id}`, normalizeNewsPage);
+  cacheLife(result.ok ? { stale: 30, revalidate: 30, expire: 300 } : { stale: 0, revalidate: 1, expire: 2 });
+  return result;
+}
+
+async function myPlayersFromApi(ids: string, days: number) {
+  "use cache";
+  const result = await requestApi(`/api/my?ids=${ids}&days=${days}`, normalizeMy);
+  cacheLife(result.ok ? { stale: 30, revalidate: 30, expire: 300 } : { stale: 0, revalidate: 1, expire: 2 });
+  return result;
+}
+
+// connection(): 빌드 때 미리 그리지 않고 요청이 올 때 받는다. 재사용 함수 밖에서 불러야 한다.
+// cache: 한 요청 안에서 같은 호출을 여러 번 해도 한 번만 부른다.
+export const getHome = cache(async () => {
+  await connection();
+  return homeFromApi();
+});
 
 /** GET /api/players: 선수 목록 */
-export const getPlayers = cache(() => fetchApi("/api/players", normalizePlayers));
+export const getPlayers = cache(async () => {
+  await connection();
+  return playersFromApi();
+});
 
-export const getPlayer = cache((id: number) =>
-  fetchApi(`/api/players/${id}`, normalizePlayer),
-);
+export const getPlayer = cache(async (id: number) => {
+  await connection();
+  return playerFromApi(id);
+});
 
 /** GET /api/news/{id}: 우리 기사 페이지 한 건. 없는 기사면 notFound */
-export const getNews = cache((id: number) => fetchApi(`/api/news/${id}`, normalizeNewsPage));
+export const getNews = cache(async (id: number) => {
+  await connection();
+  return newsFromApi(id);
+});
 
 /** GET /api/my: 고른 선수들의 최근 days일 경기. ids는 "1,5,2"처럼 1명 이상(빈 목록은 api가 400) */
-const getMyPlayersCached = cache((ids: string, days: number) =>
-  fetchApi(`/api/my?ids=${ids}&days=${days}`, normalizeMy),
-);
+const getMyPlayersCached = cache(async (ids: string, days: number) => {
+  await connection();
+  return myPlayersFromApi(ids, days);
+});
 
 // cache는 인자를 값이 아니라 참조로 비교하므로, 배열을 문자열로 바꿔 넘긴다.
 export function getMyPlayers(ids: readonly number[], days: number) {

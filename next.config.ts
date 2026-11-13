@@ -7,6 +7,10 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/**/opengraph-image*": ["./node_modules/pretendard/dist/public/static/Pretendard-{Bold,ExtraBold}.otf"],
   },
+  // 압축은 앞단 Caddy(encode zstd gzip, korleaguer-server deploy/Caddyfile)가 한다. Next가 먼저 gzip으로 누르면
+  // Caddy가 다시 누르지 않아 zstd를 받는 브라우저(크롬 등)도 gzip을 받는다(선수 화면 26KB, zstd면 19KB).
+  // 사파리·아이폰 앱은 zstd를 몰라 Caddy가 gzip으로 준다. 라즈베리파이의 Node가 압축을 안 해도 되는 덤도 있다.
+  compress: false,
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {
