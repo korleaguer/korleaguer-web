@@ -161,6 +161,22 @@
 }
 
 /*
+ * 움직임 이름표(토스 Rally처럼 곡선을 두 가지로 묶는다). Tailwind 클래스로도 쓴다: ease-out-expo, ease-spring.
+ * - out-expo: 빠르게 출발해 부드럽게 멈춘다. 눌림·나타나기·접고 펴기 등 거의 모든 곳.
+ * - spring: 살짝(약 4%) 넘쳤다가 제자리로. 손으로 옮긴 것(고른 표시가 미끄러질 때)처럼 '물건'이 움직이는 곳.
+ *   감쇠비 0.72 스프링을 linear()로 옮긴 값이다. linear()를 모르는 옛 브라우저는 움직임 없이 바로 바뀐다.
+ * Tailwind 기본 transition 곡선도 out-expo로 바꿔, 클래스로 쓴 전환과 CSS로 쓴 전환이 같은 느낌이 되게 한다.
+ */
+@theme {
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: linear(
+    0, 0.033, 0.115, 0.226, 0.348, 0.471, 0.586, 0.689, 0.778, 0.852, 0.911, 0.956, 0.989, 1.012, 1.026, 1.035,
+    1.038, 1.038, 1.036, 1.032, 1.027, 1.022, 1.018, 1.014, 1.01, 1.007, 1.004, 1.002, 1.001 70%, 1
+  );
+  --default-transition-timing-function: var(--ease-out-expo);
+}
+
+/*
  * 앱(korleaguer-app, 웹뷰) 안에서만 켜는 모양. 앱이 문서를 그리기 전에 <html data-app="ios|android">를 붙인다.
  * 예: className="in-app:hidden" → 앱 안에서는 숨김(아래 네이티브 탭이 같은 일을 한다). 일반 브라우저에는 영향 없음.
  */
@@ -243,8 +259,8 @@
    */
   .card-link {
     transition:
-      box-shadow 160ms cubic-bezier(0.16, 1, 0.3, 1),
-      scale 150ms cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow 160ms var(--ease-out-expo),
+      scale 150ms var(--ease-out-expo);
   }
 
   /* 마우스 기기에서만. 터치 기기는 누른 뒤 돌아와도 :hover가 남아 그림자가 떠 있다 */
@@ -283,7 +299,7 @@
    */
   .press,
   .press-soft {
-    transition: scale 150ms cubic-bezier(0.16, 1, 0.3, 1);
+    transition: scale 150ms var(--ease-out-expo);
   }
 
   .press:active {
@@ -301,7 +317,7 @@
   .team-band {
     --band-from: var(--team);
     background: linear-gradient(120deg, var(--band-from), color-mix(in srgb, var(--band-from) 45%, var(--surface)));
-    transition: --team 450ms cubic-bezier(0.16, 1, 0.3, 1);
+    transition: --team 450ms var(--ease-out-expo);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -383,14 +399,14 @@
 
   /* 홈 경기 카드가 처음 그려질 때 위에서부터 차례로 살짝 떠오른다. --i = 카드 순서 */
   .card-rise {
-    animation: card-rise 260ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+    animation: card-rise 260ms var(--ease-out-expo) backwards;
     animation-delay: calc(var(--i, 0) * 35ms);
   }
 
   /* 내 선수 카드의 경기별 막대가 처음 그려질 때 아래에서 자란다. --i = 막대 순서 */
   .bar-rise {
     transform-origin: bottom;
-    animation: bar-rise 260ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+    animation: bar-rise 260ms var(--ease-out-expo) backwards;
     animation-delay: calc(min(var(--i, 0), 10) * 30ms);
   }
 
@@ -400,7 +416,7 @@
    * 기록 숫자는 움직이지 않는다: 수시로 바뀌는 값이 아니라서 볼 때마다 오르내리면 어지럽다(이슈 #92).
    */
   .reveal {
-    animation: reveal 200ms cubic-bezier(0.16, 1, 0.3, 1);
+    animation: reveal 200ms var(--ease-out-expo);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -606,7 +622,7 @@
 }
 
 .toast-in {
-  animation: toast-in 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  animation: toast-in 220ms var(--ease-out-expo);
 }
 
 .toast-out {
@@ -621,5 +637,109 @@
 
   .toast-out {
     opacity: 0;
+  }
+}
+
+/*
+ * 기다림 점 3개(토스 버튼 로딩처럼): 서버를 기다리는 동안 글자 자리에서 점 세 개가 차례로 진해졌다 흐려진다.
+ * 글자는 투명하게 남겨 두어 버튼 폭이 그대로다(LoadingDots).
+ */
+.loading-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.22em;
+}
+
+.loading-dots > span {
+  width: 0.34em;
+  height: 0.34em;
+  border-radius: 9999px;
+  background: currentColor;
+  animation: dot-pulse 900ms var(--ease-out-expo) infinite both;
+}
+
+.loading-dots > span:nth-child(2) {
+  animation-delay: 150ms;
+}
+
+.loading-dots > span:nth-child(3) {
+  animation-delay: 300ms;
+}
+
+@keyframes dot-pulse {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+
+/*
+ * 고른 표시(파란 알약)가 누르는 즉시 새 칸으로 미끄러진다(토스 SegmentedControl처럼, PillNav).
+ * 처음 자리를 잡을 때는 움직이지 않는다(data-ready 전).
+ */
+.pill-indicator[data-ready] {
+  transition:
+    translate 420ms var(--ease-spring),
+    width 420ms var(--ease-spring);
+}
+
+/*
+ * 앱 안 첫 화면 숫자 굴림(RollingNumber): 서버가 그린 최종 값이 굴리기 전에 보이면 '.276 → .000 → .276'으로 깜빡인다.
+ * 그래서 앱 안에서는 굴리는 숫자를 처음에 숨겨 두고, 화면 스크립트가 준비되면 0부터 보이며 센다.
+ * 스크립트가 늦거나 실패해도 2초 뒤에는 그대로 보인다.
+ */
+html[data-app] .roll-wait {
+  opacity: 0;
+  animation: roll-show 1ms 2s forwards;
+}
+
+@keyframes roll-show {
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-dots > span {
+    animation: none;
+    opacity: 0.6;
+  }
+
+  .pill-indicator[data-ready] {
+    transition: none;
+  }
+}
+
+/* 뼈대 → 내용 전환(PageSuspense): 뼈대는 빨리 흐려지고, 내용은 그 뒤 12px 아래에서 떠오른다 */
+::view-transition-old(.skeleton-out) {
+  animation: vt-fade-out 140ms var(--ease-out-expo) both;
+}
+
+::view-transition-new(.content-in) {
+  animation: vt-rise-in 240ms var(--ease-out-expo) both;
+}
+
+@keyframes vt-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes vt-rise-in {
+  from {
+    opacity: 0;
+    translate: 0 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
   }
 }
