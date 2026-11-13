@@ -111,14 +111,14 @@ export default async function FormCard({ entry, days, statsAvailable, isMine = t
             </div>
           </>
         ) : (
-          <Notice>아직 이 선수의 기록을 연결하지 못했어요.</Notice>
+          <Notice>아직 이 선수 기록이 없어요.</Notice>
         )}
 
         {/* 펼치면 경기별 기록이 버튼 위에 붙고, 버튼은 카드 맨 아래에서 '접기'가 된다 */}
         {showsGames && (
           // 펼친 경기 목록도 읽는 곳이라 링크 위에 둔다
           <div data-no-press className="relative z-10 mt-auto pt-3">
-            <ShowMore moreLabel={`경기별 기록 ${games.length}개 모두 보기`} buttonClassName="rounded-lg py-2">
+            <ShowMore moreLabel={`${games.length}경기 모두 보기`} buttonClassName="rounded-lg py-2">
               <ul className="-mx-4 border-y border-line divide-y divide-line">
                 {games.map((game) => (
                   <GameRow key={game.gameId} game={game} />

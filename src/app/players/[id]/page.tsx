@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const { player, season } = result.data;
   const title = `${player.nameKo} ${season} 기록`;
-  const description = `${player.nameKo}${player.nameEn ? `(${player.nameEn})` : ""} ${season} 메이저 성적과 경기별 한 줄 기록`;
+  const description = `${player.nameKo}${player.nameEn ? `(${player.nameEn})` : ""} ${season} 메이저 성적과 경기 기록`;
   // 공유 카드 그림은 og/[v]/route.tsx(사진·핵심 기록). 주소에 배포 커밋이 들어가 카톡이 옛 그림을 쓰지 않는다
   return { title, description, ...shareMeta(title, description, playerShareImage(player.id)) };
 }
@@ -51,11 +51,11 @@ export default function PlayerPage({ params }: Props) {
 // (Suspense 안에서 notFound()를 부르면 서버 HTML에는 안내가 없고 브라우저 JS가 나중에 그린다.)
 async function PlayerContent({ params }: Pick<Props, "params">) {
   const id = parseId((await params).id);
-  if (id == null) return <NotFoundNotice />;
+  if (id == null) return <NotFoundNotice message="찾는 선수가 없어요" />;
 
   const [result, myIds] = await Promise.all([getPlayer(id), readMyPlayers()]);
   if (!result.ok) {
-    if (result.failure === "notFound") return <NotFoundNotice />;
+    if (result.failure === "notFound") return <NotFoundNotice message="찾는 선수가 없어요" />;
     return <ApiErrorNotice failure={result.failure} />;
   }
 

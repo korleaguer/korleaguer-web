@@ -8,7 +8,7 @@ import SiteHeader from "@/components/SiteHeader";
 import Toaster from "@/components/Toaster";
 import "./globals.css";
 
-const DESCRIPTION = "한국 MLB 선수들의 최근 경기 한 줄 기록과 시즌 성적을 모아 봐요.";
+const DESCRIPTION = "해외파 한국 선수들의 최근 경기 기록과 시즌 성적을 모아 봐요.";
 
 export const metadata: Metadata = {
   title: {

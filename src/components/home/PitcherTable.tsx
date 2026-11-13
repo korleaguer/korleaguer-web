@@ -60,7 +60,7 @@ export default function PitcherTable({
         <tr>
           <Th align="left" sticky>이름</Th>
           <Th align="left">팀</Th>
-          <Th>경기</Th>
+          <Th>등판</Th>
           <Th>이닝</Th>
           <Th>평균자책점</Th>
           <Th>승-패-세</Th>
