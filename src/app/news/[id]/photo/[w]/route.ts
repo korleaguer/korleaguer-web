@@ -41,13 +41,8 @@ export async function GET(_request: Request, { params }: RouteContext<"/news/[id
 async function resized(source: string, width: number): Promise<string | null> {
   "use cache";
   try {
-    const res = await fetch(source, { headers: { "user-agent": USER_AGENT }, signal: AbortSignal.timeout(TIMEOUT_MS) });
-    const type = res.headers.get("content-type") ?? "";
-    const length = Number(res.headers.get("content-length") ?? 0);
-    if (!res.ok || !type.startsWith("image/") || length > MAX_BYTES) throw new Error(`${res.status} ${type} ${length}`);
-    const input = Buffer.from(await res.arrayBuffer());
-    if (input.byteLength > MAX_BYTES) throw new Error(`too large ${input.byteLength}`);
-    const out = await sharp(input)
+    const input = await download(source);
+    const out = await sharp(input, { limitInputPixels: 40_000_000 })
       .rotate()
       .resize({ width, withoutEnlargement: true })
       .webp({ quality: 72 })
@@ -58,6 +53,57 @@ async function resized(source: string, width: number): Promise<string | null> {
     console.warn(`[news-photo] ${source} 줄이기 실패:`, e instanceof Error ? e.message : e);
     cacheLife({ stale: 60, revalidate: 60, expire: 120 });
     return null;
+  }
+}
+
+/**
+ * 원본을 받는다. 다른 주소로 넘기면 https 바깥 주소일 때만 3번까지 따라간다(서버 안쪽 주소로 새지 않게).
+ * 이미지가 아니거나 8MB를 넘으면 받는 도중 멈춘다(길이 헤더가 없어도 메모리에 다 올리지 않는다).
+ */
+async function download(source: string): Promise<Buffer> {
+  let url = source;
+  for (let hop = 0; hop < 4; hop++) {
+    if (!isPublicHttps(url)) throw new Error(`not public https: ${url}`);
+    const res = await fetch(url, {
+      headers: { "user-agent": USER_AGENT },
+      redirect: "manual",
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+    if (res.status >= 300 && res.status < 400) {
+      const next = res.headers.get("location");
+      if (!next) break;
+      url = new URL(next, url).toString();
+      continue;
+    }
+    const type = res.headers.get("content-type") ?? "";
+    if (!res.ok || !type.startsWith("image/") || !res.body) throw new Error(`${res.status} ${type}`);
+    if (Number(res.headers.get("content-length") ?? 0) > MAX_BYTES) throw new Error("too large");
+    const chunks: Uint8Array[] = [];
+    let size = 0;
+    const reader = res.body.getReader();
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      size += value.byteLength;
+      if (size > MAX_BYTES) {
+        await reader.cancel();
+        throw new Error("too large");
+      }
+      chunks.push(value);
+    }
+    return Buffer.concat(chunks);
+  }
+  throw new Error("too many redirects");
+}
+
+/** https이고, 서버 안쪽(이름에 점이 없는 도커 이름, localhost, 사설 IP 숫자 주소)이 아닌가 */
+function isPublicHttps(url: string): boolean {
+  try {
+    const { protocol, hostname } = new URL(url);
+    if (protocol !== "https:" || !hostname.includes(".") || hostname === "localhost") return false;
+    return !/^(\d+\.){3}\d+$/.test(hostname) && !hostname.startsWith("[");
+  } catch {
+    return false;
   }
 }
 
