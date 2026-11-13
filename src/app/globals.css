@@ -687,22 +687,6 @@
     width 420ms var(--ease-spring);
 }
 
-/*
- * 앱 안 첫 화면 숫자 굴림(RollingNumber): 서버가 그린 최종 값이 굴리기 전에 보이면 '.276 → .000 → .276'으로 깜빡인다.
- * 그래서 앱 안에서는 굴리는 숫자를 처음에 숨겨 두고, 화면 스크립트가 준비되면 0부터 보이며 센다.
- * 스크립트가 늦거나 실패해도 2초 뒤에는 그대로 보인다.
- */
-html[data-app] .roll-wait {
-  opacity: 0;
-  animation: roll-show 1ms 2s forwards;
-}
-
-@keyframes roll-show {
-  to {
-    opacity: 1;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .loading-dots > span {
     animation: none;

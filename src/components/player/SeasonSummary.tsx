@@ -122,7 +122,7 @@ function StatBlock({ big, line }: { big: Stat[]; line: Stat[] }) {
           <div key={label} className="card min-w-0 px-4 py-3.5">
             <dt className="text-[0.8125rem] text-muted">{label}</dt>
             <dd className="text-[1.75rem] font-extrabold leading-tight tracking-[-0.02em] tabular-nums">
-              {/* 화면 밖에서 들어오면 굴러가며 나타난다 */}
+              {/* 처음부터 최종 값. 새 기록이 와서 값이 바뀔 때만 굴러간다 */}
               <RollingNumber value={String(value)} />
             </dd>
           </div>
