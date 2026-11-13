@@ -1,13 +1,25 @@
-// 기사 대표 사진을 화면 크기에 맞게 줄여 준다: /news/{기사 번호}/photo/{폭}.
+// 기사 대표 사진을 화면 크기에 맞게 줄여 준다: /news/{기사 번호}/photo/{크기}.
 // 언론사 원본은 한 장에 30~400KB인데 목록 썸네일은 88×66으로 보인다(홈 한 화면에 사진 48장). 그래서 우리 서버가 원본을 한 번 받아
-// 폭 176(썸네일 2배)·704·1280(기사 화면) webp로 줄이고, 줄인 결과는 서버 메모리에 두고 브라우저는 7일 동안 저장한다.
+// 화면에 보이는 크기의 webp로 줄이고, 줄인 결과는 서버 메모리에 두고 브라우저는 7일 동안 저장한다.
+// 화질은 원본과 구분이 안 되게 한다(사용자 11-13 "화질 저하는 싫다"): 썸네일은 칸(4:3)과 똑같이 잘라 2배·3배 화면 크기로,
+// 기사 사진은 폭만 맞춘다(원본보다 키우지 않는다). 품질 82. 원본·옛 방식(폭 176, 품질 72: 3배 화면에서 흐림)과 나란히 비교해 정했다.
 // 아무 주소나 받지 않는다: 우리 기사 번호로만 부르고, 사진 주소는 그 기사 데이터에서 꺼낸다(남이 우리 서버를 사진 변환기로 쓰지 못하게).
 // 줄이지 못하면 404를 주고, 화면(NewsThumb·NewsPhoto)은 원본 주소 → 선수 사진 순서로 넘어간다.
 import { cacheLife } from "next/cache";
 import sharp from "sharp";
 import { getNews } from "@/lib/api";
 
-const WIDTHS = new Set([176, 704, 1280]);
+/**
+ * 크기 이름 → 줄이는 방법. 주소에 크기를 그대로 써서, 방법을 바꾸면 이름도 바꾼다(브라우저가 7일 저장한 옛 사진을 쓰지 않게).
+ * - 176x132·264x198: 목록 썸네일 칸(88×66)의 2배·3배 화면. 칸과 같은 4:3으로 가운데를 잘라 화면이 다시 자르거나 늘리지 않게 한다
+ * - 720w·1280w: 기사 화면 사진(휴대폰 화면 폭, PC 628px 칸의 2배). 폭만 맞춘다
+ */
+const SIZES: Record<string, { width: number; height?: number }> = {
+  "176x132": { width: 176, height: 132 },
+  "264x198": { width: 264, height: 198 },
+  "720w": { width: 720 },
+  "1280w": { width: 1280 },
+};
 /** 언론사 원본을 받는 제한 시간과 최대 크기 */
 const TIMEOUT_MS = 10_000;
 const MAX_BYTES = 8 * 1024 * 1024;
@@ -16,14 +28,14 @@ const USER_AGENT = "korleaguer/0.1 (news thumbnails; personal, non-commercial)";
 
 export async function GET(_request: Request, { params }: RouteContext<"/news/[id]/photo/[w]">) {
   const { id, w } = await params;
-  const width = Number(w);
-  if (!/^[1-9]\d{0,14}$/.test(id) || !WIDTHS.has(width)) return notFound();
+  const size = Object.hasOwn(SIZES, w) ? SIZES[w] : null;
+  if (!/^[1-9]\d{0,14}$/.test(id) || !size) return notFound();
 
   const news = await getNews(Number(id));
   const source = news.ok ? news.data.imageUrl : null;
   if (!source) return notFound();
 
-  const webp = await resized(source, width);
+  const webp = await resized(source, size.width, size.height ?? null);
   if (!webp) return notFound();
   return new Response(Buffer.from(webp, "base64"), {
     headers: {
@@ -35,17 +47,17 @@ export async function GET(_request: Request, { params }: RouteContext<"/news/[id
 }
 
 /**
- * 원본을 받아 폭 width로 줄인 webp(base64). 원본보다 키우지 않는다. 실패하면 null.
+ * 원본을 받아 줄인 webp(base64). height가 있으면 그 칸 크기로 가운데를 잘라 맞추고, 없으면 폭만 맞춘다. 원본보다 키우지 않는다. 실패하면 null.
  * 같은 사진·폭은 서버 메모리에 두고 다시 쓴다(운영 서버는 라즈베리파이라 줄이는 일이 비싸다). 실패는 1분만 둔다.
  */
-async function resized(source: string, width: number): Promise<string | null> {
+async function resized(source: string, width: number, height: number | null): Promise<string | null> {
   "use cache";
   try {
     const input = await download(source);
     const out = await sharp(input, { limitInputPixels: 40_000_000 })
       .rotate()
-      .resize({ width, withoutEnlargement: true })
-      .webp({ quality: 72 })
+      .resize(height ? { width, height, fit: "cover", withoutEnlargement: true } : { width, withoutEnlargement: true })
+      .webp({ quality: 82 })
       .toBuffer();
     cacheLife({ stale: 86_400, revalidate: 86_400, expire: 604_800 });
     return out.toString("base64");
