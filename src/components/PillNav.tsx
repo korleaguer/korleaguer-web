@@ -1,7 +1,7 @@
 "use client"; // 누른 칸을 바로 표시하고 알약 자리를 재야 해서 클라이언트 컴포넌트다.
 
 import Link, { useLinkStatus } from "next/link";
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { haptic } from "@/lib/app";
 import LoadingDots from "./LoadingDots";
 
@@ -36,6 +36,13 @@ export default function PillNav({ items, label, className = "", itemClass, idleC
   // 누른 칸. 주소가 바뀌어 currentIndex가 따라오면 더는 쓰지 않는다(base로 어느 화면에서 눌렀는지 기억)
   const [picked, setPicked] = useState<{ index: number; base: number } | null>(null);
   const active = picked && picked.base === currentIndex ? picked.index : currentIndex;
+
+  // 이동이 취소되거나 실패해 주소가 그대로면, 10초 뒤 알약을 지금 화면 칸으로 되돌린다
+  useEffect(() => {
+    if (!picked) return;
+    const timer = setTimeout(() => setPicked(null), 10_000);
+    return () => clearTimeout(timer);
+  }, [picked]);
 
   const navRef = useRef<HTMLElement>(null);
   const itemRefs = useRef<(HTMLAnchorElement | null)[]>([]);
@@ -102,5 +109,11 @@ export default function PillNav({ items, label, className = "", itemClass, idleC
 /** 이 칸의 다음 화면을 받는 동안 점 3개(Link 안에서만 쓸 수 있다) */
 function PendingLabel({ children }: { children: string }) {
   const { pending } = useLinkStatus();
-  return <LoadingDots loading={pending}>{children}</LoadingDots>;
+  return (
+    <>
+      <LoadingDots loading={pending}>{children}</LoadingDots>
+      {/* 점은 그림이라 화면 낭독기에는 글로 알린다 */}
+      {pending && <span className="sr-only"> 불러오는 중</span>}
+    </>
+  );
 }

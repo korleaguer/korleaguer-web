@@ -14,6 +14,8 @@ export default function ReloadButton() {
       onClick={() => {
         setLoading(true);
         window.location.reload();
+        // 새로고침이 막혀 이 화면에 그대로 있으면 점을 멈춘다
+        setTimeout(() => setLoading(false), 10_000);
       }}
       className={stateActionClass}
     >

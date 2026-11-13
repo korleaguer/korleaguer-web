@@ -720,7 +720,7 @@ html[data-app] .roll-wait {
 }
 
 ::view-transition-new(.content-in) {
-  animation: vt-rise-in 320ms var(--ease-out-expo) both;
+  animation: vt-rise-in 240ms var(--ease-out-expo) both;
 }
 
 @keyframes vt-fade-out {

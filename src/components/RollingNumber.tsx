@@ -105,7 +105,8 @@ export default function RollingNumber({ value }: { value: string }) {
       // 앱 안에서는 그려질 때 숨겨 두었으므로(.roll-wait) 첫 화면 숫자도 0부터 센다(토스 금액처럼).
       if (inView(el)) {
         seen.current = true;
-        if (document.documentElement.hasAttribute("data-app")) {
+        // 스크립트가 늦어 숨김이 이미 풀렸으면(2초 지남) 보이던 값을 되돌리지 않는다
+        if (document.documentElement.hasAttribute("data-app") && getComputedStyle(el).opacity === "0") {
           // 첫 프레임에 0 가까운 값으로 바꾼 뒤 보인다(그 전까지 숨김)
           current.current = 0;
           run(0, p);
