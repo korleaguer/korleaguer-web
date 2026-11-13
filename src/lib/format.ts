@@ -90,6 +90,13 @@ export function formatRate(value: number | null): string {
   return value.toFixed(3).replace(/^0\./, ".");
 }
 
+/** 아웃 수 → 이닝 글자: 152 → "50⅔", null → "-" */
+export function formatInningsOuts(outs: number | null): string {
+  if (outs == null) return "-";
+  const rest = outs % 3;
+  return `${Math.floor(outs / 3)}${rest === 1 ? "⅓" : rest === 2 ? "⅔" : ""}`;
+}
+
 /** 평균자책점: 4.756 → "4.76", null → "-" */
 export function formatEra(value: number | null): string {
   return value == null ? "-" : value.toFixed(2);

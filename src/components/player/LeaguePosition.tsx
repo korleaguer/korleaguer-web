@@ -1,5 +1,6 @@
 import type { PlayerSaber } from "@/lib/api";
 import Section from "@/components/Section";
+import { formatInningsOuts } from "@/lib/format";
 import { cacheLife } from "next/cache";
 
 /** 이보다 적으면 '참고용'(서버가 견주는 선수 기준과 같다: 타자 100타석, 투수 30이닝 = 90아웃) */
@@ -43,11 +44,6 @@ function rowsOf(saber: PlayerSaber): Row[] | null {
   ];
 }
 
-function innings(outs: number): string {
-  const rest = outs % 3;
-  return `${Math.floor(outs / 3)}${rest === 1 ? "⅓" : rest === 2 ? "⅔" : ""}`;
-}
-
 /**
  * 선수 화면 'MLB 안 위치'(사용자 11-13 결정, Baseball Savant의 백분위 막대처럼).
  * 같은 시즌 MLB 선수 중 어디쯤인지를 네 줄로: 타자는 종합·타격·주루·수비, 투수는 종합·실점 억제·삼진·볼넷.
@@ -60,7 +56,7 @@ export default async function LeaguePosition({ saber }: { saber: PlayerSaber }) 
 
   const hitter = saber.kind === "hitter";
   const who = hitter ? "타자" : "투수";
-  const sample = hitter ? `${saber.plateAppearances ?? 0}타석` : `${innings(saber.inningsOuts ?? 0)}이닝`;
+  const sample = hitter ? `${saber.plateAppearances ?? 0}타석` : `${formatInningsOuts(saber.inningsOuts ?? 0)}이닝`;
   const steady = hitter ? (saber.plateAppearances ?? 0) >= STEADY_PA : (saber.inningsOuts ?? 0) >= STEADY_OUTS;
   const rows = rowsOf(saber);
 
@@ -68,7 +64,7 @@ export default async function LeaguePosition({ saber }: { saber: PlayerSaber }) 
     <Section
       id="position-title"
       title="MLB 안 위치"
-      aside={saber.poolSize > 0 ? `${saber.season} MLB ${who} ${saber.poolSize}명과 비교` : undefined}
+      aside={rows && saber.poolSize > 0 ? `${saber.season} MLB ${who} ${saber.poolSize}명과 비교` : undefined}
     >
       <div className="card px-4 py-4">
         {!rows ? (

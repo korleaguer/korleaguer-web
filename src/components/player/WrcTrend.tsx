@@ -19,11 +19,13 @@ function words(v: number): string {
 /**
  * 타격 흐름 그래프: 시즌 처음부터 그날까지 누적 wRC+ 선 하나와 리그 평균(100) 점선.
  * 토스증권 차트처럼 손가락으로 훑으면 그날까지의 값이 위에 보이고, 날이 바뀔 때마다 고르기 틱(앱 안).
- * 손을 떼면 그 자리에 머문다. 키보드는 ←→로 하루씩, Home/End로 처음·마지막.
+ * 손가락은 떼면 그 자리에 머물고, 마우스는 그래프를 떠나면 시즌 전체 값으로 돌아간다. 키보드는 ←→로 하루씩, Home/End로 처음·마지막.
  */
 export default function WrcTrend({ points }: { points: TrendPoint[] }) {
   const last = points.length - 1;
-  const [active, setActive] = useState(last);
+  const [picked, setPicked] = useState(last);
+  // 점 수가 줄어든 새 points가 와도 범위를 넘지 않게
+  const active = Math.min(picked, last);
   const boxRef = useRef<HTMLDivElement>(null);
 
   const values = points.map((p) => p.value);
@@ -36,7 +38,7 @@ export default function WrcTrend({ points }: { points: TrendPoint[] }) {
   const pick = (i: number) => {
     const next = Math.max(0, Math.min(last, i));
     if (next !== active) {
-      setActive(next);
+      setPicked(next);
       haptic("select");
     }
   };
@@ -88,6 +90,10 @@ export default function WrcTrend({ points }: { points: TrendPoint[] }) {
         onPointerMove={(e) => {
           // 마우스는 올려만 둬도, 손가락은 누른 채 움직일 때만 따라간다
           if (e.pointerType === "mouse" || e.buttons) fromPointer(e);
+        }}
+        // 마우스가 그래프를 떠나면 시즌 전체 값으로 돌아간다(지나가기만 한 날 값에 멈춰 있지 않게). 손가락은 뗀 자리에 머문다
+        onPointerLeave={(e) => {
+          if (e.pointerType === "mouse") setPicked(last);
         }}
         onKeyDown={onKey}
         // 세로로 쓸면 화면이 스크롤되고, 가로로 훑으면 그래프를 고른다

@@ -22,11 +22,13 @@ export const TREND_MIN_PA = 50;
 
 /**
  * 경기(최신부터)를 누적 wRC+ 점(오래된 것부터)으로. 마지막 점은 seasonWrc(MLB 공식 값)와 같게 전체를 옮긴다.
- * 경기별 세부 칸(2루타·타석 등)이 없는 옛 데이터가 섞였거나 점이 10개 미만이면 null(그리지 않는다).
+ * 경기별 세부 칸(2루타·타석 등)이 없는 경기는 건너뛰고, 그런 경기가 2할을 넘거나(옛 데이터) 점이 10개 미만이면 null(그리지 않는다).
  */
 export function buildWrcTrend(games: GameLine[], seasonWrc: number): TrendPoint[] | null {
-  const played = games.filter((g) => g.played && g.batting).reverse();
-  if (played.some((g) => g.batting!.plateAppearances == null || g.batting!.doubles == null)) return null;
+  const batted = games.filter((g) => g.played && g.batting).reverse();
+  // MLB가 세부 칸을 안 준 경기는 건너뛴다. 대부분 없으면(옛 데이터) 그리지 않는다
+  const played = batted.filter((g) => g.batting!.plateAppearances != null && g.batting!.doubles != null);
+  if (played.length < batted.length * 0.8) return null;
 
   let num = 0;
   let den = 0;
