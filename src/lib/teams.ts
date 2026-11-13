@@ -89,9 +89,13 @@ export function teamColorById(teamId: number | null | undefined): string {
  * NEXT_PUBLIC_ 값은 빌드할 때 코드에 박힌다. 바꾸면 다시 빌드해야 한다.
  */
 export function teamLogoUrl(teamAbbr: string | null): string | null {
+  return teamLogoUrlById(teamAbbr ? MLB_TEAM_IDS[teamAbbr] : null);
+}
+
+/** 팀 번호로 로고 주소(마이너 팀도 MLB 공식 로고 주소에 있다). 번호를 모르거나 로고를 껐으면 null */
+export function teamLogoUrlById(teamId: number | null | undefined): string | null {
   if (process.env.NEXT_PUBLIC_TEAM_LOGOS === "off") return null;
-  const id = teamAbbr ? MLB_TEAM_IDS[teamAbbr] : undefined;
-  return typeof id === "number" ? `https://www.mlbstatic.com/team-logos/${id}.svg` : null;
+  return typeof teamId === "number" ? `https://www.mlbstatic.com/team-logos/${teamId}.svg` : null;
 }
 
 /** 팀 색 위에 올릴 글자색. 밝은 색(피츠버그 노랑 등)이면 검정, 아니면 흰색 */
