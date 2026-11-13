@@ -23,6 +23,17 @@ export default function MyHeader({ subtitle, players, selectedIds }: Props) {
   const [open, setOpen] = useState(selectedIds.length === 0);
   // 버튼으로 연 적이 있나. 처음부터 열려 있을 때(아무도 안 골랐을 때)는 움직이지 않고, 눌러서 열 때만 나타나는 움직임을 준다
   const [opened, setOpened] = useState(false);
+  // 마지막 선수를 빼서 0명이 되면 목록을 연다. 아래 빈 안내가 "위 목록에서 고르세요"라고 하는데 닫혀 있으면 가리킬 것이 없다(이슈 #185).
+  // 그려진 뒤 바뀐 값이라 effect 대신 렌더 중에 앞 값과 견준다(React 권장 방식). 1명 이상이 돼도 열린 목록은 닫지 않는다
+  const empty = selectedIds.length === 0;
+  const [wasEmpty, setWasEmpty] = useState(empty);
+  if (empty !== wasEmpty) {
+    setWasEmpty(empty);
+    if (empty) {
+      setOpen(true);
+      setOpened(true);
+    }
+  }
   const selected = new Set(selectedIds);
   // 고른 순서대로 선수 정보. 화면 순서 목록에 쓴다
   const ordered = selectedIds

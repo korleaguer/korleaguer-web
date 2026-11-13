@@ -407,6 +407,9 @@ export interface PlayerResponse {
   player: PlayerDetail;
   hitting: HitterSeason | null;
   pitching: PitcherSeason | null;
+  /** 같은 시즌 마이너 기록(경기별 기록을 더한 것, 단계는 levelKo). 마이너 경기가 없거나 오래된 api면 null */
+  minorHitting: HitterSeason | null;
+  minorPitching: PitcherSeason | null;
   /** 최신 경기부터 */
   games: GameLine[];
   /** 이동 기록, 최신부터. 이동 기록을 주지 않는 오래된 api면 null(없다고 단정하지 않는다) */
@@ -744,6 +747,8 @@ function normalizePlayer(raw: PlayerResponse): PlayerResponse {
     },
     hitting: raw.hitting ? normalizeSeason(raw.hitting) : null,
     pitching: raw.pitching ? normalizeSeason(raw.pitching) : null,
+    minorHitting: raw.minorHitting ? normalizeSeason(raw.minorHitting) : null,
+    minorPitching: raw.minorPitching ? normalizeSeason(raw.minorPitching) : null,
     games: (raw.games ?? []).map(normalizeLine),
     moves: raw.moves ?? null,
   };

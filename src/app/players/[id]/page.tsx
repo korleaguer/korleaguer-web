@@ -59,7 +59,8 @@ async function PlayerContent({ params }: Pick<Props, "params">) {
     return <ApiErrorNotice failure={result.failure} />;
   }
 
-  const { dataMode, statsAvailable, season, player, hitting, pitching, games, moves } = result.data;
+  const { dataMode, statsAvailable, season, player, hitting, pitching, minorHitting, minorPitching, games, moves } =
+    result.data;
   return (
     <div className="space-y-4 sm:space-y-5">
       <DataBanners dataMode={dataMode} statsAvailable={statsAvailable} />
@@ -72,6 +73,8 @@ async function PlayerContent({ params }: Pick<Props, "params">) {
             statsAvailable={statsAvailable}
             hitting={hitting}
             pitching={pitching}
+            minorHitting={minorHitting}
+            minorPitching={minorPitching}
           />
           <GameLog games={games} />
         </div>
