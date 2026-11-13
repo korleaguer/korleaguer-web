@@ -1,6 +1,7 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import type { HitterSeason, PitcherSeason } from "@/lib/api";
 import { formatEra, formatRate } from "@/lib/format";
+import { levelSeasons, sampleLabel } from "@/lib/seasonStats";
 import RollingNumber from "@/components/RollingNumber";
 import Section from "@/components/Section";
 import { cacheLife } from "next/cache";
@@ -10,71 +11,98 @@ interface Props {
   statsAvailable: boolean;
   hitting: HitterSeason | null;
   pitching: PitcherSeason | null;
+  /** 같은 시즌 마이너 기록. 없거나 오래된 api면 null */
+  minorHitting: HitterSeason | null;
+  minorPitching: PitcherSeason | null;
 }
 
 type Stat = [label: string, value: string | number];
 
 /**
- * 선수 시즌 성적(메이저 정규시즌). 큰 숫자 카드 네 장 + 세부 기록 한 장. 마이너 기록은 들어 있지 않아 제목에 '메이저'를 적는다
- * (그냥 '시즌 성적'이면 트리플A에서 85경기를 뛴 김혜성이 43경기로 읽혔다, 점검 11-13)
+ * 선수 시즌 성적. 단계(메이저·마이너)마다 큰 숫자 카드 네 장 + 세부 기록 한 장이고, 올해 주로 뛴 단계가 먼저다.
+ * 묶음마다 '메이저 4경기'처럼 단계·경기 수를 먼저 적는다. 메이저만 보이면 트리플A 85경기를 뛴 김혜성이 43경기로 읽히고,
+ * 메이저 4경기 9.00이 시즌 전체처럼 보였다(이슈 #184).
  */
-export default async function SeasonSummary({ season, statsAvailable, hitting, pitching }: Props) {
+export default async function SeasonSummary({
+  season,
+  statsAvailable,
+  hitting,
+  pitching,
+  minorHitting,
+  minorPitching,
+}: Props) {
   // 잠깐 재사용: 같은 데이터면 30초 동안 그려 둔 것을 다시 쓴다(쿠키와 상관없는 부품이라 모두에게 같다).
   // 운영 서버(라즈베리파이 4)는 화면 그리기가 느려서 큰 부품을 매번 그리지 않는다.
   "use cache";
   cacheLife({ stale: 30, revalidate: 30, expire: 300 });
+  const hitterSeasons = levelSeasons(hitting, minorHitting);
+  const pitcherSeasons = levelSeasons(pitching, minorPitching);
   return (
-    <Section id="season-title" title={`${season} 메이저 성적`}>
-      <div className="space-y-2.5">
-        {hitting && (
-          <StatBlock
-            // 야구 중계에서 쓰는 '타율/출루율/장타율' + OPS
-            big={[
-              ["타율", formatRate(hitting.avg)],
-              ["출루율", formatRate(hitting.obp)],
-              ["장타율", formatRate(hitting.slg)],
-              ["OPS", formatRate(hitting.ops)],
-            ]}
-            line={[
-              ["경기", hitting.games],
-              ["타수", hitting.atBats],
-              ["안타", hitting.hits],
-              ["2루타", hitting.doubles],
-              ["홈런", hitting.homeRuns],
-              ["타점", hitting.rbi],
-              ["볼넷", hitting.walks],
-              ["삼진", hitting.strikeouts],
-              ["도루", hitting.stolenBases],
-            ]}
-          />
-        )}
-        {pitching && (
-          <StatBlock
-            big={[
-              ["평균자책점", formatEra(pitching.era)],
-              ["승-패", `${pitching.wins}-${pitching.losses}`],
-              ["이닝", pitching.inningsText],
-              ["탈삼진", pitching.strikeouts],
-            ]}
-            line={[
-              ["경기", pitching.games],
-              ["이닝", pitching.inningsText],
-              ["승", pitching.wins],
-              ["패", pitching.losses],
-              ["세이브", pitching.saves],
-              ["탈삼진", pitching.strikeouts],
-              ["볼넷", pitching.walks],
-              ["피안타", pitching.hitsAllowed],
-            ]}
-          />
-        )}
-        {!hitting && !pitching && (
+    <Section id="season-title" title={`${season} 시즌 성적`}>
+      <div className="space-y-5">
+        {hitterSeasons.map((s) => (
+          <LevelBlock key={s.levelKo} label={sampleLabel(s, false)}>
+            <StatBlock
+              // 야구 중계에서 쓰는 '타율/출루율/장타율' + OPS
+              big={[
+                ["타율", formatRate(s.line.avg)],
+                ["출루율", formatRate(s.line.obp)],
+                ["장타율", formatRate(s.line.slg)],
+                ["OPS", formatRate(s.line.ops)],
+              ]}
+              line={[
+                ["경기", s.line.games],
+                ["타수", s.line.atBats],
+                ["안타", s.line.hits],
+                ["2루타", s.line.doubles],
+                ["홈런", s.line.homeRuns],
+                ["타점", s.line.rbi],
+                ["볼넷", s.line.walks],
+                ["삼진", s.line.strikeouts],
+                ["도루", s.line.stolenBases],
+              ]}
+            />
+          </LevelBlock>
+        ))}
+        {pitcherSeasons.map((s) => (
+          <LevelBlock key={s.levelKo} label={sampleLabel(s, true)}>
+            <StatBlock
+              big={[
+                ["평균자책점", formatEra(s.line.era)],
+                ["승-패", `${s.line.wins}-${s.line.losses}`],
+                ["이닝", s.line.inningsText],
+                ["탈삼진", s.line.strikeouts],
+              ]}
+              line={[
+                ["경기", s.line.games],
+                ["이닝", s.line.inningsText],
+                ["승", s.line.wins],
+                ["패", s.line.losses],
+                ["세이브", s.line.saves],
+                ["탈삼진", s.line.strikeouts],
+                ["볼넷", s.line.walks],
+                ["피안타", s.line.hitsAllowed],
+              ]}
+            />
+          </LevelBlock>
+        ))}
+        {hitterSeasons.length === 0 && pitcherSeasons.length === 0 && (
           <p className="card px-4 py-5 text-sm text-muted">
             {statsAvailable ? "이번 시즌 기록이 없어요." : "아직 시즌 기록을 받지 못했어요."}
           </p>
         )}
       </div>
     </Section>
+  );
+}
+
+/** 단계 묶음: '메이저 143경기' 이름표(작은 제목) + 숫자 카드들 */
+function LevelBlock({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="space-y-2.5">
+      <h3 className="px-1 text-[0.8125rem] font-semibold text-muted">{label}</h3>
+      {children}
+    </div>
   );
 }
 

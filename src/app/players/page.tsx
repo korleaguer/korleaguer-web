@@ -40,11 +40,13 @@ async function PlayersContent() {
   const home = homeResult.data;
   const hitters = new Map(home.hitters.map((h) => [h.playerId, h]));
   const pitchers = new Map(home.pitchers.map((p) => [p.playerId, p]));
+  const minorHitters = new Map(home.minorHitters.map((h) => [h.playerId, h]));
+  const minorPitchers = new Map(home.minorPitchers.map((p) => [p.playerId, p]));
 
   return (
     <div className="space-y-4">
       <DataBanners dataMode={home.dataMode} statsAvailable={home.statsAvailable} />
-      <p className="px-1 text-sm font-medium text-muted">{`${players.length}명 · ${home.season} 메이저 기록`}</p>
+      <p className="px-1 text-sm font-medium text-muted">{`${players.length}명 · ${home.season} 시즌 기록`}</p>
       {players.length === 0 ? (
         <StateNotice emoji="⚾" title="아직 등록된 선수가 없어요" detail="선수가 등록되면 여기에 선수마다 카드가 생겨요." />
       ) : (
@@ -58,6 +60,8 @@ async function PlayersContent() {
               player={player}
               hitting={hitters.get(player.id) ?? null}
               pitching={pitchers.get(player.id) ?? null}
+              minorHitting={minorHitters.get(player.id) ?? null}
+              minorPitching={minorPitchers.get(player.id) ?? null}
               isMine={myIds.includes(player.id)}
             />
           ))}
