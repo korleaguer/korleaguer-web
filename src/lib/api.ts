@@ -334,6 +334,8 @@ export interface SeasonReport {
   winterMoves: { date: string; label: string }[];
   /** 시즌이 끝난 뒤 나온 이 선수 기사(늦은 순, 같은 기사는 한 줄, 12건까지). 옛 api면 없다 */
   news?: NewsHeadline[];
+  /** FA 선수의 행선지로 거론된 구단(최근 7일, 직전 구단 뺌). FA가 아니거나 거론이 없으면 null, 옛 api면 없다 */
+  linkedTeams?: LinkedTeams | null;
 }
 
 /** GET /api/players 의 한 항목. 매칭 전 선수는 이름(한글)·역할 말고는 null일 수 있다 */

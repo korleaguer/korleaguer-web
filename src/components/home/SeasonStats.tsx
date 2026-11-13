@@ -3,6 +3,7 @@ import type { HitterSeason, PitcherSeason, RankingMinimums } from "@/lib/api";
 import Section from "@/components/Section";
 import HitterTable from "./HitterTable";
 import PitcherTable from "./PitcherTable";
+import HistoryToggle from "./HistoryToggle";
 import { cacheLife } from "next/cache";
 
 interface Props {
@@ -13,6 +14,8 @@ interface Props {
   pitchers: PitcherSeason[];
   minorHitters: HitterSeason[];
   minorPitchers: PitcherSeason[];
+  /** 비시즌: 시즌 성적표가 같은 숫자를 보이므로 표를 접어 둔다(이슈 #191) */
+  folded?: boolean;
 }
 
 /**
@@ -27,6 +30,7 @@ export default async function SeasonStats({
   pitchers,
   minorHitters,
   minorPitchers,
+  folded = false,
 }: Props) {
   // 잠깐 재사용: 같은 데이터면 30초 동안 그려 둔 것을 다시 쓴다(쿠키와 상관없는 부품이라 모두에게 같다).
   // 운영 서버(라즈베리파이 4)는 화면 그리기가 느려서 큰 부품을 매번 그리지 않는다.
@@ -49,48 +53,68 @@ export default async function SeasonStats({
   const minorsPending = !hasMinors && [...hitters, ...pitchers].some((row) => row.minorGames > 0);
 
   // 제목은 '선수별 기록': 비시즌 홈의 '시즌 성적표'(카드)와 한 화면에 있어 이름이 거의 같았다(문구 점검 11-13)
-  return (
-    <Section id="stats-title" title={`${season} 선수별 기록`}>
-      <div className="space-y-5">
-        <Group title="타자" aside="타율 순 · 파란 숫자는 1위">
-          <TableCard>
-            {majorHitters.length + minorHitters.length > 0 ? (
-              <HitterTable hitters={majorHitters} minors={minorHitters} ranking={ranking} />
-            ) : (
-              <Empty />
-            )}
-          </TableCard>
-          <Notes
-            lines={[
-              ranking &&
-                majorHitters.length > 0 &&
-                `타율·OPS 1위는 ${ranking.minPlateAppearances}타석 이상인 선수 중에서 골라요. 타석이 적거나 주로 마이너에서 뛴 선수는 아래에 있어요.`,
-            ]}
-          />
-        </Group>
-        <Group title="투수" aside="평균자책점 순">
-          <TableCard>
-            {majorPitchers.length + minorPitchers.length > 0 ? (
-              <PitcherTable pitchers={majorPitchers} minors={minorPitchers} ranking={ranking} />
-            ) : (
-              <Empty />
-            )}
-          </TableCard>
-          <Notes
-            lines={[
-              ranking &&
-                majorPitchers.length > 0 &&
-                `평균자책점 1위는 ${ranking.minInningsText}이닝 이상인 투수 중에서 골라요.`,
-            ]}
-          />
-        </Group>
+  const tables = (
+    <div className="space-y-5">
+      <Group title="타자" aside="타율 순 · 파란 숫자는 1위">
+        <TableCard>
+          {majorHitters.length + minorHitters.length > 0 ? (
+            <HitterTable hitters={majorHitters} minors={minorHitters} ranking={ranking} />
+          ) : (
+            <Empty />
+          )}
+        </TableCard>
         <Notes
           lines={[
-            hasMinors && "마이너 기록은 모든 단계를 더한 것이라 1위를 표시하지 않아요.",
-            minorsPending && "마이너 경기 기록을 받는 중이에요. 하루 한 번 새로 받아요.",
+            ranking &&
+              majorHitters.length > 0 &&
+              `타율·OPS 1위는 ${ranking.minPlateAppearances}타석 이상인 선수 중에서 골라요. 타석이 적거나 주로 마이너에서 뛴 선수는 아래에 있어요.`,
           ]}
         />
-      </div>
+      </Group>
+      <Group title="투수" aside="평균자책점 순">
+        <TableCard>
+          {majorPitchers.length + minorPitchers.length > 0 ? (
+            <PitcherTable pitchers={majorPitchers} minors={minorPitchers} ranking={ranking} />
+          ) : (
+            <Empty />
+          )}
+        </TableCard>
+        <Notes
+          lines={[
+            ranking &&
+              majorPitchers.length > 0 &&
+              `평균자책점 1위는 ${ranking.minInningsText}이닝 이상인 투수 중에서 골라요.`,
+          ]}
+        />
+      </Group>
+      <Notes
+        lines={[
+          hasMinors && "마이너 기록은 모든 단계를 더한 것이라 1위를 표시하지 않아요.",
+          minorsPending && "마이너 경기 기록을 받는 중이에요. 하루 한 번 새로 받아요.",
+        ]}
+      />
+    </div>
+  );
+  if (!folded) {
+    return (
+      <Section id="stats-title" title={`${season} 선수별 기록`}>
+        {tables}
+      </Section>
+    );
+  }
+  // 몇 명의 표인지 접힌 줄에 적는다(메이저·마이너 줄은 같은 선수다)
+  const hitterCount = new Set([...majorHitters, ...minorHitters].map((h) => h.playerId)).size;
+  const pitcherCount = new Set([...majorPitchers, ...minorPitchers].map((p) => p.playerId)).size;
+  return (
+    <Section id="stats-title" title={`${season} 선수별 기록`}>
+      <HistoryToggle
+        title="타자·투수 기록 표"
+        hint={`타자 ${hitterCount}명 · 투수 ${pitcherCount}명 · 메이저·마이너 합계와 순위`}
+        className=""
+        buttonClassName="card px-4 py-3.5"
+      >
+        <div className="mt-4">{tables}</div>
+      </HistoryToggle>
     </Section>
   );
 }
