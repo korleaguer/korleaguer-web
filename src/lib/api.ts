@@ -52,6 +52,13 @@ export interface GameBatting {
   rbi: number;
   walks: number;
   stolenBases: number;
+  /** 아래 여섯 칸은 선수 화면 타격 흐름 그래프(누적 wRC+)에 쓴다. MLB가 주지 않았거나 옛 API면 null(korleaguer-server#133) */
+  doubles: number | null;
+  triples: number | null;
+  hitByPitch: number | null;
+  sacFlies: number | null;
+  plateAppearances: number | null;
+  strikeouts: number | null;
 }
 
 export interface GamePitching {
@@ -399,6 +406,91 @@ export interface CareerPhoto {
   photoUrl: string;
 }
 
+/**
+ * 선수 화면 'MLB 안 위치'의 백분위(1~99, 높을수록 좋다): 같은 시즌 MLB 선수(타자 100타석·투수 30이닝 이상) 중
+ * 이 선수보다 값이 나쁜 비율. 견줄 선수가 아직 없거나(시즌 초) 이 선수의 그 값이 없으면 null
+ */
+export interface HitterPercentiles {
+  /** 종합: 타석당 WAR */
+  overall: number | null;
+  /** 타격: wRC+ */
+  batting: number | null;
+  /** 주루: 타석당 주루 득점 */
+  baseRunning: number | null;
+  /** 수비: 타석당 수비 득점(포지션 난도 포함) */
+  fielding: number | null;
+}
+
+export interface PitcherPercentiles {
+  /** 종합: 아웃당 WAR */
+  overall: number | null;
+  /** 실점 억제: ERA-(낮을수록 좋다) */
+  runPrevention: number | null;
+  /** 삼진: 상대 타자 중 삼진 비율 */
+  strikeouts: number | null;
+  /** 볼넷: 상대 타자 중 볼넷 비율(낮을수록 좋다) */
+  walks: number | null;
+}
+
+/**
+ * GET /api/players/{id}의 saber(korleaguer-server#133): 지금 시즌 MLB 공식 세이버 지표와 MLB 안 위치.
+ * 득점(batting·baseRunning·fielding)은 리그 평균 대비(+면 평균보다 낫다). percentiles는 표본이 적으면(타자 50타석·투수 10이닝 미만) null
+ */
+export type PlayerSaber =
+  | {
+      kind: "hitter";
+      season: number;
+      war: number | null;
+      /** 견준 MLB 선수 수. 견줄 선수가 없으면 0 */
+      poolSize: number;
+      plateAppearances: number | null;
+      wrcPlus: number | null;
+      batting: number | null;
+      baseRunning: number | null;
+      fielding: number | null;
+      percentiles: HitterPercentiles | null;
+    }
+  | {
+      kind: "pitcher";
+      season: number;
+      war: number | null;
+      poolSize: number;
+      /** 이닝을 아웃 수로(50⅔이닝 = 152) */
+      inningsOuts: number | null;
+      eraMinus: number | null;
+      fipMinus: number | null;
+      /** 퍼센트 값(22.7 = 22.7%) */
+      strikeoutRate: number | null;
+      walkRate: number | null;
+      percentiles: PitcherPercentiles | null;
+    };
+
+/** 지난 시즌 표 한 줄(MLB 정규시즌, 최신부터). 한 시즌 여러 팀이면 합친 한 줄이고 teamKo는 "탬파베이·애틀랜타" */
+export type CareerSeason =
+  | {
+      kind: "hitter";
+      season: number;
+      teamKo: string | null;
+      games: number | null;
+      plateAppearances: number | null;
+      avg: number | null;
+      homeRuns: number | null;
+      ops: number | null;
+      wrcPlus: number | null;
+      war: number | null;
+    }
+  | {
+      kind: "pitcher";
+      season: number;
+      teamKo: string | null;
+      games: number | null;
+      inningsOuts: number | null;
+      era: number | null;
+      strikeouts: number | null;
+      eraMinus: number | null;
+      war: number | null;
+    };
+
 /** GET /api/players/{id} */
 export interface PlayerResponse {
   dataMode: DataMode;
@@ -414,6 +506,13 @@ export interface PlayerResponse {
   games: GameLine[];
   /** 이동 기록, 최신부터. 이동 기록을 주지 않는 오래된 api면 null(없다고 단정하지 않는다) */
   moves: RosterMove[] | null;
+  /** 아래 셋은 korleaguer-server#133. 옛 API·아직 받지 않았으면 null / 빈 목록 */
+  /** 지금 시즌 MLB 안 위치. 그 시즌 MLB 기록이 없으면 null */
+  saber: PlayerSaber | null;
+  /** MLB 시즌별 기록(최신부터) */
+  seasons: CareerSeason[];
+  /** 이 선수 기사(늦은 순, 최대 10건) */
+  news: NewsHeadline[];
 }
 
 /** 내 선수 카드의 기간 합계(타자). avg는 타수가 없으면 null */
@@ -595,7 +694,17 @@ function normalizeLine(line: GameLine): GameLine {
     opponentScore: line.opponentScore ?? null,
     result: line.result ?? null,
     summary: line.summary ?? "",
-    batting: line.batting ?? null,
+    batting: line.batting
+      ? {
+          ...line.batting,
+          doubles: num(line.batting.doubles),
+          triples: num(line.batting.triples),
+          hitByPitch: num(line.batting.hitByPitch),
+          sacFlies: num(line.batting.sacFlies),
+          plateAppearances: num(line.batting.plateAppearances),
+          strikeouts: num(line.batting.strikeouts),
+        }
+      : null,
     pitching: line.pitching ?? null,
     lineup: line.lineup === "STARTER" || line.lineup === "SUB" ? line.lineup : null,
   };
@@ -751,6 +860,70 @@ function normalizePlayer(raw: PlayerResponse): PlayerResponse {
     minorPitching: raw.minorPitching ? normalizeSeason(raw.minorPitching) : null,
     games: (raw.games ?? []).map(normalizeLine),
     moves: raw.moves ?? null,
+    saber: normalizeSaber(raw.saber),
+    seasons: (Array.isArray(raw.seasons) ? raw.seasons : []).flatMap((x) => normalizeCareerSeason(x) ?? []),
+    news: (Array.isArray(raw.news) ? raw.news : []).flatMap((n) => normalizeHeadline(n) ?? []),
+  };
+}
+
+/** 숫자면 그대로, 아니면 null */
+function num(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+/** 서버는 타자·투수를 키로만 나눈다(타자 모양엔 투수 칸이 아예 없다). 화면이 고르기 쉽게 kind를 붙인다 */
+function normalizeSaber(raw: unknown): PlayerSaber | null {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw as Record<string, unknown>;
+  const season = num(r.season);
+  if (season == null) return null;
+  const pct = (r.percentiles ?? null) as Record<string, unknown> | null;
+  const common = { season, war: num(r.war), poolSize: num(r.poolSize) ?? 0 };
+  if ("inningsOuts" in r) {
+    return {
+      kind: "pitcher",
+      ...common,
+      inningsOuts: num(r.inningsOuts),
+      eraMinus: num(r.eraMinus),
+      fipMinus: num(r.fipMinus),
+      strikeoutRate: num(r.strikeoutRate),
+      walkRate: num(r.walkRate),
+      percentiles: pct
+        ? { overall: num(pct.overall), runPrevention: num(pct.runPrevention), strikeouts: num(pct.strikeouts), walks: num(pct.walks) }
+        : null,
+    };
+  }
+  return {
+    kind: "hitter",
+    ...common,
+    plateAppearances: num(r.plateAppearances),
+    wrcPlus: num(r.wrcPlus),
+    batting: num(r.batting),
+    baseRunning: num(r.baseRunning),
+    fielding: num(r.fielding),
+    percentiles: pct
+      ? { overall: num(pct.overall), batting: num(pct.batting), baseRunning: num(pct.baseRunning), fielding: num(pct.fielding) }
+      : null,
+  };
+}
+
+function normalizeCareerSeason(raw: unknown): CareerSeason | null {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw as Record<string, unknown>;
+  const season = num(r.season);
+  if (season == null) return null;
+  const common = { season, teamKo: typeof r.teamKo === "string" ? r.teamKo : null, games: num(r.games), war: num(r.war) };
+  if ("inningsOuts" in r) {
+    return { kind: "pitcher", ...common, inningsOuts: num(r.inningsOuts), era: num(r.era), strikeouts: num(r.strikeouts), eraMinus: num(r.eraMinus) };
+  }
+  return {
+    kind: "hitter",
+    ...common,
+    plateAppearances: num(r.plateAppearances),
+    avg: num(r.avg),
+    homeRuns: num(r.homeRuns),
+    ops: num(r.ops),
+    wrcPlus: num(r.wrcPlus),
   };
 }
 
