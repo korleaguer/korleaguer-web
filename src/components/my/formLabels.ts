@@ -6,7 +6,7 @@ import { formatDateRange, formatEra, formatRate } from "@/lib/format";
 const LEVEL_KO: Record<string, string> = {
   AAA: "트리플A",
   AA: "더블A",
-  "A+": "하이A",
+  "A+": "하이싱글A",
   A: "싱글A",
   ROK: "루키",
 };
@@ -55,10 +55,10 @@ export function metaLine(entry: MyPlayer): string {
   return parts.filter(Boolean).join(" · ");
 }
 
-/** "2026-08-27" → "8/27" */
+/** "2026-08-27" → "8월 27일"(다른 화면과 같은 표기, 슬래시는 쓰지 않는다) */
 function monthDay(date: string): string {
   const [, m, d] = date.split("-");
-  return `${Number(m)}/${Number(d)}`;
+  return `${Number(m)}월 ${Number(d)}일`;
 }
 
 /**
@@ -126,7 +126,7 @@ export function periodLabel(basis: CardBasis, level: string | null, days: number
 /** 기간을 당긴 카드(마지막·다치기 전)의 기간 설명: "다치기 전 7일 · 9월 15일(화) ~ 21일(월)" */
 export function periodNote(entry: MyPlayer, days: number): string | null {
   if (entry.basis === "LAST_PLAYED" || (entry.basis === "REHAB" && entry.isFallback)) {
-    return `마지막으로 뛴 ${days}일 · ${formatDateRange(entry.fromKst, entry.toKst)}`;
+    return `마지막 경기까지 ${days}일 · ${formatDateRange(entry.fromKst, entry.toKst)}`;
   }
   if (entry.basis === "BEFORE_INJURY") return `다치기 전 ${days}일 · ${formatDateRange(entry.fromKst, entry.toKst)}`;
   return null;

@@ -8,7 +8,7 @@ import StarIcon from "./StarIcon";
 import { useMyPlayerToggle } from "./useMyPlayerToggle";
 
 interface Props {
-  /** 제목 아래 작은 글씨. 예: "고른 선수 3명 · 9월 21일(월) ~ 27일(일)" */
+  /** 제목 아래 작은 글씨. 예: "내 선수 3명 · 9월 21일(월) ~ 27일(일)" */
   subtitle: string;
   /** 고를 수 있는 선수 전원 */
   players: PlayerSummary[];

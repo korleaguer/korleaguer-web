@@ -15,7 +15,7 @@ export default function HomePage() {
   return (
     <>
       {/* 눈에는 안 보이고 화면 낭독기만 읽는 페이지 제목 */}
-      <h1 className="sr-only">KOR Leaguer — 한국 MLB 선수 경기 기록</h1>
+      <h1 className="sr-only">KOR Leaguer — 해외파 한국 선수 기록 모아보기</h1>
       <PageSuspense fallback={<HomeLoading />}>
         <HomeContent />
       </PageSuspense>

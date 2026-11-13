@@ -10,7 +10,7 @@ import PageSuspense from "@/components/PageSuspense";
 import { shareMeta } from "@/lib/share";
 
 // <title>: "선수 · KOR Leaguer" (뒷부분은 layout의 template이 붙인다)
-const DESCRIPTION = "한국 MLB 선수 모아보기. 선수별 시즌 성적을 한눈에 봐요.";
+const DESCRIPTION = "해외파 한국 선수 모아보기. 선수별 시즌 기록을 한눈에 봐요.";
 
 export const metadata: Metadata = {
   title: "선수",

@@ -25,7 +25,7 @@ interface Props {
 
 /**
  * 내 선수 한 명의 카드: 팀 색 무대(상태 배지 + 사진) → 이름 → 출전 줄·한 줄 소식 → 큰 숫자와 작은 숫자 셋 →
- * 경기별 막대 → 경기별 기록 모두 보기. 마이너에 있으면 숫자·막대가 마이너 기록이고(이름표에 단계),
+ * 경기별 막대 → 경기 기록 모두 보기. 마이너에 있으면 숫자·막대가 마이너 기록이고(이름표에 단계),
  * 비시즌·FA면 기간 대신 시즌 합계를 보인다(이슈 #13). 비시즌 홈도 같은 카드로 선수 6명을 보인다.
  */
 export default async function FormCard({ entry, days, statsAvailable, isMine = true, nameAs: Name = "h2" }: Props) {
@@ -80,7 +80,7 @@ export default async function FormCard({ entry, days, statsAvailable, isMine = t
         {statsAvailable && <SummaryLines entry={entry} />}
 
         {!statsAvailable ? (
-          <Notice>아직 경기별 기록을 받지 못했어요.</Notice>
+          <Notice>아직 경기 기록을 받지 못했어요.</Notice>
         ) : basis === "SEASON" && entry.seasonTotals ? (
           <SeasonNumbers totals={entry.seasonTotals} pitcher={pitcher} />
         ) : basis === "NONE" ? (
@@ -111,14 +111,14 @@ export default async function FormCard({ entry, days, statsAvailable, isMine = t
             </div>
           </>
         ) : (
-          <Notice>아직 이 선수의 기록을 연결하지 못했어요.</Notice>
+          <Notice>아직 이 선수 기록이 없어요.</Notice>
         )}
 
         {/* 펼치면 경기별 기록이 버튼 위에 붙고, 버튼은 카드 맨 아래에서 '접기'가 된다 */}
         {showsGames && (
           // 펼친 경기 목록도 읽는 곳이라 링크 위에 둔다
           <div data-no-press className="relative z-10 mt-auto pt-3">
-            <ShowMore moreLabel={`경기별 기록 ${games.length}개 모두 보기`} buttonClassName="rounded-lg py-2">
+            <ShowMore moreLabel="경기 기록 모두 보기" buttonClassName="rounded-lg py-2">
               <ul className="-mx-4 border-y border-line divide-y divide-line">
                 {games.map((game) => (
                   <GameRow key={game.gameId} game={game} />
