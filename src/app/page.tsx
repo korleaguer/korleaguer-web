@@ -58,6 +58,7 @@ async function HomeContent() {
         pitchers={home.pitchers}
         minorHitters={home.minorHitters}
         minorPitchers={home.minorPitchers}
+        folded={home.offseason != null}
       />
     </div>
   );

@@ -81,7 +81,8 @@ export default async function OffseasonPlayers({ offseason }: { offseason: OffSe
         <p className="card px-4 py-6 text-sm text-muted">선수 기록이 모이면 선수별 시즌 카드가 여기에 나와요.</p>
       ) : (
         <ul className="grid items-stretch gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {/* 같은 줄 카드는 높이를 맞춘다(시즌 합계 카드는 펼치는 목록이 없다). 숫자 묶음은 카드 아래에 붙는다 */}
+          {/* 같은 줄 카드는 높이를 맞춘다(시즌 합계 카드는 펼치는 목록이 없다). 숫자 묶음은 카드 아래에 붙는다.
+              성적표 카드는 기사 수가 선수마다 달라 맞추면 기사 없는 카드 아래가 비므로 제 높이로 둔다(이슈 #191) */}
           {entries.map((entry) => {
             const r = report.get(entry.player.id)?.r;
             return r ? (
