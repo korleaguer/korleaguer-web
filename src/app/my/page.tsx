@@ -91,12 +91,9 @@ async function MyContent({ searchParams }: Pick<PageProps<"/my">, "searchParams"
           </ul>
         </>
       ) : (
-        // 아무도 안 골랐으면 위 '선수 고르기' 목록이 열려 있어서 따로 버튼을 두지 않는다
-        <StateNotice
-          emoji="⭐"
-          title="아직 내 선수가 없어요"
-          detail="위 목록에서 선수를 누르면 여기에 카드가 생겨요."
-        />
+        // 아무도 안 골랐으면 위 '선수 고르기' 목록이 열려 있어서 따로 버튼을 두지 않는다.
+        // 누르는 법은 목록 안내가 이미 말하니 여기서는 제목만(같은 안내를 한 화면에서 되풀이하지 않는다)
+        <StateNotice emoji="⭐" title="아직 내 선수가 없어요" />
       )}
     </div>
   );

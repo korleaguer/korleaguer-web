@@ -80,7 +80,7 @@ export default async function FormCard({ entry, days, statsAvailable, isMine = t
         {statsAvailable && <SummaryLines entry={entry} />}
 
         {!statsAvailable ? (
-          <Notice>아직 경기별 기록을 받지 못했어요.</Notice>
+          <Notice>아직 경기 기록을 받지 못했어요.</Notice>
         ) : basis === "SEASON" && entry.seasonTotals ? (
           <SeasonNumbers totals={entry.seasonTotals} pitcher={pitcher} />
         ) : basis === "NONE" ? (
@@ -118,7 +118,7 @@ export default async function FormCard({ entry, days, statsAvailable, isMine = t
         {showsGames && (
           // 펼친 경기 목록도 읽는 곳이라 링크 위에 둔다
           <div data-no-press className="relative z-10 mt-auto pt-3">
-            <ShowMore moreLabel={`${games.length}경기 모두 보기`} buttonClassName="rounded-lg py-2">
+            <ShowMore moreLabel="경기 기록 모두 보기" buttonClassName="rounded-lg py-2">
               <ul className="-mx-4 border-y border-line divide-y divide-line">
                 {games.map((game) => (
                   <GameRow key={game.gameId} game={game} />

@@ -86,8 +86,8 @@ export default async function SeasonStats({
         </Group>
         <Notes
           lines={[
-            hasMinors && "마이너 줄은 모든 단계를 더한 기록이라 1위를 표시하지 않아요.",
-            minorsPending && "마이너 경기별 기록을 받는 중이에요. 하루 한 번 새로 받아요.",
+            hasMinors && "마이너 기록은 모든 단계를 더한 것이라 1위를 표시하지 않아요.",
+            minorsPending && "마이너 경기 기록을 받는 중이에요. 하루 한 번 새로 받아요.",
           ]}
         />
       </div>
