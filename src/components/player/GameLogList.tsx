@@ -1,7 +1,7 @@
 "use client"; // 접은 결장 펼치기를 기억하고 '더 보기'를 처음 누를 때 나머지를 그려야 해서 클라이언트 컴포넌트다.
 
 import { useMemo, useState } from "react";
-import type { GameLine, MinorGameLine, RosterMove } from "@/lib/api";
+import type { GameLine, MinorGameLine, Role, RosterMove } from "@/lib/api";
 import { formatShortDate } from "@/lib/format";
 import { buildGameLog, type GameLogItem } from "@/lib/gameLog";
 import { haptic } from "@/lib/app";
@@ -31,14 +31,16 @@ export default function GameLogList({
   games,
   minorGames,
   moves,
+  role,
 }: {
   games: GameLine[];
   minorGames: MinorGameLine[];
   moves: RosterMove[];
+  role: Role;
 }) {
-  const pitcher = (games[0]?.role ?? (minorGames[0]?.pitching ? "PITCHER" : "HITTER")) === "PITCHER";
+  const pitcher = role === "PITCHER";
   const [open, setOpen] = useState<ReadonlySet<string>>(new Set());
-  const items = useMemo(() => buildGameLog(games, minorGames, moves), [games, minorGames, moves]);
+  const items = useMemo(() => buildGameLog(games, minorGames, moves, role), [games, minorGames, moves, role]);
 
   // 처음 VISIBLE줄과 나머지로 나눈다. 달 머리 줄·띠는 다음 경기 줄과 함께 간다
   let rowsSeen = 0;
@@ -95,7 +97,7 @@ export default function GameLogList({
       return e.kind === "mlb" ? (
         <GameRow key={it.key} game={e.game} />
       ) : (
-        <GameRow key={it.key} game={e.line} levelKo={e.game.levelKo} opponentId={e.game.opponentId} />
+        <GameRow key={it.key} game={e.line} levelKo={e.game.levelKo} opponentId={e.game.opponentId} hideVenue={e.game.home == null} />
       );
     }
     const expanded = open.has(it.key);

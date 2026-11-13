@@ -110,7 +110,7 @@ async function PlayerContent({ params }: Pick<Props, "params">) {
               <PlayerNews id="news-title" news={news} photoUrl={player.photoUrl} />
             </div>
           )}
-          <GameLog games={games} minorGames={minorGames} moves={moves ?? []} />
+          <GameLog games={games} minorGames={minorGames} moves={moves ?? []} role={player.role} />
           <CareerSeasons seasons={seasons} />
         </div>
         {/* 오른쪽 칸: 선수 정보 + 기사(PC) + 이동 기록(메이저·마이너 오간 날짜) */}

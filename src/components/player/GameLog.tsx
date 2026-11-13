@@ -1,4 +1,4 @@
-import type { GameLine, MinorGameLine, RosterMove } from "@/lib/api";
+import type { GameLine, MinorGameLine, Role, RosterMove } from "@/lib/api";
 import Section from "@/components/Section";
 import GameLogList from "./GameLogList";
 import { cacheLife } from "next/cache";
@@ -16,10 +16,12 @@ export default async function GameLog({
   games,
   minorGames,
   moves,
+  role,
 }: {
   games: GameLine[];
   minorGames: MinorGameLine[];
   moves: RosterMove[];
+  role: Role;
 }) {
   // 잠깐 재사용: 같은 데이터면 30초 동안 그려 둔 것을 다시 쓴다(쿠키와 상관없는 부품이라 모두에게 같다).
   // 운영 서버(라즈베리파이 4)는 화면 그리기가 느려서 큰 부품을 매번 그리지 않는다.
@@ -31,7 +33,7 @@ export default async function GameLog({
       {games.length === 0 && minorGames.length === 0 ? (
         <p className="card px-4 py-5 text-sm text-muted">경기 기록이 없어요.</p>
       ) : (
-        <GameLogList games={games} minorGames={minorGames} moves={moves} />
+        <GameLogList games={games} minorGames={minorGames} moves={moves} role={role} />
       )}
     </Section>
   );

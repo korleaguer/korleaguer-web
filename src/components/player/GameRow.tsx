@@ -9,15 +9,18 @@ import TeamName from "@/components/TeamName";
  * 경기 한 줄(선수 페이지 경기 기록, 내 선수 카드의 '모두 보기'가 같이 쓴다).
  * 서버에서도, 브라우저에서도(경기 기록 GameLogList) 그린다. 서버 전용 기능을 쓰지 않는다.
  * 마이너 경기면 levelKo('트리플A')를 상대 팀 앞에 작게 붙이고, 상대 로고는 opponentId(팀 번호)로 찾는다.
+ * hideVenue면 홈·원정을 쓰지 않는다(마이너 경기에서 모를 때).
  */
 export default function GameRow({
   game: g,
   levelKo,
   opponentId,
+  hideVenue = false,
 }: {
   game: GameLine;
   levelKo?: string;
   opponentId?: number | null;
+  hideVenue?: boolean;
 }) {
   const hasScore = g.teamScore != null && g.opponentScore != null;
   const lineup = formatLineup(g);
@@ -41,7 +44,7 @@ export default function GameRow({
           )}
           <span>vs</span>
           <TeamName teamKo={g.opponentKo} teamAbbr={g.opponentAbbr} teamId={opponentId} />
-          <span>{`· ${g.home ? "홈" : "원정"}`}</span>
+          {!hideVenue && <span>{`· ${g.home ? "홈" : "원정"}`}</span>}
           {lineup && <span>{`· ${lineup}`}</span>}
           {/* 경기 전이면 점수 대신 시작 시각. 끝났는데 점수가 없으면(마이너 경기) 둘 다 쓰지 않는다 */}
           {hasScore ? (

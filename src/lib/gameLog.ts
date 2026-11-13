@@ -31,11 +31,23 @@ function monthOf(startTimeKst: string): number {
   return Number(startTimeKst.slice(5, 7));
 }
 
-/** 이동 기록 중 단계가 바뀌는 것: 콜업이면 true, 강등·이관이면 false, 그 밖은 null */
+/**
+ * 이동 기록이 단계를 바꾸는지: 메이저로 오르면 true, 마이너로 내려가면 false, 그 밖은 null.
+ * 글자가 아니라 MLB 거래 종류(typeCode)와 옮긴 곳(toLevel)으로 본다.
+ * 오름: 콜업(CU)·계약 선택(SE). 내림: 옵션(OPT)·아웃라이트(OUT)·마이너 팀 배정(ASG, 재활 제외).
+ * 트레이드·클레임·계약은 옮긴 곳이 '메이저 구단'으로만 적혀 실제 메이저 명단인지 모르므로 보지 않는다
+ * (고우석 7.5 트레이드는 트리플A로 가는 이적이었다). 부상자 명단·DFA·방출·FA 선언·출장 정지도 단계를 바꾸지 않는다.
+ */
 function levelChange(m: RosterMove): boolean | null {
-  if (/콜업/.test(m.labelKo)) return true;
-  if (/강등|이관/.test(m.labelKo)) return false;
+  if (m.typeCode === "CU" || m.typeCode === "SE") return true;
+  if (m.typeCode === "OPT" || m.typeCode === "OUT") return false;
+  if (m.typeCode === "ASG") return isRehab(m) || m.toLevel !== "MINORS" ? null : false;
   return null;
+}
+
+/** 재활 경기 배정(부상자 명단에 있는 메이저 선수가 마이너 경기에 나간다) */
+function isRehab(m: RosterMove): boolean {
+  return /재활 경기/.test(m.labelKo);
 }
 
 /**
@@ -51,6 +63,7 @@ export function minorAsLine(m: MinorGameLine, base: Pick<GameLine, "playerId" | 
     teamAbbr: null,
     opponentKo: m.opponentKo,
     opponentAbbr: null,
+    // 홈·원정을 모르면(null) 줄에 쓰지 않는다(GameRow hideVenue). 여기 값은 쓰이지 않는다
     home: m.home ?? false,
     teamScore: m.teamScore,
     opponentScore: m.opponentScore,
@@ -86,7 +99,9 @@ export function monthSummary(entries: LogGame[], role: Role): string {
     const line = e.kind === "mlb" ? e.game : e.line;
     if (!line.played) continue;
     const level = e.kind === "mlb" ? "메이저" : e.game.levelKo;
-    byLevel.set(level, [...(byLevel.get(level) ?? []), line]);
+    const list = byLevel.get(level);
+    if (list) list.push(line);
+    else byLevel.set(level, [line]);
   }
   if (byLevel.size === 0) return role === "PITCHER" ? "등판 없음" : "뛴 경기 없음";
   return [...byLevel]
@@ -95,15 +110,19 @@ export function monthSummary(entries: LogGame[], role: Role): string {
 }
 
 /**
- * 메이저 경기(최신부터, 결장 포함)와 마이너 경기(최신부터)를 한 목록으로.
+ * 메이저 경기(최신부터, 결장 포함)와 마이너 경기(최신부터)를 한 목록으로. role은 선수의 주 역할(달 머리 줄 성적·결장 글에 쓴다).
  * - 경기는 시작 시각 최신부터 섞는다. 마이너 경기 줄은 메이저와 같은 모양이다.
  * - 콜업·강등(단계가 실제로 바뀐 것)과 재활 경기 배정은 그날 경기와 그 전 경기 사이에 띠로 끼운다(이 시즌 것만, 첫 경기보다 앞선 것은 맨 끝).
  * - 이어진 메이저 결장 2경기 이상은 한 줄로 접는다(1경기는 그대로). 띠·달이 바뀌면 끊는다.
  * - 달 머리 줄은 그달 첫 줄 앞에 둔다.
  */
-export function buildGameLog(games: GameLine[], minorGames: MinorGameLine[], moves: RosterMove[]): GameLogItem[] {
+export function buildGameLog(
+  games: GameLine[],
+  minorGames: MinorGameLine[],
+  moves: RosterMove[],
+  role: Role,
+): GameLogItem[] {
   const base = games[0] ?? null;
-  const role: Role = base?.role ?? (minorGames[0]?.pitching && !minorGames[0]?.batting ? "PITCHER" : "HITTER");
   const who = { playerId: base?.playerId ?? 0, nameKo: base?.nameKo ?? "", role, photoUrl: base?.photoUrl ?? null };
   const entries: LogGame[] = [
     ...games.map((g): LogGame => ({ kind: "mlb", game: g })),
@@ -116,15 +135,21 @@ export function buildGameLog(games: GameLine[], minorGames: MinorGameLine[], mov
   const oldest = usDate(startOf(first));
   // 실제로 단계가 바뀐 이동만 띠로 둔다. 이미 마이너에 있는 선수를 40인 명단에서 빼는 '이관'처럼
   // 같은 방향이 이어지면 뺀다(마이너에서 던지는 중인데 '마이너로 내려감'이 붙지 않게).
-  // 첫 경기 전의 이동은 띠 없이 그때 상태만 정하고, 이동이 없으면 첫 경기가 메이저인지로 정한다.
+  // 상태는 지난 이동에서 이어 오되, 첫 경기 때는 실제로 뛴 곳으로 다시 맞춘다(지난 시즌 끝 상태가 개막과 다를 수 있다:
+  // 고우석은 지난 시즌 메이저로 끝났지만 개막을 트리플A에서 맞아, 4.8 더블A 배정이 '내려감'으로 보이면 안 된다).
   // 재활 경기 배정은 단계를 바꾸지 않지만, 부상 중 메이저 선수가 왜 트리플A 줄에 있는지 알려 주려고 흐린 띠로 둔다.
-  let up: boolean | null = first.kind === "mlb";
+  let up: boolean | null = null;
+  let synced = false;
   const kept: { date: string; tone: MoveTone }[] = [];
   let lastRehab = "";
   for (const m of [...moves].sort((a, c) => a.date.localeCompare(c.date))) {
+    if (!synced && m.date > oldest) {
+      up = first.kind === "mlb";
+      synced = true;
+    }
     // 이 시즌의 이동만 띠로(마지막 경기 뒤의 이동, 예를 들어 오늘 콜업은 맨 위에, 첫 경기 전 것은 맨 끝에)
     const shown = m.date.slice(0, 4) === oldest.slice(0, 4);
-    if (/재활 경기/.test(m.labelKo)) {
+    if (isRehab(m)) {
       // 며칠 사이 단계를 옮겨 다시 배정되는 일이 많아(더블A → 트리플A) 열흘 안의 재활 배정은 첫 것 하나로
       if (shown && daysBetween(lastRehab, m.date) > 10) kept.push({ date: m.date, tone: "rehab" });
       lastRehab = m.date;
@@ -140,7 +165,9 @@ export function buildGameLog(games: GameLine[], minorGames: MinorGameLine[], mov
   const byMonth = new Map<number, LogGame[]>();
   for (const e of entries) {
     const m = monthOf(startOf(e));
-    byMonth.set(m, [...(byMonth.get(m) ?? []), e]);
+    const list = byMonth.get(m);
+    if (list) list.push(e);
+    else byMonth.set(m, [e]);
   }
 
   const items: GameLogItem[] = [];
