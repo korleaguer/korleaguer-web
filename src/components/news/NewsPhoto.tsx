@@ -17,8 +17,8 @@ export default function NewsPhoto({
   url: string | null;
   fallback: string | null;
 }) {
-  // ① 우리 서버가 화면 폭에 맞게 줄인 사진(704·1280) → ② 언론사 원본 → ③ 선수 사진
-  const small = url ? `/news/${newsId}/photo/704` : null;
+  // ① 우리 서버가 화면 폭에 맞게 줄인 사진(720·1280, 원본과 화질은 같고 원본보다 키우지 않는다) → ② 언론사 원본 → ③ 선수 사진
+  const small = url ? `/news/${newsId}/photo/720w` : null;
   const smallState = useImageFailed(small);
   const article = useImageFailed(url);
   const player = useImageFailed(fallback);
@@ -27,7 +27,7 @@ export default function NewsPhoto({
   if (stage < 0) return null;
   const usePlayer = stage === 2;
   const src = stage === 0 ? small : stage === 1 ? url : fallback;
-  const srcSet = stage === 0 ? `/news/${newsId}/photo/704 704w, /news/${newsId}/photo/1280 1280w` : undefined;
+  const srcSet = stage === 0 ? `/news/${newsId}/photo/720w 720w, /news/${newsId}/photo/1280w 1280w` : undefined;
   const { ref, onError } = stage === 0 ? smallState : stage === 1 ? article : player;
   return (
     // 기사 사진은 2:1(휴대폰 343px 폭이면 172px). 640px 이상(PC 왼쪽 칸 폭 628px이면 16:9가 353px)은 높이를 288px로 정해 요약이 첫 화면에 들어오게 한다.
