@@ -1,6 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { Suspense } from "react";
 import { getHome, getMyPlayers, getPlayers } from "@/lib/api";
 import { formatDateRange } from "@/lib/format";
 import { readMyPlayers } from "@/lib/myPlayers";
@@ -9,7 +7,9 @@ import DataBanners from "@/components/DataBanners";
 import LoadingBlock from "@/components/LoadingBlock";
 import FormCard from "@/components/my/FormCard";
 import MyHeader from "@/components/my/MyHeader";
+import PillNav from "@/components/PillNav";
 import StateNotice from "@/components/StateNotice";
+import PageSuspense from "@/components/PageSuspense";
 
 // <title>: "내 선수 · KOR Leaguer". 사람마다 다른 화면이라 검색에는 올리지 않는다.
 export const metadata: Metadata = {
@@ -29,9 +29,9 @@ function parseDays(value: string | string[] | undefined): Period {
 
 export default function MyPage({ searchParams }: PageProps<"/my">) {
   return (
-    <Suspense fallback={<LoadingBlock rows={8} />}>
+    <PageSuspense fallback={<LoadingBlock rows={8} />}>
       <MyContent searchParams={searchParams} />
-    </Suspense>
+    </PageSuspense>
   );
 }
 
@@ -99,24 +99,20 @@ async function MyContent({ searchParams }: Pick<PageProps<"/my">, "searchParams"
   );
 }
 
-/** 기간 알약: 최근 7일 · 14일 · 30일. 주소(?days=)로 바꾼다 */
+/** 기간 고르기: 최근 7일 · 14일 · 30일. 주소(?days=)로 바꾼다. 흰 바탕 띠 위로 파란 알약이 미끄러진다(토스 SegmentedControl처럼) */
 function PeriodTabs({ days }: { days: Period }) {
   return (
-    <nav aria-label="기간" className="flex gap-1.5 px-1">
-      {PERIODS.map((d) => {
-        const current = d === days;
-        return (
-          <Link
-            key={d}
-            href={d === 7 ? "/my" : `/my?days=${d}`}
-            scroll={false}
-            aria-current={current ? "page" : undefined}
-            className={`press tap-target rounded-full px-3 py-1 text-[0.8125rem] font-semibold ${current ? "bg-accent-soft text-accent-ink" : "bg-surface text-muted hover:text-foreground"}`}
-          >
-            {d === 7 ? "최근 7일" : `${d}일`}
-          </Link>
-        );
-      })}
-    </nav>
+    <PillNav
+      label="기간"
+      scroll={false}
+      className="w-fit gap-0.5 rounded-full bg-surface p-1 shadow-[var(--shadow-card)]"
+      itemClass="px-3 py-1 text-[0.8125rem] font-semibold"
+      idleClass="text-muted hover:text-foreground"
+      items={PERIODS.map((d) => ({
+        href: d === 7 ? "/my" : `/my?days=${d}`,
+        label: d === 7 ? "최근 7일" : `${d}일`,
+        current: d === days ? "page" : undefined,
+      }))}
+    />
   );
 }
