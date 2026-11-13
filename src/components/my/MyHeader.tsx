@@ -92,7 +92,9 @@ export default function MyHeader({ subtitle, players, selectedIds }: Props) {
 /** 고르기 목록 한 줄: 사진 · 이름 · 팀 · 별. 줄 전체가 버튼이다 */
 function PickerRow({ player, initialOn }: { player: PlayerSummary; initialOn: boolean }) {
   const { on, pending, toggle } = useMyPlayerToggle(player.id, initialOn, player.nameKo);
-  const meta = [player.teamKo, player.positionKo].filter(Boolean).join(" · ");
+  // 팀은 카드 이름 아래 줄(metaLine)과 같게: 국내 복귀면 그 팀, FA면 '전 마지막 팀'
+  const team = player.returnedKo ?? (player.freeAgent && player.teamKo ? `전 ${player.teamKo}` : player.teamKo);
+  const meta = [team, player.positionKo].filter(Boolean).join(" · ");
 
   return (
     <li>

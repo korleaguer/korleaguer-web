@@ -19,7 +19,12 @@ export default function InfoChips({ player, className = "" }: { player: PlayerSu
       <LevelChip player={player} as="li" />
       {player.teamKo && (
         <li className={CHIP}>
-          <TeamName teamKo={player.teamKo} teamAbbr={player.teamAbbr} />
+          {/* FA·국내 복귀 선수의 팀 칸은 마지막 MLB 팀이라 '전'을 붙인다('FA' 옆 '애틀랜타'는 아직 소속처럼 읽혔다, 점검 11-13) */}
+          <TeamName
+            teamKo={player.teamKo}
+            teamAbbr={player.teamAbbr}
+            prefix={player.freeAgent || player.returnedKo ? "전" : undefined}
+          />
         </li>
       )}
       {player.positionKo && <li className={CHIP}>{player.positionKo}</li>}

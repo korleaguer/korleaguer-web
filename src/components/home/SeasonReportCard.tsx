@@ -9,7 +9,7 @@ import NewsTitleList from "@/components/news/NewsTitleList";
 import BandPhoto from "@/components/my/BandPhoto";
 import { StatusBadge } from "@/components/my/FormSummary";
 import MyPlayerToggle from "@/components/my/MyPlayerToggle";
-import { type BadgeTone, metaLine, otherTotalsLine, statusBadge } from "@/components/my/formLabels";
+import { type BadgeTone, levelKo, metaLine, otherTotalsLine, statusBadge } from "@/components/my/formLabels";
 
 /**
  * 판정마다 색(사용자 11-12 결정 '혹평 막기'): 잘한 시즌만 색을 쓴다(좋은·짧았지만 좋았던 = 초록, 제 몫 = 파랑).
@@ -197,6 +197,8 @@ function Numbers({ entry, report, box }: { entry: MyPlayer; report: SeasonReport
   const items = pitcher ? pitcherItems(main) : hitterItems(main, showWar ? report.war : null);
   return (
     <div className={`mt-2.5 rounded-xl px-3 pb-2.5 pt-2 ${box}`}>
+      {/* 큰 숫자가 마이너 기록이면 어느 단계인지 먼저 적는다. 이름표가 그냥 '타율'이면 메이저 기록으로 읽힌다(점검 11-13) */}
+      {main !== totals.mlb && <p className="mb-1 text-[0.6875rem] font-bold text-muted">{`${levelKo(main.level)} 기록`}</p>}
       <dl className="grid grid-cols-4 gap-1">
         {items.map(([k, v]) => (
           <div key={k}>

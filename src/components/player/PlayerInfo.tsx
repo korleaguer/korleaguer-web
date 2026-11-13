@@ -21,8 +21,11 @@ function dataFields(player: PlayerDetail): Field[] {
   // "샌프란시스코 (San Francisco Giants)". 알약에는 짧은 한글 이름만 있어서 여기서 정식 이름을 보여 준다.
   const team = player.teamKo && player.teamEn ? `${player.teamKo} (${player.teamEn})` : player.teamKo;
 
+  // FA·국내 복귀 선수의 팀은 마지막 MLB 팀이다('소속팀 미네소타'는 LG로 돌아간 고우석을 미네소타 소속으로 읽히게 했다)
+  const formerTeam = player.freeAgent || player.returnedKo != null;
+
   const fields: (Field | null)[] = [
-    team ? { label: "소속팀", value: team, wide: true } : null,
+    team ? { label: formerTeam ? "전 소속팀" : "소속팀", value: team, wide: true } : null,
     player.positionKo ? { label: "포지션", value: player.positionKo } : null,
     player.batsThrowsKo ? { label: "투타", value: player.batsThrowsKo } : null,
     birthText ? { label: "생년월일", value: birthText } : null,

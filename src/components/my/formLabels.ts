@@ -47,11 +47,11 @@ export function statusBadge(status: CardStatus): { text: string; tone: BadgeTone
   }
 }
 
-/** 이름 아래 팀 줄: FA면 직전 소속, 국내 리그로 돌아갔으면 그 팀 */
+/** 이름 아래 팀 줄: FA면 '전 마지막 팀'(선수 페이지 알약·선수 정보와 같은 말), 국내 리그로 돌아갔으면 그 팀 */
 export function metaLine(entry: MyPlayer): string {
   const status = entry.status;
   const team = status?.kind === "KBO" && status.teamName ? status.teamName : entry.player.teamKo;
-  const parts = [status?.kind === "FA" && team ? `직전 ${team}` : team, entry.player.positionKo];
+  const parts = [status?.kind === "FA" && team ? `전 ${team}` : team, entry.player.positionKo];
   return parts.filter(Boolean).join(" · ");
 }
 
