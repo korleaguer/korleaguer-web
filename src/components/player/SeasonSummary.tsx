@@ -14,14 +14,17 @@ interface Props {
 
 type Stat = [label: string, value: string | number];
 
-/** 선수 시즌 성적. 큰 숫자 카드 네 장 + 세부 기록 한 장 */
+/**
+ * 선수 시즌 성적(메이저 정규시즌). 큰 숫자 카드 네 장 + 세부 기록 한 장. 마이너 기록은 들어 있지 않아 제목에 '메이저'를 적는다
+ * (그냥 '시즌 성적'이면 트리플A에서 85경기를 뛴 김혜성이 43경기로 읽혔다, 점검 11-13)
+ */
 export default async function SeasonSummary({ season, statsAvailable, hitting, pitching }: Props) {
   // 잠깐 재사용: 같은 데이터면 30초 동안 그려 둔 것을 다시 쓴다(쿠키와 상관없는 부품이라 모두에게 같다).
   // 운영 서버(라즈베리파이 4)는 화면 그리기가 느려서 큰 부품을 매번 그리지 않는다.
   "use cache";
   cacheLife({ stale: 30, revalidate: 30, expire: 300 });
   return (
-    <Section id="season-title" title={`${season} 시즌 성적`}>
+    <Section id="season-title" title={`${season} 메이저 성적`}>
       <div className="space-y-2.5">
         {hitting && (
           <StatBlock
