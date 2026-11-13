@@ -6,11 +6,17 @@ import ApiErrorNotice from "@/components/ApiErrorNotice";
 import DataBanners from "@/components/DataBanners";
 import LoadingBlock from "@/components/LoadingBlock";
 import NotFoundNotice from "@/components/NotFoundNotice";
+import CareerSeasons from "@/components/player/CareerSeasons";
 import GameLog from "@/components/player/GameLog";
+import LeaguePosition from "@/components/player/LeaguePosition";
 import PlayerHeader from "@/components/player/PlayerHeader";
 import PlayerInfo from "@/components/player/PlayerInfo";
+import PlayerNews from "@/components/player/PlayerNews";
 import RosterMoves from "@/components/player/RosterMoves";
 import SeasonSummary from "@/components/player/SeasonSummary";
+import WrcTrend from "@/components/player/WrcTrend";
+import Section from "@/components/Section";
+import { buildWrcTrend } from "@/lib/wrcTrend";
 import PageSuspense from "@/components/PageSuspense";
 
 type Props = PageProps<"/players/[id]">;
@@ -59,12 +65,14 @@ async function PlayerContent({ params }: Pick<Props, "params">) {
     return <ApiErrorNotice failure={result.failure} />;
   }
 
-  const { dataMode, statsAvailable, season, player, hitting, pitching, games, moves } = result.data;
+  const { dataMode, statsAvailable, season, player, hitting, pitching, games, moves, saber, seasons, news } = result.data;
+  // 타격 흐름(누적 wRC+)은 타자만. 마지막 점을 MLB 공식 시즌 wRC+에 맞춘다
+  const trend = saber?.kind === "hitter" && saber.wrcPlus != null ? buildWrcTrend(games, saber.wrcPlus) : null;
   return (
     <div className="space-y-4 sm:space-y-5">
       <DataBanners dataMode={dataMode} statsAvailable={statsAvailable} />
       <PlayerHeader player={player} isMine={myIds.includes(player.id)} />
-      {/* 넓은 화면: 왼쪽 시즌 성적·경기 기록 | 오른쪽 선수 정보 */}
+      {/* 넓은 화면: 왼쪽 시즌 성적·MLB 안 위치·흐름·경기 기록·시즌별 기록 | 오른쪽 선수 정보·기사·이동 기록 */}
       <div className="space-y-7 pt-2 lg:grid lg:grid-cols-[minmax(0,1fr)_21.25rem] lg:items-start lg:gap-x-4 lg:space-y-0">
         <div className="min-w-0 space-y-7">
           <SeasonSummary
@@ -73,11 +81,29 @@ async function PlayerContent({ params }: Pick<Props, "params">) {
             hitting={hitting}
             pitching={pitching}
           />
+          {saber && <LeaguePosition saber={saber} />}
+          {trend && (
+            <Section id="trend-title" title="타격 흐름" aside="누적 wRC+">
+              <WrcTrend points={trend} />
+            </Section>
+          )}
+          {/* 기사는 휴대폰에선 경기 기록 위, PC에선 오른쪽 칸(사용자 11-12: PC 오른쪽 칸은 관련 기사) */}
+          {news.length > 0 && (
+            <div className="lg:hidden">
+              <PlayerNews id="news-title" news={news} photoUrl={player.photoUrl} />
+            </div>
+          )}
           <GameLog games={games} />
+          <CareerSeasons seasons={seasons} />
         </div>
-        {/* 오른쪽 칸: 선수 정보 + 이동 기록(메이저·마이너 오간 날짜) */}
+        {/* 오른쪽 칸: 선수 정보 + 기사(PC) + 이동 기록(메이저·마이너 오간 날짜) */}
         <div className="min-w-0 space-y-7">
           <PlayerInfo player={player} />
+          {news.length > 0 && (
+            <div className="hidden lg:block">
+              <PlayerNews id="news-title-pc" news={news} photoUrl={player.photoUrl} />
+            </div>
+          )}
           {moves && <RosterMoves moves={moves} />}
         </div>
       </div>
