@@ -79,6 +79,7 @@ async function PlayerContent({ params }: Pick<Props, "params">) {
     saber,
     seasons,
     news,
+    minorGames,
   } = result.data;
   // 타격 흐름(누적 wRC+)은 타자만. 마지막 점을 MLB 공식 시즌 wRC+에 맞춘다
   const trend = saber?.kind === "hitter" && saber.wrcPlus != null ? buildWrcTrend(games, saber.wrcPlus) : null;
@@ -109,7 +110,7 @@ async function PlayerContent({ params }: Pick<Props, "params">) {
               <PlayerNews id="news-title" news={news} photoUrl={player.photoUrl} />
             </div>
           )}
-          <GameLog games={games} />
+          <GameLog games={games} minorGames={minorGames} moves={moves ?? []} />
           <CareerSeasons seasons={seasons} />
         </div>
         {/* 오른쪽 칸: 선수 정보 + 기사(PC) + 이동 기록(메이저·마이너 오간 날짜) */}
