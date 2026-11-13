@@ -16,11 +16,13 @@ export interface NewsTitleItem extends NewsHeadline {
  * (사용자 11-11: "기사 제목만 가져오고 클릭하면 새로운 페이지에서 썸네일과 요약", 11-12: "썸네일 다시 넣어").
  * 요약은 목록에 두지 않고, 누르면 우리 기사 페이지(/news/{id})에서 큰 사진과 함께 본다. 기사 번호가 없는 옛 API면 원문을 새 탭으로 연다.
  * twoColumns면 PC(lg)에서 두 칸으로 나눈다(줄은 왼쪽에서 오른쪽으로 찬다).
+ * 한 목록에서 앞 줄과 같은 기사 사진은 다시 쓰지 않고 선수 사진으로 바꾼다(언론사가 자료 사진을 돌려 써서
+ * 나란히 같은 사진이 보였다, 이슈 #191).
  */
 export default function NewsTitleList({ items, twoColumns = false }: { items: NewsTitleItem[]; twoColumns?: boolean }) {
   return (
     <ul className={twoColumns ? "lg:grid lg:grid-cols-2 lg:gap-x-8" : undefined}>
-      {items.map((n, i) => (
+      {withoutRepeatedPhotos(items).map((n, i) => (
         // 줄 사이에만 선을 긋는다. 두 칸이면 첫 줄 두 칸 모두 위 선이 없다
         <li
           key={n.id ?? n.url}
@@ -31,6 +33,17 @@ export default function NewsTitleList({ items, twoColumns = false }: { items: Ne
       ))}
     </ul>
   );
+}
+
+/** 앞 줄에서 이미 쓴 기사 사진이면 그 줄의 기사 사진을 비운다(썸네일은 선수 사진으로 대신한다) */
+function withoutRepeatedPhotos(items: NewsTitleItem[]): NewsTitleItem[] {
+  const seen = new Set<string>();
+  return items.map((n) => {
+    if (!n.imageUrl) return n;
+    if (seen.has(n.imageUrl)) return { ...n, imageUrl: null };
+    seen.add(n.imageUrl);
+    return n;
+  });
 }
 
 function NewsTitleRow({ item: n }: { item: NewsTitleItem }) {
