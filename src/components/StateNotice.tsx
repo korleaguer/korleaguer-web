@@ -31,6 +31,9 @@ export default function StateNotice({
   );
 }
 
-/** StateNotice의 버튼 모양(파란 알약). 링크·버튼 어느 쪽에도 붙인다 */
+/**
+ * StateNotice의 버튼 모양(회색 알약). 링크·버튼 어느 쪽에도 붙인다.
+ * 버튼은 파랗게 칠하지 않는다(DESIGN.md The One Blue Rule, 이슈 #200). 기사 '원문 보기'와 같은 surface-2 바탕이다
+ */
 export const stateActionClass =
-  "press inline-flex h-11 items-center rounded-full bg-accent px-5 text-[0.9375rem] font-bold text-accent-fg hover:opacity-90";
+  "press inline-flex h-11 items-center rounded-full bg-surface-2 px-5 text-[0.9375rem] font-bold transition hover:bg-line";

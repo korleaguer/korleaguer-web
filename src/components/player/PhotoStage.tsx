@@ -118,7 +118,8 @@ export default function PhotoStage({
         {children}
         {many && (
           <div role="group" aria-label="소속팀별 사진" className="mt-3 flex flex-wrap items-center gap-1.5">
-            <span className="mr-0.5 text-xs text-muted">소속팀 사진</span>
+            {/* 휴대폰에서는 이름표를 윗줄에 둔다. 한 줄에 두면 알약이 갈려 지금 팀 알약만 혼자 다음 줄로 떨어졌다(이슈 #200) */}
+            <span className="mr-0.5 w-full text-xs text-muted sm:w-auto">소속팀 사진</span>
             {shots.map((s, i) => {
               const active = i === index;
               return (

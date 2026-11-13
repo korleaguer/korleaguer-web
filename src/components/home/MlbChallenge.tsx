@@ -286,7 +286,7 @@ function PlayerHead({ player: p }: { player: PostingPlayer }) {
         {/* 이름·한 줄은 띠 아래에서 시작한다(띠에 걸친 사진 높이 36px + 여백) */}
         <div className="min-w-0 pt-[2.75rem]">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <h3 className="text-[1.375rem] font-extrabold leading-tight tracking-[-0.02em]">{p.nameKo}</h3>
+            <h3 className="text-2xl font-extrabold leading-tight tracking-[-0.02em]">{p.nameKo}</h3>
             <span
               className={`sr-only whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-bold lg:not-sr-only lg:inline-block ${status.className}`}
             >
@@ -302,7 +302,9 @@ function PlayerHead({ player: p }: { player: PostingPlayer }) {
           <div>
             <p className="text-[0.8125rem] text-muted">협상 마감까지</p>
             <p className="text-[2.75rem] font-extrabold leading-none tracking-[-0.03em] tabular-nums">
-              {p.daysLeft === 0 ? "오늘" : `D-${p.daysLeft}`}
+              {/* 'D-19'는 화면 낭독기가 'D 하이픈 19'로 읽을 수 있어 '19일 남음'을 따로 읽힌다 */}
+              <span aria-hidden>{p.daysLeft === 0 ? "오늘" : `D-${p.daysLeft}`}</span>
+              <span className="sr-only">{p.daysLeft === 0 ? "오늘 마감" : `${p.daysLeft}일 남음`}</span>
             </p>
           </div>
           <p className="text-right text-[0.8125rem] font-semibold leading-snug tabular-nums">
@@ -360,8 +362,9 @@ function RowResult({ player: p }: { player: PostingPlayer }) {
   if (p.status === "NEGOTIATING" && p.daysLeft != null) {
     return (
       <div className="shrink-0 text-right">
-        <p className="text-[1.375rem] font-extrabold leading-none tracking-[-0.02em] tabular-nums">
-          {p.daysLeft === 0 ? "오늘" : `D-${p.daysLeft}`}
+        <p className="text-[1.3125rem] font-extrabold leading-none tracking-[-0.02em] tabular-nums">
+          <span aria-hidden>{p.daysLeft === 0 ? "오늘" : `D-${p.daysLeft}`}</span>
+          <span className="sr-only">{p.daysLeft === 0 ? "오늘 마감" : `마감까지 ${p.daysLeft}일`}</span>
         </p>
         <p className="mt-1 text-[0.6875rem] text-muted tabular-nums">{kstDay(p.deadlineAt)} 마감</p>
       </div>
@@ -429,7 +432,7 @@ function SigningList({
                 <p className="flex items-baseline gap-1.5">
                   <span className="shrink-0 text-sm font-bold leading-5">{s.nameKo}</span>
                   {s.thisYear && (
-                    <span className="shrink-0 self-center rounded-full bg-success-bg px-1.5 text-[0.625rem] font-bold leading-4 text-success-fg">
+                    <span className="shrink-0 self-center rounded-full bg-success-bg px-1.5 text-[0.6875rem] font-bold leading-4 text-success-fg">
                       올해
                     </span>
                   )}
