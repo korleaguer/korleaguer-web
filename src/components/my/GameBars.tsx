@@ -92,14 +92,14 @@ export default function GameBars({ slots, role, days, minors = false }: Props) {
   return (
     <div className="mt-4">
       <div className="flex items-baseline justify-between gap-2 text-xs text-muted">
-        <h3 className="font-semibold">{pitcher ? "경기별 던진 이닝" : "경기별 안타"}</h3>
-        {gameCount > 1 && <span>막대를 누르거나 훑으면 그 경기</span>}
+        <h3 className="font-semibold">{pitcher ? "경기별 이닝" : "경기별 안타"}</h3>
+        {gameCount > 1 && <span>막대를 누르면 그 경기를 보여 줘요</span>}
       </div>
 
       <div
         ref={groupRef}
         role="group"
-        aria-label={pitcher ? "경기별 던진 이닝" : "경기별 안타"}
+        aria-label={pitcher ? "경기별 이닝" : "경기별 안타"}
         className={`mt-2 grid touch-pan-y select-none ${gap}`}
         style={grid}
         onPointerDown={(e) => {

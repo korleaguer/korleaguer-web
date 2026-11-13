@@ -40,7 +40,7 @@ export default function LinkedTeams({ counts, className }: { counts: LinkedTeamC
             <TeamMark logoUrl={teamLogoUrl(t.abbreviation)} color={teamColor(t.abbreviation)} size="sm" />
             {t.nameKo}
             <span className="font-bold tabular-nums">{t.linked}건</span>
-            {t.today && <span className="text-xs font-bold text-accent-ink">오늘</span>}
+            {t.today && <span className="text-xs font-bold text-accent-ink">오늘 새 기사</span>}
           </li>
         ))}
         {more > 0 && <li className="px-1 text-xs text-muted tabular-nums">외 {more}개 구단</li>}

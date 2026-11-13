@@ -29,7 +29,7 @@ export default async function Image() {
           해외파 한국 선수 기록을 한눈에
         </div>
         <div style={{ marginTop: 16, fontSize: 34, fontWeight: 700, color: OG_COLORS.muted }}>
-          최근 경기 한 줄 기록 · 시즌 성적 · MLB 도전
+          최근 경기 기록 · 시즌 성적 · MLB 도전
         </div>
       </div>
     ),

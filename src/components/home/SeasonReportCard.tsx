@@ -13,16 +13,19 @@ import LinkedTeams from "@/components/home/LinkedTeams";
 import { type BadgeTone, levelKo, metaLine, otherTotalsLine, statusBadge } from "@/components/my/formLabels";
 
 /**
- * 판정마다 색(사용자 11-12 결정 '혹평 막기'): 잘한 시즌만 색을 쓴다(좋은·짧았지만 좋았던 = 초록, 제 몫 = 파랑).
- * 아쉬운 시즌은 빨강 대신 회색이다. 숫자 칸 바탕도 같은 색이고, 판정 딱지·한 줄 제목·이유는 흰 카드 위 본문 글자다.
+ * 판정 딱지(사용자 11-13 결정 'B4 채움 사다리', 이슈 #192): 알약은 칭찬에만 쓴다.
+ * 좋은·짧았지만 좋았던 시즌 = 옅은 주황 알약(좋은 활약 색, 아래 🔥 자랑 알약과 한 식구), 제 몫 한 시즌 = 회색 알약,
+ * 트리플A·마이너·출전 적음·아쉬운 시즌 = 알약 없이 흐린 글자. 아쉬운 시즌에 도장을 찍지 않아 11-12 '혹평 막기'를 지킨다.
+ * 예전 초록(좋은 시즌)·파랑(제 몫)은 다른 화면의 '복귀·계약'·'나빠짐'과 뜻이 부딪혀 뺐다(Signal Color Rule).
+ * 숫자 칸은 판정과 상관없이 회색이다.
  */
-const TIER_STYLE: Record<SeasonTier, { box: string; chip: string }> = {
-  GOOD: { box: "bg-success-bg", chip: "bg-success-bg text-success-fg" },
-  SHORT_GOOD: { box: "bg-success-bg", chip: "bg-success-bg text-success-fg" },
-  SOLID: { box: "bg-accent-soft", chip: "bg-accent-soft text-accent-ink" },
-  MINORS: { box: "bg-surface-2", chip: "bg-neutral-pill text-neutral-pill-fg" },
-  SHORT: { box: "bg-surface-2", chip: "bg-neutral-pill text-neutral-pill-fg" },
-  POOR: { box: "bg-surface-2", chip: "bg-neutral-pill text-neutral-pill-fg" },
+const TIER_CHIP: Record<SeasonTier, string> = {
+  GOOD: "rounded-full bg-hot-soft px-2 text-hot-ink",
+  SHORT_GOOD: "rounded-full bg-hot-soft px-2 text-hot-ink",
+  SOLID: "rounded-full bg-neutral-pill px-2 text-neutral-pill-fg",
+  MINORS: "text-muted",
+  SHORT: "text-muted",
+  POOR: "text-muted",
 };
 
 /** 이름 옆 상태 알약(무대가 없는 카드). 무대 위 배지(StatusBadge)와 같은 글·색 */
@@ -49,7 +52,6 @@ export default function SeasonReportCard({
   isMine: boolean;
 }) {
   const { player } = entry;
-  const style = TIER_STYLE[report.tier];
   const good = report.tier === "GOOD";
   const meta = metaLine(entry);
   // 기사 사진이 없거나 안 뜨면 이 선수 사진으로
@@ -94,14 +96,15 @@ export default function SeasonReportCard({
 
         {/* 판정 한 줄이 카드의 주 내용이라 흰 바탕 본문 글자로 둔다(회색·색 칸에는 숫자만, 규칙: 주 내용은 상자에 넣지 않기) */}
         <div className="mt-3">
-          <span className={`inline-flex rounded-full px-2 py-px text-xs font-bold leading-5 ${style.chip}`}>{report.label}</span>
+          {/* 알약이 없는 판정은 글자가 제목과 왼쪽 줄이 맞도록 둥근 바탕·옆 여백을 판정별로 준다 */}
+          <span className={`inline-flex py-px text-xs font-bold leading-5 ${TIER_CHIP[report.tier]}`}>{report.label}</span>
           <p className={`mt-1.5 font-extrabold leading-snug tracking-[-0.01em] ${good ? "text-[1.125rem]" : "text-[1.0625rem]"}`}>
             {report.headline}
           </p>
           {report.reason && <p className="mt-0.5 text-[0.875rem] text-muted">{report.reason}</p>}
         </div>
 
-        <Numbers entry={entry} report={report} box={style.box} />
+        <Numbers entry={entry} report={report} />
 
         {report.stories.length > 0 && (
           <ul className="mt-2.5 flex flex-wrap gap-1.5">
@@ -190,7 +193,7 @@ function StoryPill({ text }: { text: string }) {
  * 숫자 넷: 서버가 정한 단계(report.level)의 시즌 합계. 타자는 타율·경기·안타·홈런, 좋은·제 몫 시즌은 경기 대신 WAR.
  * 투수는 평균자책점·등판·이닝·탈삼진. 다른 단계 기록이 있으면 한 줄로 덧붙인다(트리플A 85경기 · 타율 .262 · 3홈런).
  */
-function Numbers({ entry, report, box }: { entry: MyPlayer; report: SeasonReport; box: string }) {
+function Numbers({ entry, report }: { entry: MyPlayer; report: SeasonReport }) {
   const totals = entry.seasonTotals;
   if (!totals) return null;
   const minorsFirst = report.level === "MINORS";
@@ -201,7 +204,7 @@ function Numbers({ entry, report, box }: { entry: MyPlayer; report: SeasonReport
   const showWar = (report.tier === "GOOD" || report.tier === "SOLID") && report.war != null && main === totals.mlb;
   const items = pitcher ? pitcherItems(main) : hitterItems(main, showWar ? report.war : null);
   return (
-    <div className={`mt-2.5 rounded-xl px-3 pb-2.5 pt-2 ${box}`}>
+    <div className="mt-2.5 rounded-xl bg-surface-2 px-3 pb-2.5 pt-2">
       {/* 큰 숫자가 마이너 기록이면 어느 단계인지 먼저 적는다. 이름표가 그냥 '타율'이면 메이저 기록으로 읽힌다(점검 11-13) */}
       {main !== totals.mlb && <p className="mb-1 text-[0.6875rem] font-bold text-muted">{`${levelKo(main.level)} 기록`}</p>}
       <dl className="grid grid-cols-4 gap-1">

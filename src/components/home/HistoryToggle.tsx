@@ -35,7 +35,7 @@ export default function HistoryToggle({
           <span className="block text-[0.8125rem] font-bold">{title}</span>
           <span className="mt-0.5 block truncate text-xs text-muted tabular-nums">{hint}</span>
         </span>
-        <span className="shrink-0 text-[0.8125rem] font-semibold text-accent-ink">{open ? "접기" : "보기"}</span>
+        <span className="shrink-0 text-[0.8125rem] font-semibold text-accent-ink">{open ? "접기" : "펼치기"}</span>
         <svg
           aria-hidden
           viewBox="0 0 16 16"

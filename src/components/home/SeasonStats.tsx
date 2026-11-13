@@ -39,7 +39,7 @@ export default async function SeasonStats({
   // 선수 기록을 아직 못 받았으면 표 대신 한 줄로 알린다.
   if (!statsAvailable) {
     return (
-      <Section id="stats-title" title={`${season} 시즌 기록`}>
+      <Section id="stats-title" title={`${season} 선수별 기록`}>
         <p className="card px-4 py-5 text-sm text-muted">아직 시즌 기록을 받지 못했어요.</p>
       </Section>
     );
@@ -52,9 +52,10 @@ export default async function SeasonStats({
   // 마이너 경기 수는 아는데 경기별 기록을 아직 못 받은 경우(받기 전)
   const minorsPending = !hasMinors && [...hitters, ...pitchers].some((row) => row.minorGames > 0);
 
+  // 제목은 '선수별 기록': 비시즌 홈의 '시즌 성적표'(카드)와 한 화면에 있어 이름이 거의 같았다(문구 점검 11-13)
   const tables = (
     <div className="space-y-5">
-      <Group title="타자" aside="타율 순 · 파란 숫자 = 1위">
+      <Group title="타자" aside="타율 순 · 파란 숫자는 1위">
         <TableCard>
           {majorHitters.length + minorHitters.length > 0 ? (
             <HitterTable hitters={majorHitters} minors={minorHitters} ranking={ranking} />
@@ -66,7 +67,7 @@ export default async function SeasonStats({
           lines={[
             ranking &&
               majorHitters.length > 0 &&
-              `타율·OPS 순위와 1위는 ${ranking.minPlateAppearances}타석 이상인 선수만 세어요. 못 채운 선수는 메이저 줄 아래쪽에 있어요.`,
+              `타율·OPS 1위는 ${ranking.minPlateAppearances}타석 이상인 선수 중에서 골라요. 타석이 적거나 주로 마이너에서 뛴 선수는 아래에 있어요.`,
           ]}
         />
       </Group>
@@ -82,21 +83,21 @@ export default async function SeasonStats({
           lines={[
             ranking &&
               majorPitchers.length > 0 &&
-              `평균자책점 순위와 1위는 ${ranking.minInningsText}이닝 이상인 투수만 세어요.`,
+              `평균자책점 1위는 ${ranking.minInningsText}이닝 이상인 투수 중에서 골라요.`,
           ]}
         />
       </Group>
       <Notes
         lines={[
-          hasMinors && "마이너 기록은 트리플A부터 루키까지 마이너 경기를 모두 더한 것이라, 1위는 따로 표시하지 않아요.",
-          minorsPending && "마이너 경기별 기록을 받는 중이에요. 하루 한 번 새로 받아요.",
+          hasMinors && "마이너 기록은 모든 단계를 더한 것이라 1위를 표시하지 않아요.",
+          minorsPending && "마이너 경기 기록을 받는 중이에요. 하루 한 번 새로 받아요.",
         ]}
       />
     </div>
   );
   if (!folded) {
     return (
-      <Section id="stats-title" title={`${season} 시즌 기록`}>
+      <Section id="stats-title" title={`${season} 선수별 기록`}>
         {tables}
       </Section>
     );
@@ -105,9 +106,9 @@ export default async function SeasonStats({
   const hitterCount = new Set([...majorHitters, ...minorHitters].map((h) => h.playerId)).size;
   const pitcherCount = new Set([...majorPitchers, ...minorPitchers].map((p) => p.playerId)).size;
   return (
-    <Section id="stats-title" title={`${season} 시즌 기록`}>
+    <Section id="stats-title" title={`${season} 선수별 기록`}>
       <HistoryToggle
-        title="선수별 기록 표"
+        title="타자·투수 기록 표"
         hint={`타자 ${hitterCount}명 · 투수 ${pitcherCount}명 · 메이저·마이너 합계와 순위`}
         className=""
         buttonClassName="card px-4 py-3.5"

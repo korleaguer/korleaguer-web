@@ -73,13 +73,10 @@ export default async function SeasonSummary({
                 ["이닝", s.line.inningsText],
                 ["탈삼진", s.line.strikeouts],
               ]}
+              // 위 큰 칸에 있는 이닝·승패·탈삼진은 되풀이하지 않는다(문구 점검 11-13). 투수 출전 수는 '등판'
               line={[
-                ["경기", s.line.games],
-                ["이닝", s.line.inningsText],
-                ["승", s.line.wins],
-                ["패", s.line.losses],
+                ["등판", s.line.games],
                 ["세이브", s.line.saves],
-                ["탈삼진", s.line.strikeouts],
                 ["볼넷", s.line.walks],
                 ["피안타", s.line.hitsAllowed],
               ]}

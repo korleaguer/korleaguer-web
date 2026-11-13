@@ -6,17 +6,17 @@ import StateNotice, { stateActionClass } from "./StateNotice";
 const MESSAGES: Record<ApiFailure, { emoji: string; title: string; detail: string }> = {
   unreachable: {
     emoji: "📡",
-    title: "기록 서버에 연결하지 못했어요",
+    title: "정보를 불러오지 못했어요",
     detail: "잠시 뒤 다시 불러와 주세요.",
   },
   badResponse: {
     emoji: "📡",
-    title: "기록을 제대로 받지 못했어요",
+    title: "정보를 제대로 받지 못했어요",
     detail: "잠시 뒤 다시 불러와 주세요.",
   },
   notFound: {
     emoji: "🔍",
-    title: "찾는 기록이 없어요",
+    title: "찾는 정보가 없어요",
     detail: "주소가 맞는지 확인해 주세요.",
   },
 };

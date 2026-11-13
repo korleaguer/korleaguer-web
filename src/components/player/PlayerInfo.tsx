@@ -58,7 +58,7 @@ export default async function PlayerInfo({ player }: { player: PlayerDetail }) {
             ))}
           </dl>
         ) : (
-          <p className="text-sm text-muted">아직 선수 정보를 연결하지 못했어요.</p>
+          <p className="text-sm text-muted">선수 정보를 준비하고 있어요.</p>
         )}
         {player.mlbUrl && (
           <a
