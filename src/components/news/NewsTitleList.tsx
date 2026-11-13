@@ -69,7 +69,7 @@ function NewsTitleRow({ item: n }: { item: NewsTitleItem }) {
         {thumb}
         <span className="text-muted">
           <ExternalLinkIcon />
-          <span className="sr-only">(원문, 새 탭)</span>
+          <span className="sr-only">(원문, 새 탭에서 열림)</span>
         </span>
       </a>
     );

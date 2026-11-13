@@ -144,7 +144,7 @@ function Article({ news }: { news: NewsPage }) {
       >
         {news.publisher}에서 원문 보기
         <ExternalLinkIcon />
-        <span className="sr-only">(새 탭)</span>
+        <span className="sr-only">(새 탭에서 열림)</span>
       </a>
     </article>
   );

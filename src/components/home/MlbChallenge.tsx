@@ -25,7 +25,7 @@ const BAR_MIN_SHARE = 0.04;
 
 const STATUS: Record<PostingStatus, { label: string; className: string }> = {
   UPCOMING: { label: "협상 시작 전", className: "bg-fa-bg text-fa-fg" },
-  NEGOTIATING: { label: "포스팅 협상 중", className: "bg-fa-bg text-fa-fg" },
+  NEGOTIATING: { label: "협상 중", className: "bg-fa-bg text-fa-fg" },
   SIGNED: { label: "계약", className: "bg-success-bg text-success-fg" },
   NO_DEAL: { label: "결렬", className: "bg-neutral-pill text-neutral-pill-fg" },
   CLOSED: { label: "결과 확인 중", className: "bg-neutral-pill text-neutral-pill-fg" },
@@ -221,14 +221,14 @@ export default async function MlbChallenge({ posting }: { posting: PostingSummar
           {single && isOpen(single) && single.linkedTeams && <LinkedTeams counts={single.linkedTeams} />}
           {past.length > 0 && (
             <p className="sr-only">
-              역대 포스팅 계약 {past.length}건 중 {late}건이 마감 {NEAR_DEADLINE}일 안에 맺어졌어요.
+              역대 포스팅 계약 {past.length}건 중 {late}건은 마감 {NEAR_DEADLINE}일 전부터 마감일 사이에 계약했어요.
             </p>
           )}
           {signings.length > 0 && (
             <div className={historyOnRight ? "lg:hidden" : undefined}>
               <HistoryToggle
                 title={`역대 포스팅 계약 ${signings.length}건`}
-                hint={`최고 ${signings[0].nameKo} ${signings[0].years}년 ${signings[0].usd} · 보장액 순`}
+                hint={`1위 ${signings[0].nameKo} ${signings[0].years}년 ${signings[0].usd} · 보장액 순`}
               >
                 <SigningList signings={signings} head={false} flush />
               </HistoryToggle>
@@ -307,7 +307,7 @@ function PlayerHead({ player: p }: { player: PostingPlayer }) {
           </div>
           <p className="text-right text-[0.8125rem] font-semibold leading-snug tabular-nums">
             {deadlineKst(p.deadlineAt)}
-            <span className="block text-xs font-normal text-muted">한국 시간 · 미국 {deadlineUs(p.deadlineAt)}</span>
+            <span className="block text-xs font-normal text-muted">한국 시간 · 미국 동부 {deadlineUs(p.deadlineAt)}</span>
           </p>
         </div>
       )}
@@ -317,7 +317,7 @@ function PlayerHead({ player: p }: { player: PostingPlayer }) {
           {/* 받침 있는 구단(보스턴·시애틀)은 '과'(점검 11-13) */}
           {p.deal.mlbTeamKo ? `${withAndParticle(p.deal.mlbTeamKo)} ` : ""}{p.deal.years}년 {formatUsd(p.deal.guaranteedUsd)}
           {p.deal.agreedOn && (
-            <span className="block text-xs font-normal text-muted">합의 {formatDate(p.deal.agreedOn)} (미국 날짜)</span>
+            <span className="block text-xs font-normal text-muted">합의 {formatDate(p.deal.agreedOn)}, 미국 날짜</span>
           )}
         </p>
       )}
@@ -360,7 +360,7 @@ function LinkedTeams({ counts }: { counts: LinkedTeamCounts }) {
             <TeamMark logoUrl={teamLogoUrl(t.abbreviation)} color={teamColor(t.abbreviation)} size="sm" />
             {t.nameKo}
             <span className="font-bold tabular-nums">{t.linked}건</span>
-            {t.today && <span className="text-xs font-bold text-accent-ink">오늘</span>}
+            {t.today && <span className="text-xs font-bold text-accent-ink">오늘 새 기사</span>}
           </li>
         ))}
         {more > 0 && <li className="px-1 text-xs text-muted tabular-nums">외 {more}개 구단</li>}
@@ -503,7 +503,7 @@ function SigningList({
       </ul>
       {foot && (
         <p className="mt-1.5 pb-1 text-[0.6875rem] leading-relaxed text-muted">
-          보장액(옵션 제외) · 원화는 계약 당시 환율 · 막대는 금액 2배면 1.5배 길이. 출처: MLB Trade Rumors·ECB 등
+          보장액 기준(옵션 제외), 원화는 계약 당시 환율로 어림. 출처: MLB Trade Rumors 등
         </p>
       )}
     </div>

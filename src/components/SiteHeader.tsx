@@ -33,7 +33,7 @@ export default function SiteHeader() {
         <Suspense fallback={<NavLinks pathname={null} />}>
           <SiteNav />
         </Suspense>
-        <span className="ml-auto hidden text-xs text-muted md:inline">한국 MLB 선수 경기 기록 모아보기</span>
+        <span className="ml-auto hidden text-xs text-muted md:inline">해외파 한국 선수 기록 모아보기</span>
         {/* 앱 안에서만: 화면 제목이 지나가면 가운데에 그 제목. 현재 주소가 바뀌면 다시 보므로 Suspense 안에 둔다 */}
         <Suspense fallback={null}>
           <HeaderTitle />

@@ -22,7 +22,8 @@ export async function GET(_request: Request, { params }: RouteContext<"/players/
   // 선수 목록 카드와 같은 기록: 올해 주로 뛴 단계 + 단계·경기 수 이름표(이슈 #184)
   const main = mainSeasonStats(player, result.data);
   const stats = main?.stats ?? null;
-  const team = player.returnedKo ? `${player.returnedKo} 복귀` : player.teamKo;
+  // FA면 마지막 MLB 팀에 '전'(화면의 팀 알약과 같다, 문구 점검 11-13)
+  const team = player.returnedKo ? `${player.returnedKo} 복귀` : player.freeAgent && player.teamKo ? `전 ${player.teamKo}` : player.teamKo;
   const subline = [team, player.positionKo, player.freeAgent && !player.returnedKo ? "FA" : null].filter(Boolean).join(" · ");
 
   return new ImageResponse(
@@ -74,7 +75,7 @@ export async function GET(_request: Request, { params }: RouteContext<"/players/
                   </div>
                 </div>
               ) : (
-                <div style={{ fontSize: 32, fontWeight: 700, color: OG_COLORS.muted }}>{season} 시즌 기록 모아보기</div>
+                <div style={{ fontSize: 32, fontWeight: 700, color: OG_COLORS.muted }}>{season} 시즌 기록 보기</div>
               )}
               <OgBrand scale={0.85} />
             </div>

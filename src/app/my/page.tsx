@@ -10,12 +10,16 @@ import MyHeader from "@/components/my/MyHeader";
 import PillNav from "@/components/PillNav";
 import StateNotice from "@/components/StateNotice";
 import PageSuspense from "@/components/PageSuspense";
+import { shareMeta } from "@/lib/share";
 
 // <title>: "내 선수 · KOR Leaguer". 사람마다 다른 화면이라 검색에는 올리지 않는다.
+// 공유 미리보기도 홈 것이 아니라 이 화면 것으로(문구 점검 11-13: 홈 제목·설명이 그대로 나왔다)
+const DESCRIPTION = "내 선수의 최근 경기를 한곳에서 봐요.";
 export const metadata: Metadata = {
   title: "내 선수",
-  description: "고른 선수들의 최근 경기를 한곳에서 봐요.",
+  description: DESCRIPTION,
   robots: { index: false, follow: true },
+  ...shareMeta("내 선수 · KOR Leaguer", DESCRIPTION),
 };
 
 const PERIODS = [7, 14, 30] as const;
@@ -54,18 +58,17 @@ async function MyContent({ searchParams }: Pick<PageProps<"/my">, "searchParams"
   const picked = my?.players ?? [];
   const status = my ?? (homeResult?.ok ? homeResult.data : null);
   // 고른 선수가 모두 시즌 합계 카드(시즌 끝·FA)면 기간이 뜻이 없다: 기간 알약·안내를 빼고 머리말을 시즌 합계로.
-  // "비시즌이라"는 시즌 끝 카드가 있을 때만 쓴다(시즌 중에 FA 선수만 골랐을 수도 있다).
+  // 머리말에 '비시즌이라' 같은 이유는 붙이지 않는다(문구 점검 11-13: 머리 줄에 이유 구절이 끼어 어색했다)
   const seasonView = picked.length > 0 && picked.every((e) => e.basis === "SEASON");
-  const offSeason = picked.some((e) => e.status?.kind === "SEASON_OVER");
   // '마지막으로 뛴 날까지' 안내는 실제로 그 기간을 보이는 카드가 있을 때만(마이너·부상자 명단 카드는 제 기간을 따로 적는다)
   const showFallbackNote = picked.some(
     (e) => e.basis === "LAST_PLAYED" || (e.basis === "REHAB" && e.isFallback),
   );
   const subtitle = !my
-    ? "좋아하는 선수를 골라 두면 최근 경기를 한곳에서 볼 수 있어요"
+    ? "좋아하는 선수를 넣어 두면 최근 경기를 한곳에서 볼 수 있어요"
     : seasonView
-      ? `고른 선수 ${picked.length}명 · ${offSeason ? "비시즌이라 " : ""}${my.season} 시즌 합계`
-      : `고른 선수 ${picked.length}명 · ${formatDateRange(my.fromKst, my.toKst)}`;
+      ? `내 선수 ${picked.length}명 · ${my.season} 시즌 기록`
+      : `내 선수 ${picked.length}명 · ${formatDateRange(my.fromKst, my.toKst)}`;
 
   return (
     <div className="space-y-4">
@@ -78,7 +81,7 @@ async function MyContent({ searchParams }: Pick<PageProps<"/my">, "searchParams"
           {!seasonView && <PeriodTabs days={days} />}
           {!seasonView && showFallbackNote && (
             <p className="px-1 text-[0.8125rem] text-muted">
-              {`최근 ${days}일에 경기가 없는 선수는 그 선수가 마지막으로 뛴 날까지 ${days}일을 보여 줘요.`}
+              {`최근 ${days}일에 안 뛴 선수는 마지막 경기까지 ${days}일을 보여 줘요.`}
             </p>
           )}
           <ul className="grid items-start gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -88,18 +91,15 @@ async function MyContent({ searchParams }: Pick<PageProps<"/my">, "searchParams"
           </ul>
         </>
       ) : (
-        // 아무도 안 골랐으면 위 '선수 고르기' 목록이 열려 있어서 따로 버튼을 두지 않는다
-        <StateNotice
-          emoji="⭐"
-          title="아직 고른 선수가 없어요"
-          detail="위 목록에서 챙겨 볼 선수를 누르면 여기에 선수마다 카드가 생겨요."
-        />
+        // 아무도 안 골랐으면 위 '선수 고르기' 목록이 열려 있어서 따로 버튼을 두지 않는다.
+        // 누르는 법은 목록 안내가 이미 말하니 여기서는 제목만(같은 안내를 한 화면에서 되풀이하지 않는다)
+        <StateNotice emoji="⭐" title="아직 내 선수가 없어요" />
       )}
     </div>
   );
 }
 
-/** 기간 고르기: 최근 7일 · 14일 · 30일. 주소(?days=)로 바꾼다. 흰 바탕 띠 위로 파란 알약이 미끄러진다(토스 SegmentedControl처럼) */
+/** 기간 고르기: 7일 · 14일 · 30일(첫 칸에만 '최근'이 붙어 어긋났다. 어느 기간인지는 머리말 날짜가 말한다). 주소(?days=)로 바꾼다. 흰 바탕 띠 위로 파란 알약이 미끄러진다(토스 SegmentedControl처럼) */
 function PeriodTabs({ days }: { days: Period }) {
   return (
     <PillNav
@@ -110,7 +110,7 @@ function PeriodTabs({ days }: { days: Period }) {
       idleClass="text-muted hover:text-foreground"
       items={PERIODS.map((d) => ({
         href: d === 7 ? "/my" : `/my?days=${d}`,
-        label: d === 7 ? "최근 7일" : `${d}일`,
+        label: `${d}일`,
         current: d === days ? "page" : undefined,
       }))}
     />

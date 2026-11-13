@@ -12,7 +12,7 @@ function whole(value: number | null): string {
 
 /**
  * 선수 화면 '시즌별 기록': MLB 정규시즌 연도별 한 줄(최신부터, korleaguer-server#133).
- * 휴대폰 폭에 맞게 연도 아래 팀을 작게 쓰고, 숫자는 타자 경기·타율·홈런·OPS·wRC+·WAR, 투수 경기·이닝·평균자책점·삼진·ERA-·WAR.
+ * 휴대폰 폭에 맞게 연도 아래 팀을 작게 쓰고, 숫자는 타자 경기·타율·홈런·OPS·wRC+·WAR, 투수 등판·이닝·평균자책점·탈삼진·ERA-·WAR.
  * KBO 기록은 아직 없다(선수 정보의 경력 줄이 대신한다).
  */
 export default function CareerSeasons({ seasons: all }: { seasons: CareerSeason[] }) {
@@ -20,7 +20,7 @@ export default function CareerSeasons({ seasons: all }: { seasons: CareerSeason[
   // 표 머리가 한 종류라 최신 시즌과 같은 종류(타자·투수) 줄만 둔다(역할이 바뀐 선수의 옛 줄이 다른 머리 아래 들어가지 않게)
   const hitter = all[0].kind === "hitter";
   const seasons = all.filter((s) => s.kind === all[0].kind);
-  const head = hitter ? ["경기", "타율", "홈런", "OPS", "wRC+", "WAR"] : ["경기", "이닝", "평균자책", "삼진", "ERA-", "WAR"];
+  const head = hitter ? ["경기", "타율", "홈런", "OPS", "wRC+", "WAR"] : ["등판", "이닝", "평균자책점", "탈삼진", "ERA-", "WAR"];
   return (
     <Section id="seasons-title" title="시즌별 기록" aside="MLB 정규시즌">
       <div className="card overflow-x-auto">

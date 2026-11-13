@@ -38,7 +38,7 @@ export function playerShareImage(id: number): ShareImage {
 
 /** 기사 페이지 공유 그림(app/news/[id]/og/[v]/route.tsx). 주소에 판 번호가 들어간다 */
 export function newsShareImage(id: number): ShareImage {
-  return { url: `/news/${id}/og/${OG_VERSION}`, alt: `${SITE_NAME} 관련 기사 요약` };
+  return { url: `/news/${id}/og/${OG_VERSION}`, alt: `${SITE_NAME} 기사 요약` };
 }
 
 /**
