@@ -515,6 +515,34 @@ export interface PlayerResponse {
   seasons: CareerSeason[];
   /** 이 선수 기사(늦은 순, 최대 10건) */
   news: NewsHeadline[];
+  /** 이번 시즌 마이너리그 경기(최신부터). 옛 API·마이너 경기가 없으면 빈 목록 */
+  minorGames: MinorGameLine[];
+}
+
+/**
+ * 선수의 마이너리그 경기 한 번(GET /api/players/{id}의 minorGames). 경기 기록에서 메이저 경기와 날짜순으로 섞어 보여 준다.
+ * 팀 이름은 한국어 도시 이름(모르는 팀이면 영어 지명), 로고는 teamId·opponentId로 MLB 공식 로고 주소에서 받는다.
+ */
+export interface MinorGameLine {
+  gamePk: number;
+  /** ISO-8601 +09:00. 시작 시각을 모르면 공식 날짜 다음 날 08:00으로 어림한 값 */
+  startTimeKst: string;
+  /** "AAA" | "AA" | "A+" | "A" | "ROK" */
+  level: string;
+  /** "트리플A" 등 */
+  levelKo: string;
+  teamId: number | null;
+  teamKo: string;
+  opponentId: number | null;
+  opponentKo: string;
+  home: boolean | null;
+  teamScore: number | null;
+  opponentScore: number | null;
+  result: GameResult;
+  /** 메이저 GameLine.summary와 같은 규칙의 한국어 한 줄 기록 */
+  summary: string;
+  batting: GameBatting | null;
+  pitching: GamePitching | null;
 }
 
 /** 내 선수 카드의 기간 합계(타자). avg는 타수가 없으면 null */
@@ -865,6 +893,36 @@ function normalizePlayer(raw: PlayerResponse): PlayerResponse {
     saber: normalizeSaber(raw.saber),
     seasons: (Array.isArray(raw.seasons) ? raw.seasons : []).flatMap((x) => normalizeCareerSeason(x) ?? []),
     news: (Array.isArray(raw.news) ? raw.news : []).flatMap((n) => normalizeHeadline(n) ?? []),
+    minorGames: (Array.isArray(raw.minorGames) ? raw.minorGames : []).flatMap((m) => normalizeMinorGame(m) ?? []),
+  };
+}
+
+/** 마이너 경기 한 줄. 날짜·팀 이름이 없으면 쓸 수 없어 뺀다 */
+function normalizeMinorGame(m: MinorGameLine): MinorGameLine | null {
+  if (!m || typeof m.startTimeKst !== "string" || !m.opponentKo) return null;
+  return {
+    ...m,
+    levelKo: m.levelKo || "마이너",
+    teamId: num(m.teamId),
+    teamKo: m.teamKo ?? "",
+    opponentId: num(m.opponentId),
+    home: typeof m.home === "boolean" ? m.home : null,
+    teamScore: num(m.teamScore),
+    opponentScore: num(m.opponentScore),
+    result: m.result === "W" || m.result === "L" || m.result === "T" ? m.result : null,
+    summary: m.summary ?? "",
+    batting: m.batting
+      ? {
+          ...m.batting,
+          doubles: num(m.batting.doubles),
+          triples: num(m.batting.triples),
+          hitByPitch: num(m.batting.hitByPitch),
+          sacFlies: num(m.batting.sacFlies),
+          plateAppearances: num(m.batting.plateAppearances),
+          strikeouts: num(m.batting.strikeouts),
+        }
+      : null,
+    pitching: m.pitching ?? null,
   };
 }
 
