@@ -86,7 +86,7 @@ async function PlayerContent({ params }: Pick<Props, "params">) {
     <div className="space-y-4 sm:space-y-5">
       <DataBanners dataMode={dataMode} statsAvailable={statsAvailable} />
       <PlayerHeader player={player} isMine={myIds.includes(player.id)} />
-      {/* 넓은 화면: 왼쪽 시즌 성적·MLB 안 위치·흐름·경기 기록·시즌별 기록 | 오른쪽 선수 정보·기사·이동 기록 */}
+      {/* 넓은 화면: 왼쪽 시즌 성적·MLB 중 위치(백분위)·흐름·경기 기록·시즌별 기록 | 오른쪽 선수 정보·기사·이동 기록 */}
       <div className="space-y-7 pt-2 lg:grid lg:grid-cols-[minmax(0,1fr)_21.25rem] lg:items-start lg:gap-x-4 lg:space-y-0">
         <div className="min-w-0 space-y-7">
           <SeasonSummary

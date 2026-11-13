@@ -409,7 +409,7 @@ export interface CareerPhoto {
 }
 
 /**
- * 선수 화면 'MLB 안 위치'의 백분위(1~99, 높을수록 좋다): 같은 시즌 MLB 선수(타자 100타석·투수 30이닝 이상) 중
+ * 선수 화면 'MLB 타자(투수) 중에서'의 백분위(1~99, 높을수록 좋다): 같은 시즌 MLB 선수(타자 100타석·투수 30이닝 이상) 중
  * 이 선수보다 값이 나쁜 비율. 견줄 선수가 아직 없거나(시즌 초) 이 선수의 그 값이 없으면 null
  */
 export interface HitterPercentiles {
@@ -435,7 +435,7 @@ export interface PitcherPercentiles {
 }
 
 /**
- * GET /api/players/{id}의 saber(korleaguer-server#133): 지금 시즌 MLB 공식 세이버 지표와 MLB 안 위치.
+ * GET /api/players/{id}의 saber(korleaguer-server#133): 지금 시즌 MLB 공식 세이버 지표와 MLB 선수 중 위치(백분위).
  * 득점(batting·baseRunning·fielding)은 리그 평균 대비(+면 평균보다 낫다). percentiles는 표본이 적으면(타자 50타석·투수 10이닝 미만) null
  */
 export type PlayerSaber =
@@ -509,7 +509,7 @@ export interface PlayerResponse {
   /** 이동 기록, 최신부터. 이동 기록을 주지 않는 오래된 api면 null(없다고 단정하지 않는다) */
   moves: RosterMove[] | null;
   /** 아래 셋은 korleaguer-server#133. 옛 API·아직 받지 않았으면 null / 빈 목록 */
-  /** 지금 시즌 MLB 안 위치. 그 시즌 MLB 기록이 없으면 null */
+  /** 지금 시즌 MLB 선수 중 위치(백분위). 그 시즌 MLB 기록이 없으면 null */
   saber: PlayerSaber | null;
   /** MLB 시즌별 기록(최신부터) */
   seasons: CareerSeason[];
