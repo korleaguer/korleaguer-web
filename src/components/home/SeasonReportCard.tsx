@@ -9,6 +9,7 @@ import NewsTitleList from "@/components/news/NewsTitleList";
 import BandPhoto from "@/components/my/BandPhoto";
 import { StatusBadge } from "@/components/my/FormSummary";
 import MyPlayerToggle from "@/components/my/MyPlayerToggle";
+import LinkedTeams from "@/components/home/LinkedTeams";
 import { type BadgeTone, levelKo, metaLine, otherTotalsLine, statusBadge } from "@/components/my/formLabels";
 
 /**
@@ -55,8 +56,9 @@ export default function SeasonReportCard({
   const meta = metaLine(entry);
   // 기사 사진이 없거나 안 뜨면 이 선수 사진으로
   const news = (report.news ?? []).map((n) => ({ ...n, playerPhotoUrl: player.photoUrl }));
+  const linked = report.linkedTeams?.teams.some((t) => t.linked > 0) ? report.linkedTeams : null;
   return (
-    <li className="card card-link relative flex flex-col overflow-hidden has-[h3_a:focus-visible]:outline-2 has-[h3_a:focus-visible]:outline-offset-2 has-[h3_a:focus-visible]:outline-accent">
+    <li className="card card-link relative flex flex-col self-start overflow-hidden has-[h3_a:focus-visible]:outline-2 has-[h3_a:focus-visible]:outline-offset-2 has-[h3_a:focus-visible]:outline-accent">
       {good && (
         // 잘한 시즌은 팀 색 무대에 사진을 크게(내 선수 카드와 같은 무대). isolate: 배지의 z-10이 무대 안에서만 통하게
         <div className="player-stage isolate h-[6.5rem]" style={{ "--team": teamColor(player.teamAbbr) } as CSSProperties}>
@@ -114,7 +116,7 @@ export default function SeasonReportCard({
           </ul>
         )}
 
-        {(report.winterMoves.length > 0 || news.length > 0) && (
+        {(report.winterMoves.length > 0 || news.length > 0 || linked) && (
           // 링크 위(relative z-10)에 올려 기사 줄·더 보기가 제 동작을 한다(카드 링크는 선수 페이지)
           <div className="relative z-10 mt-3 border-t border-line pt-3">
             <p className="text-xs font-bold text-muted">이번 겨울</p>
@@ -128,6 +130,9 @@ export default function SeasonReportCard({
                 ))}
               </ul>
             )}
+            {/* FA 선수: 노시환 MLB 도전 카드와 같은 '행선지로 거론된 구단' 칩(이슈 #191, 서버가 FA에게만 준다).
+                FA 선언(이동) 다음, 기사 앞에 둔다 */}
+            {linked && <LinkedTeams counts={linked} className="mb-1 mt-3" />}
             {news.length > 0 && (
               <>
                 <NewsTitleList items={news.slice(0, WINTER_NEWS_SHOWN)} />
