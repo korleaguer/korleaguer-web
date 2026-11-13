@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import { getHome, getPlayers } from "@/lib/api";
 import { readMyPlayers } from "@/lib/myPlayers";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
@@ -7,6 +6,7 @@ import DataBanners from "@/components/DataBanners";
 import LoadingBlock from "@/components/LoadingBlock";
 import PlayerCard from "@/components/players/PlayerCard";
 import StateNotice from "@/components/StateNotice";
+import PageSuspense from "@/components/PageSuspense";
 import { shareMeta } from "@/lib/share";
 
 // <title>: "선수 · KOR Leaguer" (뒷부분은 layout의 template이 붙인다)
@@ -23,9 +23,9 @@ export default function PlayersPage() {
   return (
     <div className="space-y-4">
       <h1 className="px-1 text-2xl font-extrabold tracking-[-0.02em]">선수</h1>
-      <Suspense fallback={<LoadingBlock rows={6} />}>
+      <PageSuspense fallback={<LoadingBlock rows={6} />}>
         <PlayersContent />
-      </Suspense>
+      </PageSuspense>
     </div>
   );
 }

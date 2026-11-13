@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { getHome } from "@/lib/api";
 import { formatDate, formatTime } from "@/lib/format";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
@@ -9,6 +8,7 @@ import OffseasonPlayers from "@/components/home/OffseasonPlayers";
 import RecentGames from "@/components/home/RecentGames";
 import SeasonLeaders from "@/components/home/SeasonLeaders";
 import SeasonStats from "@/components/home/SeasonStats";
+import PageSuspense from "@/components/PageSuspense";
 
 // 홈 화면. 데이터는 요청마다 api에서 새로 받는다.
 export default function HomePage() {
@@ -16,9 +16,9 @@ export default function HomePage() {
     <>
       {/* 눈에는 안 보이고 화면 낭독기만 읽는 페이지 제목 */}
       <h1 className="sr-only">KOR Leaguer — 한국 MLB 선수 경기 기록</h1>
-      <Suspense fallback={<HomeLoading />}>
+      <PageSuspense fallback={<HomeLoading />}>
         <HomeContent />
-      </Suspense>
+      </PageSuspense>
     </>
   );
 }
