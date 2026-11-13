@@ -28,7 +28,7 @@ export function StatusBadge({ status }: { status: CardStatus }) {
   if (!badge) return null;
   return (
     <span
-      className={`absolute left-3.5 top-3 z-10 inline-flex max-w-[calc(100%-8.5rem)] items-center gap-1.5 rounded-full bg-surface px-2.5 py-0.5 text-xs font-bold leading-5 shadow-[var(--shadow-card)] ${BADGE_TONE[badge.tone]}`}
+      className={`absolute left-3.5 top-3 z-10 inline-flex max-w-[calc(100%-8.5rem)] items-center gap-1.5 rounded-full bg-surface px-2.5 py-0.5 text-badge shadow-[var(--shadow-card)] ${BADGE_TONE[badge.tone]}`}
     >
       <span aria-hidden className={`size-[7px] shrink-0 rounded-full ${badge.tone === "neutral" ? "bg-muted" : "bg-current"}`} />
       <span className="truncate">{badge.text}</span>
@@ -62,14 +62,14 @@ export function SummaryLines({ entry }: { entry: MyPlayer }) {
               <span key={i} className={`size-[9px] rounded-[2.5px] ${STRIP[code]}`} />
             ))}
           </span>
-          <span className="flex min-w-0 flex-col leading-tight">
-            <span className="text-[0.6875rem] text-muted">{hitter.label}</span>
-            <span className="text-[0.8125rem] font-semibold tabular-nums">{hitter.counts}</span>
+          <span className="flex min-w-0 flex-col">
+            <span className="text-caption text-muted">{hitter.label}</span>
+            <span className="text-label tabular-nums">{hitter.counts}</span>
           </span>
         </p>
       )}
-      {pitcher && <p className="mt-2 text-[0.8125rem] text-muted tabular-nums">{pitcher}</p>}
-      {status && <p className="mt-1 text-[0.8125rem] text-muted">{status}</p>}
+      {pitcher && <p className="mt-2 text-meta text-muted tabular-nums">{pitcher}</p>}
+      {status && <p className="mt-1 text-meta text-muted">{status}</p>}
       {entry.fact && <FactPill fact={entry.fact} />}
     </>
   );
@@ -80,7 +80,7 @@ function FactPill({ fact }: { fact: FormFact }) {
   const hot = fact.tone === "HOT";
   return (
     <p
-      className={`mt-2 inline-flex items-center gap-1.5 self-start rounded-full px-2.5 py-0.5 text-[0.8125rem] font-bold leading-5 ${hot ? "bg-hot-soft text-hot-ink" : "bg-surface-2 text-accent-ink"}`}
+      className={`mt-2 inline-flex items-center gap-1.5 self-start rounded-full px-2.5 py-0.5 text-badge ${hot ? "bg-hot-soft text-hot-ink" : "bg-surface-2 text-accent-ink"}`}
     >
       <span aria-hidden className={`size-1.5 shrink-0 rounded-full ${hot ? "bg-hot" : "bg-accent-ink"}`} />
       {fact.text}
@@ -113,14 +113,14 @@ export function SeasonNumbers({ totals, pitcher }: { totals: SeasonTotals; pitch
   return (
     <>
       <Numbers label={label} value={pitcher ? formatEra(main.era) : formatRate(main.avg)} small={small} />
-      {other && <p className="mt-2.5 text-[0.8125rem] text-muted tabular-nums">{otherTotalsLine(other, pitcher)}</p>}
+      {other && <p className="mt-2.5 text-meta text-muted tabular-nums">{otherTotalsLine(other, pitcher)}</p>}
     </>
   );
 }
 
 /** 숫자·막대 자리의 회색 칸 안내 한 줄(기록이 없거나 못 받았을 때) */
 export function Notice({ children }: { children: ReactNode }) {
-  return <p className="mt-3 rounded-xl bg-surface-2 px-3 py-2.5 text-sm text-muted">{children}</p>;
+  return <p className="mt-3 rounded-xl bg-surface-2 px-3 py-2.5 text-body text-muted">{children}</p>;
 }
 
 /** 큰 숫자 하나(왼쪽) + 회색 칸 작은 숫자 셋(오른쪽). 기간 카드와 시즌 합계가 같이 쓴다 */
@@ -138,19 +138,19 @@ export function Numbers({
   return (
     <div className="mt-3.5 grid grid-cols-[auto_minmax(0,1fr)] items-end gap-4">
       <dl>
-        <dt className="text-xs text-muted">{label}</dt>
-        <dd className="mt-1 text-[2.75rem] font-extrabold leading-none tracking-[-0.03em] tabular-nums">
+        <dt className="text-caption text-muted">{label}</dt>
+        <dd className="mt-1 text-stat-form tabular-nums">
           {/* 처음엔 최종 값으로 서 있고, 기간(7·14·30일)을 바꾸면 앞 값에서 굴러가며 바뀐다 */}
           <RollingNumber value={value} />
         </dd>
-        {note != null && <dd className="mt-1.5 text-xs font-semibold text-muted">{note}</dd>}
+        {note != null && <dd className="mt-1.5 text-caption text-muted">{note}</dd>}
       </dl>
       {/* 세 칸을 똑같이 나누지 않고 내용 너비대로 고르게 벌린다. 좁은 카드에서 "50⅔"이 "50"/"⅔"로 갈리지 않게 */}
       <dl className="grid grid-cols-[repeat(3,auto)] justify-evenly rounded-xl bg-surface-2 py-2 text-center">
         {small.map(([k, v]) => (
           <div key={k} className="whitespace-nowrap">
-            <dt className="text-xs text-muted">{k}</dt>
-            <dd className="text-xl font-extrabold leading-tight tabular-nums">
+            <dt className="text-caption text-muted">{k}</dt>
+            <dd className="text-stat tabular-nums">
               {v}
             </dd>
           </div>

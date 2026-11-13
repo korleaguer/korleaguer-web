@@ -31,7 +31,7 @@ export default async function GameLog({
     // 옆에 줄 수를 적지 않는다. 줄에는 결장·포스트시즌이 섞여 있어 위 시즌 성적의 '경기'와 어긋난다(점검 11-13: '경기 43' 옆 '162경기')
     <Section id="games-title" title="경기 기록">
       {games.length === 0 && minorGames.length === 0 ? (
-        <p className="card px-4 py-5 text-sm text-muted">경기 기록이 없어요.</p>
+        <p className="card px-4 py-5 text-body text-muted">경기 기록이 없어요.</p>
       ) : (
         <GameLogList games={games} minorGames={minorGames} moves={moves} role={role} />
       )}

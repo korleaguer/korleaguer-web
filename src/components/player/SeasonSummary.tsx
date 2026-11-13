@@ -84,7 +84,7 @@ export default async function SeasonSummary({
           </LevelBlock>
         ))}
         {hitterSeasons.length === 0 && pitcherSeasons.length === 0 && (
-          <p className="card px-4 py-5 text-sm text-muted">
+          <p className="card px-4 py-5 text-body text-muted">
             {statsAvailable ? "이번 시즌 기록이 없어요." : "아직 시즌 기록을 받지 못했어요."}
           </p>
         )}
@@ -97,7 +97,7 @@ export default async function SeasonSummary({
 function LevelBlock({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="space-y-2.5">
-      <h3 className="px-1 text-[0.8125rem] font-semibold text-muted">{label}</h3>
+      <h3 className="px-1 text-label text-muted">{label}</h3>
       {children}
     </div>
   );
@@ -117,8 +117,8 @@ function StatBlock({ big, line }: { big: Stat[]; line: Stat[] }) {
       <dl className="grid grid-cols-2 gap-2.5 md:grid-cols-4">
         {big.map(([label, value]) => (
           <div key={label} className="card min-w-0 px-4 py-3.5">
-            <dt className="text-[0.8125rem] text-muted">{label}</dt>
-            <dd className="text-[1.75rem] font-extrabold leading-tight tracking-[-0.02em] tabular-nums">
+            <dt className="text-caption text-muted">{label}</dt>
+            <dd className="text-stat-hero tabular-nums">
               {/* 처음부터 최종 값. 새 기록이 와서 값이 바뀔 때만 굴러간다 */}
               <RollingNumber value={String(value)} />
             </dd>
@@ -128,8 +128,8 @@ function StatBlock({ big, line }: { big: Stat[]; line: Stat[] }) {
       <dl className={`card grid p-1.5 ${narrowCols} md:grid-cols-(--line-cols)`} style={wideCols}>
         {line.map(([label, value]) => (
           <div key={label} className="min-w-0 px-1 py-2.5 text-center">
-            <dt className="text-xs text-muted">{label}</dt>
-            <dd className="text-[1.0625rem] font-bold tabular-nums">{value}</dd>
+            <dt className="text-caption text-muted">{label}</dt>
+            <dd className="text-stat-sm tabular-nums">{value}</dd>
           </div>
         ))}
       </dl>

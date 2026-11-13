@@ -25,9 +25,9 @@ export default function LinkedTeams({ counts, className }: { counts: LinkedTeamC
     .sort((a, b) => b.doubted - a.doubted)[0];
   return (
     <div className={className}>
-      <p className="mb-2 flex items-baseline justify-between gap-2 text-[0.8125rem] font-bold">
+      <p className="mb-2 flex items-baseline justify-between gap-2 text-label">
         <span>행선지로 거론된 구단</span>
-        <span className="shrink-0 text-[0.6875rem] font-normal text-muted tabular-nums">
+        <span className="shrink-0 text-caption text-muted tabular-nums">
           최근 {counts.days}일 기사 수
         </span>
       </p>
@@ -35,18 +35,18 @@ export default function LinkedTeams({ counts, className }: { counts: LinkedTeamC
         {shown.map((t) => (
           <li
             key={t.abbreviation}
-            className="inline-flex items-center gap-1.5 rounded-full bg-surface-2 py-1 pl-1.5 pr-3 text-[0.8125rem] font-semibold"
+            className="inline-flex items-center gap-1.5 rounded-full bg-surface-2 py-1 pl-1.5 pr-3 text-label"
           >
             <TeamMark logoUrl={teamLogoUrl(t.abbreviation)} color={teamColor(t.abbreviation)} size="sm" />
             {t.nameKo}
             <span className="font-bold tabular-nums">{t.linked}건</span>
-            {t.today && <span className="text-xs font-bold text-accent-ink">오늘 새 기사</span>}
+            {t.today && <span className="text-caption font-bold text-accent-ink">오늘 새 기사</span>}
           </li>
         ))}
-        {more > 0 && <li className="px-1 text-xs text-muted tabular-nums">외 {more}개 구단</li>}
+        {more > 0 && <li className="px-1 text-caption text-muted tabular-nums">외 {more}개 구단</li>}
       </ul>
       {doubt && (
-        <p className="mt-2 text-xs text-muted tabular-nums">
+        <p className="mt-2 text-caption text-muted tabular-nums">
           {withTopicParticle(doubt.nameKo)} &apos;필요 없다&apos;는 전망도 {doubt.doubted}건 있었어요
         </p>
       )}

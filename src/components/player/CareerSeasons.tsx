@@ -24,14 +24,14 @@ export default function CareerSeasons({ seasons: all }: { seasons: CareerSeason[
   return (
     <Section id="seasons-title" title="시즌별 기록" aside="MLB 정규시즌">
       <div className="card overflow-x-auto">
-        <table className="w-full min-w-[20rem] text-sm tabular-nums">
-          <thead className="text-[0.6875rem] text-muted">
+        <table className="w-full min-w-[20rem] text-meta tabular-nums">
+          <thead className="text-caption text-muted">
             <tr className="border-b border-line">
-              <th scope="col" className="py-2.5 pl-4 pr-2 text-left font-medium">
+              <th scope="col" className="py-2.5 pl-4 pr-2 text-left font-semibold">
                 시즌
               </th>
               {head.map((h, i) => (
-                <th key={h} scope="col" className={`py-2.5 text-right font-medium ${i === head.length - 1 ? "pr-4" : "px-1.5"}`}>
+                <th key={h} scope="col" className={`py-2.5 text-right font-semibold ${i === head.length - 1 ? "pr-4" : "px-1.5"}`}>
                   {h}
                 </th>
               ))}
@@ -47,7 +47,7 @@ export default function CareerSeasons({ seasons: all }: { seasons: CareerSeason[
                 <tr key={s.season}>
                   <th scope="row" className="py-2.5 pl-4 pr-2 text-left font-normal">
                     <span className="block font-bold">{s.season}</span>
-                    {s.teamKo && <span className="block max-w-[6.5rem] truncate text-[0.6875rem] text-muted">{s.teamKo}</span>}
+                    {s.teamKo && <span className="block max-w-[6.5rem] truncate text-caption text-muted">{s.teamKo}</span>}
                   </th>
                   {cells.map((c, i) => (
                     <td key={head[i]} className={`py-2.5 text-right ${i === cells.length - 1 ? "pr-4 font-semibold" : "px-1.5"}`}>

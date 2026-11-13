@@ -52,20 +52,20 @@ export default async function PlayerInfo({ player }: { player: PlayerDetail }) {
           <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
             {fields.map((field) => (
               <div key={field.label} className={`min-w-0 ${field.wide ? "col-span-2" : ""}`}>
-                <dt className="text-xs text-muted">{field.label}</dt>
-                <dd className="mt-0.5 break-words text-sm font-semibold">{formatSummary(field.value)}</dd>
+                <dt className="text-caption text-muted">{field.label}</dt>
+                <dd className="mt-0.5 break-words text-body">{formatSummary(field.value)}</dd>
               </div>
             ))}
           </dl>
         ) : (
-          <p className="text-sm text-muted">선수 정보를 준비하고 있어요.</p>
+          <p className="text-body text-muted">선수 정보를 준비하고 있어요.</p>
         )}
         {player.mlbUrl && (
           <a
             href={player.mlbUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="press tap-target mt-4 inline-flex items-center gap-1 text-[0.8125rem] font-semibold text-accent-ink hover:underline"
+            className="press tap-target mt-4 inline-flex items-center gap-1 text-label text-accent-ink hover:underline"
           >
             MLB 공식 페이지
             <ExternalLinkIcon />

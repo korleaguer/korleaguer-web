@@ -27,20 +27,20 @@ export default function GameRow({
 
   return (
     <li className="flex gap-3 p-3.5">
-      {/* 눈에는 "9.27 / 일", 화면 낭독기에는 "9월 27일(일)". 10~12월("10.16")도 한 줄에 들어가는 너비 */}
-      <p className="w-12 shrink-0 text-center">
-        <span aria-hidden className="block whitespace-nowrap text-base font-bold leading-snug tabular-nums">
+      {/* 눈에는 "9.27 / 일", 화면 낭독기에는 "9월 27일(일)". 10~12월("10.16", 17px 굵게 약 49px)도 한 줄에 들어가는 너비 */}
+      <p className="w-13 shrink-0 text-center">
+        <span aria-hidden className="block whitespace-nowrap text-heading tabular-nums">
           {formatShortDate(g.startTimeKst)}
         </span>
-        <span aria-hidden className="block text-xs text-muted">
+        <span aria-hidden className="block text-caption text-muted">
           {formatWeekday(g.startTimeKst)}
         </span>
         <span className="sr-only">{formatDate(g.startTimeKst)}</span>
       </p>
       <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[0.8125rem] text-muted">
+        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-meta text-muted">
           {levelKo && (
-            <span className="rounded-md bg-surface-2 px-1.5 py-px text-[0.6875rem] font-bold text-foreground/70">{levelKo}</span>
+            <span className="rounded-md bg-surface-2 px-1.5 py-0.5 text-badge text-foreground/70">{levelKo}</span>
           )}
           <span>vs</span>
           <TeamName teamKo={g.opponentKo} teamAbbr={g.opponentAbbr} teamId={opponentId} />
@@ -48,14 +48,14 @@ export default function GameRow({
           {lineup && <span>{`· ${lineup}`}</span>}
           {/* 경기 전이면 점수 대신 시작 시각. 끝났는데 점수가 없으면(마이너 경기) 둘 다 쓰지 않는다 */}
           {hasScore ? (
-            <ScoreText line={g} className="text-sm font-bold text-foreground" />
+            <ScoreText line={g} className="text-summary font-bold text-foreground" />
           ) : g.gameStatus === "final" ? null : (
             <span className="tabular-nums">{`· ${formatTime(g.startTimeKst)}`}</span>
           )}
           <ResultPill result={g.result} className="ml-auto" />
         </div>
         <p
-          className={`mt-1 text-[0.9375rem] leading-[1.45] text-pretty ${g.played ? "font-semibold" : "font-medium text-muted"}`}
+          className={`mt-1 text-summary text-pretty ${g.played ? "" : "font-medium text-muted"}`}
         >
           {formatSummary(g.summary)}
         </p>

@@ -64,7 +64,7 @@ export default function RecentGames({ recent, asOf }: Props) {
           {pills.map((part) => (
             <li
               key={part}
-              className="rounded-full bg-surface px-2.5 py-0.5 text-[0.8125rem] font-semibold leading-5 text-neutral-pill-fg"
+              className="rounded-full bg-surface px-2.5 py-0.5 text-label text-neutral-pill-fg"
             >
               {part}
             </li>
@@ -73,7 +73,7 @@ export default function RecentGames({ recent, asOf }: Props) {
       )}
 
       {recent.lines.length === 0 ? (
-        <p className="card px-4 py-6 text-sm text-muted">
+        <p className="card px-4 py-6 text-body text-muted">
           {noData ? "경기 기록이 모이면 선수별 최근 경기가 여기에 나와요." : "보여 줄 경기가 없어요."}
         </p>
       ) : (
@@ -105,11 +105,11 @@ function GameCard({ line, index }: { line: GameLine; index: number }) {
         <TeamSide teamKo={line.teamKo} teamAbbr={line.teamAbbr} />
         <div className="text-center">
           {line.teamScore != null && line.opponentScore != null ? (
-            <ScoreText line={line} className="block text-[1.3125rem] font-extrabold leading-tight tracking-[0.02em]" />
+            <ScoreText line={line} className="block text-score" />
           ) : (
-            <span className="block text-base font-bold leading-tight text-muted">vs</span>
+            <span className="block text-heading text-muted">vs</span>
           )}
-          <span className="block whitespace-nowrap text-[0.6875rem] text-muted tabular-nums">{meta}</span>
+          <span className="block whitespace-nowrap text-micro text-muted tabular-nums">{meta}</span>
         </div>
         <TeamSide teamKo={line.opponentKo} teamAbbr={line.opponentAbbr} end />
       </div>
@@ -120,17 +120,17 @@ function GameCard({ line, index }: { line: GameLine; index: number }) {
           <div className="flex items-center gap-1.5">
             <Link
               href={`/players/${line.playerId}`}
-              className="text-base font-bold after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none"
+              className="text-heading after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none"
             >
               {line.nameKo}
             </Link>
             {/* "투수 · 구원", "선발"처럼 이름 옆 작은 글씨 */}
-            {sideNote(line) && <span className="text-xs text-muted">{sideNote(line)}</span>}
+            {sideNote(line) && <span className="text-caption text-muted">{sideNote(line)}</span>}
             <ResultPill result={line.result} className="ml-auto" />
           </div>
           {/* 한 줄 기록이 이 서비스의 핵심이라 카드 안에서 가장 굵게 둔다. 안 뛰었으면 흐리게 */}
           <p
-            className={`mt-0.5 text-[0.9375rem] leading-[1.45] text-pretty ${line.played ? "font-semibold" : "font-medium text-muted"}`}
+            className={`mt-0.5 text-summary text-pretty ${line.played ? "" : "font-medium text-muted"}`}
           >
             {formatSummary(line.summary)}
           </p>
@@ -145,7 +145,7 @@ function GameCard({ line, index }: { line: GameLine; index: number }) {
 function TeamSide({ teamKo, teamAbbr, end = false }: { teamKo: string; teamAbbr: string | null; end?: boolean }) {
   return (
     <span
-      className={`flex min-w-0 items-center gap-1.5 text-[0.8125rem] font-semibold ${end ? "flex-row-reverse text-right" : ""}`}
+      className={`flex min-w-0 items-center gap-1.5 text-label ${end ? "flex-row-reverse text-right" : ""}`}
     >
       <TeamMark logoUrl={teamLogoUrl(teamAbbr)} color={teamColor(teamAbbr)} size="md" />
       <span className="truncate">{teamKo}</span>

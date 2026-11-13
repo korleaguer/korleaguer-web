@@ -42,7 +42,7 @@ export default function SeasonLeaders({ season, statsAvailable, ranking, hitters
           ))}
         </ul>
       ) : (
-        <p className="card px-4 py-5 text-sm text-muted">아직 시즌 기록을 받지 못했어요.</p>
+        <p className="card px-4 py-5 text-body text-muted">아직 시즌 기록을 받지 못했어요.</p>
       )}
     </Section>
   );
@@ -71,16 +71,16 @@ function LeaderCard({
     <li
       className={`card min-w-0 p-3.5 ${first ? "card-link relative has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-accent" : ""}`}
     >
-      <h3 className="flex flex-wrap items-baseline gap-x-1.5 text-[0.8125rem] font-semibold text-muted">
+      <h3 className="flex flex-wrap items-baseline gap-x-1.5 text-label text-muted">
         {leader.title}
-        {filtered && <span className="text-[0.6875rem] font-medium">{`${ranking.minPlateAppearances}타석 이상`}</span>}
+        {filtered && <span className="text-caption">{`${ranking.minPlateAppearances}타석 이상`}</span>}
       </h3>
       {first ? (
         <>
-          <p className="mb-2 mt-0.5 text-[1.75rem] font-extrabold leading-tight tracking-[-0.02em] text-accent-ink tabular-nums">
+          <p className="mb-2 mt-0.5 text-stat-hero text-accent-ink tabular-nums">
             <RollingNumber value={leader.format(first.value)} />
           </p>
-          <p className="flex min-w-0 items-center gap-1 text-sm font-semibold">
+          <p className="flex min-w-0 items-center gap-1 text-summary">
             <PlayerLink
               playerId={first.row.playerId}
               nameKo={first.row.nameKo}
@@ -93,7 +93,7 @@ function LeaderCard({
           </p>
         </>
       ) : (
-        <p className="mt-1.5 text-sm text-muted">{emptyMessage(hitters.length, majors.length, filtered)}</p>
+        <p className="mt-1.5 text-body text-muted">{emptyMessage(hitters.length, majors.length, filtered)}</p>
       )}
     </li>
   );

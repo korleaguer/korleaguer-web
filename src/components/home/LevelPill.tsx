@@ -2,7 +2,7 @@
 export default function LevelPill({ level, className = "ml-1.5" }: { level: string; className?: string }) {
   return (
     <span
-      className={`inline-flex rounded-full bg-neutral-pill px-1.5 py-0.5 align-middle text-[0.6875rem] font-semibold leading-none text-neutral-pill-fg ${className}`}
+      className={`inline-flex rounded-full bg-neutral-pill px-1.5 py-0.5 align-middle text-badge text-neutral-pill-fg ${className}`}
     >
       {level}
     </span>

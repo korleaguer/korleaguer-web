@@ -31,7 +31,7 @@ export default function PlayerCard({ player, hitting, pitching, minorHitting, mi
         <div className="min-w-0 flex-1">
           <Link
             href={`/players/${player.id}`}
-            className="text-[1.0625rem] font-extrabold tracking-[-0.01em] after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none"
+            className="text-heading after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none"
           >
             {player.nameKo}
           </Link>
@@ -51,12 +51,12 @@ export default function PlayerCard({ player, hitting, pitching, minorHitting, mi
       <div className="mt-auto pt-3.5">
         {main ? (
           <div className="border-t border-line pt-3">
-            <p className="mb-1.5 text-xs font-semibold text-muted">{main.label}</p>
+            <p className="mb-1.5 text-label text-muted">{main.label}</p>
             <dl className="grid grid-cols-3">
               {main.stats.map(({ label, value }) => (
                 <div key={label} className="min-w-0">
-                  <dt className="text-xs text-muted">{label}</dt>
-                  <dd className="mt-0.5 text-xl font-extrabold tracking-[-0.02em] tabular-nums">
+                  <dt className="text-caption text-muted">{label}</dt>
+                  <dd className="mt-0.5 text-stat tabular-nums">
                     {value}
                   </dd>
                 </div>
@@ -64,7 +64,7 @@ export default function PlayerCard({ player, hitting, pitching, minorHitting, mi
             </dl>
           </div>
         ) : (
-          <p className="border-t border-line pt-3 text-sm text-muted">시즌 기록 없음</p>
+          <p className="border-t border-line pt-3 text-body text-muted">시즌 기록 없음</p>
         )}
       </div>
     </li>
