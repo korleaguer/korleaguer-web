@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import type { LinkedTeams as LinkedTeamCounts, PostingPast, PostingPlayer, PostingStatus, PostingSummary } from "@/lib/api";
-import { formatDate } from "@/lib/format";
+import { formatDate, withAndParticle, withTopicParticle } from "@/lib/format";
 import { uniqueByUrl } from "@/lib/news";
 import Section from "@/components/Section";
 import TeamMark from "@/components/TeamMark";
@@ -314,7 +314,8 @@ function PlayerHead({ player: p }: { player: PostingPlayer }) {
 
       {p.deal && p.deal.years != null && p.deal.guaranteedUsd != null && (
         <p className="mt-4 text-[0.9375rem] font-semibold">
-          {p.deal.mlbTeamKo}와 {p.deal.years}년 {formatUsd(p.deal.guaranteedUsd)}
+          {/* 받침 있는 구단(보스턴·시애틀)은 '과'(점검 11-13) */}
+          {p.deal.mlbTeamKo ? `${withAndParticle(p.deal.mlbTeamKo)} ` : ""}{p.deal.years}년 {formatUsd(p.deal.guaranteedUsd)}
           {p.deal.agreedOn && (
             <span className="block text-xs font-normal text-muted">합의 {formatDate(p.deal.agreedOn)} (미국 날짜)</span>
           )}
@@ -366,7 +367,7 @@ function LinkedTeams({ counts }: { counts: LinkedTeamCounts }) {
       </ul>
       {doubt && (
         <p className="mt-2 text-xs text-muted tabular-nums">
-          {doubt.nameKo}는 &apos;필요 없다&apos;는 전망도 {doubt.doubted}건 있었어요
+          {withTopicParticle(doubt.nameKo)} &apos;필요 없다&apos;는 전망도 {doubt.doubted}건 있었어요
         </p>
       )}
     </div>
