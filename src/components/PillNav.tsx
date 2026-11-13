@@ -1,7 +1,8 @@
 "use client"; // 누른 칸을 바로 표시하고 알약 자리를 재야 해서 클라이언트 컴포넌트다.
 
 import Link, { useLinkStatus } from "next/link";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { usePillIndicator } from "@/lib/usePillIndicator";
 import { haptic } from "@/lib/app";
 import LoadingDots from "./LoadingDots";
 
@@ -45,30 +46,7 @@ export default function PillNav({ items, label, className = "", itemClass, idleC
   }, [picked]);
 
   const navRef = useRef<HTMLElement>(null);
-  const itemRefs = useRef<(HTMLAnchorElement | null)[]>([]);
-  const [rect, setRect] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
-  const [ready, setReady] = useState(false);
-
-  // 고른 칸의 자리를 잰다. 글씨 크기·창 폭이 바뀌어도 다시 잰다
-  useLayoutEffect(() => {
-    const nav = navRef.current;
-    const measure = () => {
-      const el = active >= 0 ? itemRefs.current[active] : null;
-      setRect(el ? { x: el.offsetLeft, y: el.offsetTop, width: el.offsetWidth, height: el.offsetHeight } : null);
-    };
-    measure();
-    if (!nav) return;
-    const observer = new ResizeObserver(measure);
-    observer.observe(nav);
-    return () => observer.disconnect();
-  }, [active]);
-
-  // 첫 자리를 잡은 다음 프레임부터 움직임을 켠다(처음 그릴 때 왼쪽 끝에서 미끄러져 오지 않게)
-  useLayoutEffect(() => {
-    if (!rect || ready) return;
-    const frame = requestAnimationFrame(() => setReady(true));
-    return () => cancelAnimationFrame(frame);
-  }, [rect, ready]);
+  const { itemRefs, rect, ready } = usePillIndicator<HTMLAnchorElement>(active, navRef);
 
   return (
     <nav ref={navRef} aria-label={label} className={`relative flex ${className}`}>

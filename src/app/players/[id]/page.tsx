@@ -73,7 +73,7 @@ async function PlayerContent({ params }: Pick<Props, "params">) {
             hitting={hitting}
             pitching={pitching}
           />
-          <GameLog games={games} />
+          <GameLog games={games} moves={moves ?? []} />
         </div>
         {/* 오른쪽 칸: 선수 정보 + 이동 기록(메이저·마이너 오간 날짜) */}
         <div className="min-w-0 space-y-7">
