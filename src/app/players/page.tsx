@@ -40,6 +40,8 @@ async function PlayersContent() {
   const home = homeResult.data;
   const hitters = new Map(home.hitters.map((h) => [h.playerId, h]));
   const pitchers = new Map(home.pitchers.map((p) => [p.playerId, p]));
+  const minorHitters = new Map(home.minorHitters.map((h) => [h.playerId, h]));
+  const minorPitchers = new Map(home.minorPitchers.map((p) => [p.playerId, p]));
 
   return (
     <div className="space-y-4">
@@ -58,6 +60,8 @@ async function PlayersContent() {
               player={player}
               hitting={hitters.get(player.id) ?? null}
               pitching={pitchers.get(player.id) ?? null}
+              minorHitting={minorHitters.get(player.id) ?? null}
+              minorPitching={minorPitchers.get(player.id) ?? null}
               isMine={myIds.includes(player.id)}
             />
           ))}

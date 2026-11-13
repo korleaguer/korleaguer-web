@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const { player, season } = result.data;
   const title = `${player.nameKo} ${season} 기록`;
-  const description = `${player.nameKo}${player.nameEn ? `(${player.nameEn})` : ""} ${season} 시즌 성적과 경기별 한 줄 기록`;
+  const description = `${player.nameKo}${player.nameEn ? `(${player.nameEn})` : ""} ${season} 메이저 성적과 경기별 한 줄 기록`;
   // 공유 카드 그림은 og/[v]/route.tsx(사진·핵심 기록). 주소에 배포 커밋이 들어가 카톡이 옛 그림을 쓰지 않는다
   return { title, description, ...shareMeta(title, description, playerShareImage(player.id)) };
 }
@@ -65,7 +65,21 @@ async function PlayerContent({ params }: Pick<Props, "params">) {
     return <ApiErrorNotice failure={result.failure} />;
   }
 
-  const { dataMode, statsAvailable, season, player, hitting, pitching, games, moves, saber, seasons, news } = result.data;
+  const {
+    dataMode,
+    statsAvailable,
+    season,
+    player,
+    hitting,
+    pitching,
+    minorHitting,
+    minorPitching,
+    games,
+    moves,
+    saber,
+    seasons,
+    news,
+  } = result.data;
   // 타격 흐름(누적 wRC+)은 타자만. 마지막 점을 MLB 공식 시즌 wRC+에 맞춘다
   const trend = saber?.kind === "hitter" && saber.wrcPlus != null ? buildWrcTrend(games, saber.wrcPlus) : null;
   return (
@@ -80,6 +94,8 @@ async function PlayerContent({ params }: Pick<Props, "params">) {
             statsAvailable={statsAvailable}
             hitting={hitting}
             pitching={pitching}
+            minorHitting={minorHitting}
+            minorPitching={minorPitching}
           />
           {saber && <LeaguePosition saber={saber} />}
           {trend && (

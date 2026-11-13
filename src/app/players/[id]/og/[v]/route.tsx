@@ -3,7 +3,7 @@
 import { ImageResponse } from "next/og";
 import { getPlayer } from "@/lib/api";
 import { OG_COLORS, OG_SIZE, OgBrand, mixHex, ogFonts, photoDataUrl } from "@/lib/og";
-import { seasonStats } from "@/lib/seasonStats";
+import { mainSeasonStats } from "@/lib/seasonStats";
 import { teamColor } from "@/lib/teams";
 
 // 주소: /players/[id]/og/<판 번호>. 판 번호는 배포 커밋(lib/share.ts OG_VERSION)이고 그림에는 쓰지 않는다.
@@ -16,10 +16,12 @@ export async function GET(_request: Request, { params }: RouteContext<"/players/
   const fonts = await ogFonts();
   if (!result?.ok) return fallback(fonts);
 
-  const { player, season, hitting, pitching } = result.data;
+  const { player, season } = result.data;
   const color = teamColor(player.teamAbbr);
   const photo = await photoDataUrl(player.photoUrl);
-  const stats = seasonStats(player, hitting, pitching);
+  // 선수 목록 카드와 같은 기록: 올해 주로 뛴 단계 + 단계·경기 수 이름표(이슈 #184)
+  const main = mainSeasonStats(player, result.data);
+  const stats = main?.stats ?? null;
   const team = player.returnedKo ? `${player.returnedKo} 복귀` : player.teamKo;
   const subline = [team, player.positionKo, player.freeAgent && !player.returnedKo ? "FA" : null].filter(Boolean).join(" · ");
 
@@ -57,16 +59,19 @@ export async function GET(_request: Request, { params }: RouteContext<"/players/
             </div>
             {subline && <div style={{ marginTop: 14, fontSize: 36, fontWeight: 700, color: OG_COLORS.muted }}>{subline}</div>}
             <div style={{ display: "flex", flex: 1, alignItems: "flex-end", justifyContent: "space-between" }}>
-              {stats ? (
-                <div style={{ display: "flex", gap: 56 }}>
-                  {stats.map((s) => (
-                    <div key={s.label} style={{ display: "flex", flexDirection: "column" }}>
-                      <div style={{ fontSize: 28, fontWeight: 700, color: OG_COLORS.muted }}>{s.label}</div>
-                      <div style={{ fontSize: 72, fontWeight: 800, letterSpacing: -2, color: OG_COLORS.foreground, lineHeight: 1.1 }}>
-                        {s.value}
+              {main && stats ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  <div style={{ fontSize: 28, fontWeight: 700, color: OG_COLORS.muted }}>{main.label}</div>
+                  <div style={{ display: "flex", gap: 56 }}>
+                    {stats.map((s) => (
+                      <div key={s.label} style={{ display: "flex", flexDirection: "column" }}>
+                        <div style={{ fontSize: 28, fontWeight: 700, color: OG_COLORS.muted }}>{s.label}</div>
+                        <div style={{ fontSize: 72, fontWeight: 800, letterSpacing: -2, color: OG_COLORS.foreground, lineHeight: 1.1 }}>
+                          {s.value}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               ) : (
                 <div style={{ fontSize: 32, fontWeight: 700, color: OG_COLORS.muted }}>{season} 시즌 기록 모아보기</div>

@@ -140,7 +140,7 @@ export function Numbers({
       <dl>
         <dt className="text-xs text-muted">{label}</dt>
         <dd className="mt-1 text-[2.75rem] font-extrabold leading-none tracking-[-0.03em] tabular-nums">
-          {/* 기간을 바꾸거나 화면 밖에서 들어오면 굴러가며 바뀐다 */}
+          {/* 처음엔 최종 값으로 서 있고, 기간(7·14·30일)을 바꾸면 앞 값에서 굴러가며 바뀐다 */}
           <RollingNumber value={value} />
         </dd>
         {note != null && <dd className="mt-1.5 text-xs font-semibold text-muted">{note}</dd>}
