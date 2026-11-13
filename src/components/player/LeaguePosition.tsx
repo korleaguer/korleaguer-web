@@ -45,7 +45,8 @@ function rowsOf(saber: PlayerSaber): Row[] | null {
 }
 
 /**
- * 선수 화면 'MLB 안 위치'(사용자 11-13 결정, Baseball Savant의 백분위 막대처럼).
+ * 선수 화면 'MLB 타자(투수) 중에서'(사용자 11-13 결정, Baseball Savant의 백분위 막대처럼).
+ * 제목은 아래 줄과 이어 읽힌다: 'MLB 타자 중에서 타격 상위 41%'(처음 이름 'MLB 안 위치'는 어색하다는 사용자 의견으로 바꿨다).
  * 같은 시즌 MLB 선수 중 어디쯤인지를 네 줄로: 타자는 종합·타격·주루·수비, 투수는 종합·실점 억제·삼진·볼넷.
  * 타율 하나로 폼을 판단하지 않게(사용자: "현대 야구에서 타율만으로 평가하진 않아서"), 실제 값은 바 아래 작게만 둔다.
  * 중간보다 아래는 순위 대신 회색 '평균 아래'(혹평처럼 읽히지 않게). 숫자는 서버가 MLB 공식 세이버 지표로 계산한다(korleaguer-server#133).
@@ -63,8 +64,8 @@ export default async function LeaguePosition({ saber }: { saber: PlayerSaber }) 
   return (
     <Section
       id="position-title"
-      title="MLB 안 위치"
-      aside={rows && saber.poolSize > 0 ? `${saber.season} MLB ${who} ${saber.poolSize}명과 비교` : undefined}
+      title={`MLB ${who} 중에서`}
+      aside={rows && saber.poolSize > 0 ? `${saber.season} · ${saber.poolSize}명과 비교` : undefined}
     >
       <div className="card px-4 py-4">
         {!rows ? (
