@@ -25,7 +25,7 @@ interface Props {
 
 /**
  * 내 선수 한 명의 카드: 팀 색 무대(상태 배지 + 사진) → 이름 → 출전 줄·한 줄 소식 → 큰 숫자와 작은 숫자 셋 →
- * 경기별 막대 → 경기별 기록 모두 보기. 마이너에 있으면 숫자·막대가 마이너 기록이고(이름표에 단계),
+ * 경기별 막대 → 경기 기록 모두 보기. 마이너에 있으면 숫자·막대가 마이너 기록이고(이름표에 단계),
  * 비시즌·FA면 기간 대신 시즌 합계를 보인다(이슈 #13). 비시즌 홈도 같은 카드로 선수 6명을 보인다.
  */
 export default async function FormCard({ entry, days, statsAvailable, isMine = true, nameAs: Name = "h2" }: Props) {
