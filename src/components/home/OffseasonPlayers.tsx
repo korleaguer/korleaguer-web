@@ -24,11 +24,20 @@ function order(entries: MyPlayer[], myIds: number[]): MyPlayer[] {
   return [...entries].sort((a, b) => rank(a) - rank(b) || majorGames(b) - majorGames(a));
 }
 
-/** 머리 알약: "2027 개막 D-134", "FA 3명" */
+/**
+ * 머리 알약: "2027 개막 D-132 · 3월 25일(목)", "FA 2명". 개막일은 알약 하나에 D-day와 날짜를 함께 쓴다
+ * (예전에는 아래 문장 '2027 정규시즌은 미국 날짜로 …에 시작해요.'가 같은 말을 한 번 더 했다, 사용자 11-13 시안 C).
+ * '2026 시즌 끝' 알약도 뺐다: 제목이 '2026 시즌 성적표'라 비시즌인 게 보이고, 카드마다 붙던 '시즌 끝'도 함께 뺐다.
+ */
 function pills(offseason: OffSeason, entries: MyPlayer[]): string[] {
   const out: string[] = [];
   const days = offseason.daysToOpening;
-  if (days != null) out.push(days > 0 ? `${offseason.nextSeason} 개막 D-${days}` : `${offseason.nextSeason} 오늘 개막`);
+  if (days == null) {
+    out.push(`${offseason.nextSeason} 개막일 발표 전`);
+  } else {
+    const day = formatDate(offseason.nextOpeningDay); // 미국 날짜(MLB 일정 그대로)
+    out.push(days > 0 ? `${offseason.nextSeason} 개막 D-${days}${day !== "-" ? ` · ${day}` : ""}` : `${offseason.nextSeason} 오늘 개막`);
+  }
   const freeAgents = entries.filter((e) => e.status?.kind === "FA").length;
   if (freeAgents > 0) out.push(`FA ${freeAgents}명`);
   return out;
@@ -52,9 +61,6 @@ export default async function OffseasonPlayers({ offseason }: { offseason: OffSe
       ? [...my.players].sort((a, b) => (report.get(a.player.id)?.i ?? 99) - (report.get(b.player.id)?.i ?? 99))
       : order(my.players, myIds)
     : [];
-  const opening = offseason.nextOpeningDay
-    ? `${offseason.nextSeason} 정규시즌은 미국 날짜로 ${formatDate(offseason.nextOpeningDay)}에 시작해요.`
-    : `${offseason.nextSeason} 시즌 개막일은 아직 발표 전이에요.`;
 
   return (
     <Section
@@ -62,8 +68,8 @@ export default async function OffseasonPlayers({ offseason }: { offseason: OffSe
       title={report.size > 0 ? `${offseason.season} 시즌 성적표` : `${offseason.season} 시즌 끝`}
       aside={report.size > 0 ? "잘한 순" : undefined}
     >
-      <ul className="-mt-0.5 mb-2 flex flex-wrap gap-1.5 px-1">
-        {[...(report.size > 0 ? [`${offseason.season} 시즌 끝`] : []), ...pills(offseason, entries)].map((part) => (
+      <ul className="-mt-0.5 mb-3 flex flex-wrap gap-1.5 px-1">
+        {pills(offseason, entries).map((part) => (
           <li
             key={part}
             className="rounded-full bg-surface px-2.5 py-0.5 text-[0.8125rem] font-semibold leading-5 text-neutral-pill-fg tabular-nums"
@@ -72,7 +78,6 @@ export default async function OffseasonPlayers({ offseason }: { offseason: OffSe
           </li>
         ))}
       </ul>
-      <p className="mb-3 px-1 text-[0.8125rem] text-muted">{opening}</p>
 
       {myResult && !myResult.ok ? (
         // /api/my는 404를 주지 않는다. 404면 api가 이 기능보다 오래된 것이다.

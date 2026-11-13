@@ -53,6 +53,8 @@ export default function SeasonReportCard({
 }) {
   const { player } = entry;
   const good = report.tier === "GOOD";
+  // 성적표는 모두 끝난 시즌이라 카드마다 '시즌 끝'을 붙이지 않는다(사용자 11-13 시안 C). FA·국내 복귀 등은 그대로
+  const status = entry.status?.kind === "SEASON_OVER" ? null : entry.status;
   const meta = metaLine(entry);
   // 기사 사진이 없거나 안 뜨면 이 선수 사진으로
   const news = (report.news ?? []).map((n) => ({ ...n, playerPhotoUrl: player.photoUrl }));
@@ -62,7 +64,7 @@ export default function SeasonReportCard({
       {good && (
         // 잘한 시즌은 팀 색 무대에 사진을 크게(내 선수 카드와 같은 무대). isolate: 배지의 z-10이 무대 안에서만 통하게
         <div className="player-stage isolate h-[6.5rem]" style={{ "--team": teamColor(player.teamAbbr) } as CSSProperties}>
-          {entry.status && <StatusBadge status={entry.status} />}
+          {status && <StatusBadge status={status} />}
           <BandPhoto nameKo={player.nameKo} photoUrl={player.photoUrl} teamAbbr={player.teamAbbr} />
         </div>
       )}
@@ -81,7 +83,7 @@ export default function SeasonReportCard({
                   {player.nameKo}
                 </Link>
               </h3>
-              {!good && entry.status && <StatusPill status={entry.status} />}
+              {!good && status && <StatusPill status={status} />}
             </div>
             {meta && <p className="text-[0.8125rem] text-muted">{meta}</p>}
           </div>
