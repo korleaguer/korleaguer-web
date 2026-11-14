@@ -56,7 +56,7 @@ export default function Highlights({ line, className = "" }: { line: HighlightSo
         <span
           key={h.text}
           aria-hidden
-          className={`inline-flex items-center rounded-full px-2 py-px text-xs font-bold leading-[1.125rem] ${h.strong ? "bg-hot-strong text-hot-on" : "bg-hot-soft text-hot-ink"}`}
+          className={`inline-flex items-center rounded-full px-2 py-0.5 text-badge ${h.strong ? "bg-hot-strong text-hot-on" : "bg-hot-soft text-hot-ink"}`}
         >
           {h.text}
         </span>

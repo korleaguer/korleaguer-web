@@ -44,8 +44,8 @@ export default function MyHeader({ subtitle, players, selectedIds }: Props) {
     <div>
       <div className="flex items-end justify-between gap-3 px-1">
         <div className="min-w-0">
-          <h1 className="text-2xl font-extrabold tracking-[-0.02em]">내 선수</h1>
-          <p className="mt-0.5 text-[0.8125rem] text-muted">{subtitle}</p>
+          <h1 className="text-display">내 선수</h1>
+          <p className="mt-0.5 text-meta text-muted">{subtitle}</p>
         </div>
         <button
           type="button"
@@ -55,7 +55,7 @@ export default function MyHeader({ subtitle, players, selectedIds }: Props) {
             setOpen((v) => !v);
             setOpened(true);
           }}
-          className="inline-flex shrink-0 items-center gap-1 rounded-full bg-surface px-3.5 py-1.5 text-[0.8125rem] font-semibold shadow-[var(--shadow-card)] transition duration-150 hover:shadow-[var(--shadow-card-hover)] press tap-target"
+          className="inline-flex shrink-0 items-center gap-1 rounded-full bg-surface px-3.5 py-1.5 text-label shadow-[var(--shadow-card)] transition duration-150 hover:shadow-[var(--shadow-card-hover)] press tap-target"
         >
           선수 고르기
           <svg
@@ -77,16 +77,16 @@ export default function MyHeader({ subtitle, players, selectedIds }: Props) {
         <section id="my-picker" aria-label="선수 고르기" className={`card mt-3 p-2 ${opened ? "reveal" : ""}`}>
           {ordered.length >= 2 && (
             <div className="mb-2 border-b border-line pb-2">
-              <h2 className="px-2 pb-1 pt-1 text-xs font-semibold text-muted">화면 순서 · 손잡이를 끌어서 바꾸기</h2>
+              <h2 className="px-2 pb-1 pt-1 text-label text-muted">화면 순서 · 손잡이를 끌어서 바꾸기</h2>
               <OrderList players={ordered} />
             </div>
           )}
           <h2 className="sr-only">전체 선수</h2>
-          <p className="px-2 pb-1.5 pt-1 text-xs text-muted">
+          <p className="px-2 pb-1.5 pt-1 text-caption text-muted">
             누르면 내 선수에 넣거나 뺄 수 있어요. 가입 없이 이 기기에만 저장돼요.
           </p>
           {players.length === 0 ? (
-            <p className="px-2 py-3 text-sm text-muted">아직 등록된 선수가 없어요.</p>
+            <p className="px-2 py-3 text-body text-muted">아직 등록된 선수가 없어요.</p>
           ) : (
             <ul className="grid sm:grid-cols-2 lg:grid-cols-3">
               {players.map((p) => (
@@ -117,8 +117,8 @@ function PickerRow({ player, initialOn }: { player: PlayerSummary; initialOn: bo
       >
         <PlayerAvatar size={28} nameKo={player.nameKo} photoUrl={player.photoUrl} teamAbbr={player.teamAbbr} />
         <span className="min-w-0 flex-1">
-          <span className="block text-sm font-bold">{player.nameKo}</span>
-          {meta && <span className="block truncate text-xs text-muted">{meta}</span>}
+          <span className="block text-summary">{player.nameKo}</span>
+          {meta && <span className="block truncate text-meta text-muted">{meta}</span>}
         </span>
         <StarIcon filled={on} className={`size-5 shrink-0 ${on ? "text-accent-ink" : "text-muted"}`} />
         <span className="sr-only">내 선수</span>

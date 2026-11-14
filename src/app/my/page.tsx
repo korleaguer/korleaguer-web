@@ -80,7 +80,7 @@ async function MyContent({ searchParams }: Pick<PageProps<"/my">, "searchParams"
         <>
           {!seasonView && <PeriodTabs days={days} />}
           {!seasonView && showFallbackNote && (
-            <p className="px-1 text-[0.8125rem] text-muted">
+            <p className="px-1 text-meta text-muted">
               {`최근 ${days}일에 안 뛴 선수는 마지막 경기까지 ${days}일을 보여 줘요.`}
             </p>
           )}
@@ -106,7 +106,7 @@ function PeriodTabs({ days }: { days: Period }) {
       label="기간"
       scroll={false}
       className="w-fit gap-0.5 rounded-full bg-surface p-1 shadow-[var(--shadow-card)]"
-      itemClass="px-3 py-1 text-[0.8125rem] font-semibold"
+      itemClass="px-3 py-1 text-label"
       idleClass="text-muted hover:text-foreground"
       items={PERIODS.map((d) => ({
         href: d === 7 ? "/my" : `/my?days=${d}`,

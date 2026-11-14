@@ -209,7 +209,7 @@ export default async function MlbChallenge({ posting }: { posting: PostingSummar
   return (
     <Section id="mlb-challenge-title" title="이번 겨울 MLB 도전">
       <ul className="-mt-0.5 mb-2 flex flex-wrap gap-1.5 px-1">
-        <li className="rounded-full bg-surface px-2.5 py-0.5 text-[0.8125rem] font-semibold leading-5 text-neutral-pill-fg tabular-nums">
+        <li className="rounded-full bg-surface px-2.5 py-0.5 text-label text-neutral-pill-fg tabular-nums">
           포스팅 {players.length}명
         </li>
       </ul>
@@ -264,7 +264,7 @@ function HeadBand({ player: p }: { player: PostingPlayer }) {
       {/* 화면 읽기는 이름 다음의 알약이 맡는다(이름보다 먼저 읽히지 않게) */}
       <span
         aria-hidden
-        className="absolute right-3 top-3 z-10 rounded-full bg-surface px-2.5 py-0.5 text-xs font-bold text-fa-fg shadow-[var(--shadow-card)] lg:hidden"
+        className="absolute right-3 top-3 z-10 rounded-full bg-surface px-2.5 py-0.5 text-badge text-fa-fg shadow-[var(--shadow-card)] lg:hidden"
       >
         {status.label}
       </span>
@@ -286,44 +286,44 @@ function PlayerHead({ player: p }: { player: PostingPlayer }) {
         {/* 이름·한 줄은 띠 아래에서 시작한다(띠에 걸친 사진 높이 36px + 여백) */}
         <div className="min-w-0 pt-[2.75rem]">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <h3 className="text-2xl font-extrabold leading-tight tracking-[-0.02em]">{p.nameKo}</h3>
+            <h3 className="text-display">{p.nameKo}</h3>
             <span
-              className={`sr-only whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-bold lg:not-sr-only lg:inline-block ${status.className}`}
+              className={`sr-only whitespace-nowrap rounded-full px-2.5 py-0.5 text-badge lg:not-sr-only lg:inline-block ${status.className}`}
             >
               {status.label}
             </span>
           </div>
-          <p className="mt-0.5 text-[0.8125rem] leading-snug text-muted">{sub}</p>
+          <p className="mt-0.5 text-meta text-muted">{sub}</p>
         </div>
       </div>
 
       {isOpen(p) && p.daysLeft != null && (
         <div className="mt-4 flex items-end justify-between gap-3">
           <div>
-            <p className="text-[0.8125rem] text-muted">협상 마감까지</p>
-            <p className="text-[2.75rem] font-extrabold leading-none tracking-[-0.03em] tabular-nums">
+            <p className="text-caption text-muted">협상 마감까지</p>
+            <p className="text-stat-form tabular-nums">
               {/* 'D-19'는 화면 낭독기가 'D 하이픈 19'로 읽을 수 있어 '19일 남음'을 따로 읽힌다 */}
               <span aria-hidden>{p.daysLeft === 0 ? "오늘" : `D-${p.daysLeft}`}</span>
               <span className="sr-only">{p.daysLeft === 0 ? "오늘 마감" : `${p.daysLeft}일 남음`}</span>
             </p>
           </div>
-          <p className="text-right text-[0.8125rem] font-semibold leading-snug tabular-nums">
+          <p className="text-right text-label tabular-nums">
             {deadlineKst(p.deadlineAt)}
-            <span className="block text-xs font-normal text-muted">한국 시간 · 미국 동부 {deadlineUs(p.deadlineAt)}</span>
+            <span className="block text-caption text-muted">한국 시간 · 미국 동부 {deadlineUs(p.deadlineAt)}</span>
           </p>
         </div>
       )}
 
       {p.deal && p.deal.years != null && p.deal.guaranteedUsd != null && (
-        <p className="mt-4 text-[0.9375rem] font-semibold">
+        <p className="mt-4 text-summary">
           {/* 받침 있는 구단(보스턴·시애틀)은 '과'(점검 11-13) */}
           {p.deal.mlbTeamKo ? `${withAndParticle(p.deal.mlbTeamKo)} ` : ""}{p.deal.years}년 {formatUsd(p.deal.guaranteedUsd)}
           {p.deal.agreedOn && (
-            <span className="block text-xs font-normal text-muted">합의 {formatDate(p.deal.agreedOn)}, 미국 날짜</span>
+            <span className="block text-caption text-muted">합의 {formatDate(p.deal.agreedOn)}, 미국 날짜</span>
           )}
         </p>
       )}
-      {p.status === "NO_DEAL" && <p className="mt-4 text-sm text-muted">계약하지 못해 {p.kboTeam}에 남아요.</p>}
+      {p.status === "NO_DEAL" && <p className="mt-4 text-body text-muted">계약하지 못해 {p.kboTeam}에 남아요.</p>}
     </>
   );
 }
@@ -338,8 +338,8 @@ function PlayerRows({ players }: { players: PostingPlayer[] }) {
           <li key={p.nameKo} className="flex items-center gap-3 py-2.5 first:pt-0">
             <KboAvatar nameKo={p.nameKo} photoUrl={p.photoUrl} size={40} />
             <div className="min-w-0 flex-1">
-              <h3 className="text-base font-extrabold leading-tight tracking-[-0.02em]">{p.nameKo}</h3>
-              <p className="truncate text-xs text-muted">
+              <h3 className="text-heading">{p.nameKo}</h3>
+              <p className="truncate text-meta text-muted">
                 {signed ? `${p.kboTeam} → ${p.deal?.mlbTeamKo}` : `${p.kboTeam} · ${p.positionKo}`}
               </p>
             </div>
@@ -355,18 +355,19 @@ function PlayerRows({ players }: { players: PostingPlayer[] }) {
 function RowResult({ player: p }: { player: PostingPlayer }) {
   const status = STATUS[p.status] ?? STATUS.CLOSED;
   const pill = (
-    <span className={`whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-bold ${status.className}`}>
+    <span className={`whitespace-nowrap rounded-full px-2.5 py-0.5 text-badge ${status.className}`}>
       {status.label}
     </span>
   );
   if (p.status === "NEGOTIATING" && p.daysLeft != null) {
     return (
       <div className="shrink-0 text-right">
-        <p className="text-[1.3125rem] font-extrabold leading-none tracking-[-0.02em] tabular-nums">
+        {/* leading-none: 40px 사진 줄 높이를 늘리지 않게(이슈 #204 리뷰) */}
+        <p className="text-stat leading-none tabular-nums">
           <span aria-hidden>{p.daysLeft === 0 ? "오늘" : `D-${p.daysLeft}`}</span>
           <span className="sr-only">{p.daysLeft === 0 ? "오늘 마감" : `마감까지 ${p.daysLeft}일`}</span>
         </p>
-        <p className="mt-1 text-[0.6875rem] text-muted tabular-nums">{kstDay(p.deadlineAt)} 마감</p>
+        <p className="mt-1 text-micro text-muted tabular-nums">{kstDay(p.deadlineAt)} 마감</p>
       </div>
     );
   }
@@ -374,7 +375,7 @@ function RowResult({ player: p }: { player: PostingPlayer }) {
     return (
       <div className="shrink-0 text-right">
         {pill}
-        <p className="mt-1 text-[0.6875rem] text-muted tabular-nums">{kstDay(p.windowOpensAt)} 시작</p>
+        <p className="mt-1 text-micro text-muted tabular-nums">{kstDay(p.windowOpensAt)} 시작</p>
       </div>
     );
   }
@@ -382,7 +383,7 @@ function RowResult({ player: p }: { player: PostingPlayer }) {
     return (
       <div className="shrink-0 text-right">
         {pill}
-        <p className="mt-1 text-xs font-semibold tabular-nums">
+        <p className="mt-1 text-label tabular-nums">
           {p.deal.years}년 {formatUsd(p.deal.guaranteedUsd)}
         </p>
       </div>
@@ -416,9 +417,9 @@ function SigningList({
   return (
     <div className={flush ? "" : "mt-4 border-t border-line pt-3 lg:mt-0 lg:border-t-0 lg:pt-0"}>
       {head && (
-        <p className="mb-1 flex items-baseline justify-between gap-2 text-[0.8125rem] font-bold">
+        <p className="mb-1 flex items-baseline justify-between gap-2 text-label">
           역대 포스팅 계약
-          <span className="shrink-0 text-[0.6875rem] font-normal text-muted">보장액 순</span>
+          <span className="shrink-0 text-caption text-muted">보장액 순</span>
         </p>
       )}
       <ul className="money-flip-pause divide-y divide-line">
@@ -430,24 +431,24 @@ function SigningList({
               <PostingDot nameKo={s.nameKo} photoUrl={s.photoUrl} size={30} />
               <div className="min-w-0 flex-1">
                 <p className="flex items-baseline gap-1.5">
-                  <span className="shrink-0 text-sm font-bold leading-5">{s.nameKo}</span>
+                  <span className="shrink-0 text-summary">{s.nameKo}</span>
                   {s.thisYear && (
-                    <span className="shrink-0 self-center rounded-full bg-success-bg px-1.5 text-[0.6875rem] font-bold leading-4 text-success-fg">
+                    <span className="shrink-0 self-center rounded-full bg-success-bg px-1.5 py-0.5 text-badge text-success-fg">
                       올해
                     </span>
                   )}
-                  <span className="truncate text-xs text-muted tabular-nums">
+                  <span className="truncate text-caption text-muted tabular-nums">
                     {s.season}
                     {s.teamKo ? ` · ${s.teamKo}` : ""}
                   </span>
-                  <span className="ml-auto shrink-0 text-xs text-muted tabular-nums">
+                  <span className="ml-auto shrink-0 text-caption text-muted tabular-nums">
                     {/* '마감 22일 전'은 위 'D-20'(남은 날)과 같은 축으로 읽혀서, 계약 시점임을 문장으로 쓴다(11-12 PC 평가) */}
                     {s.days === 0 ? "마감 당일 계약" : `${s.days}일 남기고 계약`}
                   </span>
                 </p>
                 <div className="mt-1.5 flex items-center gap-2">
                   <i aria-hidden className="ink-bar" style={{ "--share": share.toFixed(4) } as CSSProperties} />
-                  <span className="text-[0.8125rem] font-bold tabular-nums">
+                  <span className="text-label tabular-nums">
                     <DealMoney years={s.years} usd={s.usd} krw={s.krw} align="start" />
                   </span>
                 </div>
@@ -457,7 +458,7 @@ function SigningList({
         })}
       </ul>
       {foot && (
-        <p className="mt-1.5 pb-1 text-[0.6875rem] leading-relaxed text-muted">
+        <p className="mt-1.5 pb-1 text-micro text-muted">
           보장액 기준(옵션 제외), 원화는 계약 당시 환율로 어림. 출처: MLB Trade Rumors 등
         </p>
       )}

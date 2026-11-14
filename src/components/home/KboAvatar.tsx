@@ -13,6 +13,7 @@ export default function KboAvatar({ nameKo, photoUrl, size = 52 }: { nameKo: str
     <div
       aria-hidden
       className="face-edge grid shrink-0 place-items-center overflow-hidden rounded-full bg-avatar-bg font-extrabold text-muted"
+      // eslint-disable-next-line no-restricted-syntax -- 사진 원 크기에 맞춘 이니셜(그림 글자)
       style={{ width: size, height: size, fontSize: Math.round(size * 0.37) }}
     >
       {photoUrl && !failed ? (

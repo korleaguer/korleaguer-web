@@ -27,7 +27,7 @@ export function NavLinks({ pathname }: { pathname: string | null }) {
     <PillNav
       label="주요 메뉴"
       className="gap-1 in-app:hidden"
-      itemClass="px-3 py-1.5 text-sm font-semibold"
+      itemClass="px-3 py-1.5 text-button"
       idleClass="text-muted hover:bg-surface-2 hover:text-foreground"
       items={LINKS.map(({ href, label }) => ({ href, label, current: currentOf(href, pathname) }))}
     />

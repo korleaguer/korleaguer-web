@@ -50,11 +50,11 @@ function NewsTitleRow({ item: n }: { item: NewsTitleItem }) {
   const content = (
     // 화면 낭독기는 제목부터 읽고(글 순서), 눈에는 출처 줄이 위에 보인다(flex-col-reverse)
     <span className="flex min-w-0 flex-1 flex-col-reverse">
-      <span className="mt-0.5 line-clamp-2 text-[0.9375rem] font-semibold leading-snug tracking-[-0.01em] group-hover:underline">
+      <span className="mt-0.5 line-clamp-2 text-summary group-hover:underline">
         {n.titleKo ?? n.title}
       </span>
       {/* 출처 줄은 한 줄로 둔다. 좁으면 누구·언론사만 '…'으로 줄이고 '외 N곳'과 날짜는 남긴다 */}
-      <span className="flex min-w-0 whitespace-nowrap text-xs text-muted tabular-nums">
+      <span className="flex min-w-0 whitespace-nowrap text-caption text-muted tabular-nums">
         <span className="min-w-0 truncate">
           {n.who ? `${n.who} · ` : ""}
           {n.publisher}

@@ -72,9 +72,9 @@ export default function GameLogList({
     if (it.kind === "month") {
       return (
         // 달 머리 줄은 띠 없이 글자만(경기 줄과 같은 흰 바탕), 아래 첫 경기와는 선 없이 붙인다
-        <li key={it.key} className="flex items-baseline justify-between gap-3 border-b-0 px-3.5 pt-3.5 pb-0.5 text-xs">
-          <span className="shrink-0 font-bold">{it.month}월</span>
-          <span className="min-w-0 truncate text-muted tabular-nums">{it.summary}</span>
+        <li key={it.key} className="flex items-baseline justify-between gap-3 border-b-0 px-3.5 pt-3.5 pb-0.5">
+          <span className="shrink-0 text-label">{it.month}월</span>
+          <span className="min-w-0 truncate text-caption text-muted tabular-nums">{it.summary}</span>
         </li>
       );
     }
@@ -84,7 +84,7 @@ export default function GameLogList({
       return (
         <li
           key={it.key}
-          className={`flex items-center gap-2 px-3.5 py-2.5 text-[0.8125rem] font-bold ${it.tone === "up" ? "bg-accent-soft text-accent-ink" : "bg-surface-2 text-muted"}`}
+          className={`flex items-center gap-2 px-3.5 py-2.5 text-label ${it.tone === "up" ? "bg-accent-soft text-accent-ink" : "bg-surface-2 text-muted"}`}
         >
           <span aria-hidden>{band.mark}</span>
           <span className="tabular-nums">{moveDay(it.date)}</span>
@@ -111,10 +111,10 @@ export default function GameLogList({
           onClick={() => toggle(it.key)}
           className="press-soft flex w-full items-center justify-between gap-3 px-3.5 py-3 text-left"
         >
-          <span className="text-[0.9375rem] font-bold tabular-nums">
+          <span className="text-summary tabular-nums">
             {formatShortDate(oldest.startTimeKst)}–{formatShortDate(newest.startTimeKst)}
           </span>
-          <span className="flex items-center gap-1 text-[0.8125rem] text-muted">
+          <span className="flex items-center gap-1 text-meta text-muted">
             {pitcher ? "등판 없음" : "결장"} {it.games.length}경기
             <svg
               aria-hidden

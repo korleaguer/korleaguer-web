@@ -6,7 +6,7 @@
  */
 export function MinorRowLabel({ nameKo }: { nameKo: string }) {
   return (
-    <span className="block pl-8 text-xs font-semibold text-muted">
+    <span className="block pl-8 text-caption font-semibold text-muted">
       <span className="sr-only">{nameKo} </span>마이너
     </span>
   );
@@ -22,7 +22,7 @@ export function MinorsOnlyHeader({ colSpan }: { colSpan: number }) {
       <th
         scope="rowgroup"
         colSpan={colSpan}
-        className="border-t border-line bg-surface-2 px-2.5 py-1.5 text-left text-xs font-semibold text-muted"
+        className="border-t border-line bg-surface-2 px-2.5 py-1.5 text-left text-caption font-semibold text-muted"
       >
         <span className="sticky left-4">마이너에서만 뛴 선수</span>
       </th>

@@ -32,9 +32,9 @@ export default function PostingNews({
   return (
     <div className={flush ? undefined : "mt-4 border-t border-line pt-3"}>
       <div className="flex items-baseline justify-between gap-3">
-        <h3 className="text-[0.8125rem] font-bold">관련 기사</h3>
+        <h3 className="text-label">관련 기사</h3>
         {items.some((n) => n.id != null) && (
-          <span className="text-[0.6875rem] text-muted">누르면 사진과 AI 요약을 볼 수 있어요</span>
+          <span className="text-caption text-muted">누르면 사진과 AI 요약을 볼 수 있어요</span>
         )}
       </div>
       <NewsTitleList items={first} />

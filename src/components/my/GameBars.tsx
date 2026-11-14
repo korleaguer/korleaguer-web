@@ -91,9 +91,9 @@ export default function GameBars({ slots, role, days, minors = false }: Props) {
 
   return (
     <div className="mt-4">
-      <div className="flex items-baseline justify-between gap-2 text-xs text-muted">
-        <h3 className="font-semibold">{pitcher ? "경기별 이닝" : "경기별 안타"}</h3>
-        {gameCount > 1 && <span>막대를 누르면 그 경기를 보여 줘요</span>}
+      <div className="flex items-baseline justify-between gap-2 text-muted">
+        <h3 className="text-label">{pitcher ? "경기별 이닝" : "경기별 안타"}</h3>
+        {gameCount > 1 && <span className="text-caption">막대를 누르면 그 경기를 보여 줘요</span>}
       </div>
 
       <div
@@ -116,16 +116,16 @@ export default function GameBars({ slots, role, days, minors = false }: Props) {
         {slots.map((slot, i) => {
           const day = showsDay(slot, i, slots.length, days);
           const dayText = (
-            <span aria-hidden className="block h-8 text-center leading-tight">
+            <span aria-hidden className="block h-8 text-center">
               {day && (
                 <>
                   {/* 30일이면 칸이 좁아 두 자리 날짜가 넘친다. 줄을 바꾸지 않고 칸 가운데에 걸쳐 쓴다 */}
                   <span
-                    className={`flex justify-center whitespace-nowrap text-xs font-bold ${i === selected ? "text-accent-ink" : slot.game ? "text-foreground" : "text-muted"}`}
+                    className={`flex justify-center whitespace-nowrap text-caption font-bold ${i === selected ? "text-accent-ink" : slot.game ? "text-foreground" : "text-muted"}`}
                   >
                     {slot.day}
                   </span>
-                  {days === 7 && <span className="block text-[0.6875rem] text-muted">{formatWeekday(slot.date)}</span>}
+                  {days === 7 && <span className="block text-micro text-muted">{formatWeekday(slot.date)}</span>}
                 </>
               )}
             </span>
@@ -185,7 +185,7 @@ export default function GameBars({ slots, role, days, minors = false }: Props) {
         })}
       </div>
 
-      <p className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[0.6875rem] text-muted">
+      <p className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-micro text-muted">
         {!pitcher && (
           <span className="inline-flex items-center gap-1">
             <span aria-hidden className="size-2 rounded-full bg-hot" />
@@ -207,25 +207,25 @@ export default function GameBars({ slots, role, days, minors = false }: Props) {
         {current ? (
           <>
             {/* 카드가 좁고 상대 팀 이름이 길면(시카고 화이트삭스, 마이너 팀 영어 이름) 점수·결과를 다음 줄로 넘긴다 */}
-            <p className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[0.8125rem] text-muted">
+            <p className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-meta text-muted">
               <span className="whitespace-nowrap tabular-nums">{`${formatShortDate(current.startTimeKst)}(${formatWeekday(current.startTimeKst)})`}</span>
               <span>{`vs ${current.opponentKo}`}</span>
               {formatLineup(current) && <span>{`· ${formatLineup(current)}`}</span>}
               {/* 점수와 승패는 한 묶음으로 넘어가고, 남은 너비를 채워 승패를 오른쪽 끝에 둔다 */}
               <span className="flex grow items-center gap-1.5">
-                <ScoreText line={current} className="text-[0.9375rem] font-extrabold text-foreground" />
+                <ScoreText line={current} className="text-summary font-bold text-foreground" />
                 <ResultPill result={current.result} className="ml-auto" />
               </span>
             </p>
             <p
-              className={`mt-0.5 text-[0.9375rem] leading-[1.45] text-pretty ${current.played ? "font-semibold" : "font-medium text-muted"}`}
+              className={`mt-0.5 text-summary text-pretty ${current.played ? "" : "font-medium text-muted"}`}
             >
               {formatSummary(current.summary)}
             </p>
             <Highlights line={current} className="mt-1.5" />
           </>
         ) : (
-          <p className="text-sm text-muted">이 기간에는 경기가 없어요.</p>
+          <p className="text-body text-muted">이 기간에는 경기가 없어요.</p>
         )}
       </div>
     </div>

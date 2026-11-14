@@ -56,7 +56,7 @@ export default async function FormCard({ entry, days, statsAvailable, isMine = t
       <div className="flex flex-1 flex-col px-4 pb-2 pt-3">
         <div className="flex items-start gap-2">
           <div className="min-w-0 flex-1">
-            <Name className="text-xl font-extrabold leading-snug tracking-[-0.02em]">
+            <Name className="text-title">
               <Link
                 href={`/players/${player.id}`}
                 className="after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none"
@@ -64,9 +64,9 @@ export default async function FormCard({ entry, days, statsAvailable, isMine = t
                 {player.nameKo}
               </Link>
             </Name>
-            {meta && <p className="text-[0.8125rem] text-muted">{meta}</p>}
+            {meta && <p className="text-meta text-muted">{meta}</p>}
             {/* 기간을 당긴 카드(마지막으로 뛴·다치기 전): 어느 기간인지 적는다 */}
-            {note && statsAvailable && <p className="mt-0.5 text-xs text-muted">{note}</p>}
+            {note && statsAvailable && <p className="mt-0.5 text-caption text-muted">{note}</p>}
           </div>
           <MyPlayerToggle
             playerId={player.id}
@@ -192,7 +192,7 @@ function Delta({ seasonText, diff, better, amount }: { seasonText: string; diff:
   return (
     <span className="inline-flex items-center gap-0.5">
       {`시즌 ${seasonText}보다`}
-      <span className={`ml-0.5 inline-flex items-center gap-0.5 ${better ? "text-hot-ink" : "text-accent-ink"}`}>
+      <span className={`ml-0.5 inline-flex items-center gap-0.5 font-semibold ${better ? "text-hot-ink" : "text-accent-ink"}`}>
         <svg aria-hidden viewBox="0 0 10 10" className={`size-2.5 fill-current ${up ? "" : "rotate-180"}`}>
           <path d="M5 1.5 9 8.5H1z" />
         </svg>

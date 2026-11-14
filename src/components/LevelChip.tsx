@@ -18,7 +18,7 @@ export default function LevelChip({
   if (player.returnedKo) {
     return (
       <Tag
-        className={`inline-flex min-w-0 items-center gap-1.5 rounded-full bg-neutral-pill px-2.5 py-1 text-[0.8125rem] font-semibold leading-5 text-neutral-pill-fg ${className}`}
+        className={`inline-flex min-w-0 items-center gap-1.5 rounded-full bg-neutral-pill px-2.5 py-1 text-label text-neutral-pill-fg ${className}`}
       >
         <span aria-hidden className="size-2 shrink-0 rounded-full bg-muted" />
         <span className="truncate">{`${player.returnedKo} 복귀`}</span>
@@ -28,7 +28,7 @@ export default function LevelChip({
   if (player.freeAgent) {
     return (
       <Tag
-        className={`inline-flex min-w-0 items-center gap-1.5 rounded-full bg-fa-bg px-2.5 py-1 text-[0.8125rem] font-semibold leading-5 text-fa-fg ${className}`}
+        className={`inline-flex min-w-0 items-center gap-1.5 rounded-full bg-fa-bg px-2.5 py-1 text-label text-fa-fg ${className}`}
       >
         <span aria-hidden className="size-2 shrink-0 rounded-full border-[1.5px] border-dashed border-fa-fg" />
         <span className="truncate">FA</span>
@@ -40,7 +40,7 @@ export default function LevelChip({
 
   return (
     <Tag
-      className={`inline-flex min-w-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.8125rem] font-semibold leading-5 ${minors ? "bg-neutral-pill text-neutral-pill-fg" : "bg-surface-2 text-neutral-pill-fg"} ${className}`}
+      className={`inline-flex min-w-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-label ${minors ? "bg-neutral-pill text-neutral-pill-fg" : "bg-surface-2 text-neutral-pill-fg"} ${className}`}
     >
       <span
         aria-hidden

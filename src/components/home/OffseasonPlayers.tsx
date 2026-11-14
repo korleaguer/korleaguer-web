@@ -72,7 +72,7 @@ export default async function OffseasonPlayers({ offseason }: { offseason: OffSe
         {pills(offseason, entries).map((part) => (
           <li
             key={part}
-            className="rounded-full bg-surface px-2.5 py-0.5 text-[0.8125rem] font-semibold leading-5 text-neutral-pill-fg tabular-nums"
+            className="rounded-full bg-surface px-2.5 py-0.5 text-label text-neutral-pill-fg tabular-nums"
           >
             {part}
           </li>
@@ -83,7 +83,7 @@ export default async function OffseasonPlayers({ offseason }: { offseason: OffSe
         // /api/my는 404를 주지 않는다. 404면 api가 이 기능보다 오래된 것이다.
         <ApiErrorNotice failure={myResult.failure === "notFound" ? "badResponse" : myResult.failure} />
       ) : !my || entries.length === 0 ? (
-        <p className="card px-4 py-6 text-sm text-muted">선수 기록이 모이면 선수별 시즌 카드가 여기에 나와요.</p>
+        <p className="card px-4 py-6 text-body text-muted">선수 기록이 모이면 선수별 시즌 카드가 여기에 나와요.</p>
       ) : (
         <ul className="grid items-stretch gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {/* 같은 줄 카드는 높이를 맞춘다(시즌 합계 카드는 펼치는 목록이 없다). 숫자 묶음은 카드 아래에 붙는다.

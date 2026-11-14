@@ -15,10 +15,10 @@ export default function Section({ title, aside, id, children }: Props) {
     <section aria-labelledby={id} className="min-w-0">
       {/* 자리가 모자라면(큰 글씨 등) 오른쪽 작은 글씨가 다음 줄로 내려간다. 제목이 낱말마다 쪼개지지 않게 */}
       <div className="mb-2.5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 px-1">
-        <h2 id={id} className="text-[1.1875rem] font-extrabold tracking-[-0.02em]">
+        <h2 id={id} className="text-title">
           {title}
         </h2>
-        {aside && <div className="shrink-0 text-xs text-muted tabular-nums">{aside}</div>}
+        {aside && <div className="shrink-0 text-caption text-muted tabular-nums">{aside}</div>}
       </div>
       {children}
     </section>

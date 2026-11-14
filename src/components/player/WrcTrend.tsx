@@ -66,11 +66,11 @@ export default function WrcTrend({ points }: { points: TrendPoint[] }) {
     <div className="card px-4 pb-3 pt-4">
       <div className="mb-2 flex items-end justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs text-muted tabular-nums">{active === last ? "시즌 전체" : `${date}까지`}</p>
-          <p className={`text-[0.8125rem] font-semibold ${value >= 105 ? "text-accent-ink" : "text-muted"}`}>{words(value)}</p>
+          <p className="text-caption text-muted tabular-nums">{active === last ? "시즌 전체" : `${date}까지`}</p>
+          <p className={`text-label ${value >= 105 ? "text-accent-ink" : "text-muted"}`}>{words(value)}</p>
         </div>
-        <p className="shrink-0 text-xl font-extrabold tabular-nums">
-          <span className="mr-1 text-xs font-semibold text-muted">wRC+</span>
+        <p className="shrink-0 text-stat tabular-nums">
+          <span className="mr-1 text-caption text-muted">wRC+</span>
           {value}
         </p>
       </div>
@@ -121,11 +121,11 @@ export default function WrcTrend({ points }: { points: TrendPoint[] }) {
           />
         </div>
       </div>
-      <div aria-hidden className="mt-1 flex justify-between text-[0.6875rem] text-muted">
+      <div aria-hidden className="mt-1 flex justify-between text-micro text-muted">
         <span>{firstMonth}월</span>
         <span>{lastMonth}월</span>
       </div>
-      <p className="mt-2 text-xs text-muted">점선은 리그 평균(100). 시즌 처음부터 그날까지의 타격이고, 50타석부터 그려요.</p>
+      <p className="mt-2 text-micro text-muted">점선은 리그 평균(100). 시즌 처음부터 그날까지의 타격이고, 50타석부터 그려요.</p>
     </div>
   );
 }

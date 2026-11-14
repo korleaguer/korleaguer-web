@@ -75,7 +75,7 @@ export default function SeasonReportCard({
           )}
           <div className="min-w-0 flex-1 self-center">
             <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
-              <h3 className="text-lg font-extrabold leading-snug tracking-[-0.02em]">
+              <h3 className="text-title">
                 <Link
                   href={`/players/${player.id}`}
                   className="after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none"
@@ -85,7 +85,7 @@ export default function SeasonReportCard({
               </h3>
               {!good && status && <StatusPill status={status} />}
             </div>
-            {meta && <p className="text-[0.8125rem] text-muted">{meta}</p>}
+            {meta && <p className="text-meta text-muted">{meta}</p>}
           </div>
           <MyPlayerToggle
             playerId={player.id}
@@ -99,11 +99,11 @@ export default function SeasonReportCard({
         {/* 판정 한 줄이 카드의 주 내용이라 흰 바탕 본문 글자로 둔다(회색·색 칸에는 숫자만, 규칙: 주 내용은 상자에 넣지 않기) */}
         <div className="mt-3">
           {/* 알약이 없는 판정은 글자가 제목과 왼쪽 줄이 맞도록 둥근 바탕·옆 여백을 판정별로 준다 */}
-          <span className={`inline-flex py-px text-xs font-bold leading-5 ${TIER_CHIP[report.tier]}`}>{report.label}</span>
-          <p className={`mt-1.5 font-extrabold leading-snug tracking-[-0.01em] ${good ? "text-[1.125rem]" : "text-[1.0625rem]"}`}>
+          <span className={`inline-flex py-0.5 text-badge ${TIER_CHIP[report.tier]}`}>{report.label}</span>
+          <p className="mt-1.5 text-heading">
             {report.headline}
           </p>
-          {report.reason && <p className="mt-0.5 text-[0.875rem] text-muted">{report.reason}</p>}
+          {report.reason && <p className="mt-0.5 text-body text-muted">{report.reason}</p>}
         </div>
 
         <Numbers entry={entry} report={report} />
@@ -121,11 +121,11 @@ export default function SeasonReportCard({
         {(report.winterMoves.length > 0 || news.length > 0 || linked) && (
           // 링크 위(relative z-10)에 올려 기사 줄·더 보기가 제 동작을 한다(카드 링크는 선수 페이지)
           <div className="relative z-10 mt-3 border-t border-line pt-3">
-            <p className="text-xs font-bold text-muted">이번 겨울</p>
+            <p className="text-label text-muted">이번 겨울</p>
             {report.winterMoves.length > 0 && (
               <ul>
                 {report.winterMoves.map((m) => (
-                  <li key={`${m.date}-${m.label}`} className="mt-1 text-[0.875rem]">
+                  <li key={`${m.date}-${m.label}`} className="mt-1 text-body">
                     <span className="text-muted tabular-nums">{monthDay(m.date)}</span>{" "}
                     <span className="font-bold">{m.label}</span>
                   </li>
@@ -171,7 +171,7 @@ function StatusPill({ status }: { status: CardStatus }) {
   if (!badge) return null;
   return (
     <span
-      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-px text-xs font-bold leading-5 ${PILL_TONE[badge.tone]}`}
+      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-0.5 text-badge ${PILL_TONE[badge.tone]}`}
     >
       <span aria-hidden className={`size-[7px] shrink-0 rounded-full ${badge.tone === "neutral" ? "bg-muted" : "bg-current"}`} />
       {badge.text}
@@ -182,7 +182,7 @@ function StatusPill({ status }: { status: CardStatus }) {
 /** 자랑 알약(연속 기록·최고 경기). 주황 = 기록이 만든 순간(The Hot Is Earned Rule) */
 function StoryPill({ text }: { text: string }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-hot-soft px-2 py-px text-xs font-bold leading-[1.125rem] text-hot-ink">
+    <span className="inline-flex items-center gap-1 rounded-full bg-hot-soft px-2 py-0.5 text-badge text-hot-ink">
       <svg aria-hidden viewBox="0 0 12 12" className="size-3 fill-current">
         <path d="M6.6 1c.3 1.7-.6 2.6-1.4 3.5C4.3 5.4 3.5 6.3 3.5 7.7 3.5 9.6 4.9 11 6.7 11c1.9 0 3.3-1.4 3.3-3.4 0-1.3-.6-2.2-1.2-2.8 0 .9-.4 1.5-1 1.8C8.1 4.6 7.9 2.4 6.6 1Z" />
       </svg>
@@ -208,16 +208,16 @@ function Numbers({ entry, report }: { entry: MyPlayer; report: SeasonReport }) {
   return (
     <div className="mt-2.5 rounded-xl bg-surface-2 px-3 pb-2.5 pt-2">
       {/* 큰 숫자가 마이너 기록이면 어느 단계인지 먼저 적는다. 이름표가 그냥 '타율'이면 메이저 기록으로 읽힌다(점검 11-13) */}
-      {main !== totals.mlb && <p className="mb-1 text-[0.6875rem] font-bold text-muted">{`${levelKo(main.level)} 기록`}</p>}
+      {main !== totals.mlb && <p className="mb-1 text-label text-muted">{`${levelKo(main.level)} 기록`}</p>}
       <dl className="grid grid-cols-4 gap-1">
         {items.map(([k, v]) => (
           <div key={k}>
-            <dt className="text-[0.6875rem] text-muted">{k}</dt>
-            <dd className="text-lg font-extrabold leading-tight tabular-nums">{v}</dd>
+            <dt className="text-caption text-muted">{k}</dt>
+            <dd className="text-stat tabular-nums">{v}</dd>
           </div>
         ))}
       </dl>
-      {other && other.games > 0 && <p className="mt-1.5 text-xs text-muted">{otherTotalsLine(other, pitcher)}</p>}
+      {other && other.games > 0 && <p className="mt-1.5 text-caption text-muted">{otherTotalsLine(other, pitcher)}</p>}
     </div>
   );
 }
