@@ -111,15 +111,15 @@ function Article({ news }: { news: NewsPage }) {
   const kind = summary.length > 0 ? "AI 요약" : body.length > 0 ? "기사 앞부분" : null;
   return (
     <article className="card min-w-0 p-4 sm:p-6">
-      <h1 className="text-[1.125rem] font-bold leading-[1.4] tracking-[-0.02em] sm:text-[1.375rem]">
+      <h1 className="text-article-title">
         {news.titleKo ?? news.title}
       </h1>
       {news.titleKo && (
-        <p className="mt-1.5 text-[0.8125rem] text-muted">
+        <p className="mt-1.5 text-meta text-muted">
           <span className="font-semibold">원제</span> {news.title}
         </p>
       )}
-      <p className="mt-2 text-[0.8125rem] text-muted tabular-nums">
+      <p className="mt-2 text-meta text-muted tabular-nums">
         {news.publisher} · {formatDate(news.publishedAt)} {formatTime(news.publishedAt)}
         {kind && ` · ${kind}`}
       </p>
@@ -127,20 +127,20 @@ function Article({ news }: { news: NewsPage }) {
       <NewsPhoto newsId={news.id} url={news.imageUrl} fallback={news.playerPhotoUrl} />
 
       {body.length > 0 ? (
-        <div className="mt-3.5 space-y-2 text-[1.0625rem] leading-[1.6] tracking-[-0.01em]">
+        <div className="mt-3.5 space-y-2 text-reading">
           {body.map((sentence, i) => (
             <p key={i}>{sentence}</p>
           ))}
         </div>
       ) : (
-        <p className="mt-3.5 text-[0.9375rem] text-muted">아직 요약을 만들지 못했어요. 원문에서 읽어 주세요.</p>
+        <p className="mt-3.5 text-body text-muted">아직 요약을 만들지 못했어요. 원문에서 읽어 주세요.</p>
       )}
 
       <a
         href={news.url}
         target="_blank"
         rel="noopener noreferrer"
-        className="press-soft mt-4 flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl bg-surface-2 px-4 text-[0.9375rem] font-semibold transition hover:bg-line"
+        className="press-soft mt-4 flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl bg-surface-2 px-4 text-button transition hover:bg-line"
       >
         {news.publisher}에서 원문 보기
         <ExternalLinkIcon />

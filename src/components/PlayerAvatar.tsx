@@ -6,13 +6,19 @@ import { useImageFailed } from "@/lib/useImageFailed";
 /** 원 지름(px). 24 표·순위 / 28 시즌 1위 / 44 경기 카드 / 56 선수 목록 / 96 선수 페이지 */
 export type AvatarSize = 24 | 28 | 44 | 56 | 96;
 
+/*
+ * 사진이 없을 때 원 안 이니셜 크기. 글자 역할이 아니라 원 지름에 맞춘 그림 글자라 역할 토큰 밖이다(원 지름의 약 0.36~0.46배).
+ * 기본 크기 이름(text-xs 등)은 @theme에서 껐으므로 크기 값을 그대로 적는다(11·12·16·20·36px).
+ */
+/* eslint-disable no-restricted-syntax -- 사진 원 크기에 맞춘 이니셜(그림 글자) */
 const INITIAL_TEXT: Record<AvatarSize, string> = {
   24: "text-[0.6875rem]",
-  28: "text-xs",
-  44: "text-base",
-  56: "text-xl",
-  96: "text-4xl",
+  28: "text-[0.75rem]",
+  44: "text-[1rem]",
+  56: "text-[1.25rem]",
+  96: "text-[2.25rem]",
 };
+/* eslint-enable no-restricted-syntax */
 
 interface Props {
   nameKo: string;

@@ -136,11 +136,11 @@ export default function OrderList({ players }: { players: PlayerSummary[] }) {
                   <circle cx="10.5" cy="12.5" r="1.25" />
                 </svg>
               </button>
-              <span aria-hidden className="w-4 shrink-0 text-center text-xs font-bold tabular-nums text-muted">
+              <span aria-hidden className="w-4 shrink-0 text-center text-caption font-bold tabular-nums text-muted">
                 {index + 1}
               </span>
               <PlayerAvatar size={28} nameKo={player.nameKo} photoUrl={player.photoUrl} teamAbbr={player.teamAbbr} />
-              <span className="min-w-0 flex-1 truncate text-sm font-bold">{player.nameKo}</span>
+              <span className="min-w-0 flex-1 truncate text-summary">{player.nameKo}</span>
             </li>
           );
         })}

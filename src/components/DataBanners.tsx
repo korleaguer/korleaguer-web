@@ -32,13 +32,13 @@ function Banner({ mark, title, children }: { mark: string; title: string; childr
     <div role="status" className="flex items-start gap-3 rounded-2xl bg-notice-bg px-4 py-3 text-notice-fg">
       <span
         aria-hidden
-        className="mt-px shrink-0 rounded-full bg-notice-mark px-2.5 py-0.5 text-xs font-bold leading-[1.125rem] text-notice-bg"
+        className="mt-px shrink-0 rounded-full bg-notice-mark px-2.5 py-0.5 text-badge text-notice-bg"
       >
         {mark}
       </span>
       <div className="min-w-0">
-        <p className="text-[0.9375rem] font-bold leading-snug">{title}</p>
-        <p className="mt-0.5 text-[0.8125rem] opacity-90">{children}</p>
+        <p className="text-summary">{title}</p>
+        <p className="mt-0.5 text-meta opacity-90">{children}</p>
       </div>
     </div>
   );

@@ -21,11 +21,12 @@ export default function StateNotice({
 }) {
   return (
     <div role={alert ? "alert" : undefined} className="card flex flex-col items-center px-5 py-10 text-center">
+      {/* eslint-disable-next-line no-restricted-syntax -- 상태 안내 이모지(그림 글자, 40px) */}
       <span aria-hidden className="text-[2.5rem] leading-none">
         {emoji}
       </span>
-      <p className="mt-4 text-base font-bold">{title}</p>
-      {detail != null && <p className="mt-1.5 text-sm text-muted">{detail}</p>}
+      <p className="mt-4 text-heading">{title}</p>
+      {detail != null && <p className="mt-1.5 text-body text-muted">{detail}</p>}
       {action && <div className="mt-5">{action}</div>}
     </div>
   );
@@ -36,4 +37,4 @@ export default function StateNotice({
  * 버튼은 파랗게 칠하지 않는다(DESIGN.md The One Blue Rule, 이슈 #200). 기사 '원문 보기'와 같은 surface-2 바탕이다
  */
 export const stateActionClass =
-  "press inline-flex h-11 items-center rounded-full bg-surface-2 px-5 text-[0.9375rem] font-bold transition hover:bg-line";
+  "press inline-flex h-11 items-center rounded-full bg-surface-2 px-5 text-button transition hover:bg-line";

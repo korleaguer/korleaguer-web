@@ -17,7 +17,7 @@ export default function PlayerSubline({
 
   return (
     <p
-      className={`flex min-w-0 gap-1 text-[0.6875rem] font-medium uppercase tracking-[0.08em] text-muted ${className}`}
+      className={`flex min-w-0 gap-1 text-micro uppercase tracking-[0.08em] text-muted ${className}`}
     >
       {nameEn && <span className="truncate">{nameEn}</span>}
       {nameEn && jersey && <span aria-hidden>·</span>}

@@ -28,7 +28,7 @@ export default async function RosterMoves({ moves }: { moves: RosterMove[] }) {
   return (
     <Section id="moves-title" title="이동 기록" aside={moves.length > 0 ? `${moves.length}건` : undefined}>
       {moves.length === 0 ? (
-        <p className="card px-4 py-5 text-sm text-muted">최근 두 시즌 동안 이동 기록이 없어요.</p>
+        <p className="card px-4 py-5 text-body text-muted">최근 두 시즌 동안 이동 기록이 없어요.</p>
       ) : (
         <div className="card">
           <ol className="divide-y divide-line">
@@ -98,14 +98,14 @@ function MoveRow({ move }: { move: RosterMove }) {
 
   return (
     <li className="flex items-start gap-3 px-4 py-3">
-      <time dateTime={move.date} className="w-[5.25rem] shrink-0 pt-0.5 text-[0.8125rem] tabular-nums text-muted">
+      <time dateTime={move.date} className="w-[5.25rem] shrink-0 pt-0.5 text-meta tabular-nums text-muted">
         {dotDate(move.date)}
       </time>
       <div className="min-w-0 flex-1">
-        <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold leading-[1.125rem] ${tone}`}>
+        <span className={`inline-flex rounded-full px-2.5 py-0.5 text-badge ${tone}`}>
           {move.labelKo}
         </span>
-        {route && <p className="mt-1 text-[0.8125rem] leading-snug text-pretty">{route}</p>}
+        {route && <p className="mt-1 text-meta text-pretty">{route}</p>}
       </div>
     </li>
   );

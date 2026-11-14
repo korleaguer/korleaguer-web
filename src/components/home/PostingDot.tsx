@@ -31,6 +31,7 @@ export function PostingDot({
     <span
       aria-hidden
       className="face-edge grid shrink-0 place-items-center overflow-hidden rounded-full bg-avatar-bg font-bold leading-none tracking-[-0.04em] text-muted"
+      // eslint-disable-next-line no-restricted-syntax -- 사진 원 크기에 맞춘 이름 두 글자(그림 글자)
       style={{ width: size, height: size, boxShadow: ring, fontSize: Math.round(size * 0.34) }}
     >
       {photoUrl && !failed ? (

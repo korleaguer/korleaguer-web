@@ -40,7 +40,7 @@ export default async function SeasonStats({
   if (!statsAvailable) {
     return (
       <Section id="stats-title" title={`${season} 선수별 기록`}>
-        <p className="card px-4 py-5 text-sm text-muted">아직 시즌 기록을 받지 못했어요.</p>
+        <p className="card px-4 py-5 text-body text-muted">아직 시즌 기록을 받지 못했어요.</p>
       </Section>
     );
   }
@@ -124,8 +124,8 @@ function Group({ title, aside, children }: { title: string; aside: string; child
   return (
     <div>
       <div className="mb-2 flex items-baseline justify-between gap-x-3 px-1">
-        <h3 className="text-[0.9375rem] font-bold">{title}</h3>
-        <p className="shrink-0 text-xs text-muted">{aside}</p>
+        <h3 className="text-summary">{title}</h3>
+        <p className="shrink-0 text-caption text-muted">{aside}</p>
       </div>
       {children}
     </div>
@@ -141,7 +141,7 @@ function Notes({ lines }: { lines: (string | false | null)[] }) {
   const shown = lines.filter((line): line is string => typeof line === "string" && line.length > 0);
   if (shown.length === 0) return null;
   return (
-    <div className="mt-2 space-y-0.5 px-1 text-xs text-muted">
+    <div className="mt-2 space-y-0.5 px-1 text-caption text-muted">
       {shown.map((line) => (
         <p key={line}>{line}</p>
       ))}
@@ -150,5 +150,5 @@ function Notes({ lines }: { lines: (string | false | null)[] }) {
 }
 
 function Empty() {
-  return <p className="px-4 py-4 text-sm text-muted">아직 기록이 없어요.</p>;
+  return <p className="px-4 py-4 text-body text-muted">아직 기록이 없어요.</p>;
 }

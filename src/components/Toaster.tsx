@@ -66,10 +66,10 @@ export default function Toaster() {
           onPointerLeave={() => setHeld(false)}
           onFocus={() => setHeld(true)}
           onBlur={() => setHeld(false)}
-          className={`pointer-events-auto flex max-w-[26rem] touch-none items-center gap-2.5 rounded-2xl bg-toast-bg py-3 pl-4 pr-3 text-[0.9375rem] font-semibold text-toast-fg shadow-[0_8px_24px_rgb(0_0_0/0.18)] ${shown.leaving ? "toast-out" : "toast-in"}`}
+          className={`pointer-events-auto flex max-w-[26rem] touch-none items-center gap-2.5 rounded-2xl bg-toast-bg py-3 pl-4 pr-3 text-summary text-toast-fg shadow-[0_8px_24px_rgb(0_0_0/0.18)] ${shown.leaving ? "toast-out" : "toast-in"}`}
         >
           {toastItem.tone !== "info" && <ToneIcon tone={toastItem.tone} />}
-          <span className="min-w-0 flex-1 pr-1 leading-snug">{toastItem.message}</span>
+          <span className="min-w-0 flex-1 pr-1">{toastItem.message}</span>
           {toastItem.action && <ActionButton item={toastItem} />}
         </div>
       )}
@@ -79,7 +79,7 @@ export default function Toaster() {
 
 function ActionButton({ item }: { item: ToastItem }) {
   const action = item.action!;
-  const className = "press tap-target shrink-0 rounded-lg px-2 py-1 text-[0.9375rem] font-bold text-toast-action";
+  const className = "press tap-target shrink-0 rounded-lg px-2 py-1 text-button text-toast-action";
   const onClick = () => {
     action.onClick?.();
     dismissToast(item.id);

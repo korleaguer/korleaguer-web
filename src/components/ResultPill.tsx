@@ -15,7 +15,7 @@ export default function ResultPill({ result, className = "" }: { result: GameRes
   if (result === null) return null;
   return (
     <span
-      className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-bold leading-[1.125rem] ${STYLE[result]} ${className}`}
+      className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-badge ${STYLE[result]} ${className}`}
     >
       <span className="sr-only">팀 </span>
       {WORD[result]}

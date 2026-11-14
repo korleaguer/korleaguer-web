@@ -53,19 +53,6 @@ colors:
   fa-bg-dark: "#2a2145"
   fa-fg-dark: "#c9b8ff"
 typography:
-  display:
-    fontFamily: "Pretendard Variable, Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Apple SD Gothic Neo, Noto Sans KR, Malgun Gothic, sans-serif"
-    fontSize: "1.5rem"
-    fontWeight: 800
-    lineHeight: 1.25
-    letterSpacing: "-0.02em"
-  stat-hero:
-    fontFamily: "Pretendard Variable, Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Apple SD Gothic Neo, Noto Sans KR, Malgun Gothic, sans-serif"
-    fontSize: "1.75rem"
-    fontWeight: 800
-    lineHeight: 1.25
-    letterSpacing: "-0.02em"
-    fontFeature: "tnum"
   stat-form:
     fontFamily: "Pretendard Variable, Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Apple SD Gothic Neo, Noto Sans KR, Malgun Gothic, sans-serif"
     fontSize: "2.75rem"
@@ -73,71 +60,112 @@ typography:
     lineHeight: 1
     letterSpacing: "-0.03em"
     fontFeature: "tnum"
+  stat-hero:
+    fontFamily: "Pretendard Variable, Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Apple SD Gothic Neo, Noto Sans KR, Malgun Gothic, sans-serif"
+    fontSize: "1.75rem"
+    fontWeight: 800
+    lineHeight: 1.2
+    letterSpacing: "-0.02em"
+    fontFeature: "tnum"
+  display:
+    fontFamily: "Pretendard Variable, Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Apple SD Gothic Neo, Noto Sans KR, Malgun Gothic, sans-serif"
+    fontSize: "1.5rem"
+    fontWeight: 800
+    lineHeight: 1.25
+    letterSpacing: "-0.02em"
+  title:
+    fontFamily: "Pretendard Variable, Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Apple SD Gothic Neo, Noto Sans KR, Malgun Gothic, sans-serif"
+    fontSize: "1.25rem"
+    fontWeight: 800
+    lineHeight: 1.3
+    letterSpacing: "-0.02em"
+  article-title:
+    fontFamily: "Pretendard Variable, Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Apple SD Gothic Neo, Noto Sans KR, Malgun Gothic, sans-serif"
+    fontSize: "1.25rem"
+    fontWeight: 700
+    lineHeight: 1.4
+    letterSpacing: "-0.02em"
+  stat:
+    fontFamily: "Pretendard Variable, Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Apple SD Gothic Neo, Noto Sans KR, Malgun Gothic, sans-serif"
+    fontSize: "1.25rem"
+    fontWeight: 800
+    lineHeight: 1.25
+    letterSpacing: "-0.02em"
+    fontFeature: "tnum"
   score:
     fontFamily: "Pretendard Variable, Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Apple SD Gothic Neo, Noto Sans KR, Malgun Gothic, sans-serif"
-    fontSize: "1.3125rem"
+    fontSize: "1.25rem"
     fontWeight: 800
     lineHeight: 1.25
     letterSpacing: "0.02em"
     fontFeature: "tnum"
-  headline:
+  heading:
     fontFamily: "Pretendard Variable, Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Apple SD Gothic Neo, Noto Sans KR, Malgun Gothic, sans-serif"
-    fontSize: "1.1875rem"
+    fontSize: "1.0625rem"
     fontWeight: 800
+    lineHeight: 1.3
     letterSpacing: "-0.02em"
-  card-name:
+  stat-sm:
     fontFamily: "Pretendard Variable, Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Apple SD Gothic Neo, Noto Sans KR, Malgun Gothic, sans-serif"
-    fontSize: "1.25rem"
-    fontWeight: 800
-    lineHeight: 1.375
-    letterSpacing: "-0.02em"
-  wordmark:
-    fontFamily: "Pretendard Variable, Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Apple SD Gothic Neo, Noto Sans KR, Malgun Gothic, sans-serif"
-    fontSize: "1.125rem"
-    fontWeight: 800
-    letterSpacing: "-0.03em"
-  title:
-    fontFamily: "Pretendard Variable, Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Apple SD Gothic Neo, Noto Sans KR, Malgun Gothic, sans-serif"
-    fontSize: "1rem"
+    fontSize: "1.0625rem"
     fontWeight: 700
-    lineHeight: 1.5
-  summary-line:
-    fontFamily: "Pretendard Variable, Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Apple SD Gothic Neo, Noto Sans KR, Malgun Gothic, sans-serif"
-    fontSize: "0.9375rem"
-    fontWeight: 600
-    lineHeight: 1.45
-  body:
-    fontFamily: "Pretendard Variable, Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Apple SD Gothic Neo, Noto Sans KR, Malgun Gothic, sans-serif"
-    fontSize: "0.875rem"
-    fontWeight: 400
-    lineHeight: 1.43
-  article-title:
-    fontFamily: "Pretendard Variable, Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Apple SD Gothic Neo, Noto Sans KR, Malgun Gothic, sans-serif"
-    fontSize: "1.125rem"
-    fontWeight: 700
-    lineHeight: 1.4
-    letterSpacing: "-0.02em"
+    lineHeight: 1.3
+    letterSpacing: "-0.01em"
+    fontFeature: "tnum"
   reading:
     fontFamily: "Pretendard Variable, Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Apple SD Gothic Neo, Noto Sans KR, Malgun Gothic, sans-serif"
     fontSize: "1.0625rem"
     fontWeight: 400
     lineHeight: 1.6
     letterSpacing: "-0.01em"
+  summary:
+    fontFamily: "Pretendard Variable, Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Apple SD Gothic Neo, Noto Sans KR, Malgun Gothic, sans-serif"
+    fontSize: "0.9375rem"
+    fontWeight: 600
+    lineHeight: 1.45
+    letterSpacing: "0em"
+  button:
+    fontFamily: "Pretendard Variable, Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Apple SD Gothic Neo, Noto Sans KR, Malgun Gothic, sans-serif"
+    fontSize: "0.9375rem"
+    fontWeight: 600
+    lineHeight: "1.25rem"
+    letterSpacing: "0em"
+  body:
+    fontFamily: "Pretendard Variable, Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Apple SD Gothic Neo, Noto Sans KR, Malgun Gothic, sans-serif"
+    fontSize: "0.9375rem"
+    fontWeight: 400
+    lineHeight: 1.5
+    letterSpacing: "0em"
   label:
     fontFamily: "Pretendard Variable, Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Apple SD Gothic Neo, Noto Sans KR, Malgun Gothic, sans-serif"
     fontSize: "0.8125rem"
     fontWeight: 600
-    lineHeight: 1.25
+    lineHeight: "1.25rem"
+    letterSpacing: "0em"
+  meta:
+    fontFamily: "Pretendard Variable, Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Apple SD Gothic Neo, Noto Sans KR, Malgun Gothic, sans-serif"
+    fontSize: "0.8125rem"
+    fontWeight: 400
+    lineHeight: 1.5
+    letterSpacing: "0em"
+  badge:
+    fontFamily: "Pretendard Variable, Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Apple SD Gothic Neo, Noto Sans KR, Malgun Gothic, sans-serif"
+    fontSize: "0.75rem"
+    fontWeight: 700
+    lineHeight: "1.125rem"
+    letterSpacing: "0em"
   caption:
     fontFamily: "Pretendard Variable, Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Apple SD Gothic Neo, Noto Sans KR, Malgun Gothic, sans-serif"
     fontSize: "0.75rem"
     fontWeight: 400
-    lineHeight: 1.33
+    lineHeight: "1rem"
+    letterSpacing: "0em"
   micro:
     fontFamily: "Pretendard Variable, Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Apple SD Gothic Neo, Noto Sans KR, Malgun Gothic, sans-serif"
     fontSize: "0.6875rem"
     fontWeight: 400
-    fontFeature: "tnum"
+    lineHeight: "1rem"
+    letterSpacing: "0em"
 rounded:
   sm: "6px"
   md: "8px"
@@ -171,20 +199,24 @@ components:
   result-pill-win:
     backgroundColor: "{colors.accent}"
     textColor: "{colors.accent-fg}"
+    typography: "{typography.badge}"
     rounded: "{rounded.full}"
     padding: "2px 10px"
   result-pill-loss:
     backgroundColor: "{colors.neutral-pill}"
     textColor: "{colors.neutral-pill-fg}"
+    typography: "{typography.badge}"
     rounded: "{rounded.full}"
     padding: "2px 10px"
   result-pill-tie:
     backgroundColor: "{colors.neutral-pill}"
     textColor: "{colors.foreground}"
+    typography: "{typography.badge}"
     rounded: "{rounded.full}"
     padding: "2px 10px"
   nav-pill:
     textColor: "{colors.muted}"
+    typography: "{typography.button}"
     rounded: "{rounded.full}"
     padding: "6px 12px"
   nav-pill-hover:
@@ -193,6 +225,7 @@ components:
   nav-pill-current:
     backgroundColor: "{colors.accent-soft}"
     textColor: "{colors.accent-ink}"
+    typography: "{typography.button}"
     rounded: "{rounded.full}"
     padding: "6px 12px"
   info-chip:
@@ -215,6 +248,7 @@ components:
   notice-mark:
     backgroundColor: "{colors.notice-mark}"
     textColor: "{colors.notice-bg}"
+    typography: "{typography.badge}"
     rounded: "{rounded.full}"
     padding: "2px 10px"
   logo-mark:
@@ -256,41 +290,49 @@ components:
   status-badge:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.foreground}"
+    typography: "{typography.badge}"
     rounded: "{rounded.full}"
     padding: "2px 10px"
   fact-pill-hot:
     backgroundColor: "{colors.hot-soft}"
     textColor: "{colors.hot-ink}"
+    typography: "{typography.badge}"
     rounded: "{rounded.full}"
     padding: "2px 10px"
   fact-pill-cold:
     backgroundColor: "{colors.surface-2}"
     textColor: "{colors.accent-ink}"
+    typography: "{typography.badge}"
     rounded: "{rounded.full}"
     padding: "2px 10px"
   highlight-badge-strong:
     backgroundColor: "{colors.hot-strong}"
     textColor: "{colors.hot-on}"
+    typography: "{typography.badge}"
     rounded: "{rounded.full}"
-    padding: "1px 8px"
+    padding: "2px 8px"
   highlight-badge:
     backgroundColor: "{colors.hot-soft}"
     textColor: "{colors.hot-ink}"
+    typography: "{typography.badge}"
     rounded: "{rounded.full}"
-    padding: "1px 8px"
+    padding: "2px 8px"
   move-pill-danger:
     backgroundColor: "{colors.danger-bg}"
     textColor: "{colors.danger-fg}"
+    typography: "{typography.badge}"
     rounded: "{rounded.full}"
     padding: "2px 10px"
   move-pill-success:
     backgroundColor: "{colors.success-bg}"
     textColor: "{colors.success-fg}"
+    typography: "{typography.badge}"
     rounded: "{rounded.full}"
     padding: "2px 10px"
   move-pill-fa:
     backgroundColor: "{colors.fa-bg}"
     textColor: "{colors.fa-fg}"
+    typography: "{typography.badge}"
     rounded: "{rounded.full}"
     padding: "2px 10px"
   stat-tile:
@@ -304,7 +346,7 @@ components:
     width: "72%"
   selected-game-line:
     backgroundColor: "{colors.surface-2}"
-    typography: "{typography.summary-line}"
+    typography: "{typography.summary}"
     rounded: "{rounded.lg}"
     padding: "10px 12px"
   my-toggle-pill:
@@ -393,21 +435,30 @@ components:
 **Character:** 한 가족으로 끝낸다. 제목은 800으로 단단하게, 한 줄 기록은 600으로 또렷하게, 설명은 400으로 조용하게. 글꼴 파일은 `pretendard` 패키지에서 우리 서버가 주고, 화면에 쓴 글자 조각만 받는다.
 
 ### Hierarchy
-- **Display** (800, 1.5rem, 1.25): 선수 페이지 이름, '선수'·'내 선수' 페이지 제목.
-- **Stat hero** (800, 1.75rem, 1.25, 고정폭): 선수 시즌 큰 숫자 칸. 시즌 1위 카드 숫자도 같은 역할이다.
-- **Stat form** (800, 2.75rem, 1, -0.03em, 고정폭): '내 선수' 카드의 큰 숫자 하나(최근 N일 타율·평균자책점, 비시즌·FA면 시즌 타율·평균자책점). 화면에서 가장 큰 글자이고, 카드마다 하나뿐이다.
-- **Score** (800, 1.3125rem, 고정폭, 0.02em): 점수 띠 가운데 "5 - 3".
-- **Headline** (800, 1.1875rem, -0.02em): 섹션 제목. 카드 밖 회색 바탕 위.
-- **Card name** (800, 1.25rem, 1.375, -0.02em): '내 선수' 카드 선수 이름. 회색 칸 작은 숫자 셋도 같은 크기·굵기(고정폭, 1.25)다. 세 칸은 똑같이 나누지 않고 내용 너비대로 고르게 벌리며, 칸 안에서 줄을 바꾸지 않는다(좁은 카드에서 '50⅔'이 갈리지 않게).
-- **Wordmark** (800, 1.125rem, -0.03em): 머리글 'KOR Leaguer'.
-- **Title** (700, 1rem): 경기 카드 선수 이름.
-- **Summary line** (600, 0.9375rem, 1.45): 한 줄 기록. 카드 안에서 가장 굵은 본문이다. 안 뛰었으면 500 + 흐린 글자.
-- **Body** (400, 0.875rem): 표, 빈 상태 문구.
-- **Article title** (700, 1.125rem, 1.4, -0.02em, 640px 이상 1.375rem): 기사 페이지 제목. 언론사 제목은 길어서(운영 기사 중간값 56자) 800이면 서너 줄 검은 덩어리가 되어 본문보다 눈을 끈다. 그래서 700이다.
-- **Reading** (400, 1.0625rem, 1.6, -0.01em): 기사 페이지 요약 본문. 화면에서 읽는 글이라 본문 글자 가운데 가장 크다(iOS 기본 본문 17pt와 같다). 문장마다 한 단락, 단락 사이 8px. 휴대폰 첫 화면에 요약과 원문 버튼이 들어오게 줄 간격 1.75·단락 16px에서 줄였다(사용자가 고른 '촘촘하게' 시안, 11-12, 이슈 #149). 16px로 줄여도 얻는 공간은 20px뿐이라 크기는 그대로 둔다.
-- **Label** (600, 0.8125rem): 팀 이름, 정보 칩, 요약 알약, 시즌 1위 카드 제목.
-- **Caption** (400, 0.75rem): 기준 시각, 표 머리(600), 알약 글자(700), 바닥글.
-- **Micro** (400, 0.6875rem, 고정폭): 점수 아래 '종료 · 홈 · 05:05'.
+크기는 9단계(11·12·13·15·17·20·24·28·44px)뿐이다. 글자는 크기가 아니라 역할(쓰임)로 고르고, 역할마다 크기·줄 간격·자간·굵기가 하나로 정해져 있다. 코드에서는 `globals.css` `@theme`의 `--text-<역할>` 토큰을 `text-<역할>` 클래스로 쓴다(이슈 #204, 사용자가 고른 B안 11-13). 굵기 사다리는 800 제목·큰 숫자 / 700 알약·기사 제목·시즌 세부 숫자 / 600 한 줄 기록·이름표·버튼 / 400 설명·본문.
+
+| 토큰 | 크기 | 줄 간격 | 자간 | 굵기 | 쓰는 곳 |
+|---|---|---|---|---|---|
+| `stat-form` | 2.75rem (44px) | 1 | -0.03em | 800 | 카드마다 하나뿐인 가장 큰 숫자: '내 선수' 카드의 최근 N일 타율·평균자책점(비시즌·FA면 시즌 값), MLB 도전 'D-19'. 고정폭 |
+| `stat-hero` | 1.75rem (28px) | 1.2 | -0.02em | 800 | 선수 페이지 시즌 큰 숫자 칸, 시즌 1위 카드 숫자. 고정폭 |
+| `display` | 1.5rem (24px) | 1.25 | -0.02em | 800 | '선수'·'내 선수' 페이지 제목, 선수 페이지 이름, MLB 도전 선수 이름 |
+| `title` | 1.25rem (20px) | 1.3 | -0.02em | 800 | 섹션 제목(카드 밖 회색 바탕 위), 큰 카드 선수 이름('내 선수' 카드, 시즌 성적표) |
+| `article-title` | 1.25rem (20px), 640px 이상 1.5rem (24px) | 1.4 | -0.02em | 700 | 기사 페이지 제목. 언론사 제목은 길어서(운영 기사 중간값 56자) 800이면 서너 줄 검은 덩어리가 되어 본문보다 눈을 끈다. 그래서 700이다 |
+| `stat` | 1.25rem (20px) | 1.25 | -0.02em | 800 | 카드 안 숫자 칸(선수 목록 셋, '내 선수' 회색 칸 셋, 성적표 넷), 타격 흐름 wRC+, MLB 도전 여러 명 줄의 D-day. 고정폭 |
+| `score` | 1.25rem (20px) | 1.25 | 0.02em | 800 | 점수 띠 가운데 "5 - 3". 고정폭 |
+| `heading` | 1.0625rem (17px) | 1.3 | -0.02em | 800 | 경기 카드·선수 목록·MLB 도전 줄의 선수 이름, 성적표 판정 한 줄 제목, 빈·오류 화면 제목, 앱 머리글 가운데 제목, 워드마크 'KOR Leaguer'(자간만 -0.03em), 경기 기록 날짜('9.27') |
+| `stat-sm` | 1.0625rem (17px) | 1.3 | -0.01em | 700 | 선수 페이지 시즌 세부 숫자 칸(경기·타수·안타…)에만. 20px 800은 칸이 무거워 17px 700으로 둔다(사용자 판단 11-13). 다른 곳에 쓰지 않는다. 고정폭 |
+| `reading` | 1.0625rem (17px) | 1.6 | -0.01em | 400 | 기사 페이지 요약 본문. 화면에서 읽는 글이라 본문 글자 가운데 가장 크다(iOS 기본 본문 17pt와 같다). 문장마다 한 단락, 단락 사이 8px. 휴대폰 첫 화면에 요약과 원문 버튼이 들어오게 줄 간격 1.75·단락 16px에서 줄였다(사용자가 고른 '촘촘하게' 시안, 11-12, 이슈 #149) |
+| `summary` | 0.9375rem (15px) | 1.45 | 0 | 600 | 한 줄 기록(카드 안에서 가장 굵은 본문, 안 뛰었으면 500 + 흐린 글자), 기사 제목 목록, 목록 줄 이름(역대 포스팅 계약·선수 고르기·화면 순서·시즌 1위 선수), 안내 띠 제목, 표 묶음 제목('타자'·'투수'), 알림 띠 글 |
+| `button` | 0.9375rem (15px) | 1.25rem | 0 | 600 | 버튼과 메뉴 글자: 웹 머리글 메뉴, '원문 보기', 빈·오류 화면 버튼, 알림 띠 버튼 |
+| `body` | 0.9375rem (15px) | 1.5 | 0 | 400 | 안내·빈 상태 문장, 성적표 이유 한 줄과 '이번 겨울' 소식, 선수 정보 값 |
+| `label` | 0.8125rem (13px) | 1.25rem | 0 | 600 | 정보 칩·요약 알약·기간 알약·팀 이름, 카드 안 작은 제목('행선지로 거론된 구단'·'관련 기사'·'이번 겨울'·'경기별 안타'·'메이저 143경기'), 글자 버튼('더 보기'·'펼치기'), 알약 버튼('선수 고르기'·'내 선수에 넣기') |
+| `meta` | 0.8125rem (13px) | 1.5 | 0 | 400 | 이름·제목 아래 한 줄('팀 · 포지션'), 기사 페이지 출처 줄, 경기 기록 위 줄, 기록 표 본문 |
+| `badge` | 0.75rem (12px) | 1.125rem | 0 | 700 | 모든 알약(승패·상태·한 줄 소식·자랑·판정·이동·활약·마이너 단계·'올해'). 위아래 2px(`py-0.5`)을 더해 높이 22px(표 줄 안 마이너 단계 알약만 `leading-none`으로 줄 높이를 키우지 않는다). 글자 크기가 다른 요약 알약(Label 13px, 24px)·정보 칩(28px)은 이 역할이 아니다 |
+| `caption` | 0.75rem (12px) | 1rem | 0 | 400 | 기준 시각, 보조 한 줄, 숫자 칸 이름표('타율'), 작은 제목 옆 회색 글씨, 표 머리(600), 바닥글 |
+| `micro` | 0.6875rem (11px) | 1rem | 0 | 400 | 점수 아래 '종료 · 홈 · 05:05', 그래프 눈금·범례, 각주, 대문자 영문 이름 줄('JUNG HOO LEE · #51', 자간 0.08em) |
+
+토큰에 굵기·줄 간격·자간이 들어 있으므로 같은 요소에 `font-*`·`leading-*`·`tracking-*`를 되풀이하지 않는다. 덧붙여 덮어쓰는 것은 이런 경우다: 한 줄 안 강조(굵게: 점수 띠 밖 점수 700, 1위 값, 'N건', 막대 아래 날짜, '오늘 새 기사', 화면 순서 번호, 시즌 비교의 색 있는 차이, '상위 N%'), 줄 높이를 늘리지 않아야 하는 숫자·알약(`leading-none`: 큰 D-day, 목록 D-day, 표 안 마이너 단계 알약), 안 뛴 경기(500 + 흐림), 표 머리·표 행 머리(600), 워드마크 자간(-0.03em), 대문자 영문 자간(0.08em). 그림 글자(사진 원 안 이니셜, 빈·오류 화면 이모지 40px)는 원 지름에 맞춘 크기라 역할 밖이고, 그 줄에 lint 예외 주석과 이유를 적는다. 공유 그림(OG, 1200×630)도 대상 밖이다.
 
 ### Named Rules
 **The Tabular Numbers Rule.** 점수, 기록, 시각 등 숫자는 모두 고정폭(`tabular-nums`)이다. 줄이 바뀌어도 자릿수가 흔들리지 않는다.
@@ -415,6 +466,8 @@ components:
 **The Weight Ladder Rule.** 위계는 굵기와 크기로만 만든다. 두 번째 글꼴(명조, 장식체)을 들이지 않는다.
 
 **The Keep-All Rule.** 한국어는 낱말 중간에서 줄을 바꾸지 않는다(`word-break: keep-all`). 너무 긴 낱말만 쪼갠다.
+
+**The Role Token Rule.** 글자 크기는 역할 토큰(`text-display`·`text-heading`·`text-body`·`text-caption` …)으로만 쓴다. 단계 밖 크기(`text-[13px]`, `sm:text-[1.375rem]`, JSX `style`의 `fontSize`)와 Tailwind 기본 크기 이름(`text-xs`~`text-9xl`, `@theme`에서 껐다)은 lint(`no-restricted-syntax`)가 막는다. 새 크기가 필요하면 먼저 역할을 정해 `globals.css` `@theme`와 이 표에 함께 넣는다. 한 화면에서 비슷한 크기가 여럿 섞여 위계가 흐려지는 것을 막는다(15단계 → 9단계, 이슈 #204).
 
 ## Layout
 
@@ -474,7 +527,7 @@ components:
 - **요약 알약:** 홈 섹션 제목 아래 흰 알약('6명 중 5명 출전', '팀 결과 3승 3패'). 회색 바탕 위라 흰색이다.
 - **기간 알약:** '내 선수' 제목 아래 7일·14일·30일. 현재 메뉴와 같은 연파랑 알약, 나머지는 흰 알약 + 흐린 글자(13px 600).
 - **상태 배지:** '내 선수' 카드 무대 왼쪽 위 흰 알약(12px 700, 카드 쉼 그림자), 앞에 7px 점. 점과 글자가 신호색이다: '부상자 명단 N일째'·'마이너 부상자 명단'·'출장 정지 N일째'·'지명 할당(DFA) N일째' 빨강, '부상 복귀 N일째' 초록(7일까지), '콜업 N일째' 진한 파랑(7일까지), 'FA N일째' 보라, '마이너 · 트리플A'·'시즌 끝'·'LG 트윈스 복귀'(국내 리그로 돌아감)는 본문 글자 + 회색 점. 메이저에서 평소대로 뛰면 없다. 마이너 부상자 명단은 오른 날을 믿기 어려워 날수를 붙이지 않는다.
-- **한 줄 소식:** 이름 아래(8px 띄움) 알약 하나(13px 700). 판정 없이 사실만: 좋은 일은 옅은 주황 + `hot` 점('18경기 연속 안타', '트리플A 강등 후 9경기 멀티히트 3번'), 안 좋은 일은 `surface-2` 바탕 + 진한 파랑 글자·점('10경기 연속 무안타'). 비시즌·FA면 '시즌 최장 18경기 연속 안타'. 해당하는 일이 없으면 없다.
+- **한 줄 소식:** 이름 아래(8px 띄움) 알약 하나(Badge 12px 700, 높이 22px). 판정 없이 사실만: 좋은 일은 옅은 주황 + `hot` 점('18경기 연속 안타', '트리플A 강등 후 9경기 멀티히트 3번'), 안 좋은 일은 `surface-2` 바탕 + 진한 파랑 글자·점('10경기 연속 무안타'). 비시즌·FA면 '시즌 최장 18경기 연속 안타'. 해당하는 일이 없으면 없다.
 - **활약 배지:** 한 줄 기록 바로 아래(6px 띄움) 작은 알약 줄(12px 700, 좌우 8px). 가장 큰 활약(홈런·N홈런·승리투수·세이브)은 채운 주황 + 흰 글자, 나머지(멀티히트·N안타·N타점·도루·퀄리티스타트·무실점·N탈삼진)는 옅은 주황 + 주황 글자. 우선순위대로 두 개까지. 홈 경기 카드, 선수 페이지 경기 기록, '내 선수' 고른 경기 한 줄과 '모두 보기' 목록에 같은 모양으로 나온다. 화면 낭독기는 '활약: 홈런, 멀티히트'로 읽는다.
 - **이동 알약:** 이동 기록의 종류 알약(12px 700). 위기 빨강 / 복귀 초록 / 이적 보라 / 메이저로 옮김 연파랑 / 마이너로 옮김(강등·이관·재활) 회색 / 그 밖 옅은 회색.
 - **레벨 알약:** 메이저(옅은 회색 + 파란 점), 마이너(회색 + 빈 점 + 팀 이름), FA(이적 보라 + 점선 빈 점), 국내 복귀(회색 + 회색 점 + 'LG 트윈스 복귀', 명단에 돌아간 팀을 적은 선수).
@@ -492,8 +545,8 @@ components:
 '내 선수' 카드 위쪽 92px. 배경을 지운 선수 사진이 서는 자리다. 사진이 선 오른쪽이 가장 진한 팀 색이고(오른쪽 끝은 18% 어둡게), 왼쪽으로 갈수록 카드 색과 섞여(78%) 옅어진다(100도 방향). 머리 뒤에 흰빛(34%) 둥근 빛을 깔고, 아래 끝은 살짝 어둡다. 다크 모드는 팀 색을 20% 밝혀 남색·갈색 팀이 묻히지 않게 한다. 사진은 112px로 무대보다 크게, 아래 16px을 무대 밖으로 내려 어깨 잘린 선이 무대 끝에서 잘린 것처럼 보이게 한다. 사진이 없거나 안 뜨면 흰 테두리 56px 이니셜 원.
 
 ### 내 선수 카드 (Signature)
-선수 한 명에 카드 한 장. 위에서 아래로: 팀 색 무대(상태 배지 + 사진; FA·국내 복귀는 직전 MLB 팀 색, 사진 모자와 같은 팀) → 이름(Card name) + 흐린 '팀 · 포지션'(FA면 '전 애틀랜타 · 포지션', 국내 복귀면 'LG 트윈스 · 포지션') + 오른쪽 둥근 별 버튼 → 출전 줄 또는 상태 줄 → 한 줄 소식 → 왼쪽 큰 숫자(Stat form)와 위 흐린 라벨 '최근 N일 타율'(마이너면 '트리플A 최근 N일 타율', 메이저 부상자 명단이면 '다치기 전 N일', 최근에 안 뛰었으면 '마지막 N일'), 아래 흐린 시즌 비교('시즌 .301보다' + 좋아졌으면 주황, 나빠졌으면 진한 파랑 '▲.047'; 투수는 평균자책점으로 같은 방식, 낮아지면 좋아짐), 오른쪽 회색 12px 칸 작은 숫자 셋(안타·홈런·타점 / 등판·이닝·탈삼진) → 경기별 막대 → 고른 경기 한 줄 → '경기 기록 모두 보기'(진한 파랑 13px 600, 누르면 선수 페이지와 같은 경기 한 줄 목록이 펼쳐짐). 기록을 못 받으면 막대 자리에 회색 칸 안내 한 줄.
-- **출전 줄(메이저 타자):** 9px 칸 10개(3px 간격, 2.5px 둥근 모서리)로 팀의 최근 끝난 10경기를 오래된 것부터: 선발 채운 파랑, 교체 파랑 2px 테두리, 선발·교체를 모르는 출전 60% 파랑, 결장 흐린 점선. 오른쪽에 두 줄 글자 '팀 최근 10경기'(11px 흐림) / '선발 9 · 교체 1 · 결장 0'(13px 600). 선발·교체를 모르는 출전(시즌 초 등)이 있으면 0인 선발·교체를 빼고 '출전 10 · 결장 0'처럼 쓴다(좁은 카드에서 한 줄). 복귀·콜업 뒤 10경기가 안 되면 그 뒤 경기만 '복귀 후 팀 6경기'(그날부터 팀 경기를 모두 세서 콜업 당일 결장도 든다). 투수는 칸 없이 '최근 14일 3번 등판 · 마지막 등판 2일 전' 한 줄(13px 흐림). 부상자 명단·마이너·FA 카드에는 없다.
+선수 한 명에 카드 한 장. 위에서 아래로: 팀 색 무대(상태 배지 + 사진; FA·국내 복귀는 직전 MLB 팀 색, 사진 모자와 같은 팀) → 이름(Title) + 흐린 '팀 · 포지션'(FA면 '전 애틀랜타 · 포지션', 국내 복귀면 'LG 트윈스 · 포지션') + 오른쪽 둥근 별 버튼 → 출전 줄 또는 상태 줄 → 한 줄 소식 → 왼쪽 큰 숫자(Stat form)와 위 흐린 라벨 '최근 N일 타율'(마이너면 '트리플A 최근 N일 타율', 메이저 부상자 명단이면 '다치기 전 N일', 최근에 안 뛰었으면 '마지막 N일'), 아래 흐린 시즌 비교('시즌 .301보다' + 좋아졌으면 주황, 나빠졌으면 진한 파랑 '▲.047'; 투수는 평균자책점으로 같은 방식, 낮아지면 좋아짐), 오른쪽 회색 12px 칸 작은 숫자 셋(안타·홈런·타점 / 등판·이닝·탈삼진) → 경기별 막대 → 고른 경기 한 줄 → '경기 기록 모두 보기'(진한 파랑 13px 600, 누르면 선수 페이지와 같은 경기 한 줄 목록이 펼쳐짐). 기록을 못 받으면 막대 자리에 회색 칸 안내 한 줄.
+- **출전 줄(메이저 타자):** 9px 칸 10개(3px 간격, 2.5px 둥근 모서리)로 팀의 최근 끝난 10경기를 오래된 것부터: 선발 채운 파랑, 교체 파랑 2px 테두리, 선발·교체를 모르는 출전 60% 파랑, 결장 흐린 점선. 오른쪽에 두 줄 글자 '팀 최근 10경기'(12px 흐림) / '선발 9 · 교체 1 · 결장 0'(13px 600). 선발·교체를 모르는 출전(시즌 초 등)이 있으면 0인 선발·교체를 빼고 '출전 10 · 결장 0'처럼 쓴다(좁은 카드에서 한 줄). 복귀·콜업 뒤 10경기가 안 되면 그 뒤 경기만 '복귀 후 팀 6경기'(그날부터 팀 경기를 모두 세서 콜업 당일 결장도 든다). 투수는 칸 없이 '최근 14일 3번 등판 · 마지막 등판 2일 전' 한 줄(13px 흐림). 부상자 명단·마이너·FA 카드에는 없다.
 - **상태 줄:** 출전 줄 자리의 흐린 한 줄(13px). 마이너면 'Oklahoma City Comets 소속'(새 팀에서 아직 안 뛰었으면 'Nashville Sounds 합류, 아직 경기 없음'), FA면 '마지막 경기 8월 27일 트리플A', 국내 복귀면 '미국 마지막 경기 8월 23일 트리플A'.
 - **마이너 카드:** 큰 숫자·막대·경기 한 줄이 마이너 기록이다. 마이너 경기는 점수가 없어 결과 알약만 있고, 막대 범례에서 '결장'을 빼고 '빈칸은 뛰지 않은 날'로 쓴다(마이너 기록에는 본인이 뛴 경기만 있다).
 - **재활 카드(메이저 부상자 명단):** 오른 뒤 마이너 재활 경기를 뛰었으면 숫자·막대가 재활 경기다. 상태 줄 'Gwinnett Stripers(트리플A)에서 재활 경기', 이름표 '재활 최근 7일 타율'(단계는 상태 줄에 두어 이름표를 짧게), 시즌 비교와 한 줄 소식은 없다(단계도 몸 상태도 달라서).
@@ -509,7 +562,7 @@ components:
 - **경기 없는 날:** 빈칸(바닥 선만).
 - **홈런:** 막대 위 4px에 8px 주황 점(`hot`).
 - 아래 날짜(12px 700, 고른 날은 진한 파랑), 7일이면 요일까지. 30일이면 5칸마다만 쓴다. 아래에 작은 범례(홈런 점·점선·빈칸).
-- 막대를 누르면 아래 `surface-2` 12px 칸의 한 줄이 그 경기로 바뀐다: '9.27(일) vs 상대 점수 결과 알약', 그 아래 굵은 한 줄 기록(Summary line). 카드가 좁아 한 줄에 안 들어가면 점수와 결과 알약을 한 묶음으로 다음 줄에 내린다(점수는 어디서도 '1 -'/'2'로 끊지 않는다).
+- 막대를 누르면 아래 `surface-2` 12px 칸의 한 줄이 그 경기로 바뀐다: '9.27(일) vs 상대 점수 결과 알약', 그 아래 굵은 한 줄 기록(Summary). 카드가 좁아 한 줄에 안 들어가면 점수와 결과 알약을 한 묶음으로 다음 줄에 내린다(점수는 어디서도 '1 -'/'2'로 끊지 않는다).
 
 ### 내 선수 별표
 누르면 바로 바뀌는 넣기·빼기 버튼. 켜지면 칠한 별, 꺼지면 테두리 별.
@@ -536,7 +589,7 @@ components:
 - **그래프**: 왼쪽 협상 시작(마감 30일 전) → 오른쪽 마감 막대(8px, `neutral-pill`). 역대 계약 선수 얼굴은 세우지 않는다(선수가 늘수록 겹쳐 안 보이고 어색했다). 마감 직전 4일은 `surface-2` 칸으로 막대 끝을 덮고, 칸 위쪽에 '마지막 4일'(흐림) / '9명 중 5명'(본문 글자 600) 두 줄로 역대 계약이 몰린 정도를 쓴다.
 - **'지금'**: 포스팅 중인 선수 얼굴은 막대 아래, 카드 색 2px + 파랑 2px 테두리, 옆에 '지금'(진한 파랑 12px 700, 마감 가까우면 얼굴 왼쪽). 여러 명이면 글씨 대신 아래 줄에 '파란 테두리는 지금' 한 번. 한 명이면 막대를 '지금'까지 파랑으로 채운다.
 - **요약 문장**: '9명 중 5명이 마지막 4일 안에 계약했어요.' 절반 넘게가 마지막 4일이면 앞에 '보통 마감 직전에 계약해요.'를 붙이고(데이터가 말할 때만), 한 명이 협상 중이면 '지금(D-21)보다 빨랐던 건 이정후(D-22)뿐이에요.'(없으면 '지금보다 일찍 계약한 선수는 없었어요.')를 덧붙인다. 이름과 끝말은 줄바꿈으로 떨어뜨리지 않는다.
-- **역대 포스팅 계약 순위**: 2012년 류현진부터 제도를 나누지 않고 보장액 순. 한 줄 = 30px 얼굴 · 이름(14px 700, 올해 계약이면 초록 '올해' 알약) · 흐린 '2023 · 샌프란시스코' · 오른쪽 끝 흐린 '마감 22일 전'/'마감 당일', 그 아래 잉크 막대 + 금액(13px 700, 달러↔원화 `.money-flip`, 막대 끝에 왼쪽 맞춤). 휴대폰에서는 그래프와 `line` 1px 선으로 나눈다.
+- **역대 포스팅 계약 순위**: 2012년 류현진부터 제도를 나누지 않고 보장액 순. 한 줄 = 30px 얼굴 · 이름(Summary 15px 600, 올해 계약이면 초록 '올해' 알약) · 흐린 '2023 · 샌프란시스코' · 오른쪽 끝 흐린 '마감 22일 전'/'마감 당일', 그 아래 잉크 막대 + 금액(Label 13px 600, 달러↔원화 `.money-flip`, 막대 끝에 왼쪽 맞춤). 휴대폰에서는 그래프와 `line` 1px 선으로 나눈다.
 - **잉크 막대**(`.ink-bar`): 높이 10px, 시작은 2px·끝은 완전히 둥근 모서리, 왼쪽이 거의 투명(글자색 8%)하고 금액 쪽으로 글자색까지 진해지는 막대. 바탕 줄이 없어서 위 '지금' 진행 막대(회색 줄 + 파랑)와 헷갈리지 않는다. 파랑·신호색·팀 색을 쓰지 않는다(팀 색 막대는 어두운 화면에서 파드리스 갈색이 사라지고 다저스 파랑이 진행 막대와 겹쳐 버렸다). 길이는 금액이 2배면 1.5배(1위가 금액 자리 140px을 뺀 폭 전부, 최소 4%). 글자색을 쓰므로 어두운 모드에서는 밝은 막대다.
 - 처음 보일 때만 막대가 '지금'까지 차오르고 '지금' 얼굴이 시작점에서 제자리로 미끄러진다(The Still Numbers Rule의 그래프 차오르기).
 
@@ -550,7 +603,7 @@ components:
 - 기사 사진이 없거나 안 뜨면 선수 사진을 같은 자리의 낮은 회색 띠(12px 둥근 모서리) 가운데에 원래 크기로 둔다. KBO 등록 사진은 작은 증명사진이라 늘리면 흐리다.
 
 ### 기록 표
-흰 카드 안 표. 숫자는 오른쪽 정렬·고정폭, 머리는 12px 600 흐린 글자 + 아래 `line` 선. 1위 값은 800 진한 파랑, 화면 낭독기에는 "(1위)"를 읽어 준다. 이름 칸은 가로로 밀어도 고정.
+흰 카드 안 표. 본문은 13px(Meta), 숫자는 오른쪽 정렬·고정폭, 머리는 12px 600 흐린 글자 + 아래 `line` 선. 1위 값은 800 진한 파랑, 화면 낭독기에는 "(1위)"를 읽어 준다. 이름 칸은 가로로 밀어도 고정.
 - **홈 시즌 기록의 마이너 줄:** 탭 없이 한 표에 둔다. 같은 선수의 마이너 기록은 메이저 줄 바로 밑 흐린 줄(위 여백 0)로 붙여 이름을 한 번만 쓴다. 이름 칸은 사진만큼 들여 '마이너'(12px 600 흐림), 팀 칸은 마이너 팀 이름 + 회색 단계 알약('트리플A'). 휴대폰(640px 미만)에서는 영문 팀 이름이 길어 메이저 숫자를 밀어내므로 단계 알약만 둔다. 선수 묶음 사이에만 `line` 선을 긋는다. 마이너에서만 뛴 선수는 표 맨 아래 `surface-2` 띠('마이너에서만 뛴 선수', 가로로 밀어도 글자 고정) 밑에 둔다. 마이너 줄은 단계가 섞여 1위 비교에서 뺀다.
 
 ## Do's and Don'ts

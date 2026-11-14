@@ -71,7 +71,8 @@ export default function PhotoStage({
             <span
               key={s.key}
               aria-hidden
-              className={`absolute inset-0 grid place-items-center text-4xl font-extrabold text-white ${motion} ${visibility}`}
+              // eslint-disable-next-line no-restricted-syntax -- 사진 원 크기(96px)에 맞춘 이니셜(그림 글자)
+              className={`absolute inset-0 grid place-items-center text-[2.25rem] font-extrabold text-white ${motion} ${visibility}`}
               style={{ backgroundColor: s.color }}
             >
               {nameKo.charAt(0)}
@@ -119,7 +120,7 @@ export default function PhotoStage({
         {many && (
           <div role="group" aria-label="소속팀별 사진" className="mt-3 flex flex-wrap items-center gap-1.5">
             {/* 휴대폰에서는 이름표를 윗줄에 둔다. 한 줄에 두면 알약이 갈려 지금 팀 알약만 혼자 다음 줄로 떨어졌다(이슈 #200) */}
-            <span className="mr-0.5 w-full text-xs text-muted sm:w-auto">소속팀 사진</span>
+            <span className="mr-0.5 w-full text-caption text-muted sm:w-auto">소속팀 사진</span>
             {shots.map((s, i) => {
               const active = i === index;
               return (
@@ -128,7 +129,7 @@ export default function PhotoStage({
                   type="button"
                   aria-pressed={active}
                   onClick={() => pick(i)}
-                  className={`press tap-target inline-flex min-h-8 items-center gap-1.5 rounded-full px-2.5 text-[0.8125rem] font-semibold leading-5 transition duration-150 motion-reduce:transition-none ${
+                  className={`press tap-target inline-flex min-h-8 items-center gap-1.5 rounded-full px-2.5 text-label transition duration-150 motion-reduce:transition-none ${
                     active ? "bg-accent-soft text-accent-ink" : "bg-surface-2 text-muted hover:text-foreground"
                   }`}
                 >

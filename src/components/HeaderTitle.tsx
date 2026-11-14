@@ -48,7 +48,7 @@ export default function HeaderTitle() {
     <span
       // 화면 낭독기는 본문의 h1을 읽으므로 같은 글을 두 번 읽지 않게 숨긴다
       aria-hidden
-      className="pointer-events-none absolute left-1/2 top-1/2 hidden max-w-[calc(100%-8rem)] -translate-x-1/2 -translate-y-1/2 truncate text-[1.0625rem] font-extrabold tracking-[-0.02em] opacity-0 transition-opacity duration-200 motion-reduce:transition-none group-data-titled:opacity-100 in-app:block"
+      className="pointer-events-none absolute left-1/2 top-1/2 hidden max-w-[calc(100%-8rem)] -translate-x-1/2 -translate-y-1/2 truncate text-heading opacity-0 transition-opacity duration-200 motion-reduce:transition-none group-data-titled:opacity-100 in-app:block"
     >
       {title}
     </span>

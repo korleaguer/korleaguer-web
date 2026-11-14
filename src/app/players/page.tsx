@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 export default function PlayersPage() {
   return (
     <div className="space-y-4">
-      <h1 className="px-1 text-2xl font-extrabold tracking-[-0.02em]">선수</h1>
+      <h1 className="px-1 text-display">선수</h1>
       <PageSuspense fallback={<LoadingBlock rows={6} />}>
         <PlayersContent />
       </PageSuspense>
@@ -46,7 +46,7 @@ async function PlayersContent() {
   return (
     <div className="space-y-4">
       <DataBanners dataMode={home.dataMode} statsAvailable={home.statsAvailable} />
-      <p className="px-1 text-sm font-medium text-muted">{`${players.length}명 · ${home.season} 시즌 기록`}</p>
+      <p className="px-1 text-meta text-muted">{`${players.length}명 · ${home.season} 시즌 기록`}</p>
       {players.length === 0 ? (
         <StateNotice emoji="⚾" title="아직 등록된 선수가 없어요" detail="선수가 등록되면 여기에 선수마다 카드가 생겨요." />
       ) : (

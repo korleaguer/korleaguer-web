@@ -70,14 +70,14 @@ export default async function LeaguePosition({ saber }: { saber: PlayerSaber }) 
       <div className="card px-4 py-4">
         {!rows ? (
           // 표본이 적으면 서버가 위치를 매기지 않는다(타자 50타석·투수 10이닝 미만)
-          <p className="text-sm text-muted">
+          <p className="text-body text-muted">
             {hitter ? `아직 ${sample}이라 위치를 매기지 않았어요. 50타석부터 보여요.` : `아직 ${sample}이라 위치를 매기지 않았어요. 10이닝부터 보여요.`}
           </p>
         ) : (
           <>
             {!steady && (
-              <p className="mb-3 text-xs text-muted">
-                <span className="mr-1.5 rounded-md bg-surface-2 px-1.5 py-px font-bold">참고용</span>
+              <p className="mb-3 text-caption text-muted">
+                <span className="mr-1.5 rounded-md bg-surface-2 px-1.5 py-0.5 text-badge">참고용</span>
                 {hitter ? `${sample}뿐이라 더 뛰면 크게 바뀔 수 있어요` : `${sample}뿐이라 더 던지면 크게 바뀔 수 있어요`}
               </p>
             )}
@@ -86,7 +86,7 @@ export default async function LeaguePosition({ saber }: { saber: PlayerSaber }) 
                 <PositionRow key={r.label} row={r} who={who} />
               ))}
             </ul>
-            <p className="mt-3.5 border-t border-line pt-2.5 text-[0.6875rem] leading-relaxed text-muted">
+            <p className="mt-3.5 border-t border-line pt-2.5 text-micro text-muted">
               가운데 선 = MLB 중간 · {hitter ? "득점은 리그 평균 대비(수비는 포지션 난도 포함)" : "ERA-는 100이 평균, 낮을수록 좋아요"} · MLB
               공식 세이버 지표 · {sample}
             </p>
@@ -104,8 +104,8 @@ function PositionRow({ row, who }: { row: Row; who: string }) {
   return (
     <li>
       <div className="flex items-baseline justify-between">
-        <span className="text-[0.9375rem] font-bold">{label}</span>
-        <span className={`text-[0.9375rem] font-extrabold tabular-nums ${top ? "text-accent-ink" : "text-muted"}`}>
+        <span className="text-summary">{label}</span>
+        <span className={`text-summary font-extrabold tabular-nums ${top ? "text-accent-ink" : "text-muted"}`}>
           <span className="sr-only">{`MLB ${who} 중 `}</span>
           {verdict}
         </span>
@@ -122,7 +122,7 @@ function PositionRow({ row, who }: { row: Row; who: string }) {
           </>
         )}
       </div>
-      {raw && <p className="mt-1 text-[0.6875rem] text-muted tabular-nums">{raw}</p>}
+      {raw && <p className="mt-1 text-micro text-muted tabular-nums">{raw}</p>}
     </li>
   );
 }

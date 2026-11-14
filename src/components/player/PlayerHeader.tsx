@@ -40,7 +40,7 @@ export default function PlayerHeader({ player, isMine }: { player: PlayerDetail;
         initial={shots.length - 1}
         toggle={<MyPlayerToggle playerId={player.id} nameKo={player.nameKo} initialOn={isMine} variant="pill" />}
       >
-        <h1 id="player-name" className="mt-2 text-2xl font-extrabold leading-tight tracking-[-0.02em]">
+        <h1 id="player-name" className="mt-2 text-display">
           {player.nameKo}
         </h1>
         <PlayerSubline player={player} className="mt-0.5" />

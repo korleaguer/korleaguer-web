@@ -4,7 +4,7 @@ import LevelChip from "./LevelChip";
 import TeamName from "./TeamName";
 
 const CHIP =
-  "inline-flex items-center gap-1.5 rounded-full bg-surface-2 px-2.5 py-1 text-[0.8125rem] font-semibold leading-5 text-neutral-pill-fg";
+  "inline-flex items-center gap-1.5 rounded-full bg-surface-2 px-2.5 py-1 text-label text-neutral-pill-fg";
 
 /**
  * 선수 기본 정보 알약: 메이저·마이너 · 팀(로고) · 포지션 · 나이. 값이 없는 칸은 뺀다. 하나도 없으면 그리지 않는다.

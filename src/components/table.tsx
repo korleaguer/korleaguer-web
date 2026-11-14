@@ -27,7 +27,7 @@ export function Th({
   return (
     <th
       scope="col"
-      className={`whitespace-nowrap border-b border-line bg-(--table-head-bg,var(--surface)) px-2.5 py-2 text-xs font-semibold text-muted ${ALIGN[align]} ${sticky ? "sticky left-0 z-10" : ""} ${className}`}
+      className={`whitespace-nowrap border-b border-line bg-(--table-head-bg,var(--surface)) px-2.5 py-2 text-caption font-semibold text-muted ${ALIGN[align]} ${sticky ? "sticky left-0 z-10" : ""} ${className}`}
     >
       {children}
     </th>
@@ -72,7 +72,7 @@ export function Td({
 export function TableScroll({ children }: { children: ReactNode }) {
   return (
     <RowLinks className="table-scroll relative overflow-x-auto">
-      <table className="w-full border-collapse text-sm tabular-nums [&_tr>*:first-child]:pl-4 [&_tr>*:last-child]:pr-4">{children}</table>
+      <table className="w-full border-collapse text-meta tabular-nums [&_tr>*:first-child]:pl-4 [&_tr>*:last-child]:pr-4">{children}</table>
     </RowLinks>
   );
 }
