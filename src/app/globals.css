@@ -1,4 +1,7 @@
 @import "tailwindcss";
+/* 글자 규칙을 설명하는 주석 속 예시(text-[13px] 등)가 클래스로 읽혀 CSS에 들어가지 않게 뺀다(이슈 #204) */
+@source not "../../eslint.config.mjs";
+@source not "../../DESIGN.md";
 
 /*
  * 화면 전체에서 쓰는 색. 다크 모드는 운영체제 설정(prefers-color-scheme)을 따른다.

@@ -362,7 +362,8 @@ function RowResult({ player: p }: { player: PostingPlayer }) {
   if (p.status === "NEGOTIATING" && p.daysLeft != null) {
     return (
       <div className="shrink-0 text-right">
-        <p className="text-stat tabular-nums">
+        {/* leading-none: 40px 사진 줄 높이를 늘리지 않게(이슈 #204 리뷰) */}
+        <p className="text-stat leading-none tabular-nums">
           <span aria-hidden>{p.daysLeft === 0 ? "오늘" : `D-${p.daysLeft}`}</span>
           <span className="sr-only">{p.daysLeft === 0 ? "오늘 마감" : `마감까지 ${p.daysLeft}일`}</span>
         </p>

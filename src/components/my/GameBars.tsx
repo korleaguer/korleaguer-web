@@ -213,7 +213,7 @@ export default function GameBars({ slots, role, days, minors = false }: Props) {
               {formatLineup(current) && <span>{`· ${formatLineup(current)}`}</span>}
               {/* 점수와 승패는 한 묶음으로 넘어가고, 남은 너비를 채워 승패를 오른쪽 끝에 둔다 */}
               <span className="flex grow items-center gap-1.5">
-                <ScoreText line={current} className="text-summary font-extrabold text-foreground" />
+                <ScoreText line={current} className="text-summary font-bold text-foreground" />
                 <ResultPill result={current.result} className="ml-auto" />
               </span>
             </p>

@@ -77,7 +77,7 @@ export default async function LeaguePosition({ saber }: { saber: PlayerSaber }) 
           <>
             {!steady && (
               <p className="mb-3 text-caption text-muted">
-                <span className="mr-1.5 rounded-md bg-surface-2 px-1.5 py-px font-bold">참고용</span>
+                <span className="mr-1.5 rounded-md bg-surface-2 px-1.5 py-0.5 text-badge">참고용</span>
                 {hitter ? `${sample}뿐이라 더 뛰면 크게 바뀔 수 있어요` : `${sample}뿐이라 더 던지면 크게 바뀔 수 있어요`}
               </p>
             )}

@@ -125,7 +125,7 @@ export default function WrcTrend({ points }: { points: TrendPoint[] }) {
         <span>{firstMonth}월</span>
         <span>{lastMonth}월</span>
       </div>
-      <p className="mt-2 text-caption text-muted">점선은 리그 평균(100). 시즌 처음부터 그날까지의 타격이고, 50타석부터 그려요.</p>
+      <p className="mt-2 text-micro text-muted">점선은 리그 평균(100). 시즌 처음부터 그날까지의 타격이고, 50타석부터 그려요.</p>
     </div>
   );
 }
