@@ -303,6 +303,13 @@
 @custom-variant in-app (&:where([data-app] *));
 
 /*
+ * 아이폰 앱 안에서만. 아이폰 앱의 아래 탭 막대는 웹 화면 위에 떠 있고, 웹의 안전 영역(env(safe-area-inset-bottom))에는
+ * 그 높이가 들어가지 않는다. 그래서 화면 아래에 붙은 창(position: fixed)은 아래쪽이 탭 막대에 덮인다(korleaguer-web#226).
+ * 안드로이드 앱의 탭 막대는 웹 아래에 따로 있어 겹치지 않는다.
+ */
+@custom-variant in-ios-app (&:where([data-app="ios"] *));
+
+/*
  * 아래 규칙은 @layer base / components 안에 둔다.
  * 레이어 밖에 두면 Tailwind 클래스(focus-visible:outline-none 등)보다 항상 이겨 버린다.
  */
