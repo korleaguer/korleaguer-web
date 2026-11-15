@@ -7,6 +7,34 @@ import { haptic } from "@/lib/app";
 
 const W = 340;
 const H = 150;
+/** 달 눈금 사이 최소 간격(그래프 폭의 %). 휴대폰 그래프 폭 약 320px에서 '10월'(약 24px) 둘이 8px 넘게 떨어진다 */
+const MIN_TICK_GAP = 11;
+
+/** 그래프 아래 달 눈금 하나: 그 달 첫 경기 자리(%)와 달 */
+interface MonthTick {
+  pct: number;
+  month: number;
+}
+
+/**
+ * 달이 바뀌는 첫 경기마다 눈금. x축이 날짜가 아니라 경기 순서라 그 경기 자리에 둔다.
+ * 맨 앞 눈금은 시즌 첫 점(50타석 채운 날, 달 중간일 수 있음)이라, 다음 달 눈금과 붙으면 맨 앞 것을 뺀다.
+ * 그 밖에는 앞 눈금과 붙는 것을 뺀다(한 달에 경기가 몇 개뿐인 달).
+ */
+function monthTicks(points: TrendPoint[]): MonthTick[] {
+  const last = points.length - 1;
+  const all: MonthTick[] = [];
+  points.forEach((p, i) => {
+    const month = Number(formatShortDate(p.startTimeKst).split(".")[0]);
+    if (all.length === 0 || all[all.length - 1].month !== month) all.push({ pct: (i / last) * 100, month });
+  });
+  if (all.length > 1 && all[1].pct - all[0].pct < MIN_TICK_GAP) all.shift();
+  const kept: MonthTick[] = [];
+  for (const t of all) {
+    if (kept.length === 0 || t.pct - kept[kept.length - 1].pct >= MIN_TICK_GAP) kept.push(t);
+  }
+  return kept;
+}
 
 /** wRC+를 쉬운 말로(100 = 리그 평균) */
 function words(v: number): string {
@@ -59,8 +87,7 @@ export default function WrcTrend({ points }: { points: TrendPoint[] }) {
   const p = points[active];
   const value = Math.round(p.value);
   const date = formatShortDate(p.startTimeKst);
-  const firstMonth = Number(formatShortDate(points[0].startTimeKst).split(".")[0]);
-  const lastMonth = Number(formatShortDate(points[last].startTimeKst).split(".")[0]);
+  const ticks = monthTicks(points);
 
   return (
     <div className="card px-4 pb-3 pt-4">
@@ -102,6 +129,20 @@ export default function WrcTrend({ points }: { points: TrendPoint[] }) {
         {/* 칸 폭(휴대폰 340px ~ PC 670px)에 맞게 가로로 늘린다. 선 굵기는 그대로(non-scaling-stroke), 점은 늘어나지 않게 그림 밖 원으로 */}
         <div aria-hidden className="relative h-[150px]">
           <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="absolute inset-0 h-full w-full overflow-visible">
+            {/* 달 경계 옅은 세로선: 아래 'N월' 눈금이 어느 자리인지 이어 준다(맨 왼쪽 끝은 그래프 시작이라 긋지 않는다) */}
+            {ticks
+              .filter((t) => t.pct > 0)
+              .map((t) => (
+                <line
+                  key={t.month}
+                  x1={(t.pct / 100) * W}
+                  x2={(t.pct / 100) * W}
+                  y1="0"
+                  y2={H}
+                  stroke="var(--line)"
+                  vectorEffect="non-scaling-stroke"
+                />
+              ))}
             {/* 점선 = 리그 평균 100. 글자는 선과 겹치지 않게 그래프 아래 설명에 둔다 */}
             <line x1="0" x2={W} y1={y(100)} y2={y(100)} stroke="var(--muted)" strokeDasharray="3 4" vectorEffect="non-scaling-stroke" />
             <path
@@ -121,9 +162,19 @@ export default function WrcTrend({ points }: { points: TrendPoint[] }) {
           />
         </div>
       </div>
-      <div aria-hidden className="mt-1 flex justify-between text-micro text-muted">
-        <span>{firstMonth}월</span>
-        <span>{lastMonth}월</span>
+      {/* 달 눈금: 그 달 첫 경기 자리 가운데에 둔다. 양 끝 글자는 카드 밖으로 나가지 않게 끝을 맞춘다 */}
+      <div aria-hidden className="relative mt-1 h-4 text-micro text-muted">
+        {ticks.map((t) => (
+          <span
+            key={t.month}
+            className={`absolute top-0 whitespace-nowrap tabular-nums ${
+              t.pct < 4 ? "" : t.pct > 96 ? "-translate-x-full" : "-translate-x-1/2"
+            }`}
+            style={{ left: `${t.pct}%` }}
+          >
+            {t.month}월
+          </span>
+        ))}
       </div>
       <p className="mt-2 text-micro text-muted">점선은 리그 평균(100). 시즌 처음부터 그날까지의 타격이고, 50타석부터 그려요.</p>
     </div>
