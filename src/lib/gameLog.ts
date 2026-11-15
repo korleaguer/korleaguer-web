@@ -197,12 +197,14 @@ function buildDay(key: string, entries: LogGame[], role: Role): CalendarDay {
   let look: Look;
   if (played.length > 0) {
     look = role === "PITCHER" ? pitcherLook(played) : hitterLook(played);
-  } else if (lines.some((l) => l.gameStatus === "final")) {
+  } else if (lines.every((l) => l.gameStatus === "final")) {
     // 팀은 경기했는데 안 뛰었다. 타자에겐 결장이 소식이고, 투수에겐 등판 없는 날이 보통이라 칸을 칠하지 않는다
     look = role === "PITCHER" ? { tone: "rest", label: "", detail: "" } : { tone: "off", label: "결장", detail: "결장" };
   } else {
-    const label = pendingLabel(mainLine);
-    look = { tone: "pending", label, detail: label === formatTime(mainLine.startTimeKst) ? `${label} 시작` : label };
+    // 아직 끝나지 않은 경기가 있으면 그 경기를 쓴다(더블헤더 1차전 결장 뒤 2차전 예정이면 '결장' 대신 2차전 시각)
+    const next = lines.find((l) => l.gameStatus !== "final") ?? mainLine;
+    const label = pendingLabel(next);
+    look = { tone: "pending", label, detail: label === formatTime(next.startTimeKst) ? `${label} 시작` : label };
   }
 
   const speechLines = sorted
@@ -249,6 +251,12 @@ export function buildGameCalendar(games: GameLine[], minorGames: MinorGameLine[]
   for (const [key, list] of byDay) days.set(key, buildDay(key, list, role));
 
   const keys = [...days.keys()].sort();
+  const keysByMonth = new Map<string, string[]>();
+  for (const k of keys) {
+    const list = keysByMonth.get(k.slice(0, 7));
+    if (list) list.push(k);
+    else keysByMonth.set(k.slice(0, 7), [k]);
+  }
   const first = keys[0];
   const last = keys[keys.length - 1];
   const months: CalendarMonth[] = [];
@@ -258,7 +266,7 @@ export function buildGameCalendar(games: GameLine[], minorGames: MinorGameLine[]
   const endMonth = Number(last.slice(5, 7));
   while (year < endYear || (year === endYear && month <= endMonth)) {
     const key = `${year}-${String(month).padStart(2, "0")}`;
-    const monthDays = keys.filter((k) => k.startsWith(key)).map((k) => days.get(k)!);
+    const monthDays = (keysByMonth.get(key) ?? []).map((k) => days.get(k)!);
     const lastPlayed = monthDays.filter((d) => d.entries.some((e) => lineOf(e).played)).at(-1);
     const lastSelectable = monthDays.filter((d) => d.selectable).at(-1);
     months.push({

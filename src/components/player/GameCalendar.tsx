@@ -35,6 +35,22 @@ function filled(tone: DayTone): boolean {
  */
 const SHORT_LEVEL: Record<string, string> = { AAA: "3A", AA: "2A", ROK: "R" };
 
+/**
+ * 그달 이동을 날짜순으로. 재활 경기 배정은 며칠 사이 단계를 옮겨 다시 배정되는 일이 많아(더블A → 트리플A)
+ * 열흘 안의 재활 배정은 첫 것 하나만 둔다(예전 경기 기록 띠와 같은 규칙)
+ */
+function dedupeRehab(moves: RosterMove[]): RosterMove[] {
+  let lastRehab = "";
+  return [...moves]
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .filter((m) => {
+      if (!/재활 경기/.test(m.labelKo)) return true;
+      const keep = !lastRehab || (Date.parse(m.date) - Date.parse(lastRehab)) / 86_400_000 > 10;
+      lastRehab = m.date;
+      return keep;
+    });
+}
+
 /** 이동 기록 날짜(미국 날짜) "2026-09-21" → "9.21" */
 function moveDay(date: string): string {
   return `${Number(date.slice(5, 7))}.${Number(date.slice(8, 10))}`;
@@ -64,9 +80,11 @@ export default function GameCalendar({
   if (!month) return null;
 
   const pitcher = role === "PITCHER";
-  const selected = dayKey ? (calendar.days.get(dayKey) ?? null) : null;
+  // 고른 날짜가 보이는 달에 없으면(다른 데이터로 다시 그려져 달이 바뀐 경우) 그달 기본 날짜를 쓴다
+  const shownDay = dayKey?.startsWith(month.key) ? dayKey : month.defaultDay;
+  const selected = shownDay ? (calendar.days.get(shownDay) ?? null) : null;
   const cells = monthCells(month.year, month.month);
-  const monthMoves = moves.filter((m) => m.date.startsWith(month.key)).sort((a, b) => a.date.localeCompare(b.date));
+  const monthMoves = dedupeRehab(moves.filter((m) => m.date.startsWith(month.key)));
 
   const pickMonth = (key: string) => {
     if (key === month.key) return;
@@ -75,7 +93,7 @@ export default function GameCalendar({
     setDayKey(calendar.months.find((m) => m.key === key)?.defaultDay ?? null);
   };
   const pickDay = (key: string) => {
-    if (key === dayKey) return;
+    if (key === shownDay) return;
     haptic("select");
     setDayKey(key);
   };
@@ -143,7 +161,7 @@ export default function GameCalendar({
               </span>
             );
           }
-          return <DayCell key={key} day={day} on={key === dayKey} onPick={pickDay} />;
+          return <DayCell key={key} day={day} on={key === shownDay} onPick={pickDay} />;
         })}
       </div>
 
