@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 import type { HitterSeason, PitcherSeason } from "@/lib/api";
 import { formatEra, formatRate } from "@/lib/format";
 import { levelSeasons, sampleLabel } from "@/lib/seasonStats";
@@ -17,9 +17,12 @@ interface Props {
 }
 
 type Stat = [label: string, value: string | number];
+/** 아래 한 줄 기록 하나. numberFirst면 '143경기'처럼 숫자 뒤에 이름, 아니면 '2루타 31' */
+type RestStat = [label: string, value: number, numberFirst?: boolean];
 
 /**
  * 선수 시즌 성적. 단계(메이저·마이너)마다 큰 숫자 카드 네 장 + 세부 기록 한 장이고, 올해 주로 뛴 단계가 먼저다.
+ * 세부 기록은 팬이 먼저 찾는 넷(안타·홈런·타점·도루)을 크게, 나머지는 아래 한 줄로 모은다(사용자가 고른 시안 B, 이슈 #232).
  * 묶음마다 '메이저 4경기'처럼 단계·경기 수를 먼저 적는다. 메이저만 보이면 트리플A 85경기를 뛴 김혜성이 43경기로 읽히고,
  * 메이저 4경기 9.00이 시즌 전체처럼 보였다(이슈 #184).
  */
@@ -50,16 +53,19 @@ export default async function SeasonSummary({
                 ["장타율", formatRate(s.line.slg)],
                 ["OPS", formatRate(s.line.ops)],
               ]}
-              line={[
-                ["경기", s.line.games],
-                ["타수", s.line.atBats],
+              // 9칸을 같은 크기로 늘어놓으면 계산기 자판처럼 읽혀서, 기사에서 '149안타 10홈런 57타점 12도루'로 부르는 넷만 크게 둔다
+              main={[
                 ["안타", s.line.hits],
-                ["2루타", s.line.doubles],
                 ["홈런", s.line.homeRuns],
                 ["타점", s.line.rbi],
+                ["도루", s.line.stolenBases],
+              ]}
+              rest={[
+                ["경기", s.line.games, true],
+                ["타수", s.line.atBats, true],
+                ["2루타", s.line.doubles],
                 ["볼넷", s.line.walks],
                 ["삼진", s.line.strikeouts],
-                ["도루", s.line.stolenBases],
               ]}
             />
           </LevelBlock>
@@ -73,13 +79,14 @@ export default async function SeasonSummary({
                 ["이닝", s.line.inningsText],
                 ["탈삼진", s.line.strikeouts],
               ]}
-              // 위 큰 칸에 있는 이닝·승패·탈삼진은 되풀이하지 않는다(문구 점검 11-13). 투수 출전 수는 '등판'
-              line={[
+              // 위 큰 칸에 있는 이닝·승패·탈삼진은 되풀이하지 않는다(문구 점검 11-13). 투수 출전 수는 '등판'. 넷뿐이라 아래 한 줄은 없다
+              main={[
                 ["등판", s.line.games],
                 ["세이브", s.line.saves],
                 ["볼넷", s.line.walks],
                 ["피안타", s.line.hitsAllowed],
               ]}
+              rest={[]}
             />
           </LevelBlock>
         ))}
@@ -104,14 +111,10 @@ function LevelBlock({ label, children }: { label: string; children: ReactNode })
 }
 
 /**
- * 큰 숫자 카드(휴대폰 2×2, 넓으면 4칸) + 세부 기록 카드(휴대폰 3·4칸씩 줄바꿈, 넓으면 한 줄).
+ * 큰 숫자 카드(휴대폰 2×2, 넓으면 4칸) + 세부 기록 카드(주요 넷을 세로선으로 나눈 4칸, 그 아래 `line` 선 밑에 나머지 한 줄).
  * 이름(dt)이 위, 숫자(dd)가 아래라 화면 낭독기도 "타율 .417" 순서로 읽는다.
  */
-function StatBlock({ big, line }: { big: Stat[]; line: Stat[] }) {
-  // 휴대폰: 4로 나누어떨어지면 4칸, 아니면 3칸씩. 넓은 화면: 한 줄에 전부
-  const narrowCols = line.length % 4 === 0 ? "grid-cols-4" : "grid-cols-3";
-  const wideCols = { "--line-cols": `repeat(${line.length}, minmax(0, 1fr))` } as CSSProperties;
-
+function StatBlock({ big, main, rest }: { big: Stat[]; main: Stat[]; rest: RestStat[] }) {
   return (
     <>
       <dl className="grid grid-cols-2 gap-2.5 md:grid-cols-4">
@@ -125,14 +128,38 @@ function StatBlock({ big, line }: { big: Stat[]; line: Stat[] }) {
           </div>
         ))}
       </dl>
-      <dl className={`card grid p-1.5 ${narrowCols} md:grid-cols-(--line-cols)`} style={wideCols}>
-        {line.map(([label, value]) => (
-          <div key={label} className="min-w-0 px-1 py-2.5 text-center">
-            <dt className="text-caption text-muted">{label}</dt>
-            <dd className="text-stat-sm tabular-nums">{value}</dd>
-          </div>
-        ))}
-      </dl>
+      <div className="card px-3 pt-3.5 pb-3">
+        <dl className="grid grid-cols-4">
+          {main.map(([label, value], i) => (
+            <div key={label} className={`min-w-0 text-center ${i > 0 ? "border-l border-line" : ""}`}>
+              <dt className="text-caption text-muted">{label}</dt>
+              <dd className="text-stat tabular-nums">{value}</dd>
+            </div>
+          ))}
+        </dl>
+        {rest.length > 0 && (
+          // 항목 안에서는 줄을 바꾸지 않고, 좁으면 ' · ' 자리에서 바꾼다
+          <p className="mt-3 border-t border-line pt-2.5 text-center text-meta text-muted tabular-nums">
+            {rest.map(([label, value, numberFirst], i) => (
+              <Fragment key={label}>
+                {i > 0 && " · "}
+                <span className="whitespace-nowrap">
+                  {numberFirst ? (
+                    <>
+                      <span className="font-semibold text-foreground">{value}</span>
+                      {label}
+                    </>
+                  ) : (
+                    <>
+                      {label} <span className="font-semibold text-foreground">{value}</span>
+                    </>
+                  )}
+                </span>
+              </Fragment>
+            ))}
+          </p>
+        )}
+      </div>
     </>
   );
 }
