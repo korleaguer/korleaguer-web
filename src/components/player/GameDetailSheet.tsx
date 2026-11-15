@@ -21,8 +21,21 @@ const ClipPlayer = dynamic(() => import("./ClipPlayer"), {
   loading: () => <div className="aspect-video w-full rounded-xl bg-surface-2" />,
 });
 
-/** 받은 상세를 이 탭이 열려 있는 동안 기억한다(앞뒤 경기를 오갈 때 다시 받지 않게) */
+/**
+ * 받은 상세를 이 탭이 열려 있는 동안 기억한다(앞뒤 경기를 오갈 때 다시 받지 않게).
+ * 끝난 경기만 기억하고(진행 중이면 다시 열 때 새 타석을 받는다), 최근 DETAIL_CACHE_MAX개까지만 둔다
+ */
 const detailCache = new Map<string, GameDetail>();
+const DETAIL_CACHE_MAX = 60;
+
+function remember(key: string, detail: GameDetail) {
+  detailCache.delete(key);
+  detailCache.set(key, detail);
+  if (detailCache.size > DETAIL_CACHE_MAX) {
+    const oldest = detailCache.keys().next().value;
+    if (oldest !== undefined) detailCache.delete(oldest);
+  }
+}
 
 type Load = { state: "loading" } | { state: "ok"; detail: GameDetail } | { state: "error" };
 
@@ -263,7 +276,7 @@ function EntryDetail({
       .then((result) => {
         if (!alive) return;
         if (result.ok && result.detail.available) {
-          detailCache.set(cacheKey, result.detail);
+          if (line.gameStatus === "final") remember(cacheKey, result.detail);
           setLoad({ state: "ok", detail: result.detail });
         } else {
           setLoad({ state: "error" });
@@ -275,7 +288,7 @@ function EntryDetail({
     };
     // load는 일부러 빼고, 처음과 '다시 시도'(attempt)에만 받는다
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playerId, gamePk, attempt, notPlayedYet, cacheKey]);
+  }, [playerId, gamePk, attempt, notPlayedYet, cacheKey, line.gameStatus]);
 
   if (notPlayedYet) {
     const message =

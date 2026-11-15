@@ -948,7 +948,7 @@ function normalizeGameDetail(raw: GameDetail): GameDetail {
     role: raw.role === "PITCHER" ? "PITCHER" : "HITTER",
     available: raw.available === true,
     clips: raw.clips === true,
-    plays: (raw.plays ?? []).flatMap((p) => {
+    plays: (Array.isArray(raw.plays) ? raw.plays : []).flatMap((p) => {
       if (typeof p?.resultKo !== "string" || typeof p.inning !== "number") return [];
       return [
         {
@@ -970,7 +970,7 @@ function normalizeGameDetail(raw: GameDetail): GameDetail {
         },
       ];
     }),
-    highlights: (raw.highlights ?? []).flatMap((h) => {
+    highlights: (Array.isArray(raw.highlights) ? raw.highlights : []).flatMap((h) => {
       const mp4Url = mlbMediaUrl(h?.mp4Url);
       const hlsUrl = mlbMediaUrl(h?.hlsUrl);
       if (!mp4Url && !hlsUrl) return [];
