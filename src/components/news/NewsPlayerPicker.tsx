@@ -83,9 +83,10 @@ export default function NewsPlayerPicker({
                     />
                   )}
                 </span>
-                {/* 내 선수 별: 선수 화면 '내 선수에 넣기'와 같은 별(채운 모양, 진한 파랑) */}
-                {star && <StarIcon filled className="-mr-0.5 size-3.5 shrink-0 text-accent-ink" />}
                 <span>{p.nameKo}</span>
+                {/* 내 선수 별: 선수 화면 '내 선수에 넣기'와 같은 별(채운 모양, 진한 파랑). 사진과 이름은 붙여 두고
+                    별은 이름 끝에 둔다(사용자 11-15 시안 A: 사이에 끼면 사진과 이름이 떨어져 보였다) */}
+                {star && <StarIcon filled className="-ml-0.5 size-3.5 shrink-0 text-accent-ink" />}
                 {/* 점·별은 그림이라 화면 낭독기에는 글로 */}
                 {(star || dot) && <span className="sr-only">{[star && "내 선수", dot && "새 기사 있음"].filter(Boolean).join(", ")}</span>}
               </Chip>
