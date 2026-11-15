@@ -546,10 +546,25 @@
     animation: reveal 200ms var(--ease-out-expo);
   }
 
+  /*
+   * 경기 상세 창(GameDetailSheet). 휴대폰은 아래에서 올라오고, 640px 이상은 가운데에서 살짝 커지며 나타난다.
+   * 끌어 닫는 동안에는 손가락을 따라 움직인다(인라인 transform이 이 움직임을 덮는다).
+   */
+  .game-sheet {
+    animation: sheet-up 280ms var(--ease-out-expo);
+  }
+
+  @media (min-width: 40rem) {
+    .game-sheet {
+      animation: sheet-pop 200ms var(--ease-out-expo);
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .card-rise,
     .bar-rise,
-    .reveal {
+    .reveal,
+    .game-sheet {
       animation: none;
     }
 
@@ -642,6 +657,26 @@
   from {
     opacity: 0;
     transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes sheet-pop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
   }
   to {
     opacity: 1;
