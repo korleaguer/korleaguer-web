@@ -153,3 +153,11 @@ export function withAndParticle(word: string): string {
 export function withTopicParticle(word: string): string {
   return `${word}${endsWithFinalConsonant(word) ? "은" : "는"}`;
 }
+
+const dayKeyFormat = new Intl.DateTimeFormat("en-CA", { timeZone: KST, year: "numeric", month: "2-digit", day: "2-digit" });
+
+/** 한국 날짜 열쇠 "2026-11-15"(날짜별로 묶을 때). 모르는 값이면 null */
+export function kstDayKey(value: string | Date | null | undefined): string | null {
+  const date = value instanceof Date ? value : toDate(value);
+  return date ? dayKeyFormat.format(date) : null;
+}
