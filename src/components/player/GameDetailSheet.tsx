@@ -199,7 +199,7 @@ function SheetBody({ playerId, role, day }: { playerId: number; role: Role; day:
   const scrollRef = useRef<HTMLDivElement>(null);
 
   return (
-    <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-[max(1rem,env(safe-area-inset-bottom))]">
+    <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-[calc(env(safe-area-inset-bottom)+1rem)]">
       {labels && (
         <div role="group" aria-label="이날 경기" className="flex gap-1 px-4 pt-3">
           {labels.map((label, i) => (
