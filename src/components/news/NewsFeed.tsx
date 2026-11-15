@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import type { NewsListItem } from "@/lib/api";
 import { loadMoreNews } from "@/app/news/actions";
+import { isNewArticle, type SeenMap } from "@/lib/newsSeen";
 import LoadingDots from "@/components/LoadingDots";
 import NewsTitleList from "@/components/news/NewsTitleList";
 
@@ -13,17 +14,21 @@ import NewsTitleList from "@/components/news/NewsTitleList";
  *
  * @param player 거른 선수(전체면 null). 다음 쪽도 같은 선수로 받는다
  * @param photos 선수 이름 → 사진. 기사 사진이 없거나 안 뜨면 그 선수 사진을 대신 보인다
+ * @param seen   이 화면을 열 때의 '본 때'(선수별). 그 뒤 나온 기사 줄에 '새'를 붙인다. 이어 받은 쪽도 같은 값으로 본다
+ *               (화면을 연 뒤 본 때가 바뀌어도 이 화면에서는 처음 값을 쓴다)
  */
 export default function NewsFeed({
   items: first,
   next: firstNext,
   player,
   photos,
+  seen = null,
 }: {
   items: NewsListItem[];
   next: string | null;
   player: string | null;
   photos: Record<string, string | null>;
+  seen?: SeenMap | null;
 }) {
   // 보이는 줄 전부(첫 쪽 + 이어 받은 쪽). 앱에 돌아와 화면을 다시 받으면(router.refresh) 첫 쪽이 새로 오는데,
   // 새 기사가 맨 위에 붙어도 받아 둔 쪽을 버리지 않고 합친다(키를 바꿔 처음부터 그리면 읽던 아래 목록이 사라진다)
@@ -57,6 +62,7 @@ export default function NewsFeed({
     ...n,
     who: player ? null : n.who.join("·") || null,
     playerPhotoUrl: photos[player && n.who.includes(player) ? player : (n.who[0] ?? "")] ?? null,
+    isNew: isNewArticle(seen, player ? [player] : n.who, n.publishedAt),
   }));
 
   return (
