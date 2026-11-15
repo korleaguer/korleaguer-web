@@ -13,8 +13,6 @@ import { cacheLife } from "next/cache";
 
 /** 지금 포스팅 제도의 협상 기간(일) */
 const WINDOW_DAYS = 30;
-/** '마감 직전'으로 묶는 날 수(화면 읽기용 역대 계약 시점 한 문장) */
-const NEAR_DEADLINE = 4;
 /**
  * 역대 계약 순위 막대의 길이 규칙: 금액이 2배면 막대는 1.5배(사용자 결정 11-11).
  * 정비례면 1위(이정후 1억 1,300만 달러) 말고는 막대가 짧아 아래 선수끼리 차이가 안 보인다. 길이 = (금액 / 1위 금액)^지수
@@ -180,8 +178,11 @@ function rank(p: PostingPlayer): number {
  * 사용자 결정(11-12, 매일 들어오는 사람에게 같은 화면이 반복되지 않게):
  * - 한 명이면 원소속 구단 색 띠 + 띠에 걸친 사진 + 이름 + 흐린 한 줄(구단 · 포지션 · 출생 연도).
  * - '마지막 4일' 그래프 자리에 '행선지로 거론된 구단'(서버가 기사마다 AI로 고른 것, 최근 7일).
- * - '역대 포스팅 계약'은 휴대폰·PC 모두 접기 줄(매일 같은 목록이라 늘 펼쳐 두지 않는다).
- * - 관련 기사: 휴대폰은 2건, PC는 카드 오른쪽 칸 전체가 기사(3건). 더 있으면 '전체 기사 보기'로 뉴스 탭에서 본다(이슈 #206).
+ * - '역대 포스팅 계약'은 올해 계약한 선수가 있을 때만 보인다(사용자 11-15, 이슈 #234). 협상 중에는 매일 같은 9건이고
+ *   찾는 사람도 적지만(11-15 운영 노시환 기사 34건 중 선배 계약 비교 1건), 계약한 날에는 "역대 몇 위야?"가 가장 궁금하다.
+ *   그래서 계약 줄 밑에 '역대 n위' 알약을 두고, 전체 순위는 휴대폰·PC 모두 접기 줄로 둔다.
+ * - 행선지로 거론된 구단은 PC에서만 한 구단 한 줄 막대(사용자 11-16: 역대 계약 줄을 빼니 PC 왼쪽 칸이 비었다).
+ * - 관련 기사는 휴대폰·PC 모두 2건(11-16, PC 두 칸 높이를 맞춘다). 더 있으면 '전체 기사 보기'로 뉴스 탭에서 본다(이슈 #206).
  *   기사가 없으면 PC 오른쪽은 역대 계약.
  * 포스팅 선수가 여러 명일 때 모양은 나중에 다듬는다(사용자 11-12 "흔한 상황이 아니라 묻어둘게").
  */
@@ -196,19 +197,24 @@ export default async function MlbChallenge({ posting }: { posting: PostingSummar
   const signings = [...thisYearSignings(players), ...pastSignings(posting.history)].sort(
     (a, b) => b.amount - a.amount || b.season - a.season,
   );
+  // 역대 계약은 올해 계약한 선수가 있을 때만(협상 중·결렬이면 보이지 않는다)
+  const showHistory = signings.some((s) => s.thisYear);
+  /** 올해 계약한 선수의 역대 순위(1부터, 보장액 순). 순위에 없으면 null */
+  const rankOf = (nameKo: string) => {
+    const i = signings.findIndex((s) => s.thisYear && s.nameKo === nameKo);
+    return i < 0 ? null : i + 1;
+  };
   const single = players.length === 1 ? players[0] : null;
+  const singleRank = single ? rankOf(single.nameKo) : null;
   const news = newsOf(players);
   // '전체 기사 보기': 한 명이면 그 선수로 거른 뉴스 탭, 여러 명이면 전체
   const newsPlayer = single?.nameKo ?? null;
   // 기사가 하나도 없으면(협상 초반·덜 알려진 선수) PC 오른쪽 칸이 비지 않게 역대 계약을 펼쳐 둔다
-  const historyOnRight = news.length === 0 && signings.length > 0;
+  const historyOnRight = news.length === 0 && showHistory;
   // 띠가 있으면 오른쪽 칸을 띠 아래 20px에서 시작한다(띠의 lg:-mt-5가 카드 위 여백을 먹는다)
   const rightPad = single ? "lg:pt-5" : "";
   // 기사도 역대 계약도 없으면 오른쪽 칸 없이 한 칸으로 그린다
-  const twoColumns = news.length > 0 || signings.length > 0;
-  // 역대 계약이 마감 며칠 전에 몰렸는지는 목록이 접혀 있어 화면 읽기용 한 문장으로 알린다(사용자 11-12: 눈에는 뺀 문장)
-  const past = signings.filter((s) => !s.thisYear);
-  const late = past.filter((s) => s.days <= NEAR_DEADLINE).length;
+  const twoColumns = news.length > 0 || showHistory;
   return (
     <Section id="mlb-challenge-title" title="이번 겨울 MLB 도전">
       <ul className="-mt-0.5 mb-2 flex flex-wrap gap-1.5 px-1">
@@ -220,14 +226,16 @@ export default async function MlbChallenge({ posting }: { posting: PostingSummar
       <div className={`card p-4 lg:p-5 ${twoColumns ? "lg:grid lg:grid-cols-2 lg:gap-x-8" : ""}`}>
         {single && <HeadBand player={single} />}
         <div className="min-w-0">
-          {single ? <PlayerHead player={single} /> : <PlayerRows players={players} />}
-          {single && isOpen(single) && single.linkedTeams && <LinkedTeams counts={single.linkedTeams} className="mt-5" />}
-          {past.length > 0 && (
-            <p className="sr-only">
-              역대 포스팅 계약 {past.length}건 중 {late}건은 마감 {NEAR_DEADLINE}일 전부터 마감일 사이에 계약했어요.
-            </p>
+          {single ? (
+            <PlayerHead player={single} />
+          ) : (
+            <PlayerRows players={players} rankOf={rankOf} total={signings.length} />
           )}
-          {signings.length > 0 && (
+          {singleRank != null && <RankLine rank={singleRank} total={signings.length} />}
+          {single && isOpen(single) && single.linkedTeams && (
+            <LinkedTeams counts={single.linkedTeams} className="mt-5" pcBars />
+          )}
+          {showHistory && (
             <div className={historyOnRight ? "lg:hidden" : undefined}>
               <HistoryToggle
                 title={`역대 포스팅 계약 ${signings.length}건`}
@@ -238,7 +246,7 @@ export default async function MlbChallenge({ posting }: { posting: PostingSummar
             </div>
           )}
           <div className="lg:hidden">
-            <PostingNews items={news} shown={NEWS_SHOWN_PHONE} player={newsPlayer} />
+            <PostingNews items={news} shown={NEWS_SHOWN} player={newsPlayer} />
           </div>
         </div>
         {twoColumns && (
@@ -246,7 +254,7 @@ export default async function MlbChallenge({ posting }: { posting: PostingSummar
             {historyOnRight ? (
               <SigningList signings={signings} />
             ) : (
-              <PostingNews items={news} shown={NEWS_SHOWN_PC} player={newsPlayer} flush />
+              <PostingNews items={news} shown={NEWS_SHOWN} player={newsPlayer} flush />
             )}
           </div>
         )}
@@ -331,8 +339,33 @@ function PlayerHead({ player: p }: { player: PostingPlayer }) {
   );
 }
 
+/**
+ * 계약한 날 계약 줄 밑: '역대 n위' 알약 + 몇 건 중인지(사용자 11-15 시안 A). 순위는 보장액 순(옵션 제외)이고,
+ * 같은 금액이면 최근 계약이 위다. 전체 순위는 아래 접기 줄에서 본다.
+ */
+function RankLine({ rank, total }: { rank: number; total: number }) {
+  return (
+    <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
+      <span className="rounded-full bg-success-bg px-2.5 py-0.5 text-badge text-success-fg tabular-nums">
+        역대 {rank}위
+      </span>
+      <span className="text-caption text-muted tabular-nums">포스팅 계약 {total}건 중 · 보장액 기준</span>
+    </p>
+  );
+}
+
 /** 포스팅 선수가 여러 명일 때: 한 사람 한 줄(사진·이름·구단 | 남은 날이나 결과) */
-function PlayerRows({ players }: { players: PostingPlayer[] }) {
+function PlayerRows({
+  players,
+  rankOf,
+  total,
+}: {
+  players: PostingPlayer[];
+  /** 올해 계약한 선수의 역대 순위(계약 줄 오른쪽 아래 '역대 n위') */
+  rankOf: (nameKo: string) => number | null;
+  /** 역대 포스팅 계약 수(올해 계약 포함) */
+  total: number;
+}) {
   return (
     <ul className="divide-y divide-line">
       {players.map((p) => {
@@ -346,7 +379,7 @@ function PlayerRows({ players }: { players: PostingPlayer[] }) {
                 {signed ? `${p.kboTeam} → ${p.deal?.mlbTeamKo}` : `${p.kboTeam} · ${p.positionKo}`}
               </p>
             </div>
-            <RowResult player={p} />
+            <RowResult player={p} rank={rankOf(p.nameKo)} total={total} />
           </li>
         );
       })}
@@ -354,8 +387,8 @@ function PlayerRows({ players }: { players: PostingPlayer[] }) {
   );
 }
 
-/** 여러 명 줄의 오른쪽: 협상 중이면 남은 날, 계약이면 계약 규모, 그 밖에는 상태 알약 */
-function RowResult({ player: p }: { player: PostingPlayer }) {
+/** 여러 명 줄의 오른쪽: 협상 중이면 남은 날, 계약이면 계약 규모와 역대 순위, 그 밖에는 상태 알약 */
+function RowResult({ player: p, rank, total }: { player: PostingPlayer; rank: number | null; total: number }) {
   const status = STATUS[p.status] ?? STATUS.CLOSED;
   const pill = (
     <span className={`whitespace-nowrap rounded-full px-2.5 py-0.5 text-badge ${status.className}`}>
@@ -389,6 +422,11 @@ function RowResult({ player: p }: { player: PostingPlayer }) {
         <p className="mt-1 text-label tabular-nums">
           {p.deal.years}년 {formatUsd(p.deal.guaranteedUsd)}
         </p>
+        {rank != null && (
+          <p className="mt-0.5 text-micro text-success-fg tabular-nums">
+            역대 {rank}위 <span className="text-muted">/ {total}건</span>
+          </p>
+        )}
       </div>
     );
   }
@@ -396,7 +434,8 @@ function RowResult({ player: p }: { player: PostingPlayer }) {
 }
 
 /**
- * '역대 포스팅 계약' 보장액 순위: 얼굴 · 이름 · 연도·구단 · 마감 며칠 전 / 잉크 막대 + 금액(달러↔원화).
+ * '역대 포스팅 계약' 보장액 순위: 순위 · 얼굴 · 이름 · 연도·구단 · 마감 며칠 전 / 잉크 막대 + 금액(달러↔원화).
+ * 올해 계약한 선수가 있을 때만 그리므로 줄 앞 순위 숫자로 그 선수가 몇 위인지 바로 보이게 한다(올해 선수는 강조색).
  * 막대는 위 '지금' 진행 막대와 헷갈리지 않게 바탕 줄 없이, 왼쪽이 거의 투명하고 금액 쪽으로 진해지는 글자색 막대다
  * (`.ink-bar`). 파랑·신호색·팀 색을 쓰지 않는다(The One Blue Rule, 어두운 화면에서 갈색·남색 팀 색이 묻힘).
  * 길이는 금액이 2배면 1.5배(BAR_EXPONENT).
@@ -426,11 +465,18 @@ function SigningList({
         </p>
       )}
       <ul className="money-flip-pause divide-y divide-line">
-        {signings.map((s) => {
+        {signings.map((s, i) => {
           // 1위 금액이 0이면(보장액 0만 있는 경우) 나눗셈이 NaN이 되지 않게 모두 최소 길이
           const share = top > 0 ? Math.max(BAR_MIN_SHARE, Math.pow(s.amount / top, BAR_EXPONENT)) : BAR_MIN_SHARE;
           return (
             <li key={s.key} className="flex items-center gap-3 py-2.5">
+              {/* 두 자리(10위)도 한 줄에 들어가는 폭 */}
+              <span
+                className={`w-5 shrink-0 text-right text-label tabular-nums ${s.thisYear ? "text-accent-ink" : "text-muted"}`}
+              >
+                {i + 1}
+                <span className="sr-only">위</span>
+              </span>
               <PostingDot nameKo={s.nameKo} photoUrl={s.photoUrl} size={30} />
               <div className="min-w-0 flex-1">
                 <p className="flex items-baseline gap-1.5">
@@ -499,9 +545,11 @@ function DealMoney({
   );
 }
 
-/** 관련 기사 중 처음부터 보이는 수(사용자 11-12 결정). 나머지는 '기사 n건 더 보기' */
-const NEWS_SHOWN_PHONE = 2;
-const NEWS_SHOWN_PC = 3;
+/**
+ * 관련 기사 중 카드에 보이는 수. 휴대폰은 11-12, PC는 11-16 사용자 결정(PC도 3건 → 2건: 역대 계약 줄을 뺀 왼쪽 칸과
+ * 높이를 맞춘다). 나머지는 '전체 기사 보기'로 뉴스 탭에서 본다
+ */
+const NEWS_SHOWN = 2;
 /** 여러 명이어도 관련 기사는 이만큼까지(서버는 선수마다 12건) */
 const NEWS_MAX = 12;
 
