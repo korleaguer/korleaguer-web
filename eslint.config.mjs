@@ -16,7 +16,7 @@ const ARBITRARY = String.raw`(^|[\s:!])text-(\[(length:|[\d.]|calc\(|clamp\(|min
 // esquery 정규식 안에는 '/'를 쓸 수 없어 \x2F로 적는다
 const DEFAULT_SCALE = String.raw`(^|[\s:!])text-(xs|sm|base|lg|[2-9]?xl)($|[\s!]|\x2F)`;
 // 역할 뒤 /줄간격(text-body/6)은 Tailwind가 굵기·자간을 빼고 만들어 역할이 깨진다. 줄 간격은 leading-*로 바꾼다
-const ROLE_SLASH = String.raw`(^|[\s:!])text-(stat-form|stat-hero|display|title|article-title|stat-sm|stat|score|heading|reading|summary|button|body|label|meta|badge|caption|micro)\x2F`;
+const ROLE_SLASH = String.raw`(^|[\s:!])text-(stat-form|stat-hero|display|title|article-title|stat|score|heading|reading|summary|button|body|label|meta|badge|caption|micro)\x2F`;
 const ROLE_SLASH_MSG = "역할 토큰 뒤에 /줄간격을 붙이면 굵기·자간이 빠진다. 줄 간격은 leading-*로 덮어쓴다.";
 
 const eslintConfig = defineConfig([
