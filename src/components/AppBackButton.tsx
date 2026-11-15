@@ -3,14 +3,23 @@
 // 앱(웹뷰) 안에서만 보이는 '뒤로' 버튼. 앱에는 브라우저의 뒤로 버튼이 없어서, 탭 첫 화면이 아닌 화면(선수 페이지 등)에 둔다.
 // 일반 브라우저에서는 in-app 변형이 꺼져 있어 보이지 않는다(globals.css의 @custom-variant in-app).
 import { usePathname, useRouter } from "next/navigation";
+import { useSyncExternalStore } from "react";
 import { appHas, postToApp } from "@/lib/app";
 
 /** 앱 아래 탭의 첫 화면(홈·선수·내 선수). 여기서는 뒤로 버튼을 두지 않는다. 앱(korleaguer-app src/app)의 탭과 같다 */
 const TAB_ROOTS = new Set(["/", "/players", "/my"]);
 
-/** 탭 첫 화면인가. 뉴스(/news)는 뉴스 탭이 있는 앱("news-tab")에서만 탭 첫 화면이고, 옛 앱에서는 쌓인 하위 화면이다 */
-function isTabRoot(pathname: string): boolean {
-  return TAB_ROOTS.has(pathname) || (pathname === "/news" && appHas("news-tab"));
+/** 앱 기능은 바뀌지 않으므로 구독할 것이 없다 */
+function subscribeNothing(): () => void {
+  return () => {};
+}
+
+/**
+ * 뉴스 탭이 있는 앱("news-tab")인가. 서버에는 앱 정보가 없어 false로 그리고, 브라우저에서 화면을 이어받은 뒤 실제 값으로
+ * 다시 그린다(렌더 중에 window를 바로 읽으면 서버 HTML과 첫 화면이 달라 React가 화면을 통째로 다시 그린다)
+ */
+function useNewsTab(): boolean {
+  return useSyncExternalStore(subscribeNothing, () => appHas("news-tab"), () => false);
 }
 
 /** 돌아갈 기록이 없을 때 갈 곳: 선수 페이지는 선수 목록, 기사 한 건은 뉴스, 나머지는 홈 */
@@ -33,7 +42,9 @@ function closeAppScreen(): boolean {
 export default function AppBackButton() {
   const pathname = usePathname();
   const router = useRouter();
-  if (isTabRoot(pathname)) return null;
+  // 뉴스(/news)는 뉴스 탭이 있는 앱에서만 탭 첫 화면이고, 옛 앱에서는 쌓인 하위 화면이다
+  const newsTab = useNewsTab();
+  if (TAB_ROOTS.has(pathname) || (pathname === "/news" && newsTab)) return null;
 
   return (
     <button

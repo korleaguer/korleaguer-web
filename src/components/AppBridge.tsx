@@ -34,9 +34,10 @@ export default function AppBridge() {
         router.refresh();
       } else if (detail?.type === "tab-root" && isSitePath(detail.path)) {
         // 탭 첫 화면이면 맨 위로(기기의 '동작 줄이기'가 켜져 있으면 미끄러지지 않고 바로), 아니면 첫 화면으로(새로고침 없이 이동).
-        // 이미 맨 위인데 거른 화면(뉴스 탭 ?player=)이면 거르기를 풀어 탭 첫 화면으로 돌린다
+        // 뉴스 탭만: 이미 맨 위인데 선수로 거른 화면(?player=)이면 거르기를 풀어 전체로 돌린다(내 선수 기간 등 다른 탭 고르기는 그대로)
         const here = window.location.pathname === detail.path;
-        if (here && (window.scrollY > 0 || window.location.search === "")) {
+        const filteredNews = detail.path === "/news" && window.location.search !== "";
+        if (here && (window.scrollY > 0 || !filteredNews)) {
           const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
           window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
         } else if (here) {

@@ -15,6 +15,9 @@ import PageSuspense from "@/components/PageSuspense";
 
 type Props = PageProps<"/news/[id]">;
 
+/** api가 주는 관련 기사 최대 수(korleaguer-server NewsPageFinder.MORE). 이만큼이면 더 지난 기사가 있을 수 있다 */
+const MORE_FULL = 5;
+
 /** 주소의 id가 1 이상 15자리 이하 정수가 아니면 null */
 function parseId(id: string): number | null {
   return /^[1-9]\d{0,14}$/.test(id) ? Number(id) : null;
@@ -92,8 +95,8 @@ async function NewsContent({ params }: Pick<Props, "params">) {
         <div className="card px-4">
           {/* 관련 기사도 같은 선수라 썸네일이 안 뜨면 이 선수 사진으로 바꾼다 */}
           <NewsTitleList items={news.more.map((n) => ({ ...n, playerPhotoUrl: news.playerPhotoUrl }))} />
-          {/* 더 지난 기사는 뉴스 탭에서 이 선수로 걸러 본다(이슈 #206) */}
-          <AllNewsLink player={news.player} className="border-t border-line py-2.5" />
+          {/* 더 지난 기사는 뉴스 탭에서 이 선수로 걸러 본다(이슈 #206). 관련 기사가 꽉 찼을(5건) 때만: 덜 찼으면 이미 다 보인다 */}
+          {news.more.length >= MORE_FULL && <AllNewsLink player={news.player} className="border-t border-line py-2.5" />}
         </div>
       </Section>
     </div>

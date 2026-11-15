@@ -39,12 +39,14 @@ export default function NewsTabPage({ searchParams }: Props) {
 async function NewsContent({ searchParams }: Pick<Props, "searchParams">) {
   const raw = (await searchParams).player;
   const wanted = typeof raw === "string" && raw.trim() !== "" ? raw.trim() : null;
-  const result = await getNewsList(wanted, null);
+  // 선수 이름은 짧다. 너무 긴 값(api가 400으로 거절한다)은 묻지 않고 '모르는 선수'로 본다
+  const tooLong = wanted !== null && wanted.length > 50;
+  const result = await getNewsList(tooLong ? null : wanted, null);
   if (!result.ok) return <ApiErrorNotice failure={result.failure} />;
 
   const { players, player, items, next } = result.data;
   // 기사가 없는 선수(또는 이름이 틀린 주소)를 달라고 했으면 api가 거르지 않고 빈 목록을 준다
-  const unknown = wanted !== null && player === null;
+  const unknown = wanted !== null && (tooLong || player === null);
   const selected = players.find((p) => p.nameKo === player) ?? null;
   const photos = Object.fromEntries(players.map((p) => [p.nameKo, p.photoUrl]));
 
@@ -69,7 +71,7 @@ async function NewsContent({ searchParams }: Pick<Props, "searchParams">) {
         {unknown ? (
           <StateNotice
             emoji="🔎"
-            title={`${wanted} 선수 기사가 없어요`}
+            title={tooLong ? "찾는 선수 기사가 없어요" : `${wanted} 선수 기사가 없어요`}
             detail="지금 모으는 선수의 기사만 보여요."
             action={
               <Link href={newsHref(null)} replace className="press text-label text-accent-ink">
@@ -77,10 +79,11 @@ async function NewsContent({ searchParams }: Pick<Props, "searchParams">) {
               </Link>
             }
           />
-        ) : items.length === 0 ? (
+        ) : items.length === 0 && next === null ? (
           <StateNotice emoji="📰" title="아직 기사가 없어요" detail="새 기사가 나오면 30분 안에 여기에 모여요." />
         ) : (
-          <NewsFeed key={`${player ?? ""}:${items[0]?.id ?? ""}`} items={items} next={next} player={player} photos={photos} />
+          // 선수를 바꾸면 받아 둔 쪽을 비운다(같은 선수면 새로 받은 첫 쪽을 받아 둔 목록에 합친다, NewsFeed)
+          <NewsFeed key={player ?? ""} items={items} next={next} player={player} photos={photos} />
         )}
       </div>
     </div>

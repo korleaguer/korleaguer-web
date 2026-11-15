@@ -25,7 +25,14 @@ export default function NewsFeed({
   player: string | null;
   photos: Record<string, string | null>;
 }) {
-  const [more, setMore] = useState<NewsListItem[]>([]);
+  // 보이는 줄 전부(첫 쪽 + 이어 받은 쪽). 앱에 돌아와 화면을 다시 받으면(router.refresh) 첫 쪽이 새로 오는데,
+  // 새 기사가 맨 위에 붙어도 받아 둔 쪽을 버리지 않고 합친다(키를 바꿔 처음부터 그리면 읽던 아래 목록이 사라진다)
+  const [rows, setRows] = useState(first);
+  const [firstSeen, setFirstSeen] = useState(first);
+  if (first !== firstSeen) {
+    setFirstSeen(first);
+    setRows((shown) => merge(first, shown));
+  }
   const [next, setNext] = useState(firstNext);
   const [failed, setFailed] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -39,25 +46,22 @@ export default function NewsFeed({
         return;
       }
       setFailed(false);
-      // 그사이 새 기사가 들어와도 커서가 있어 겹치지 않지만, 혹시 몰라 이미 보인 줄은 다시 넣지 않는다
-      setMore((shown) => {
-        const seen = new Set([...first, ...shown].map((n) => n.id ?? n.url));
-        return [...shown, ...result.items.filter((n) => !seen.has(n.id ?? n.url))];
-      });
+      setRows((shown) => merge(shown, result.items));
       setNext(result.next);
     });
   }
 
-  // 전체 보기에서는 줄마다 누구 기사인지 붙인다(같은 기사가 여러 선수에 걸리면 '김혜성·김하성'). 한 선수만 보면 붙이지 않는다
-  const rows = [...first, ...more].map((n) => ({
+  // 전체 보기에서는 줄마다 누구 기사인지 붙인다(같은 기사가 여러 선수에 걸리면 '김혜성·김하성'). 한 선수만 보면 붙이지 않는다.
+  // 기사 사진이 없을 때 대신 보일 선수 사진: 거른 선수의 기사면 그 선수, 아니면 첫 선수
+  const items = rows.map((n) => ({
     ...n,
     who: player ? null : n.who.join("·") || null,
-    playerPhotoUrl: photos[n.who[0] ?? ""] ?? null,
+    playerPhotoUrl: photos[player && n.who.includes(player) ? player : (n.who[0] ?? "")] ?? null,
   }));
 
   return (
     <div className="card px-4 py-1">
-      <NewsTitleList items={rows} />
+      <NewsTitleList items={items} />
       {failed && (
         <p role="alert" className="border-t border-line py-2.5 text-center text-meta text-muted">
           기사를 더 불러오지 못했어요
@@ -76,4 +80,13 @@ export default function NewsFeed({
       )}
     </div>
   );
+}
+
+/**
+ * a 다음에 a에 없는 b의 줄을 잇는다(순서는 서버가 준 그대로, 같은 기사는 a 쪽 값). 이어 받은 쪽은 커서가 있어 겹치지 않고,
+ * 새로 받은 첫 쪽(a)은 받아 둔 목록(b)보다 늦은 기사만 새로 더한다
+ */
+function merge(a: NewsListItem[], b: NewsListItem[]): NewsListItem[] {
+  const seen = new Set(a.map((n) => n.id ?? n.url));
+  return [...a, ...b.filter((n) => !seen.has(n.id ?? n.url))];
 }
