@@ -1,6 +1,7 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import type { NewsHeadline } from "@/lib/api";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatTime } from "@/lib/format";
 import ExternalLinkIcon from "@/components/ExternalLinkIcon";
 import NewsThumb from "@/components/news/NewsThumb";
 
@@ -21,7 +22,19 @@ export interface NewsTitleItem extends NewsHeadline {
  * 한 목록에서 앞 줄과 같은 기사 사진은 다시 쓰지 않고 선수 사진으로 바꾼다(언론사가 자료 사진을 돌려 써서
  * 나란히 같은 사진이 보였다, 이슈 #191).
  */
-export default function NewsTitleList({ items, twoColumns = false }: { items: NewsTitleItem[]; twoColumns?: boolean }) {
+export default function NewsTitleList({
+  items,
+  twoColumns = false,
+  timeOnly = false,
+  highlight = null,
+}: {
+  items: NewsTitleItem[];
+  twoColumns?: boolean;
+  /** 날짜 대신 시각만(뉴스 탭처럼 날짜별 머리줄 아래 놓일 때) */
+  timeOnly?: boolean;
+  /** 제목에서 굵게 보일 검색어(대소문자 상관없이) */
+  highlight?: string | null;
+}) {
   return (
     <ul className={twoColumns ? "lg:grid lg:grid-cols-2 lg:gap-x-8" : undefined}>
       {withoutRepeatedPhotos(items).map((n, i) => (
@@ -30,7 +43,7 @@ export default function NewsTitleList({ items, twoColumns = false }: { items: Ne
           key={n.id ?? n.url}
           className={i === 0 ? undefined : `border-t border-line ${twoColumns && i === 1 ? "lg:border-t-0" : ""}`}
         >
-          <NewsTitleRow item={n} />
+          <NewsTitleRow item={n} timeOnly={timeOnly} highlight={highlight} />
         </li>
       ))}
     </ul>
@@ -48,12 +61,41 @@ function withoutRepeatedPhotos(items: NewsTitleItem[]): NewsTitleItem[] {
   });
 }
 
-function NewsTitleRow({ item: n }: { item: NewsTitleItem }) {
+/** 글에서 검색어를 굵게(대소문자 상관없이). 검색어가 없거나 안 나오면 그대로 */
+function Highlighted({ text, word }: { text: string; word: string | null }) {
+  if (!word) return text;
+  const lower = text.toLowerCase();
+  const needle = word.toLowerCase();
+  const parts: ReactNode[] = [];
+  let from = 0;
+  for (let at = lower.indexOf(needle); at >= 0; at = lower.indexOf(needle, from)) {
+    if (at > from) parts.push(text.slice(from, at));
+    parts.push(
+      <mark key={at} className="bg-transparent font-bold text-accent-ink">
+        {text.slice(at, at + needle.length)}
+      </mark>,
+    );
+    from = at + needle.length;
+  }
+  if (parts.length === 0) return text;
+  parts.push(text.slice(from));
+  return parts;
+}
+
+function NewsTitleRow({
+  item: n,
+  timeOnly,
+  highlight,
+}: {
+  item: NewsTitleItem;
+  timeOnly: boolean;
+  highlight: string | null;
+}) {
   const content = (
     // 화면 낭독기는 제목부터 읽고(글 순서), 눈에는 출처 줄이 위에 보인다(flex-col-reverse)
     <span className="flex min-w-0 flex-1 flex-col-reverse">
       <span className="mt-0.5 line-clamp-2 text-summary group-hover:underline">
-        {n.titleKo ?? n.title}
+        <Highlighted text={n.titleKo ?? n.title} word={highlight} />
       </span>
       {/* 출처 줄은 한 줄로 둔다. 좁으면 누구·언론사만 '…'으로 줄이고 '외 N곳'과 날짜는 남긴다 */}
       <span className="flex min-w-0 whitespace-nowrap text-caption text-muted tabular-nums">
@@ -75,7 +117,7 @@ function NewsTitleRow({ item: n }: { item: NewsTitleItem }) {
             <span className="sr-only">{`(같은 기사: ${n.alsoBy.join(", ")})`}</span>
           </span>
         )}
-        <span className="shrink-0">{`\u00a0· ${formatDate(n.publishedAt)}`}</span>
+        <span className="shrink-0">{`\u00a0· ${timeOnly ? formatTime(n.publishedAt) : formatDate(n.publishedAt)}`}</span>
       </span>
     </span>
   );
