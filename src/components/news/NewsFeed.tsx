@@ -38,6 +38,9 @@ export default function NewsFeed({
     setFirstSeen(first);
     setRows((shown) => merge(first, shown));
   }
+  // 본 때는 이 목록을 처음 그릴 때 값으로 고정한다. 보고 있는 동안 NewsSeenMarker가 쿠키를 바꾸고, 앱에 돌아와 화면을
+  // 다시 받으면(router.refresh) 새 값이 오는데, 그대로 쓰면 보던 줄의 '새'가 한꺼번에 꺼진다
+  const [seenAtOpen] = useState(seen);
   const [next, setNext] = useState(firstNext);
   const [failed, setFailed] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -62,7 +65,7 @@ export default function NewsFeed({
     ...n,
     who: player ? null : n.who.join("·") || null,
     playerPhotoUrl: photos[player && n.who.includes(player) ? player : (n.who[0] ?? "")] ?? null,
-    isNew: isNewArticle(seen, player ? [player] : n.who, n.publishedAt),
+    isNew: isNewArticle(seenAtOpen, player ? [player] : n.who, n.publishedAt),
   }));
 
   return (

@@ -50,6 +50,9 @@ export default function NewsSeenMarker({
     for (const p of players) {
       if (before === null || p.nameKo === selected || (selected === null && shownWho.includes(p.nameKo))) mark(p);
     }
+    // 처음 온 기기인데 적을 선수가 없으면(선수 목록이 비었을 때) 쓰지 않는다. 빈 쿠키가 남으면 다음에 '처음 온 기기'가
+    // 아니게 되어 모든 선수에 점이 찍힌다
+    if (before === null && Object.keys(next).length === 0) return;
     const changed = before === null || serializeSeen(next) !== serializeSeen(before);
     if (changed) writeSeen(next);
   }, [players, selected, shownWho]);

@@ -1,7 +1,7 @@
 "use client"; // 누른 칸에 '받는 중' 점을 보이고, 고른 칸이 가로 목록 밖이면 보이는 곳으로 옮겨야 해서 클라이언트 컴포넌트다.
 
 import Link, { useLinkStatus } from "next/link";
-import { useLayoutEffect, useRef, type ReactNode } from "react";
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import type { NewsListPlayer } from "@/lib/api";
 import { haptic } from "@/lib/app";
 import { newsHref } from "@/lib/news";
@@ -14,7 +14,7 @@ import StarIcon from "@/components/my/StarIcon";
  * 뉴스 탭의 선수 고르기: '전체'와 기사가 있는 선수(사진 + 이름). 휴대폰은 위에 가로로 한 줄(넘치면 옆으로 밀어 본다),
  * PC(lg)는 왼쪽 칸에 세로 목록으로 둔다. 고른 칸은 연파랑(위 메뉴의 현재 칸과 같은 색).
  * 거르기는 주소(?player=)로 하고, 고를 때마다 기록을 쌓지 않는다(replace). 뒤로 가면 뉴스 탭에 오기 전 화면이다.
- * 순서는 부르는 쪽이 정한다(★내 선수 → 새 기사 있는 선수 → 나머지, 이슈 #210). 내 선수는 ★, 지난번에 본 뒤 새 기사가
+ * 순서는 부르는 쪽이 정한다(★내 선수 → 새 기사 있는 선수 → 나머지, 이슈 #210). 단 이 화면에 머무는 동안은 처음 순서를 지킨다. 내 선수는 ★, 지난번에 본 뒤 새 기사가
  * 있는 선수는 사진 오른쪽 위에 파란 점(고른 칸은 지금 보고 있으니 점을 두지 않는다).
  */
 export default function NewsPlayerPicker({
@@ -31,6 +31,14 @@ export default function NewsPlayerPicker({
   fresh?: readonly string[];
 }) {
   const listRef = useRef<HTMLUListElement>(null);
+  // 뉴스 탭에 머무는 동안은 처음 순서를 지킨다. 새 기사가 있는 선수를 보면 그 선수는 '새 기사' 묶음에서 빠지는데,
+  // 그때마다 다시 세우면 알약이 한 칸씩 당겨져 누르려던 자리에 다른 선수가 온다. 점·별은 바로 바뀐다
+  const [firstOrder] = useState(() => players.map((p) => p.nameKo));
+  const rank = (name: string) => {
+    const i = firstOrder.indexOf(name);
+    return i < 0 ? firstOrder.length : i;
+  };
+  const ordered = [...players].sort((a, b) => rank(a.nameKo) - rank(b.nameKo));
 
   // 휴대폰 가로 목록: 고른 선수가 화면 밖(오른쪽 끝)이면 가운데쯤으로 옮긴다. 세로 쪽(페이지)은 건드리지 않는다
   useLayoutEffect(() => {
@@ -55,7 +63,7 @@ export default function NewsPlayerPicker({
             <span className="px-1.5 lg:px-0">전체</span>
           </Chip>
         </li>
-        {players.map((p) => {
+        {ordered.map((p) => {
           const current = selected === p.nameKo;
           const dot = !current && fresh.includes(p.nameKo);
           const star = mine.includes(p.nameKo);
