@@ -1,5 +1,5 @@
 import type { NewsHeadline } from "@/lib/api";
-import ShowMore from "@/components/ShowMore";
+import AllNewsLink from "@/components/news/AllNewsLink";
 import NewsTitleList from "@/components/news/NewsTitleList";
 
 export interface PostingNewsItem extends NewsHeadline {
@@ -12,23 +12,25 @@ export interface PostingNewsItem extends NewsHeadline {
 /**
  * MLB 도전 카드의 관련 기사. 줄마다 출처·날짜와 제목, 오른쪽에 썸네일을 두고, 누르면 우리 기사 페이지(/news/{id})에서
  * 큰 사진과 AI 요약을 본다(사용자 11-11·11-12: "썸네일 다시 넣어").
- * 처음에는 shown건만 보이고 나머지는 '기사 n건 더 보기'로 접는다(사용자 11-12 결정: 휴대폰은 2건, PC는 오른쪽 칸 전체가 기사라 3건).
- * 기사 순서와 수는 부르는 쪽이 정한다.
+ * shown건만 보인다(사용자 11-12 결정: 휴대폰은 2건, PC는 오른쪽 칸 전체가 기사라 3건). 더 있으면 그 자리에서 펼치지 않고
+ * '전체 기사 보기'로 뉴스 탭에 보낸다(펼치면 아래 성적표가 모두 밀려 내려갔다, 이슈 #206). 기사 순서와 수는 부르는 쪽이 정한다.
  *
+ * @param player '전체 기사 보기'가 거를 선수(여러 명이면 null: 전체)
  * @param flush 위 선·여백 없이 그린다(PC 카드 오른쪽 칸 맨 위)
  */
 export default function PostingNews({
   items,
   shown,
+  player,
   flush = false,
 }: {
   items: PostingNewsItem[];
   shown: number;
+  player: string | null;
   flush?: boolean;
 }) {
   if (items.length === 0) return null;
   const first = items.slice(0, shown);
-  const rest = items.slice(shown);
   return (
     <div className={flush ? undefined : "mt-4 border-t border-line pt-3"}>
       <div className="flex items-baseline justify-between gap-3">
@@ -38,13 +40,7 @@ export default function PostingNews({
         )}
       </div>
       <NewsTitleList items={first} />
-      {rest.length > 0 && (
-        <ShowMore moreLabel={`기사 ${rest.length}건 더 보기`} buttonClassName="border-t border-line py-2.5">
-          <div className="border-t border-line">
-            <NewsTitleList items={rest} />
-          </div>
-        </ShowMore>
-      )}
+      {items.length > shown && <AllNewsLink player={player} className="border-t border-line py-2.5" />}
     </div>
   );
 }

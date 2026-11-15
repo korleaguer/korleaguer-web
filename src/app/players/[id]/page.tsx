@@ -107,7 +107,7 @@ async function PlayerContent({ params }: Pick<Props, "params">) {
           {/* 기사는 휴대폰에선 경기 기록 위, PC에선 오른쪽 칸(사용자 11-12: PC 오른쪽 칸은 관련 기사) */}
           {news.length > 0 && (
             <div className="lg:hidden">
-              <PlayerNews id="news-title" news={news} photoUrl={player.photoUrl} />
+              <PlayerNews id="news-title" news={news} photoUrl={player.photoUrl} player={player.nameKo} />
             </div>
           )}
           <GameLog games={games} minorGames={minorGames} moves={moves ?? []} role={player.role} />
@@ -118,7 +118,7 @@ async function PlayerContent({ params }: Pick<Props, "params">) {
           <PlayerInfo player={player} />
           {news.length > 0 && (
             <div className="hidden lg:block">
-              <PlayerNews id="news-title-pc" news={news} photoUrl={player.photoUrl} />
+              <PlayerNews id="news-title-pc" news={news} photoUrl={player.photoUrl} player={player.nameKo} />
             </div>
           )}
           {moves && <RosterMoves moves={moves} />}

@@ -234,6 +234,35 @@ export interface NewsPage {
   more: NewsHeadline[];
 }
 
+/** GET /api/news의 선수 고르기 한 칸(korleaguer-server#153) */
+export interface NewsListPlayer {
+  nameKo: string;
+  /** 우리가 호스팅하는 선수 사진. 포스팅 선수는 KBO 구단 사진(배경 있음), 명단 선수는 배경을 지운 MLB 사진. 없으면 null */
+  photoUrl: string | null;
+  /** 명단 선수의 번호(선수 화면 /players/{id}). 포스팅 선수처럼 명단에 없으면 null */
+  playerId: number | null;
+  /** 이번 겨울 포스팅 선수(아직 KBO 선수) */
+  posting: boolean;
+}
+
+/** 뉴스 탭 기사 한 줄. 목록에는 요약을 보이지 않아 서버가 요약·첫머리를 싣지 않는다(lead·summary는 늘 null) */
+export interface NewsListItem extends NewsHeadline {
+  /** 누구 기사인지(한글 이름). 같은 기사가 여러 선수에 걸렸으면 모두 */
+  who: string[];
+}
+
+/** GET /api/news: 뉴스 탭 한 쪽 */
+export interface NewsList {
+  /** 기사가 있는 선수(포스팅 선수 먼저, 그다음 명단 순) */
+  players: NewsListPlayer[];
+  /** 이 쪽을 거른 선수. 전체이거나 모르는 선수면 null */
+  player: string | null;
+  /** 기사(늦은 순, 최대 20줄) */
+  items: NewsListItem[];
+  /** 다음 쪽 커서(그대로 before로 넘긴다). 더 없으면 null */
+  next: string | null;
+}
+
 export interface PostingPlayer {
   nameKo: string;
   kboTeam: string;
@@ -837,6 +866,28 @@ function normalizeNewsPage(raw: NewsPage): NewsPage {
   };
 }
 
+/** 뉴스 탭 한 쪽. 링크를 걸 수 없는 기사(원문 주소가 http(s)가 아님)와 이름이 빈 선수는 뺀다 */
+function normalizeNewsList(raw: NewsList): NewsList {
+  return {
+    players: (raw.players ?? [])
+      .filter((p) => typeof p.nameKo === "string" && p.nameKo.trim() !== "")
+      .map((p) => ({
+        nameKo: p.nameKo,
+        photoUrl: photoUrl(p.photoUrl),
+        playerId: typeof p.playerId === "number" ? p.playerId : null,
+        posting: p.posting === true,
+      })),
+    player: typeof raw.player === "string" ? raw.player : null,
+    items: (raw.items ?? []).flatMap((n) => {
+      const headline = normalizeHeadline(n);
+      if (!headline) return [];
+      const who = Array.isArray(n.who) ? n.who.filter((w) => typeof w === "string" && w.trim() !== "") : [];
+      return [{ ...headline, who }];
+    }),
+    next: typeof raw.next === "string" && raw.next !== "" ? raw.next : null,
+  };
+}
+
 /** 계약 내용. 옛 api는 환율(krwPerUsd)을 주지 않는다 */
 function normalizeDeal(deal: PostingDeal | null | undefined): PostingDeal | null {
   return deal ? { ...deal, krwPerUsd: deal.krwPerUsd ?? null } : null;
@@ -1084,6 +1135,17 @@ async function newsFromApi(id: number) {
   return result;
 }
 
+async function newsListFromApi(player: string, before: string) {
+  "use cache";
+  const query = new URLSearchParams();
+  if (player) query.set("player", player);
+  if (before) query.set("before", before);
+  const qs = query.toString();
+  const result = await requestApi(`/api/news${qs ? `?${qs}` : ""}`, normalizeNewsList);
+  cacheLife(result.ok ? { stale: 30, revalidate: 30, expire: 300 } : { stale: 0, revalidate: 1, expire: 2 });
+  return result;
+}
+
 async function myPlayersFromApi(ids: string, days: number) {
   "use cache";
   const result = await requestApi(`/api/my?ids=${ids}&days=${days}`, normalizeMy);
@@ -1113,6 +1175,15 @@ export const getPlayer = cache(async (id: number) => {
 export const getNews = cache(async (id: number) => {
   await connection();
   return newsFromApi(id);
+});
+
+/**
+ * GET /api/news: 뉴스 탭 한 쪽. player(한글 이름)가 null이면 전체, before는 앞 쪽의 next(null이면 첫 쪽).
+ * 기사 목록 API가 없는 옛 api면 notFound다
+ */
+export const getNewsList = cache(async (player: string | null, before: string | null) => {
+  await connection();
+  return newsListFromApi(player ?? "", before ?? "");
 });
 
 /** GET /api/my: 고른 선수들의 최근 days일 경기. ids는 "1,5,2"처럼 1명 이상(빈 목록은 api가 400) */

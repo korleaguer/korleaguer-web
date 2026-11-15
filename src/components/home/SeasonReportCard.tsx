@@ -4,7 +4,7 @@ import type { CardStatus, LevelTotals, MyPlayer, SeasonReport, SeasonTier } from
 import { formatEra, formatRate } from "@/lib/format";
 import { teamColor } from "@/lib/teams";
 import PlayerAvatar from "@/components/PlayerAvatar";
-import ShowMore from "@/components/ShowMore";
+import AllNewsLink from "@/components/news/AllNewsLink";
 import NewsTitleList from "@/components/news/NewsTitleList";
 import BandPhoto from "@/components/my/BandPhoto";
 import { StatusBadge } from "@/components/my/FormSummary";
@@ -119,7 +119,7 @@ export default function SeasonReportCard({
         )}
 
         {(report.winterMoves.length > 0 || news.length > 0 || linked) && (
-          // 링크 위(relative z-10)에 올려 기사 줄·더 보기가 제 동작을 한다(카드 링크는 선수 페이지)
+          // 링크 위(relative z-10)에 올려 기사 줄·전체 기사 보기가 제 동작을 한다(카드 링크는 선수 페이지)
           <div className="relative z-10 mt-3 border-t border-line pt-3">
             <p className="text-label text-muted">이번 겨울</p>
             {report.winterMoves.length > 0 && (
@@ -138,15 +138,9 @@ export default function SeasonReportCard({
             {news.length > 0 && (
               <>
                 <NewsTitleList items={news.slice(0, WINTER_NEWS_SHOWN)} />
+                {/* 더 있으면 그 자리에서 펼치지 않고 뉴스 탭으로(펼치면 아래 선수 카드가 모두 밀려 내려갔다, 이슈 #206) */}
                 {news.length > WINTER_NEWS_SHOWN && (
-                  <ShowMore
-                    moreLabel={`기사 ${news.length - WINTER_NEWS_SHOWN}건 더 보기`}
-                    buttonClassName="border-t border-line py-2.5"
-                  >
-                    <div className="border-t border-line">
-                      <NewsTitleList items={news.slice(WINTER_NEWS_SHOWN)} />
-                    </div>
-                  </ShowMore>
+                  <AllNewsLink player={player.nameKo} className="border-t border-line py-2.5" />
                 )}
               </>
             )}
@@ -157,7 +151,7 @@ export default function SeasonReportCard({
   );
 }
 
-/** '이번 겨울' 기사 중 처음부터 보이는 수(확정안: 사진+제목 2건, 나머지는 '기사 n건 더 보기') */
+/** '이번 겨울' 기사 중 카드에 보이는 수(확정안: 사진+제목 2건). 더 있으면 '전체 기사 보기'(뉴스 탭) */
 const WINTER_NEWS_SHOWN = 2;
 
 /** "2026-11-03" → "11월 3일" */
