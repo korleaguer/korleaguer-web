@@ -46,14 +46,26 @@ export default function NewsSearch({
   if (saved.player !== player || (topics.length > 0 && saved.topics !== topics)) setSaved({ player, topics });
   const shownTopics = saved.player === player ? saved.topics : topics;
 
-  useEffect(() => () => {
-    if (timer.current) clearTimeout(timer.current);
-  }, []);
+  // 마지막으로 찾으라고 한 검색어. 주소(query)는 결과가 와야 바뀌어서, 그 사이에 지우거나 고친 것을 견줄 때 이 값을 본다
+  // (주소만 보면 'a'를 치고 결과 전에 지울 때 '이미 빈 칸'으로 보고 찾지 않아, 입력칸은 비었는데 목록은 'a'로 남았다)
+  const requested = useRef(query);
+  useEffect(() => {
+    requested.current = query;
+  }, [query]);
+
+  // 선수를 바꾸면(또는 화면을 떠나면) 기다리던 검색을 버린다. 옛 선수로 찾아 방금 고른 선수를 덮지 않게
+  useEffect(
+    () => () => {
+      if (timer.current) clearTimeout(timer.current);
+    },
+    [player],
+  );
 
   function go(next: string) {
     if (timer.current) clearTimeout(timer.current);
     const q = next.trim() || null;
-    if (q === query) return;
+    if (q === requested.current) return;
+    requested.current = q;
     startTransition(() => router.replace(newsHref(player, q), { scroll: false }));
   }
 

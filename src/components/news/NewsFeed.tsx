@@ -108,7 +108,7 @@ export default function NewsFeed({
 
 /** 하루치 기사 묶음 */
 interface Day<T> {
-  /** 묶음 열쇠(날짜 + 순번) */
+  /** 묶음 열쇠(날짜, 같은 날짜가 떨어져 다시 나오면 몇 번째인지 붙인다) */
   key: string;
   /** 한국 날짜 "2026-11-15" */
   date: string;
@@ -130,8 +130,10 @@ function byDay<T extends { publishedAt: string }>(items: T[]): Day<T>[] {
       continue;
     }
     const label = date === today ? "오늘" : date === yesterday ? "어제" : formatDate(item.publishedAt);
-    // 같은 기사 묶음의 대표가 늦게 실린 사본이면 드물게 날짜가 앞뒤로 섞일 수 있어, 열쇠에 순번을 붙여 겹치지 않게 한다
-    days.push({ key: `${date}-${days.length}`, date, label, items: [item] });
+    // 같은 기사 묶음의 대표가 늦게 실린 사본이면 드물게 같은 날짜가 떨어져 다시 나올 수 있어, 그때만 열쇠에 몇 번째인지 붙인다.
+    // 묶음 순번을 붙이면 맨 위에 새 날짜가 생길 때(자정 뒤 새로 받은 첫 쪽) 아래 묶음이 모두 다시 그려진다
+    const seenTimes = days.filter((d) => d.date === date).length;
+    days.push({ key: seenTimes === 0 ? date : `${date}-${seenTimes + 1}`, date, label, items: [item] });
   }
   return days;
 }
