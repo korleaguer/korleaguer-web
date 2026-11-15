@@ -166,6 +166,11 @@ function thisYearSignings(players: PostingPlayer[]): Signing[] {
     ];
   });
 }
+/** 역대 순위: 보장액이 더 큰 계약 수 + 1(같은 금액은 공동 순위, 리뷰 #235) */
+function historyRank(signings: Signing[], amount: number): number {
+  return signings.filter((s) => s.amount > amount).length + 1;
+}
+
 /** 카드 안 선수 순서: 협상 중·시작 전(마감 가까운 순) → 계약 → 결과 확인 중 → 결렬 */
 function rank(p: PostingPlayer): number {
   if (isOpen(p)) return 0;
@@ -199,10 +204,10 @@ export default async function MlbChallenge({ posting }: { posting: PostingSummar
   );
   // 역대 계약은 올해 계약한 선수가 있을 때만(협상 중·결렬이면 보이지 않는다)
   const showHistory = signings.some((s) => s.thisYear);
-  /** 올해 계약한 선수의 역대 순위(1부터, 보장액 순). 순위에 없으면 null */
+  /** 올해 계약한 선수의 역대 순위(보장액 순, 같은 금액은 공동 순위). 순위에 없으면 null */
   const rankOf = (nameKo: string) => {
-    const i = signings.findIndex((s) => s.thisYear && s.nameKo === nameKo);
-    return i < 0 ? null : i + 1;
+    const s = signings.find((x) => x.thisYear && x.nameKo === nameKo);
+    return s ? historyRank(signings, s.amount) : null;
   };
   const single = players.length === 1 ? players[0] : null;
   const singleRank = single ? rankOf(single.nameKo) : null;
@@ -341,7 +346,7 @@ function PlayerHead({ player: p }: { player: PostingPlayer }) {
 
 /**
  * 계약한 날 계약 줄 밑: '역대 n위' 알약 + 몇 건 중인지(사용자 11-15 시안 A). 순위는 보장액 순(옵션 제외)이고,
- * 같은 금액이면 최근 계약이 위다. 전체 순위는 아래 접기 줄에서 본다.
+ * 같은 금액이면 공동 순위다. 전체 순위는 아래 접기 줄에서 본다.
  */
 function RankLine({ rank, total }: { rank: number; total: number }) {
   return (
@@ -379,7 +384,7 @@ function PlayerRows({
                 {signed ? `${p.kboTeam} → ${p.deal?.mlbTeamKo}` : `${p.kboTeam} · ${p.positionKo}`}
               </p>
             </div>
-            <RowResult player={p} rank={rankOf(p.nameKo)} total={total} />
+            <RowResult player={p} place={rankOf(p.nameKo)} total={total} />
           </li>
         );
       })}
@@ -388,7 +393,16 @@ function PlayerRows({
 }
 
 /** 여러 명 줄의 오른쪽: 협상 중이면 남은 날, 계약이면 계약 규모와 역대 순위, 그 밖에는 상태 알약 */
-function RowResult({ player: p, rank, total }: { player: PostingPlayer; rank: number | null; total: number }) {
+function RowResult({
+  player: p,
+  place,
+  total,
+}: {
+  player: PostingPlayer;
+  /** 올해 계약했으면 역대 순위 */
+  place: number | null;
+  total: number;
+}) {
   const status = STATUS[p.status] ?? STATUS.CLOSED;
   const pill = (
     <span className={`whitespace-nowrap rounded-full px-2.5 py-0.5 text-badge ${status.className}`}>
@@ -422,9 +436,9 @@ function RowResult({ player: p, rank, total }: { player: PostingPlayer; rank: nu
         <p className="mt-1 text-label tabular-nums">
           {p.deal.years}년 {formatUsd(p.deal.guaranteedUsd)}
         </p>
-        {rank != null && (
+        {place != null && (
           <p className="mt-0.5 text-micro text-success-fg tabular-nums">
-            역대 {rank}위 <span className="text-muted">/ {total}건</span>
+            역대 {place}위 <span className="text-muted">/ {total}건</span>
           </p>
         )}
       </div>
@@ -442,20 +456,17 @@ function RowResult({ player: p, rank, total }: { player: PostingPlayer; rank: nu
  */
 function SigningList({
   signings,
-  maxAmount,
   head = true,
   foot = true,
   flush = false,
 }: {
   signings: Signing[];
-  /** 막대 길이 기준(1위 금액). 목록을 나눠 그릴 때 넘긴다 */
-  maxAmount?: number;
   head?: boolean;
   foot?: boolean;
   /** 위 선·여백 없이(접기 안에 넣을 때) */
   flush?: boolean;
 }) {
-  const top = maxAmount ?? Math.max(...signings.map((s) => s.amount));
+  const top = Math.max(...signings.map((s) => s.amount));
   return (
     <div className={flush ? "" : "mt-4 border-t border-line pt-3 lg:mt-0 lg:border-t-0 lg:pt-0"}>
       {head && (
@@ -465,7 +476,7 @@ function SigningList({
         </p>
       )}
       <ul className="money-flip-pause divide-y divide-line">
-        {signings.map((s, i) => {
+        {signings.map((s) => {
           // 1위 금액이 0이면(보장액 0만 있는 경우) 나눗셈이 NaN이 되지 않게 모두 최소 길이
           const share = top > 0 ? Math.max(BAR_MIN_SHARE, Math.pow(s.amount / top, BAR_EXPONENT)) : BAR_MIN_SHARE;
           return (
@@ -474,7 +485,7 @@ function SigningList({
               <span
                 className={`w-5 shrink-0 text-right text-label tabular-nums ${s.thisYear ? "text-accent-ink" : "text-muted"}`}
               >
-                {i + 1}
+                {historyRank(signings, s.amount)}
                 <span className="sr-only">위</span>
               </span>
               <PostingDot nameKo={s.nameKo} photoUrl={s.photoUrl} size={30} />
