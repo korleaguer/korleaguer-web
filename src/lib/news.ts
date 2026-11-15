@@ -95,7 +95,14 @@ export function uniqueByUrl<T extends { url: string; summary: string | null; lea
   return [...byUrl.values()];
 }
 
-/** 뉴스 탭 주소. 선수를 주면 그 선수 기사로 거른 화면(/news?player=이정후), 아니면 전체 */
-export function newsHref(player?: string | null): string {
-  return player ? `/news?player=${encodeURIComponent(player)}` : "/news";
+/** 뉴스 탭 주소. 선수를 주면 그 선수 기사로 거른 화면(/news?player=이정후), 검색어를 주면 그 말로 찾은 화면(&q=FA) */
+export function newsHref(player?: string | null, q?: string | null): string {
+  const params = new URLSearchParams();
+  if (player) params.set("player", player);
+  if (q) params.set("q", q);
+  const qs = params.toString();
+  return qs ? `/news?${qs}` : "/news";
 }
+
+/** 뉴스 탭 검색어 길이 상한(api와 같다) */
+export const NEWS_QUERY_MAX = 30;

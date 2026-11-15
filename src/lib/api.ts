@@ -263,6 +263,16 @@ export interface NewsList {
   items: NewsListItem[];
   /** 다음 쪽 커서(그대로 before로 넘긴다). 더 없으면 null */
   next: string | null;
+  /** 이 쪽을 거른 검색어. 없으면 null */
+  query: string | null;
+  /** 지금 범위의 최근 기사에 많이 나온 말(검색창 바로가기, korleaguer-server#158). 첫 쪽이고 검색어가 없을 때만 */
+  topics: NewsTopic[];
+}
+
+export interface NewsTopic {
+  word: string;
+  /** 최근 기사 묶음 가운데 제목·요약에 이 말이 있는 수 */
+  count: number;
 }
 
 export interface PostingPlayer {
@@ -888,6 +898,8 @@ function normalizeNewsList(raw: NewsList): NewsList {
       return [{ ...headline, who }];
     }),
     next: typeof raw.next === "string" && raw.next !== "" ? raw.next : null,
+    query: typeof raw.query === "string" && raw.query !== "" ? raw.query : null,
+    topics: (raw.topics ?? []).filter((t) => typeof t.word === "string" && t.word !== "" && typeof t.count === "number"),
   };
 }
 
@@ -1138,11 +1150,12 @@ async function newsFromApi(id: number) {
   return result;
 }
 
-async function newsListFromApi(player: string, before: string) {
+async function newsListFromApi(player: string, before: string, q: string) {
   "use cache";
   const query = new URLSearchParams();
   if (player) query.set("player", player);
   if (before) query.set("before", before);
+  if (q) query.set("q", q);
   const qs = query.toString();
   const result = await requestApi(`/api/news${qs ? `?${qs}` : ""}`, normalizeNewsList);
   cacheLife(result.ok ? { stale: 30, revalidate: 30, expire: 300 } : { stale: 0, revalidate: 1, expire: 2 });
@@ -1181,12 +1194,12 @@ export const getNews = cache(async (id: number) => {
 });
 
 /**
- * GET /api/news: 뉴스 탭 한 쪽. player(한글 이름)가 null이면 전체, before는 앞 쪽의 next(null이면 첫 쪽).
- * 기사 목록 API가 없는 옛 api면 notFound다
+ * GET /api/news: 뉴스 탭 한 쪽. player(한글 이름)가 null이면 전체, before는 앞 쪽의 next(null이면 첫 쪽),
+ * q는 검색어(제목·요약, null이면 거르지 않음). 기사 목록 API가 없는 옛 api면 notFound다
  */
-export const getNewsList = cache(async (player: string | null, before: string | null) => {
+export const getNewsList = cache(async (player: string | null, before: string | null, q: string | null = null) => {
   await connection();
-  return newsListFromApi(player ?? "", before ?? "");
+  return newsListFromApi(player ?? "", before ?? "", q ?? "");
 });
 
 /** GET /api/my: 고른 선수들의 최근 days일 경기. ids는 "1,5,2"처럼 1명 이상(빈 목록은 api가 400) */

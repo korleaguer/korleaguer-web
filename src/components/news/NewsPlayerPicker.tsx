@@ -22,9 +22,12 @@ export default function NewsPlayerPicker({
   selected,
   mine = [],
   fresh = [],
+  query = null,
 }: {
   players: NewsListPlayer[];
   selected: string | null;
+  /** 지금 검색어. 선수를 바꿔도 그대로 찾는다 */
+  query?: string | null;
   /** 내 선수(★)로 고른 선수 이름 */
   mine?: readonly string[];
   /** 지난번에 본 뒤 새 기사가 있는 선수 이름 */
@@ -59,7 +62,7 @@ export default function NewsPlayerPicker({
         className="no-scrollbar -mx-3 flex gap-2 overflow-x-auto px-3 pb-1 sm:-mx-6 sm:px-6 lg:mx-0 lg:flex-col lg:gap-0.5 lg:overflow-visible lg:px-0 lg:pb-0"
       >
         <li className="shrink-0">
-          <Chip href={newsHref(null)} current={selected === null}>
+          <Chip href={newsHref(null, query)} current={selected === null}>
             <span className="px-1.5 lg:px-0">전체</span>
           </Chip>
         </li>
@@ -69,7 +72,7 @@ export default function NewsPlayerPicker({
           const star = mine.includes(p.nameKo);
           return (
             <li key={p.nameKo} className="shrink-0">
-              <Chip href={newsHref(p.nameKo)} current={current}>
+              <Chip href={newsHref(p.nameKo, query)} current={current}>
                 <span className="relative inline-flex shrink-0">
                   {p.posting ? (
                     <KboAvatar nameKo={p.nameKo} photoUrl={p.photoUrl} size={24} />
