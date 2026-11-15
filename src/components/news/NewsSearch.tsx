@@ -146,8 +146,9 @@ export default function NewsSearch({
             onFocus={() => setFocused(true)}
             onBlur={() => {
               setFocused(false);
-              // 돋보기로 열고 아무것도 안 친 채 다른 곳을 누르면 도로 줄로(입력칸이 빈 채 남지 않게)
-              if (open && value.trim() === (openedWith.current ?? "")) setOpen(false);
+              // 돋보기로 연 입력칸에서 다른 곳을 누르면, 친 말이 이미 찾은 말과 같을 때(새로 찾을 것이 없을 때) 도로 줄로.
+              // 지운 경우(빈 칸)도 닫혀 빈 입력칸이 남지 않고, 찾은 말은 줄 맨 앞 알약으로 보인다
+              if (open && value.trim() === (requested.current ?? "")) setOpen(false);
             }}
             className="min-w-0 flex-1 bg-transparent text-body outline-none placeholder:text-muted [&::-webkit-search-cancel-button]:hidden"
           />
@@ -219,7 +220,6 @@ export default function NewsSearch({
             <button
               type="button"
               aria-label={player ? `${player} 기사 직접 찾기` : "기사 직접 찾기"}
-              aria-expanded={false}
               onClick={openInput}
               className="press tap-target grid size-9 cursor-pointer place-items-center rounded-full bg-surface text-muted shadow-[0_0_0_1px_var(--line)] hover:bg-surface-2"
             >
