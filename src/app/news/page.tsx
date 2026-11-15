@@ -69,11 +69,9 @@ async function NewsContent({ searchParams }: Pick<Props, "searchParams">) {
   const photos = Object.fromEntries(players.map((p) => [p.nameKo, p.photoUrl]));
 
   return (
-    // 휴대폰: 검색창 → 선수 알약 → 목록. PC: 왼쪽 칸에 선수 목록(내려도 따라온다), 오른쪽 칸에 검색창과 목록(줄이 너무 길지 않게 폭을 묶는다)
+    // 휴대폰: 선수 알약 → 그 선수 기사에 자주 나온 말 알약(검색은 그 줄의 돋보기) → 목록.
+    // PC: 왼쪽 칸에 선수 목록(내려도 따라온다), 오른쪽 칸에 검색창·자주 나온 말과 목록(줄이 너무 길지 않게 폭을 묶는다)
     <div className="space-y-3 lg:grid lg:grid-cols-[12rem_minmax(0,48rem)] lg:grid-rows-[auto_1fr] lg:items-start lg:gap-x-6 lg:gap-y-3 lg:space-y-0">
-      <div className="lg:col-start-2 lg:row-start-1">
-        <NewsSearch player={unknown ? null : player} query={q} topics={topics} />
-      </div>
       <div className="lg:sticky lg:top-6 lg:col-start-1 lg:row-span-2 lg:row-start-1">
         <NewsPlayerPicker players={players} selected={unknown ? null : player} mine={mine} fresh={fresh} query={q} />
         {/* 검색 결과는 그 선수 기사를 다 본 것이 아니라 본 때를 남기지 않는다(처음 온 기기의 시작값만) */}
@@ -82,6 +80,9 @@ async function NewsContent({ searchParams }: Pick<Props, "searchParams">) {
           selected={unknown || q ? null : player}
           shownWho={player === null && !unknown && !q ? [...new Set(items.flatMap((n) => n.who))] : []}
         />
+      </div>
+      <div className="lg:col-start-2 lg:row-start-1">
+        <NewsSearch player={unknown ? null : player} query={q} topics={topics} />
       </div>
       <div className="min-w-0 space-y-2.5 lg:col-start-2 lg:row-start-2">
         {selected?.playerId != null && (
