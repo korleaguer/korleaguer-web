@@ -9,6 +9,8 @@ export interface NewsTitleItem extends NewsHeadline {
   who?: string | null;
   /** 그 기사 선수의 사진(우리가 호스팅). 기사 사진이 없거나 안 뜨면 썸네일 자리에 대신 보인다 */
   playerPhotoUrl?: string | null;
+  /** 지난번에 뉴스 탭을 본 뒤 나온 기사면 true: 출처 줄 앞에 '새'(뉴스 탭, 이슈 #210) */
+  isNew?: boolean;
 }
 
 /**
@@ -55,6 +57,12 @@ function NewsTitleRow({ item: n }: { item: NewsTitleItem }) {
       </span>
       {/* 출처 줄은 한 줄로 둔다. 좁으면 누구·언론사만 '…'으로 줄이고 '외 N곳'과 날짜는 남긴다 */}
       <span className="flex min-w-0 whitespace-nowrap text-caption text-muted tabular-nums">
+        {n.isNew && (
+          <span className="shrink-0 font-bold text-accent-ink">
+            새<span aria-hidden>{"\u00a0·\u00a0"}</span>
+            <span className="sr-only"> 기사, </span>
+          </span>
+        )}
         <span className="min-w-0 truncate">
           {n.who ? `${n.who} · ` : ""}
           {n.publisher}

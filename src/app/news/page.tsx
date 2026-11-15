@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import Link from "next/link";
-import { getNewsList } from "@/lib/api";
+import { getNewsList, type NewsListPlayer } from "@/lib/api";
+import { readMyPlayers } from "@/lib/myPlayers";
 import { newsHref } from "@/lib/news";
+import { hasNewSince, NEWS_SEEN_COOKIE, parseSeen, toSeconds } from "@/lib/newsSeen";
 import { shareMeta } from "@/lib/share";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import LoadingBlock from "@/components/LoadingBlock";
@@ -9,6 +12,7 @@ import PageSuspense from "@/components/PageSuspense";
 import StateNotice from "@/components/StateNotice";
 import NewsFeed from "@/components/news/NewsFeed";
 import NewsPlayerPicker from "@/components/news/NewsPlayerPicker";
+import NewsSeenMarker from "@/components/news/NewsSeenMarker";
 
 // <title>: "뉴스 · KOR Leaguer" (뒷부분은 layout의 template이 붙인다)
 const DESCRIPTION = "해외파 한국 선수 기사 모아보기. 선수별로 골라 보고, 영어 기사는 한국어 요약으로 읽어요.";
@@ -41,10 +45,15 @@ async function NewsContent({ searchParams }: Pick<Props, "searchParams">) {
   const wanted = typeof raw === "string" && raw.trim() !== "" ? raw.trim() : null;
   // 선수 이름은 짧다. 너무 긴 값(api가 400으로 거절한다)은 묻지 않고 '모르는 선수'로 본다
   const tooLong = wanted !== null && wanted.length > 50;
-  const result = await getNewsList(tooLong ? null : wanted, null);
+  const [result, myIds, cookieStore] = await Promise.all([getNewsList(tooLong ? null : wanted, null), readMyPlayers(), cookies()]);
   if (!result.ok) return <ApiErrorNotice failure={result.failure} />;
 
-  const { players, player, items, next } = result.data;
+  const { player, items, next } = result.data;
+  // 본 때(이 기기 쿠키). 열 때의 값으로 순서·점·'새'를 그리고, 본 것은 NewsSeenMarker가 남긴다
+  const seen = parseSeen(cookieStore.get(NEWS_SEEN_COOKIE)?.value);
+  const mine = result.data.players.filter((p) => p.playerId !== null && myIds.includes(p.playerId)).map((p) => p.nameKo);
+  const fresh = result.data.players.filter((p) => hasNewSince(seen, p.nameKo, p.latestAt)).map((p) => p.nameKo);
+  const players = orderPlayers(result.data.players, myIds, fresh);
   // 기사가 없는 선수(또는 이름이 틀린 주소)를 달라고 했으면 api가 거르지 않고 빈 목록을 준다
   const unknown = wanted !== null && (tooLong || player === null);
   const selected = players.find((p) => p.nameKo === player) ?? null;
@@ -54,7 +63,12 @@ async function NewsContent({ searchParams }: Pick<Props, "searchParams">) {
     // PC: 왼쪽 선수 목록은 내려도 따라온다(sticky). 목록은 줄이 너무 길지 않게 폭을 묶는다
     <div className="space-y-3 lg:grid lg:grid-cols-[12rem_minmax(0,48rem)] lg:items-start lg:gap-6 lg:space-y-0">
       <div className="lg:sticky lg:top-6">
-        <NewsPlayerPicker players={players} selected={unknown ? null : player} />
+        <NewsPlayerPicker players={players} selected={unknown ? null : player} mine={mine} fresh={fresh} />
+        <NewsSeenMarker
+          players={players}
+          selected={unknown ? null : player}
+          shownWho={player === null && !unknown ? [...new Set(items.flatMap((n) => n.who))] : []}
+        />
       </div>
       <div className="min-w-0 space-y-2.5">
         {selected?.playerId != null && (
@@ -83,9 +97,28 @@ async function NewsContent({ searchParams }: Pick<Props, "searchParams">) {
           <StateNotice emoji="📰" title="아직 기사가 없어요" detail="새 기사가 나오면 30분 안에 여기에 모여요." />
         ) : (
           // 선수를 바꾸면 받아 둔 쪽을 비운다(같은 선수면 새로 받은 첫 쪽을 받아 둔 목록에 합친다, NewsFeed)
-          <NewsFeed key={player ?? ""} items={items} next={next} player={player} photos={photos} />
+          <NewsFeed key={player ?? ""} items={items} next={next} player={player} photos={photos} seen={seen} />
         )}
       </div>
     </div>
   );
+}
+
+/**
+ * 선수 고르기 순서(이슈 #210, 사용자 11-15): ★내 선수(고른 순서) → 지난번에 본 뒤 새 기사가 있는 선수(가장 최근 기사 순)
+ * → 나머지(api 순서: 포스팅 선수 먼저, 그다음 명단 순). 보고 싶은 선수가 휴대폰 첫 화면에 들어오게 한다.
+ * 처음 온 기기는 새 기사가 있는 선수가 없어 내 선수 다음은 api 순서 그대로다.
+ */
+function orderPlayers(
+  players: NewsListPlayer[],
+  myIds: readonly number[],
+  fresh: readonly string[],
+): NewsListPlayer[] {
+  const myRank = (p: NewsListPlayer) => (p.playerId === null ? -1 : myIds.indexOf(p.playerId));
+  const mineFirst = players.filter((p) => myRank(p) >= 0).sort((a, b) => myRank(a) - myRank(b));
+  const rest = players.filter((p) => myRank(p) < 0);
+  const newest = (p: NewsListPlayer) => toSeconds(p.latestAt) ?? 0;
+  const withNews = rest.filter((p) => fresh.includes(p.nameKo)).sort((a, b) => newest(b) - newest(a));
+  const others = rest.filter((p) => !fresh.includes(p.nameKo));
+  return [...mineFirst, ...withNews, ...others];
 }

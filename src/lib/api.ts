@@ -243,6 +243,8 @@ export interface NewsListPlayer {
   playerId: number | null;
   /** 이번 겨울 포스팅 선수(아직 KBO 선수) */
   posting: boolean;
+  /** 이 선수의 보일 기사 중 가장 최근 발행 시각(korleaguer-server#155). '새 기사' 점에 쓴다. 옛 api면 null */
+  latestAt: string | null;
 }
 
 /** 뉴스 탭 기사 한 줄. 목록에는 요약을 보이지 않아 서버가 요약·첫머리를 싣지 않는다(lead·summary는 늘 null) */
@@ -876,6 +878,7 @@ function normalizeNewsList(raw: NewsList): NewsList {
         photoUrl: photoUrl(p.photoUrl),
         playerId: typeof p.playerId === "number" ? p.playerId : null,
         posting: p.posting === true,
+        latestAt: typeof p.latestAt === "string" ? p.latestAt : null,
       })),
     player: typeof raw.player === "string" ? raw.player : null,
     items: (raw.items ?? []).flatMap((n) => {
