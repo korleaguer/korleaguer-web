@@ -576,6 +576,65 @@ export interface MinorGameLine {
   pitching: GamePitching | null;
 }
 
+/**
+ * 선수 한 명의 경기 한 개 상세(GET /api/players/{id}/games/{gamePk}, korleaguer-server#159).
+ * 경기 달력에서 날짜를 누르면 뜨는 창에 쓴다. 옛 api면(404) 창이 '불러오지 못했어요'를 보인다.
+ */
+export interface GameDetail {
+  playerId: number;
+  gamePk: number;
+  role: Role;
+  /** 타석 기록을 받았는지. false면 MLB에서 아직 못 받았다(잠시 뒤 다시) */
+  available: boolean;
+  /** 타석마다 공 영상(Baseball Savant)을 물을 수 있는지(메이저 경기이고 영상이 켜져 있을 때) */
+  clips: boolean;
+  /** 타석(투수면 상대 타자) 순서대로 */
+  plays: GamePlay[];
+  /** 그 선수가 나온 MLB 하이라이트 영상(올라온 순서) */
+  highlights: GameHighlight[];
+}
+
+export interface GamePlay {
+  inning: number;
+  /** 초(원정 공격)면 true */
+  top: boolean;
+  /** 한국어 결과("홈런", "중견수 뜬공", "헛스윙 삼진", "우전 안타" …) */
+  resultKo: string;
+  /** MLB 결과 종류(home_run, single, strikeout, field_out …) */
+  eventType: string;
+  /** 타점(투수면 그 타석에 준 점수) */
+  rbi: number;
+  /** 상대(타자면 투수, 투수면 타자) 영어 이름 */
+  opponentName: string | null;
+  balls: number | null;
+  strikes: number | null;
+  /** 그 타석 공 수 */
+  pitches: number;
+  /** 마지막 공 구종("직구", "슬라이더" …) */
+  pitchKo: string | null;
+  /** 마지막 공 구속(km/h) */
+  pitchKmh: number | null;
+  /** 타구 속도(km/h). 치지 않았으면 null */
+  exitKmh: number | null;
+  launchAngle: number | null;
+  /** 비거리(m) */
+  distanceM: number | null;
+  /** 마지막 공 번호(공 영상을 물을 때 쓴다) */
+  playId: string | null;
+}
+
+export interface GameHighlight {
+  /** 영어 제목("Jung Hoo Lee's solo home run (10)") */
+  title: string;
+  durationSec: number | null;
+  /** MLB 서버 mp4 주소 */
+  mp4Url: string | null;
+  /** MLB 서버 HLS(.m3u8) 주소 */
+  hlsUrl: string | null;
+  /** 대표 사진(MLB 서버) */
+  imageUrl: string | null;
+}
+
 /** 내 선수 카드의 기간 합계(타자). avg는 타수가 없으면 null */
 export interface HitterPeriod {
   games: number;
@@ -869,6 +928,65 @@ function normalizeNewsPage(raw: NewsPage): NewsPage {
 }
 
 /** 뉴스 탭 한 쪽. 링크를 걸 수 없는 기사(원문 주소가 http(s)가 아님)와 이름이 빈 선수는 뺀다 */
+/** MLB 서버 주소만 받는다(영상·사진). 다른 곳이면 null */
+function mlbMediaUrl(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && (url.hostname === "mlb.com" || url.hostname.endsWith(".mlb.com") || url.hostname.endsWith(".mlbstatic.com"))
+      ? value
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function normalizeGameDetail(raw: GameDetail): GameDetail {
+  return {
+    playerId: raw.playerId,
+    gamePk: raw.gamePk,
+    role: raw.role === "PITCHER" ? "PITCHER" : "HITTER",
+    available: raw.available === true,
+    clips: raw.clips === true,
+    plays: (raw.plays ?? []).flatMap((p) => {
+      if (typeof p?.resultKo !== "string" || typeof p.inning !== "number") return [];
+      return [
+        {
+          inning: p.inning,
+          top: p.top === true,
+          resultKo: p.resultKo,
+          eventType: typeof p.eventType === "string" ? p.eventType : "",
+          rbi: num(p.rbi) ?? 0,
+          opponentName: typeof p.opponentName === "string" ? p.opponentName : null,
+          balls: num(p.balls),
+          strikes: num(p.strikes),
+          pitches: num(p.pitches) ?? 0,
+          pitchKo: typeof p.pitchKo === "string" ? p.pitchKo : null,
+          pitchKmh: num(p.pitchKmh),
+          exitKmh: num(p.exitKmh),
+          launchAngle: num(p.launchAngle),
+          distanceM: num(p.distanceM),
+          playId: typeof p.playId === "string" && /^[0-9a-f-]{36}$/.test(p.playId) ? p.playId : null,
+        },
+      ];
+    }),
+    highlights: (raw.highlights ?? []).flatMap((h) => {
+      const mp4Url = mlbMediaUrl(h?.mp4Url);
+      const hlsUrl = mlbMediaUrl(h?.hlsUrl);
+      if (!mp4Url && !hlsUrl) return [];
+      return [
+        {
+          title: typeof h.title === "string" ? h.title : "",
+          durationSec: num(h.durationSec),
+          mp4Url,
+          hlsUrl,
+          imageUrl: mlbMediaUrl(h.imageUrl),
+        },
+      ];
+    }),
+  };
+}
+
 function normalizeNewsList(raw: NewsList): NewsList {
   return {
     players: (raw.players ?? [])
@@ -1082,11 +1200,15 @@ const TIMEOUT_MS = 5000;
  * api를 부른다. 결과는 아래 '잠깐 재사용' 함수(use cache)가 30초 동안 서버 메모리에 두고 같은 요청에 다시 쓴다.
  * 운영 서버(라즈베리파이 4)는 이 Mac보다 계산이 약 9배 느려서, 받은 JSON을 다시 읽고 다듬는 일까지 아끼면 화면이 빨라진다.
  */
-async function requestApi<T>(path: string, normalize: (raw: T) => T): Promise<ApiResult<T>> {
+async function requestApi<T>(
+  path: string,
+  normalize: (raw: T) => T,
+  timeoutMs = TIMEOUT_MS,
+): Promise<ApiResult<T>> {
   let res: Response;
   try {
     const url = new URL(path, process.env.API_BASE_URL ?? "http://localhost:8080");
-    res = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
+    res = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
   } catch (e) {
     console.warn(`[api] ${path} 연결 실패:`, e instanceof Error ? e.message : e);
     return { ok: false, failure: "unreachable" };
@@ -1156,6 +1278,30 @@ async function myPlayersFromApi(ids: string, days: number) {
   return result;
 }
 
+// 경기 상세는 처음 열 때 api가 MLB에서 받아(요청 2번, 1초 간격) 조금 오래 걸린다
+const DETAIL_TIMEOUT_MS = 15_000;
+
+async function gameDetailFromApi(playerId: number, gamePk: number) {
+  "use cache";
+  const result = await requestApi(`/api/players/${playerId}/games/${gamePk}`, normalizeGameDetail, DETAIL_TIMEOUT_MS);
+  // 아직 못 받았으면(available=false) 실패처럼 짧게만 둔다
+  const keep = result.ok && result.data.available;
+  cacheLife(keep ? { stale: 30, revalidate: 30, expire: 300 } : { stale: 0, revalidate: 1, expire: 2 });
+  return result;
+}
+
+async function clipFromApi(playerId: number, gamePk: number, playId: string) {
+  "use cache";
+  const result = await requestApi<{ mp4Url: string | null }>(
+    `/api/players/${playerId}/games/${gamePk}/clips/${playId}`,
+    (raw) => ({ mp4Url: mlbMediaUrl(raw?.mp4Url) }),
+    DETAIL_TIMEOUT_MS,
+  );
+  // 영상 주소는 바뀌지 않는다. 찾았으면 하루 두고, 못 찾았으면 짧게
+  cacheLife(result.ok && result.data.mp4Url ? { stale: 3600, revalidate: 86400, expire: 86400 } : { stale: 0, revalidate: 1, expire: 2 });
+  return result;
+}
+
 // connection(): 빌드 때 미리 그리지 않고 요청이 올 때 받는다. 재사용 함수 밖에서 불러야 한다.
 // cache: 한 요청 안에서 같은 호출을 여러 번 해도 한 번만 부른다.
 export const getHome = cache(async () => {
@@ -1199,3 +1345,15 @@ const getMyPlayersCached = cache(async (ids: string, days: number) => {
 export function getMyPlayers(ids: readonly number[], days: number) {
   return getMyPlayersCached(ids.join(","), days);
 }
+
+/** GET /api/players/{id}/games/{gamePk}: 경기 상세(타석별 기록·하이라이트). 옛 api면 notFound */
+export const getGameDetail = cache(async (playerId: number, gamePk: number) => {
+  await connection();
+  return gameDetailFromApi(playerId, gamePk);
+});
+
+/** GET /api/players/{id}/games/{gamePk}/clips/{playId}: 공 하나 영상 주소(MLB 서버 mp4). 없으면 notFound */
+export const getClip = cache(async (playerId: number, gamePk: number, playId: string) => {
+  await connection();
+  return clipFromApi(playerId, gamePk, playId);
+});

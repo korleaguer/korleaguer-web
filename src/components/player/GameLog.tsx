@@ -13,11 +13,13 @@ export { default as GameRow } from "./GameRow";
  * 마이너 경기를 빼지 않는 까닭: 오래 마이너에 있는 선수는 그 경기가 유일한 소식이고, 마이너에서 잘해야 콜업된다(사용자 11-13).
  */
 export default async function GameLog({
+  playerId,
   games,
   minorGames,
   moves,
   role,
 }: {
+  playerId: number;
   games: GameLine[];
   minorGames: MinorGameLine[];
   moves: RosterMove[];
@@ -33,7 +35,7 @@ export default async function GameLog({
       {games.length === 0 && minorGames.length === 0 ? (
         <p className="card px-4 py-5 text-body text-muted">경기 기록이 없어요.</p>
       ) : (
-        <GameCalendar games={games} minorGames={minorGames} moves={moves} role={role} />
+        <GameCalendar playerId={playerId} games={games} minorGames={minorGames} moves={moves} role={role} />
       )}
     </Section>
   );
