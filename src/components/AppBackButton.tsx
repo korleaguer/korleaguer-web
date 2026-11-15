@@ -8,9 +8,16 @@ import { appHas, postToApp } from "@/lib/app";
 /** 앱 아래 탭의 첫 화면(홈·선수·내 선수). 여기서는 뒤로 버튼을 두지 않는다. 앱(korleaguer-app src/app)의 탭과 같다 */
 const TAB_ROOTS = new Set(["/", "/players", "/my"]);
 
-/** 돌아갈 기록이 없을 때 갈 곳: 선수 페이지는 선수 목록, 나머지는 홈 */
+/** 탭 첫 화면인가. 뉴스(/news)는 뉴스 탭이 있는 앱("news-tab")에서만 탭 첫 화면이고, 옛 앱에서는 쌓인 하위 화면이다 */
+function isTabRoot(pathname: string): boolean {
+  return TAB_ROOTS.has(pathname) || (pathname === "/news" && appHas("news-tab"));
+}
+
+/** 돌아갈 기록이 없을 때 갈 곳: 선수 페이지는 선수 목록, 기사 한 건은 뉴스, 나머지는 홈 */
 function parentOf(pathname: string): string {
-  return pathname.startsWith("/players/") ? "/players" : "/";
+  if (pathname.startsWith("/players/")) return "/players";
+  if (pathname.startsWith("/news/")) return "/news";
+  return "/";
 }
 
 /**
@@ -26,7 +33,7 @@ function closeAppScreen(): boolean {
 export default function AppBackButton() {
   const pathname = usePathname();
   const router = useRouter();
-  if (TAB_ROOTS.has(pathname)) return null;
+  if (isTabRoot(pathname)) return null;
 
   return (
     <button

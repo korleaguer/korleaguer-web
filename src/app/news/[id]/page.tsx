@@ -9,6 +9,7 @@ import LoadingBlock from "@/components/LoadingBlock";
 import NotFoundNotice from "@/components/NotFoundNotice";
 import Section from "@/components/Section";
 import NewsPhoto from "@/components/news/NewsPhoto";
+import AllNewsLink from "@/components/news/AllNewsLink";
 import NewsTitleList from "@/components/news/NewsTitleList";
 import PageSuspense from "@/components/PageSuspense";
 
@@ -91,6 +92,8 @@ async function NewsContent({ params }: Pick<Props, "params">) {
         <div className="card px-4">
           {/* 관련 기사도 같은 선수라 썸네일이 안 뜨면 이 선수 사진으로 바꾼다 */}
           <NewsTitleList items={news.more.map((n) => ({ ...n, playerPhotoUrl: news.playerPhotoUrl }))} />
+          {/* 더 지난 기사는 뉴스 탭에서 이 선수로 걸러 본다(이슈 #206) */}
+          <AllNewsLink player={news.player} className="border-t border-line py-2.5" />
         </div>
       </Section>
     </div>

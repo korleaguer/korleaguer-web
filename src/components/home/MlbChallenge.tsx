@@ -181,7 +181,8 @@ function rank(p: PostingPlayer): number {
  * - 한 명이면 원소속 구단 색 띠 + 띠에 걸친 사진 + 이름 + 흐린 한 줄(구단 · 포지션 · 출생 연도).
  * - '마지막 4일' 그래프 자리에 '행선지로 거론된 구단'(서버가 기사마다 AI로 고른 것, 최근 7일).
  * - '역대 포스팅 계약'은 휴대폰·PC 모두 접기 줄(매일 같은 목록이라 늘 펼쳐 두지 않는다).
- * - 관련 기사: 휴대폰은 2건 + '더 보기', PC는 카드 오른쪽 칸 전체가 기사(3건 + '더 보기'). 기사가 없으면 PC 오른쪽은 역대 계약.
+ * - 관련 기사: 휴대폰은 2건, PC는 카드 오른쪽 칸 전체가 기사(3건). 더 있으면 '전체 기사 보기'로 뉴스 탭에서 본다(이슈 #206).
+ *   기사가 없으면 PC 오른쪽은 역대 계약.
  * 포스팅 선수가 여러 명일 때 모양은 나중에 다듬는다(사용자 11-12 "흔한 상황이 아니라 묻어둘게").
  */
 export default async function MlbChallenge({ posting }: { posting: PostingSummary }) {
@@ -197,6 +198,8 @@ export default async function MlbChallenge({ posting }: { posting: PostingSummar
   );
   const single = players.length === 1 ? players[0] : null;
   const news = newsOf(players);
+  // '전체 기사 보기': 한 명이면 그 선수로 거른 뉴스 탭, 여러 명이면 전체
+  const newsPlayer = single?.nameKo ?? null;
   // 기사가 하나도 없으면(협상 초반·덜 알려진 선수) PC 오른쪽 칸이 비지 않게 역대 계약을 펼쳐 둔다
   const historyOnRight = news.length === 0 && signings.length > 0;
   // 띠가 있으면 오른쪽 칸을 띠 아래 20px에서 시작한다(띠의 lg:-mt-5가 카드 위 여백을 먹는다)
@@ -235,7 +238,7 @@ export default async function MlbChallenge({ posting }: { posting: PostingSummar
             </div>
           )}
           <div className="lg:hidden">
-            <PostingNews items={news} shown={NEWS_SHOWN_PHONE} />
+            <PostingNews items={news} shown={NEWS_SHOWN_PHONE} player={newsPlayer} />
           </div>
         </div>
         {twoColumns && (
@@ -243,7 +246,7 @@ export default async function MlbChallenge({ posting }: { posting: PostingSummar
             {historyOnRight ? (
               <SigningList signings={signings} />
             ) : (
-              <PostingNews items={news} shown={NEWS_SHOWN_PC} flush />
+              <PostingNews items={news} shown={NEWS_SHOWN_PC} player={newsPlayer} flush />
             )}
           </div>
         )}
