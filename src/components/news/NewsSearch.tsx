@@ -10,7 +10,8 @@ import { NEWS_QUERY_MAX, newsHref } from "@/lib/news";
 const TYPING_PAUSE_MS = 350;
 
 /**
- * 뉴스 탭 검색창(이슈 #214). 제목·내용에 그 말이 있는 기사만 보인다(주소 ?q=, 고른 선수 안에서).
+ * 뉴스 탭 검색창(이슈 #214). 제목(영어 기사는 한국어 제목)에 그 말이 있는 기사만 보인다(주소 ?q=, 고른 선수 안에서).
+ * 요약은 찾지 않는다: 목록에 제목만 보여 요약에만 있는 기사는 왜 나왔는지 알 수 없었다(이슈 #217).
  * - 입력하다 잠깐 멈추면 바로 찾고, 검색 키(엔터)를 누르면 곧바로 찾으면서 키보드를 내린다. 기록은 쌓지 않는다(replace).
  * - 검색창을 눌렀는데 비어 있으면 '자주 나온 말' 알약을 보인다(FotMob 검색의 추천 알약 참고). 누르면 그 말로 찾는다.
  *   알약은 api가 지금 범위의 최근 기사에서 센 것이라 누르면 대개 그 수만큼 나온다.
@@ -104,7 +105,7 @@ export default function NewsSearch({
           type="search"
           enterKeyHint="search"
           aria-label={player ? `${player} 기사 검색` : "기사 검색"}
-          placeholder={player ? `${player} 기사에서 찾기` : "기사 제목·내용으로 찾기"}
+          placeholder={player ? `${player} 기사에서 찾기` : "기사 제목으로 찾기"}
           maxLength={NEWS_QUERY_MAX}
           value={value}
           onChange={(e) => onChange(e.target.value)}

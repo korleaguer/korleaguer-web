@@ -271,7 +271,7 @@ export interface NewsList {
 
 export interface NewsTopic {
   word: string;
-  /** 최근 기사 묶음 가운데 제목·요약에 이 말이 있는 수 */
+  /** 최근 기사 묶음 가운데 제목에 이 말이 있는 수 */
   count: number;
 }
 
@@ -1195,7 +1195,7 @@ export const getNews = cache(async (id: number) => {
 
 /**
  * GET /api/news: 뉴스 탭 한 쪽. player(한글 이름)가 null이면 전체, before는 앞 쪽의 next(null이면 첫 쪽),
- * q는 검색어(제목·요약, null이면 거르지 않음). 기사 목록 API가 없는 옛 api면 notFound다
+ * q는 검색어(제목, null이면 거르지 않음). 기사 목록 API가 없는 옛 api면 notFound다
  */
 export const getNewsList = cache(async (player: string | null, before: string | null, q: string | null = null) => {
   await connection();
