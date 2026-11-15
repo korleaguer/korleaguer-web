@@ -24,8 +24,9 @@ export default function SiteHeader() {
           className="flex items-center gap-[7px] rounded-lg transition-[opacity,scale] duration-200 active:scale-[0.96] motion-reduce:transition-none motion-reduce:active:scale-100 motion-reduce:active:opacity-70 in-app:pointer-events-none group-data-titled:opacity-0"
         >
           <LogoMark className="size-[1.625rem] shrink-0" />
-          {/* 영어 이름이라 화면 낭독기가 영어로 읽게 lang="en". 워드마크만 자간을 heading(-0.02em)보다 한 단계 좁힌다 */}
-          <span lang="en" className="whitespace-nowrap text-heading tracking-[-0.03em]">
+          {/* 영어 이름이라 화면 낭독기가 영어로 읽게 lang="en". 워드마크만 자간을 heading(-0.02em)보다 한 단계 좁힌다.
+              좁은 휴대폰(384px 이하, 아이폰 미니·SE 등)은 메뉴 4칸(홈·선수·뉴스·내 선수)이 한 줄에 들어가게 글자를 숨기고 로고 그림만 둔다(낭독기는 읽는다) */}
+          <span lang="en" className="whitespace-nowrap text-heading tracking-[-0.03em] max-[24rem]:sr-only">
             KOR Leaguer
           </span>
         </Link>
