@@ -21,7 +21,7 @@ const TYPING_PAUSE_MS = 350;
  *   남아 무엇으로 걸렀는지 늘 보인다. 보일 알약이 없으면(말이 적은 선수) 입력칸만 보인다.
  * - PC: 입력칸은 늘 보이고 그 밑에 알약을 늘 보인다(자리가 넉넉하다).
  * - 입력하다 잠깐 멈추면 바로 찾고, 검색 키(엔터)를 누르면 곧바로 찾으면서 키보드를 내린다. 기록은 쌓지 않는다(replace).
- * - 알약은 api가 지금 범위의 최근 기사에서 센 것이라 누르면 대개 그 수만큼 나온다(검색은 더 오래된 기사까지 찾는다).
+ * - 알약의 말은 api가 지금 범위의 최근 기사에서 고르고, 숫자는 누르면 나오는 줄 수다(기사 전체, korleaguer-server#167).
  */
 export default function NewsSearch({
   player,
@@ -255,7 +255,7 @@ function TopicChip({ word, count, href, on }: { word: string; count: number | nu
       replace
       scroll={false}
       aria-current={on ? "true" : undefined}
-      aria-label={on ? `‘${word}’ 검색 끄기` : `‘${word}’ 기사만 보기${count === null ? "" : `, 최근 ${count}건`}`}
+      aria-label={on ? `‘${word}’ 검색 끄기` : `‘${word}’ 기사만 보기${count === null ? "" : `, ${count}건`}`}
       onClick={() => haptic("select")}
       className={`press tap-target flex h-9 items-center whitespace-nowrap rounded-full px-3 text-label ${
         on
