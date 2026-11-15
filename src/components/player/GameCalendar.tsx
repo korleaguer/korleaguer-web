@@ -1,6 +1,6 @@
 "use client"; // 달·날짜를 누르면 달력과 아래 경기 줄을 바꿔야 해서 클라이언트 컴포넌트다.
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { GameLine, MinorGameLine, Role, RosterMove } from "@/lib/api";
 import { buildGameCalendar, lineOf, monthCells, monthSummary, type CalendarDay, type DayTone } from "@/lib/gameLog";
 import { haptic } from "@/lib/app";
@@ -8,6 +8,7 @@ import { moveTone } from "@/lib/moves";
 import { teamColor, teamColorById, teamLogoUrl, teamLogoUrlById } from "@/lib/teams";
 import TeamMark from "@/components/TeamMark";
 import GameRow from "./GameRow";
+import GameDetailSheet, { gamePkOf } from "./GameDetailSheet";
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -51,6 +52,9 @@ function dedupeRehab(moves: RosterMove[]): RosterMove[] {
     });
 }
 
+/** 상세 창을 열며 쌓은 주소 기록 표시(history.state의 키) */
+const SHEET_STATE = "korleaguerGameSheet";
+
 /** 이동 기록 날짜(미국 날짜) "2026-09-21" → "9.21" */
 function moveDay(date: string): string {
   return `${Number(date.slice(5, 7))}.${Number(date.slice(8, 10))}`;
@@ -61,13 +65,17 @@ function moveDay(date: string): string {
  * 칸마다 그날 결과(홈런·N안타·무안타·결장, 투수는 승리·세이브·무실점·N실점)를 쓰고, 날짜를 누르면 아래에 그날 경기 줄이 나온다.
  * 휴대폰은 칸이 좁아 짧은 말 하나, 넓은 화면(640px 이상)은 상대 로고·타수와 안타(투수는 이닝과 실점)·팀 결과까지 쓴다.
  * 처음에는 마지막 경기가 있는 달과 그달 마지막으로 뛴 날을 고른다. 그달 이동(콜업·강등·부상자 명단)은 달력 아래 한 줄로 둔다.
+ * 날짜를 누르면 그날 상세 창(GameDetailSheet: 하이라이트 영상·타석별 기록)도 뜬다(사용자 11-15 시안 B).
+ * 창이 열리면 주소에 ?game=경기번호를 붙인다: 뒤로 가기(앱의 안드로이드 뒤로 버튼 포함)로 닫히고, 그 주소로 들어오면 그 경기 창이 바로 열린다.
  */
 export default function GameCalendar({
+  playerId,
   games,
   minorGames,
   moves,
   role,
 }: {
+  playerId: number;
   games: GameLine[];
   minorGames: MinorGameLine[];
   moves: RosterMove[];
@@ -77,6 +85,70 @@ export default function GameCalendar({
   const [monthKey, setMonthKey] = useState(calendar.defaultMonth);
   const month = calendar.months.find((m) => m.key === monthKey) ?? calendar.months.at(-1) ?? null;
   const [dayKey, setDayKey] = useState(month?.defaultDay ?? null);
+
+  // ---- 상세 창 ----
+  const [sheetKey, setSheetKey] = useState<string | null>(null);
+  /** 창에서 앞뒤로 넘길 날짜들(누를 수 있는 날, 오래된 날부터) */
+  const order = useMemo(
+    () => [...calendar.days.values()].filter((d) => d.selectable).map((d) => d.key).sort(),
+    [calendar],
+  );
+  /** 경기 번호로 그날 찾기(주소의 ?game=) */
+  const dayOfGame = useCallback(
+    (gamePk: number) => [...calendar.days.values()].find((d) => d.selectable && d.entries.some((e) => gamePkOf(e) === gamePk)),
+    [calendar],
+  );
+
+  const showDay = useCallback((key: string) => {
+    setMonthKey(key.slice(0, 7));
+    setDayKey(key);
+    setSheetKey(key);
+  }, []);
+
+  const gameUrl = (key: string | null) => {
+    const url = new URL(window.location.href);
+    const day = key ? calendar.days.get(key) : null;
+    if (day) url.searchParams.set("game", String(gamePkOf(day.main)));
+    else url.searchParams.delete("game");
+    return url.pathname + url.search + url.hash;
+  };
+
+  // 창을 열 때 쌓는 주소 기록에 표시를 남긴다(SHEET_STATE). 닫을 때 그 기록이면 뒤로 가기로 지우고,
+  // 처음부터 ?game=으로 들어온 주소(표시 없음)면 주소에서 ?game=만 뺀다. Next는 우리 상태에 자기 상태를 덧붙인다
+  const openSheet = (key: string) => {
+    if (sheetKey === null) {
+      window.history.pushState({ [SHEET_STATE]: true }, "", gameUrl(key));
+    } else {
+      window.history.replaceState(window.history.state, "", gameUrl(key));
+    }
+    showDay(key);
+  };
+
+  const closeSheet = () => {
+    if (window.history.state?.[SHEET_STATE]) {
+      // 쌓은 기록을 지우면 popstate가 창을 닫는다
+      window.history.back();
+    } else {
+      window.history.replaceState(window.history.state, "", gameUrl(null));
+      setSheetKey(null);
+    }
+  };
+
+  // 뒤로·앞으로 가기: 주소의 ?game=에 맞춰 창을 열고 닫는다. 처음 들어온 주소에 ?game=이 있으면 그 경기 창을 연다
+  useEffect(() => {
+    const sync = () => {
+      const raw = new URLSearchParams(window.location.search).get("game");
+      const gamePk = raw && /^\d{1,10}$/.test(raw) ? Number(raw) : null;
+      const day = gamePk ? dayOfGame(gamePk) : undefined;
+      if (day) showDay(day.key);
+      else setSheetKey(null);
+    };
+    sync();
+    const onPop = () => sync();
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [dayOfGame, showDay]);
+
   if (!month) return null;
 
   const pitcher = role === "PITCHER";
@@ -93,10 +165,13 @@ export default function GameCalendar({
     setDayKey(calendar.months.find((m) => m.key === key)?.defaultDay ?? null);
   };
   const pickDay = (key: string) => {
-    if (key === shownDay) return;
     haptic("select");
     setDayKey(key);
+    openSheet(key);
   };
+  const sheetDay = sheetKey ? (calendar.days.get(sheetKey) ?? null) : null;
+  const sheetIndex = sheetKey ? order.indexOf(sheetKey) : -1;
+  const goTo = (key: string | undefined) => (key ? () => openSheet(key) : null);
 
   return (
     <div className="card overflow-hidden">
@@ -199,6 +274,33 @@ export default function GameCalendar({
           <p className="px-4 py-4 text-body text-muted">{pitcher ? "이 달에는 등판이 없어요." : "이 달에는 뛴 경기가 없어요."}</p>
         )}
       </div>
+      {/* 창을 닫은 뒤 다시 열기(날짜를 다시 눌러도 열린다) */}
+      {selected && (
+        <button
+          type="button"
+          onClick={() => {
+            haptic("select");
+            openSheet(selected.key);
+          }}
+          className="press-soft flex w-full items-center justify-center gap-1 border-t border-line py-2.5 text-label text-accent-ink"
+        >
+          경기 상세 · 영상 보기
+          <svg aria-hidden viewBox="0 0 16 16" className="size-3.5" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m6 3 5 5-5 5" />
+          </svg>
+        </button>
+      )}
+
+      {sheetDay && (
+        <GameDetailSheet
+          playerId={playerId}
+          role={role}
+          day={sheetDay}
+          onClose={closeSheet}
+          onPrev={goTo(sheetIndex > 0 ? order[sheetIndex - 1] : undefined)}
+          onNext={goTo(sheetIndex >= 0 && sheetIndex < order.length - 1 ? order[sheetIndex + 1] : undefined)}
+        />
+      )}
     </div>
   );
 }
