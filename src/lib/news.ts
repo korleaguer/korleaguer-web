@@ -94,3 +94,8 @@ export function uniqueByUrl<T extends { url: string; summary: string | null; lea
   }
   return [...byUrl.values()];
 }
+
+/** 뉴스 탭 주소. 선수를 주면 그 선수 기사로 거른 화면(/news?player=이정후), 아니면 전체 */
+export function newsHref(player?: string | null): string {
+  return player ? `/news?player=${encodeURIComponent(player)}` : "/news";
+}

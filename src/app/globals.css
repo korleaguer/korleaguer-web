@@ -854,3 +854,11 @@
     animation: none !important;
   }
 }
+
+/* 옆으로 미는 줄(뉴스 탭 선수 고르기): 스크롤 막대를 숨긴다. 손가락·트랙패드로 밀고, 키보드는 칸마다 Tab으로 옮긴다 */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
