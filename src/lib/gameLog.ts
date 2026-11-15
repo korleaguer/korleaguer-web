@@ -1,53 +1,15 @@
-// 선수 페이지 경기 기록을 줄로 묶는다(GameLogList). 메이저·마이너 경기를 최신부터 한 목록에 섞고,
-// 콜업·강등은 경기 사이 띠로, 달이 바뀌면 달 머리 줄, 이어진 메이저 결장은 한 줄로 접는다(사용자 11-13 시안 3번).
-import type { GameLine, MinorGameLine, Role, RosterMove } from "./api";
-import { formatEra, formatRate } from "./format";
+// 선수 페이지 경기 기록을 월 달력으로 묶는다(GameCalendar, 사용자 11-15 시안 D).
+// 메이저·마이너 경기를 한국 날짜별로 모아 날짜 칸 하나에 그날 결과 하나(홈런·N안타·결장 …)를 쓴다.
+// 같은 날 여러 경기(더블헤더, 메이저 결장 + 마이너 재활 경기)는 한 칸으로 합치고, 날짜를 누르면 그날 경기를 모두 보여 준다.
+import type { GameLine, MinorGameLine, Role } from "./api";
+import { formatDate, formatEra, formatInningsOuts, formatRate, formatSummary, formatTime } from "./format";
 
 /** 한 경기: 메이저(팀 경기, 결장 포함) 또는 마이너(뛴 경기만) */
 export type LogGame = { kind: "mlb"; game: GameLine } | { kind: "minor"; game: MinorGameLine; line: GameLine };
 
-export type GameLogItem =
-  /** 달 머리 줄: "9월" + "트리플A 10경기 .195 · 메이저 1경기" */
-  | { kind: "month"; key: string; month: number; summary: string }
-  | { kind: "game"; key: string; entry: LogGame }
-  /** 이어진 메이저 결장(투수는 등판 없음) 2경기 이상을 접은 한 줄. games는 최신부터 */
-  | { kind: "skip"; key: string; games: GameLine[] }
-  /** 콜업(up)·강등(down)·재활 경기 배정(rehab) 띠. date는 이동 기록의 미국 날짜 */
-  | { kind: "move"; key: string; tone: MoveTone; date: string };
-
-export type MoveTone = "up" | "down" | "rehab";
-
-/** 경기의 미국 날짜("2026-09-20"). 이동 기록 날짜가 미국 날짜라 맞춰 비교한다(한국 시간에서 14시간 빼면 미국 어디든 같은 날) */
-function usDate(startTimeKst: string): string {
-  return new Date(new Date(startTimeKst).getTime() + (9 - 14) * 3600_000).toISOString().slice(0, 10);
-}
-
-/** 두 날짜("2026-07-13") 사이 날 수. 앞 날짜가 비었으면 아주 큰 수 */
-function daysBetween(from: string, to: string): number {
-  return from ? (Date.parse(to) - Date.parse(from)) / 86_400_000 : Number.POSITIVE_INFINITY;
-}
-
-function monthOf(startTimeKst: string): number {
-  return Number(startTimeKst.slice(5, 7));
-}
-
-/**
- * 이동 기록이 단계를 바꾸는지: 메이저로 오르면 true, 마이너로 내려가면 false, 그 밖은 null.
- * 글자가 아니라 MLB 거래 종류(typeCode)와 옮긴 곳(toLevel)으로 본다.
- * 오름: 콜업(CU)·계약 선택(SE). 내림: 옵션(OPT)·아웃라이트(OUT)·마이너 팀 배정(ASG, 재활 제외).
- * 트레이드·클레임·계약은 옮긴 곳이 '메이저 구단'으로만 적혀 실제 메이저 명단인지 모르므로 보지 않는다
- * (고우석 7.5 트레이드는 트리플A로 가는 이적이었다). 부상자 명단·DFA·방출·FA 선언·출장 정지도 단계를 바꾸지 않는다.
- */
-function levelChange(m: RosterMove): boolean | null {
-  if (m.typeCode === "CU" || m.typeCode === "SE") return true;
-  if (m.typeCode === "OPT" || m.typeCode === "OUT") return false;
-  if (m.typeCode === "ASG") return isRehab(m) || m.toLevel !== "MINORS" ? null : false;
-  return null;
-}
-
-/** 재활 경기 배정(부상자 명단에 있는 메이저 선수가 마이너 경기에 나간다) */
-function isRehab(m: RosterMove): boolean {
-  return /재활 경기/.test(m.labelKo);
+/** 경기 한 줄 모양(GameLine). 마이너는 메이저 줄 모양으로 바꾼 것 */
+export function lineOf(entry: LogGame): GameLine {
+  return entry.kind === "mlb" ? entry.game : entry.line;
 }
 
 /**
@@ -90,13 +52,13 @@ function rate(lines: GameLine[], role: Role): string {
 }
 
 /**
- * 달 머리 줄 글: 단계마다 뛴 경기 수와 성적. 최근에 뛴 단계부터.
+ * 그달 성적 글: 단계마다 뛴 경기 수와 성적. 최근에 뛴 단계부터.
  * 예: "트리플A 10경기 .195 · 메이저 1경기". 그달에 뛴 경기가 없으면 '뛴 경기 없음'(투수는 '등판 없음')
  */
 export function monthSummary(entries: LogGame[], role: Role): string {
   const byLevel = new Map<string, GameLine[]>();
   for (const e of entries) {
-    const line = e.kind === "mlb" ? e.game : e.line;
+    const line = lineOf(e);
     if (!line.played) continue;
     const level = e.kind === "mlb" ? "메이저" : e.game.levelKo;
     const list = byLevel.get(level);
@@ -110,106 +72,226 @@ export function monthSummary(entries: LogGame[], role: Role): string {
 }
 
 /**
- * 메이저 경기(최신부터, 결장 포함)와 마이너 경기(최신부터)를 한 목록으로. role은 선수의 주 역할(달 머리 줄 성적·결장 글에 쓴다).
- * - 경기는 시작 시각 최신부터 섞는다. 마이너 경기 줄은 메이저와 같은 모양이다.
- * - 콜업·강등(단계가 실제로 바뀐 것)과 재활 경기 배정은 그날 경기와 그 전 경기 사이에 띠로 끼운다(이 시즌 것만, 첫 경기보다 앞선 것은 맨 끝).
- * - 이어진 메이저 결장 2경기 이상은 한 줄로 접는다(1경기는 그대로). 띠·달이 바뀌면 끊는다.
- * - 달 머리 줄은 그달 첫 줄 앞에 둔다.
+ * 날짜 칸 색(뜻):
+ * hr 가장 큰 활약(홈런, 승리투수·세이브) · multi 2안타 이상(투수는 1이닝 이상 무실점) · hit 1안타(투수는 1이닝 못 채운 무실점) ·
+ * zero 무안타·출전·실점 · off 결장(타자) · pending 경기 전·중·연기 · rest 등판 없음(투수, 칸을 칠하지 않는다)
  */
-export function buildGameLog(
-  games: GameLine[],
-  minorGames: MinorGameLine[],
-  moves: RosterMove[],
-  role: Role,
-): GameLogItem[] {
+export type DayTone = "hr" | "multi" | "hit" | "zero" | "off" | "pending" | "rest";
+
+/** 달력 날짜 칸 하나(그날 경기를 모두 합친 것) */
+export interface CalendarDay {
+  /** 한국 날짜 "2026-09-21" */
+  key: string;
+  day: number;
+  /** 그날 경기. 뛴 경기 먼저, 그다음 시작 시각 순 */
+  entries: LogGame[];
+  tone: DayTone;
+  /** 좁은 칸(휴대폰) 글자: "1안타", "홈런", "결장", "무실점", "08:05" */
+  label: string;
+  /** 넓은 칸 글자: "4타수 2안타", "1안타 1홈런", "1⅔이닝 무실점" */
+  detail: string;
+  /** 넓은 칸 아래 줄: "승 7-3", 여러 경기면 "2경기". 점수를 모르면(마이너) 빈 글 */
+  result: string;
+  /** 그날 경기 수(더블헤더면 2) */
+  count: number;
+  /** 로고·단계를 보여 줄 경기(뛴 경기 먼저) */
+  main: LogGame;
+  /** 화면 낭독기가 읽는 칸 이름: "9월 21일(월) 2타수 1안타 1볼넷" */
+  speech: string;
+  /** 누를 수 있는 칸인지(투수의 등판 없는 날은 아니다) */
+  selectable: boolean;
+}
+
+/** 달 하나: 달 칸과 달력 머리에 쓴다 */
+export interface CalendarMonth {
+  /** "2026-09" */
+  key: string;
+  year: number;
+  month: number;
+  /** 그달 경기(뛴 경기·결장 포함). 0이면 빈 달(부상 등) */
+  entries: LogGame[];
+  /** 처음 고를 날짜(그달 마지막으로 뛴 날, 없으면 마지막 누를 수 있는 날). 없으면 null */
+  defaultDay: string | null;
+}
+
+export interface GameCalendarData {
+  /** 첫 경기 달부터 마지막 경기 달까지 빠짐없이(경기 없는 달도 넣는다) */
+  months: CalendarMonth[];
+  days: Map<string, CalendarDay>;
+  /** 처음 펼칠 달: 마지막 경기가 있는 달 */
+  defaultMonth: string | null;
+}
+
+/** 한국 날짜 "2026-09-21". startTimeKst는 +09:00 시각이라 앞 10자가 한국 날짜다 */
+export function kstDay(startTimeKst: string): string {
+  return startTimeKst.slice(0, 10);
+}
+
+const RESULT_KO = { W: "승", L: "패", T: "무" } as const;
+
+/** 넓은 칸 아래 줄 "승 7-3". 점수를 모르면 빈 글 */
+function resultText(line: GameLine): string {
+  if (line.teamScore == null || line.opponentScore == null) return "";
+  const head = line.result ? `${RESULT_KO[line.result]} ` : "";
+  return `${head}${line.teamScore}-${line.opponentScore}`;
+}
+
+/** 끝나지 않은 경기의 칸 글자: 경기 중 · 연기 · 취소 · 시작 시각 */
+function pendingLabel(line: GameLine): string {
+  if (line.gameStatus === "in_progress") return "경기중";
+  if (line.gameStatus === "postponed" || line.gameStatus === "suspended") return "연기";
+  if (line.gameStatus === "cancelled") return "취소";
+  return formatTime(line.startTimeKst);
+}
+
+type Look = Pick<CalendarDay, "tone" | "label" | "detail">;
+
+/** 타자가 뛴 경기(그날 모두)를 합친 칸 */
+function hitterLook(played: GameLine[]): Look {
+  const known = played.filter((l) => l.batting);
+  // 기록을 못 받았으면(숫자 없음) 뛰었다는 것만
+  if (known.length === 0) return { tone: "zero", label: "출전", detail: "출전" };
+  const ab = known.reduce((s, l) => s + (l.batting?.atBats ?? 0), 0);
+  const hits = known.reduce((s, l) => s + (l.batting?.hits ?? 0), 0);
+  const hr = known.reduce((s, l) => s + (l.batting?.homeRuns ?? 0), 0);
+  if (hr > 0) return { tone: "hr", label: hr > 1 ? `${hr}홈런` : "홈런", detail: `${hits}안타 ${hr}홈런` };
+  if (hits >= 2) return { tone: "multi", label: `${hits}안타`, detail: `${ab}타수 ${hits}안타` };
+  if (hits === 1) return { tone: "hit", label: "1안타", detail: `${ab}타수 1안타` };
+  // 타수 없이 뛴 날(대주자·대수비·볼넷만): 한 경기면 그 한 줄('1볼넷', '1도루', '출전')을 넓은 칸에 쓴다
+  if (ab === 0) return { tone: "zero", label: "출전", detail: played.length === 1 ? formatSummary(played[0].summary) : "출전" };
+  return { tone: "zero", label: "무안타", detail: `${ab}타수 무안타` };
+}
+
+/** 투수가 던진 경기(그날 모두)를 합친 칸. 승리투수·세이브 > 1이닝 이상 무실점 > 무실점 > N실점 */
+function pitcherLook(played: GameLine[]): Look {
+  const known = played.filter((l) => l.pitching);
+  if (known.length === 0) return { tone: "zero", label: "등판", detail: "등판" };
+  const outsKnown = known.every((l) => l.pitching?.outs != null);
+  const outs = known.reduce((s, l) => s + (l.pitching?.outs ?? 0), 0);
+  const runs = known.reduce((s, l) => s + (l.pitching?.runs ?? 0), 0);
+  const runsText = runs === 0 ? "무실점" : `${runs}실점`;
+  // 아웃 1~2개는 "0⅓"이 아니라 "⅓"(경기 한 줄 기록과 같은 표기)
+  const innings = formatInningsOuts(outs).replace(/^0(?=[⅓⅔])/, "");
+  const detail = outsKnown ? `${innings}이닝 ${runsText}` : runsText;
+  if (known.some((l) => l.pitching?.win)) return { tone: "hr", label: "승리", detail };
+  if (known.some((l) => l.pitching?.save)) return { tone: "hr", label: "세이브", detail };
+  if (runs === 0) return { tone: outs >= 3 ? "multi" : "hit", label: "무실점", detail };
+  return { tone: "zero", label: runsText, detail };
+}
+
+/** 그날 경기들로 칸 하나를 만든다. entries는 같은 한국 날짜의 경기 */
+function buildDay(key: string, entries: LogGame[], role: Role): CalendarDay {
+  // 뛴 경기 먼저, 그다음 시작 시각 순(더블헤더 1차전 → 2차전)
+  const sorted = [...entries].sort(
+    (a, b) =>
+      Number(lineOf(b).played) - Number(lineOf(a).played) ||
+      lineOf(a).startTimeKst.localeCompare(lineOf(b).startTimeKst),
+  );
+  const lines = sorted.map(lineOf);
+  const played = lines.filter((l) => l.played);
+  const main = sorted[0];
+  const mainLine = lines[0];
+  // 그날 실제로 치른(또는 치를) 경기 수. 메이저 결장 + 마이너 재활 경기처럼 팀이 다른 날은 뛴 경기만 센다
+  const count = played.length > 0 ? played.length : lines.length;
+
+  let look: Look;
+  if (played.length > 0) {
+    look = role === "PITCHER" ? pitcherLook(played) : hitterLook(played);
+  } else if (lines.every((l) => l.gameStatus === "final")) {
+    // 팀은 경기했는데 안 뛰었다. 타자에겐 결장이 소식이고, 투수에겐 등판 없는 날이 보통이라 칸을 칠하지 않는다
+    look = role === "PITCHER" ? { tone: "rest", label: "", detail: "" } : { tone: "off", label: "결장", detail: "결장" };
+  } else {
+    // 아직 끝나지 않은 경기가 있으면 그 경기를 쓴다(더블헤더 1차전 결장 뒤 2차전 예정이면 '결장' 대신 2차전 시각)
+    const next = lines.find((l) => l.gameStatus !== "final") ?? mainLine;
+    const label = pendingLabel(next);
+    look = { tone: "pending", label, detail: label === formatTime(next.startTimeKst) ? `${label} 시작` : label };
+  }
+
+  const speechLines = sorted
+    .filter((e) => played.length === 0 || lineOf(e).played)
+    .map((e) => `${e.kind === "minor" ? `${e.game.levelKo} ` : ""}${lineOf(e).summary}`);
+  const speech = `${formatDate(key)}${count > 1 ? ` 더블헤더 ${count}경기` : ""} ${
+    look.tone === "rest" ? "등판 없음" : speechLines.join(", ")
+  }`;
+
+  return {
+    key,
+    day: Number(key.slice(8, 10)),
+    entries: sorted,
+    ...look,
+    result: count > 1 ? `${count}경기` : resultText(mainLine),
+    count,
+    main,
+    speech,
+    selectable: look.tone !== "rest",
+  };
+}
+
+/**
+ * 메이저 경기(결장 포함)와 마이너 경기를 달력으로 묶는다. role은 선수의 주 역할(칸 글자·달 성적에 쓴다).
+ * 달은 첫 경기 달부터 마지막 경기 달까지 빠짐없이 만든다. 경기가 없는 달(시즌 내내 부상 등)도 칸으로 남겨 비었다는 걸 보여 준다.
+ */
+export function buildGameCalendar(games: GameLine[], minorGames: MinorGameLine[], role: Role): GameCalendarData {
   const base = games[0] ?? null;
   const who = { playerId: base?.playerId ?? 0, nameKo: base?.nameKo ?? "", role, photoUrl: base?.photoUrl ?? null };
   const entries: LogGame[] = [
     ...games.map((g): LogGame => ({ kind: "mlb", game: g })),
     ...minorGames.map((m): LogGame => ({ kind: "minor", game: m, line: minorAsLine(m, who) })),
-  ].sort((a, b) => b.game.startTimeKst.localeCompare(a.game.startTimeKst));
-  if (entries.length === 0) return [];
+  ];
+  if (entries.length === 0) return { months: [], days: new Map(), defaultMonth: null };
 
-  const startOf = (e: LogGame) => e.game.startTimeKst;
-  const first = entries[entries.length - 1];
-  const oldest = usDate(startOf(first));
-  // 실제로 단계가 바뀐 이동만 띠로 둔다. 이미 마이너에 있는 선수를 40인 명단에서 빼는 '이관'처럼
-  // 같은 방향이 이어지면 뺀다(마이너에서 던지는 중인데 '마이너로 내려감'이 붙지 않게).
-  // 상태는 지난 이동에서 이어 오되, 첫 경기 때는 실제로 뛴 곳으로 다시 맞춘다(지난 시즌 끝 상태가 개막과 다를 수 있다:
-  // 고우석은 지난 시즌 메이저로 끝났지만 개막을 트리플A에서 맞아, 4.8 더블A 배정이 '내려감'으로 보이면 안 된다).
-  // 재활 경기 배정은 단계를 바꾸지 않지만, 부상 중 메이저 선수가 왜 트리플A 줄에 있는지 알려 주려고 흐린 띠로 둔다.
-  let up: boolean | null = null;
-  let synced = false;
-  const kept: { date: string; tone: MoveTone }[] = [];
-  let lastRehab = "";
-  for (const m of [...moves].sort((a, c) => a.date.localeCompare(c.date))) {
-    if (!synced && m.date > oldest) {
-      up = first.kind === "mlb";
-      synced = true;
-    }
-    // 이 시즌의 이동만 띠로(마지막 경기 뒤의 이동, 예를 들어 오늘 콜업은 맨 위에, 첫 경기 전 것은 맨 끝에)
-    const shown = m.date.slice(0, 4) === oldest.slice(0, 4);
-    if (isRehab(m)) {
-      // 며칠 사이 단계를 옮겨 다시 배정되는 일이 많아(더블A → 트리플A) 열흘 안의 재활 배정은 첫 것 하나로
-      if (shown && daysBetween(lastRehab, m.date) > 10) kept.push({ date: m.date, tone: "rehab" });
-      lastRehab = m.date;
-      continue;
-    }
-    const dir = levelChange(m);
-    if (dir == null || dir === up) continue;
-    up = dir;
-    if (shown) kept.push({ date: m.date, tone: dir ? "up" : "down" });
-  }
-  const bands = kept.reverse();
-
-  const byMonth = new Map<number, LogGame[]>();
+  const byDay = new Map<string, LogGame[]>();
   for (const e of entries) {
-    const m = monthOf(startOf(e));
-    const list = byMonth.get(m);
+    const key = kstDay(lineOf(e).startTimeKst);
+    const list = byDay.get(key);
     if (list) list.push(e);
-    else byMonth.set(m, [e]);
+    else byDay.set(key, [e]);
   }
+  const days = new Map<string, CalendarDay>();
+  for (const [key, list] of byDay) days.set(key, buildDay(key, list, role));
 
-  const items: GameLogItem[] = [];
-  let lastMonth: number | null = null;
-  let b = 0;
-  for (let i = 0; i < entries.length; i++) {
-    const e = entries[i];
-    const day = usDate(startOf(e));
-    // 이 경기보다 늦은 이동은 이 경기 위에(콜업 당일 경기는 띠 위, 그 전 경기는 띠 아래)
-    while (b < bands.length && bands[b].date > day) {
-      const mv = bands[b++];
-      items.push({ kind: "move", key: `move-${mv.date}-${b}`, tone: mv.tone, date: mv.date });
-    }
-    const month = monthOf(startOf(e));
-    if (month !== lastMonth) {
-      items.push({ kind: "month", key: `month-${startOf(e).slice(0, 7)}`, month, summary: monthSummary(byMonth.get(month) ?? [], role) });
-      lastMonth = month;
-    }
-    if (e.kind === "mlb" && !e.game.played) {
-      // 같은 달 안, 사이에 띠가 끼지 않는 동안 이어진 결장을 모은다
-      let j = i;
-      const offMlb = (x: LogGame | undefined) => x?.kind === "mlb" && !x.game.played;
-      while (
-        j + 1 < entries.length &&
-        offMlb(entries[j + 1]) &&
-        monthOf(startOf(entries[j + 1])) === month &&
-        !(b < bands.length && bands[b].date > usDate(startOf(entries[j + 1])))
-      ) {
-        j++;
-      }
-      if (j > i) {
-        items.push({ kind: "skip", key: `skip-${e.game.gameId}`, games: entries.slice(i, j + 1).map((x) => x.game as GameLine) });
-        i = j;
-        continue;
-      }
-    }
-    items.push({ kind: "game", key: `${e.kind}-${e.kind === "mlb" ? e.game.gameId : e.game.gamePk}`, entry: e });
+  const keys = [...days.keys()].sort();
+  const keysByMonth = new Map<string, string[]>();
+  for (const k of keys) {
+    const list = keysByMonth.get(k.slice(0, 7));
+    if (list) list.push(k);
+    else keysByMonth.set(k.slice(0, 7), [k]);
   }
-  // 첫 경기보다 앞선 이동(시즌 첫 재활 배정 등)은 맨 끝에
-  while (b < bands.length) {
-    const mv = bands[b++];
-    items.push({ kind: "move", key: `move-${mv.date}-${b}`, tone: mv.tone, date: mv.date });
+  const first = keys[0];
+  const last = keys[keys.length - 1];
+  const months: CalendarMonth[] = [];
+  let year = Number(first.slice(0, 4));
+  let month = Number(first.slice(5, 7));
+  const endYear = Number(last.slice(0, 4));
+  const endMonth = Number(last.slice(5, 7));
+  while (year < endYear || (year === endYear && month <= endMonth)) {
+    const key = `${year}-${String(month).padStart(2, "0")}`;
+    const monthDays = (keysByMonth.get(key) ?? []).map((k) => days.get(k)!);
+    const lastPlayed = monthDays.filter((d) => d.entries.some((e) => lineOf(e).played)).at(-1);
+    const lastSelectable = monthDays.filter((d) => d.selectable).at(-1);
+    months.push({
+      key,
+      year,
+      month,
+      entries: monthDays.flatMap((d) => d.entries),
+      defaultDay: (lastPlayed ?? lastSelectable)?.key ?? null,
+    });
+    month += 1;
+    if (month > 12) {
+      month = 1;
+      year += 1;
+    }
   }
-  return items;
+  return { months, days, defaultMonth: last.slice(0, 7) };
+}
+
+/** 그달 달력 칸: 일요일부터 한 주 7칸. 앞뒤 빈칸은 null */
+export function monthCells(year: number, month: number): (number | null)[] {
+  // 시간대와 상관없게 UTC로 요일·날 수를 센다
+  const firstWeekday = new Date(Date.UTC(year, month - 1, 1)).getUTCDay();
+  const length = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  const cells: (number | null)[] = Array.from({ length: firstWeekday }, () => null);
+  for (let d = 1; d <= length; d++) cells.push(d);
+  while (cells.length % 7 !== 0) cells.push(null);
+  return cells;
 }
