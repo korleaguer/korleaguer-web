@@ -410,11 +410,15 @@ export interface SeasonMonth {
   games: number;
   /** 타자 타율. 투수거나 타수가 없으면 null */
   avg: number | null;
+  /** 타자 wRC+(그 단계 리그 평균 = 100, 메이저 달은 공식 시즌 값에 맞춤, korleaguer-server#175). 막대 높이. 옛 api면 없다 */
+  wrcPlus?: number | null;
   /** 투수 평균자책점. 타자거나 아웃이 없으면 null */
   era: number | null;
+  /** 투수 ERA+(그 단계 리그 평균 = 100, 높을수록 잘함, 300까지). 막대 높이. 옛 api면 없다 */
+  eraPlus?: number | null;
   /** 경기가 적은 달(타자 10경기·투수 5등판 미만). 막대를 옅게 */
   few: boolean;
-  /** 아주 잘한 달(메이저 타자 15경기 .330 이상, 투수 15이닝 2.00 이하). 숫자를 주황으로 */
+  /** 아주 잘한 달(메이저 타자 15경기 wRC+ 130 이상, 투수 15이닝 ERA+ 143 이상). 숫자를 주황으로 */
   hot: boolean;
 }
 
