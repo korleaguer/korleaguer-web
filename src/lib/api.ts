@@ -313,6 +313,23 @@ export interface LinkedTeam {
   doubted: number;
   /** 오늘(한국 날짜) 나온 기사에서 거론됐나 */
   today: boolean;
+  /** 거론으로 센 기사(같은 글은 대표 한 줄, 최근 순). 건수가 linked와 같다. 옛 api면 없다 */
+  articles?: LinkedArticle[];
+}
+
+/** 구단을 행선지로 거론한 기사 한 건 */
+export interface LinkedArticle {
+  id: number;
+  title: string;
+  titleKo: string | null;
+  publisher: string;
+  publishedAt: string;
+  imageUrl: string | null;
+  alsoBy: string[];
+  /** AI 요약에서 그 구단 이름이 처음 나온 문장. 없으면 null(제목을 보인다) */
+  reason: string | null;
+  /** reason(없으면 제목)에서 찾은 구단 이름 그대로. 화면이 강조한다 */
+  reasonName: string | null;
 }
 
 /** 지금 포스팅 제도(2018~)의 지난 기록. 결렬이면 deal·daysBeforeDeadline이 null */
