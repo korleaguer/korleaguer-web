@@ -13,7 +13,7 @@ function whole(value: number | null): string {
 /**
  * 선수 화면 '시즌별 기록': MLB 정규시즌 연도별 한 줄(최신부터, korleaguer-server#133).
  * 휴대폰 폭에 맞게 연도 아래 팀을 작게 쓰고, 숫자는 타자 경기·타율·홈런·OPS·wRC+·WAR, 투수 등판·이닝·평균자책점·탈삼진·ERA-·WAR.
- * KBO 기록은 아직 없다(선수 정보의 경력 줄이 대신한다).
+ * KBO 기록은 아직 없다(머리 카드의 '소속팀 사진' 줄, 그 줄이 없으면 정보 한 줄의 한국 시절이 대신한다).
  */
 export default function CareerSeasons({ seasons: all }: { seasons: CareerSeason[] }) {
   if (all.length === 0) return null;

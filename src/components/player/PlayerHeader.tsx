@@ -1,5 +1,7 @@
 import type { PlayerDetail } from "@/lib/api";
+import { formatBirthDate, formatBody, formatSummary } from "@/lib/format";
 import { kboTeamColor, teamColor } from "@/lib/teams";
+import ExternalLinkIcon from "@/components/ExternalLinkIcon";
 import InfoChips from "@/components/InfoChips";
 import PlayerSubline from "@/components/PlayerSubline";
 import MyPlayerToggle from "@/components/my/MyPlayerToggle";
@@ -10,6 +12,7 @@ import PhotoStage, { type Shot } from "@/components/player/PhotoStage";
  * 사진 오른쪽에 '내 선수' 넣기 버튼. 띠 색은 globals.css의 .team-band가 정한다(다크 모드에서는 어두운 팀 색을 밝힌다).
  * 과거 소속팀(KBO) 시절 사진이 있으면 '소속팀 사진' 알약으로 넘겨 본다(오래된 팀 → 지금 팀, 처음에는 지금 팀).
  * 과거 소속팀 사진은 api가 MLB 사진과 같은 틀(배경 없음, 같은 얼굴 크기)로 맞춘 편집본이라 넘겨도 원 안 얼굴이 그대로다.
+ * 알약 아래 흐린 한 줄이 선수 정보다(PlayerFacts).
  */
 export default function PlayerHeader({ player, isMine }: { player: PlayerDetail; isMine: boolean }) {
   const shots: Shot[] = [
@@ -45,7 +48,59 @@ export default function PlayerHeader({ player, isMine }: { player: PlayerDetail;
         </h1>
         <PlayerSubline player={player} className="mt-0.5" />
         <InfoChips player={player} className="mt-3" />
+        <PlayerFacts player={player} className="mt-2.5" />
       </PhotoStage>
     </section>
+  );
+}
+
+/**
+ * 알약 아래 선수 정보 한 줄: '우투좌타 · 183cm 89kg · 1998.08.20 · 2024 MLB 데뷔 · MLB 공식 페이지↗'.
+ * 예전에는 페이지 맨 아래(휴대폰) '선수 정보' 칸이었는데 거의 보이지 않아 머리로 올렸다(사용자 11-16 시안 C1, 이슈 #236).
+ * 소속팀·포지션·나이는 알약에 있어 뺀다. 한국 시절은 '소속팀 사진' 줄(키움 히어로즈 2017–2023)과 겹쳐서,
+ * 그 줄이 없는 선수('KBO 경력 없음 (고교 졸업 후 미국 진출)')만 여기에 쓴다. 영문 출생지는 뺐다.
+ * 값이 없는 항목은 빼고, 하나도 없으면 그리지 않는다. 좁으면 항목 단위로 줄을 바꾼다.
+ */
+function PlayerFacts({ player, className }: { player: PlayerDetail; className: string }) {
+  const birth = formatBirthDate(player.birthDate);
+  const body = formatBody(player.heightCm, player.weightKg);
+  const facts: { key: string; label: string; text: string }[] = [];
+  if (player.batsThrowsKo) facts.push({ key: "bt", label: "투타", text: player.batsThrowsKo });
+  if (body) facts.push({ key: "body", label: "키·몸무게", text: body });
+  if (birth) facts.push({ key: "birth", label: "생년월일", text: birth });
+  if (player.debutYear != null) facts.push({ key: "debut", label: "", text: `${player.debutYear} MLB 데뷔` });
+  if (player.careerKo && player.careerPhotos.length === 0) {
+    facts.push({ key: "career", label: "한국 시절", text: formatSummary(player.careerKo) });
+  }
+  if (facts.length === 0 && !player.mlbUrl) return null;
+
+  return (
+    <p className={`text-meta text-muted ${className}`}>
+      {facts.map((f, i) => (
+        <span key={f.key}>
+          {i > 0 && " · "}
+          {/* 짧은 항목은 쪼개지 않는다. 긴 한국 시절 문장만 좁은 화면·큰 글씨에서 줄을 바꾼다 */}
+          <span className={f.key === "career" ? "" : "whitespace-nowrap tabular-nums"}>
+            {f.label && <span className="sr-only">{`${f.label} `}</span>}
+            {f.text}
+          </span>
+        </span>
+      ))}
+      {player.mlbUrl && (
+        <>
+          {facts.length > 0 && " · "}
+          <a
+            href={player.mlbUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-0.5 whitespace-nowrap font-semibold text-accent-ink hover:underline"
+          >
+            MLB 공식 페이지
+            <ExternalLinkIcon />
+            <span className="sr-only"> (새 탭에서 열림)</span>
+          </a>
+        </>
+      )}
+    </p>
   );
 }
