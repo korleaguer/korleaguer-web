@@ -24,6 +24,11 @@ type Props = PageProps<"/records">;
 
 /** 순위표에서 처음 보이는 줄 수. 나머지는 '더 보기' */
 const TOP = 10;
+/**
+ * '넘은 선배'에 넣는 선배의 통산 값 하한. 도루 1개·타점 5개처럼 잠깐 뛴 선배를 넘은 것은 이야기가 안 된다
+ * (2026 운영 데이터: 21번 중 값 10 미만 8번을 빼면 13번, 남는 것은 강정호 233안타·이대호 14홈런 같은 것)
+ */
+const PASSED_MIN = 10;
 /** '다음 선배까지'에 보이는 선수 수 */
 const NEXT_PLAYERS = 4;
 
@@ -115,10 +120,11 @@ async function RecordsContent({ searchParams }: Pick<Props, "searchParams">) {
       </ul>
     </Section>
   );
-  const passed = groupPassed(records.passed);
+  const meaningful = records.passed.filter((p) => p.passedValue >= PASSED_MIN);
+  const passed = groupPassed(meaningful);
   const passedSection =
     passed.length > 0 ? (
-      <Section key="passed" title={`${records.season}년에 넘은 선배`} aside={`${records.passed.length}번`}>
+      <Section key="passed" title={`${records.season}년에 넘은 선배`} aside={`${meaningful.length}번`}>
         <ul className="card divide-y divide-line overflow-hidden">
           {passed.slice(0, 6).map((g) => (
             <PassedRow key={g.key} group={g} />

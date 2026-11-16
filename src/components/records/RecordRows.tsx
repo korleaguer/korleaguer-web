@@ -131,7 +131,7 @@ export function PassedRow({ group }: { group: PassedGroup }) {
         <PlayerAvatar nameKo={first.nameKo} photoUrl={first.photoUrl} teamAbbr={null} size={28} />
         <span className="w-12 shrink-0 text-heading">{first.nameKo}</span>
         <span className="shrink-0 rounded-full bg-surface-2 px-2 text-label text-neutral-pill-fg">{first.label}</span>
-        <span className="min-w-0 flex-1 text-body tabular-nums">
+        <span className="min-w-0 flex-1 text-meta tabular-nums">
           {names.map((p) => `${p.passedNameKo} ${count(p.passedValue)}`).join(" · ")}
         </span>
         <span className="shrink-0 text-caption text-muted tabular-nums">{when(items)}</span>
