@@ -1214,6 +1214,23 @@ function normalizeCareerSeason(raw: unknown): CareerSeason | null {
   };
 }
 
+function normalizeRecords(raw: RecordsResponse): RecordsResponse {
+  const id = (v: number | null | undefined) => (typeof v === "number" ? v : null);
+  return {
+    ...raw,
+    categories: (raw.categories ?? []).map((c) => ({
+      ...c,
+      leaders: (c.leaders ?? []).map((l) => ({ ...l, playerId: id(l.playerId), photoUrl: photoUrl(l.photoUrl) })),
+    })),
+    next: (raw.next ?? []).map((n) => ({ ...n, playerId: id(n.playerId), photoUrl: photoUrl(n.photoUrl) })),
+    passed: (raw.passed ?? []).map((p) => ({ ...p, playerId: id(p.playerId), photoUrl: photoUrl(p.photoUrl) })),
+    singleSeason: (raw.singleSeason ?? []).map((b) => ({
+      ...b,
+      rows: (b.rows ?? []).map((r) => ({ ...r, playerId: id(r.playerId) })),
+    })),
+  };
+}
+
 function normalizeMy(raw: MyPlayersResponse): MyPlayersResponse {
   return {
     ...raw,
@@ -1241,6 +1258,85 @@ function normalizeMy(raw: MyPlayersResponse): MyPlayersResponse {
 }
 
 // ---- 호출 ----
+
+/** 한국인 메이저리거 역대 기록(GET /api/records, 기록 탭). 모두 MLB 정규시즌 기록 */
+export interface RecordsResponse {
+  dataMode: DataMode;
+  season: number;
+  generatedAt: string;
+  /** 통산 순위. 타자(HITTING) 안타·홈런·경기·도루·타점, 투수(PITCHING) 승·탈삼진·세이브 */
+  categories: RecordCategory[];
+  /** 현역 선수마다·기록마다 바로 위 선수. 넘기 쉬운 순 */
+  next: RecordNext[];
+  /** 이번 시즌 현역이 현역 아닌 선배의 통산 값을 넘은 경기. 최근 것부터 */
+  passed: RecordPassed[];
+  /** 한 시즌 최다(안타·홈런·도루·승·탈삼진·세이브) 10위까지 */
+  singleSeason: RecordBest[];
+}
+
+export type RecordGroup = "HITTING" | "PITCHING";
+
+export interface RecordCategory {
+  key: string;
+  label: string;
+  group: RecordGroup;
+  /** 숫자 뒤에 붙이는 말: 336 + "안타" */
+  unit: string;
+  leaders: RecordLeader[];
+}
+
+export interface RecordLeader {
+  /** 같은 값이면 같은 등수 */
+  rank: number;
+  /** 명단 선수만(선수 화면 링크) */
+  playerId: number | null;
+  nameKo: string;
+  photoUrl: string | null;
+  value: number;
+  firstSeason: number;
+  lastSeason: number;
+  /** 지금 명단에 있고 국내로 돌아가지 않은 선수 */
+  active: boolean;
+}
+
+export interface RecordNext {
+  playerId: number | null;
+  nameKo: string;
+  photoUrl: string | null;
+  category: string;
+  label: string;
+  unit: string;
+  value: number;
+  rank: number;
+  targetNameKo: string;
+  targetValue: number;
+  targetActive: boolean;
+  /** 넘으려면 남은 수 */
+  toPass: number;
+  /** 넘으면 오르는 등수 */
+  rankAfter: number;
+}
+
+export interface RecordPassed {
+  playerId: number | null;
+  nameKo: string;
+  photoUrl: string | null;
+  category: string;
+  label: string;
+  unit: string;
+  /** 넘은 경기의 한국 날짜 "2026-05-17" */
+  dateKst: string;
+  passedNameKo: string;
+  passedValue: number;
+}
+
+export interface RecordBest {
+  key: string;
+  label: string;
+  group: RecordGroup;
+  unit: string;
+  rows: { rank: number; playerId: number | null; nameKo: string; season: number; value: number; active: boolean }[];
+}
 
 /** 호출 실패 이유. 화면은 이 값을 보고 안내 문구를 고른다. */
 export type ApiFailure = "unreachable" | "notFound" | "badResponse";
@@ -1334,6 +1430,13 @@ async function myPlayersFromApi(ids: string, days: number) {
   return result;
 }
 
+async function recordsFromApi() {
+  "use cache";
+  const result = await requestApi("/api/records", normalizeRecords);
+  cacheLife(result.ok ? { stale: 30, revalidate: 30, expire: 300 } : { stale: 0, revalidate: 1, expire: 2 });
+  return result;
+}
+
 // 경기 상세는 처음 열 때 api가 MLB에서 받아(요청 2번, 1초 간격) 조금 오래 걸린다
 const DETAIL_TIMEOUT_MS = 15_000;
 
@@ -1401,6 +1504,12 @@ const getMyPlayersCached = cache(async (ids: string, days: number) => {
 export function getMyPlayers(ids: readonly number[], days: number) {
   return getMyPlayersCached(ids.join(","), days);
 }
+
+/** GET /api/records: 한국인 메이저리거 역대 기록(기록 탭). 옛 api면 notFound */
+export const getRecords = cache(async () => {
+  await connection();
+  return recordsFromApi();
+});
 
 /** GET /api/players/{id}/games/{gamePk}: 경기 상세(타석별 기록·하이라이트). 옛 api면 notFound */
 export const getGameDetail = cache(async (playerId: number, gamePk: number) => {
