@@ -5,7 +5,7 @@ import DataBanners from "@/components/DataBanners";
 import LoadingBlock from "@/components/LoadingBlock";
 import MlbChallenge from "@/components/home/MlbChallenge";
 import OffseasonPlayers from "@/components/home/OffseasonPlayers";
-import RecentGames from "@/components/home/RecentGames";
+import SeasonFloors from "@/components/home/SeasonFloors";
 import SeasonLeaders from "@/components/home/SeasonLeaders";
 import SeasonStats from "@/components/home/SeasonStats";
 import PageSuspense from "@/components/PageSuspense";
@@ -32,7 +32,7 @@ async function HomeContent() {
   return (
     <div className="space-y-7">
       <DataBanners dataMode={home.dataMode} statsAvailable={home.statsAvailable} />
-      {/* 비시즌: 지난 경기 한 줄과 '시즌 1위' 카드 대신 선수 전원의 시즌 카드 */}
+      {/* 비시즌: 층과 '시즌 1위' 카드 대신 선수 전원의 시즌 카드 */}
       {home.offseason ? (
         <>
           {/* 포스팅 시즌: 이번 겨울 MLB에 도전하는 KBO 선수와 선배들의 계약 시기 */}
@@ -41,7 +41,8 @@ async function HomeContent() {
         </>
       ) : (
         <>
-          <RecentGames recent={home.recent} asOf={asOf} />
+          {/* 시즌 중: 선수들이 지금 어디서 뛰나(메이저·트리플A·부상 재활)를 층으로(이슈 #245) */}
+          <SeasonFloors recent={home.recent} asOf={asOf} />
           <SeasonLeaders
             season={home.season}
             statsAvailable={home.statsAvailable}
