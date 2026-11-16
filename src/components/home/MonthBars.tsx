@@ -91,7 +91,8 @@ function MonthColumn({ m, pitcher, stat }: { m: SeasonMonth; pitcher: boolean; s
       </span>
       <span aria-hidden className="flex h-10 w-full items-end px-[9px]">
         <span
-          className={`w-full ${has ? "rounded-t-[5px] rounded-b-[2px]" : "rounded-full"} ${has && m.few ? "opacity-35" : ""}`}
+          // 경기 적은 달은 옅게. 마이너 회색은 이미 옅어서(45%) 덜 빼야 막대가 남는다
+          className={`w-full ${has ? "rounded-t-[5px] rounded-b-[2px]" : "rounded-full"} ${has && m.few ? (m.kind === "MLB" ? "opacity-35" : "opacity-60") : ""}`}
           style={{ height, background: color }}
         />
       </span>
