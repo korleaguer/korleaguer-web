@@ -253,7 +253,7 @@
   --text-button--letter-spacing: 0;
   --text-button--font-weight: 600;
 
-  /* 안내·빈 상태 문장, 이유 한 줄, 선수 정보 값 */
+  /* 안내·빈 상태 문장, 이유 한 줄 */
   --text-body: 0.9375rem;
   --text-body--line-height: 1.5;
   --text-body--letter-spacing: 0;
