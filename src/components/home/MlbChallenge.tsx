@@ -238,7 +238,7 @@ export default async function MlbChallenge({ posting }: { posting: PostingSummar
           )}
           {singleRank != null && <RankLine rank={singleRank} total={signings.length} />}
           {single && isOpen(single) && single.linkedTeams && (
-            <LinkedTeams counts={single.linkedTeams} className="mt-5" pcBars />
+            <LinkedTeams counts={single.linkedTeams} className="mt-5" pcBars playerPhotoUrl={single.photoUrl} />
           )}
           {showHistory && (
             <div className={historyOnRight ? "lg:hidden" : undefined}>
