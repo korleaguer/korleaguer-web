@@ -6,8 +6,11 @@ import { usePathname, useRouter } from "next/navigation";
 import { useSyncExternalStore } from "react";
 import { appHas, postToApp } from "@/lib/app";
 
-/** 앱 아래 탭의 첫 화면(홈·선수·내 선수). 여기서는 뒤로 버튼을 두지 않는다. 앱(korleaguer-app src/app)의 탭과 같다 */
-const TAB_ROOTS = new Set(["/", "/players", "/my"]);
+/**
+ * 앱 아래 탭의 첫 화면. 여기서는 뒤로 버튼을 두지 않는다. 앱(korleaguer-app src/app)의 탭과 같다.
+ * 기록(/records)은 '내 선수' 자리에 새로 들어간 탭이고(이슈 #244), 옛 앱의 '내 선수' 탭(/my)도 남긴다.
+ */
+const TAB_ROOTS = new Set(["/", "/players", "/records", "/my"]);
 
 /** 앱 기능은 바뀌지 않으므로 구독할 것이 없다 */
 function subscribeNothing(): () => void {
