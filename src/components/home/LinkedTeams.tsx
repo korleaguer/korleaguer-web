@@ -124,10 +124,11 @@ export default function LinkedTeams({
                   type="button"
                   aria-haspopup="dialog"
                   onClick={() => open(t)}
-                  className="press inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-surface-2 py-1 pl-1.5 pr-2.5 text-label"
+                  className="press inline-flex cursor-pointer items-center gap-1 rounded-full bg-surface-2 py-1 pl-1 pr-2 text-label"
                 >
                   {body}
-                  <Chevron />
+                  {/* 누를 수 있다는 표시. 작게 붙여 알약 폭이 거의 늘지 않게(늘면 휴대폰에서 알약 줄이 하나 더 생긴다) */}
+                  <Chevron small />
                 </button>
               ) : (
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-2 py-1 pl-1.5 pr-3 text-label">
@@ -160,9 +161,9 @@ export default function LinkedTeams({
   );
 }
 
-function Chevron() {
+function Chevron({ small = false }: { small?: boolean }) {
   return (
-    <svg aria-hidden viewBox="0 0 16 16" className="size-3 shrink-0 text-muted" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg aria-hidden viewBox="0 0 16 16" className={`shrink-0 text-muted ${small ? "size-2.5" : "size-3"}`} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M6 3.5 10.5 8 6 12.5" />
     </svg>
   );
