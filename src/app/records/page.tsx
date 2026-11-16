@@ -111,10 +111,11 @@ async function RecordsContent({ searchParams }: Pick<Props, "searchParams">) {
   const other = (param: "stat" | "best"): Record<string, string> =>
     param === "stat" ? (bestKey ? { best: bestKey } : {}) : { stat };
 
-  const nextSection = (
+  const nexts = nextPerPlayer(records.next);
+  const nextSection = nexts.length === 0 ? null : (
     <Section key="next" title={offseason ? `${records.season + 1}년에 넘을 선배` : "다음 선배까지"} aside="남은 수">
       <ul className="card divide-y divide-line overflow-hidden">
-        {nextPerPlayer(records.next).map((n) => (
+        {nexts.map((n) => (
           <NextRow key={`${n.nameKo}-${n.category}`} next={n} />
         ))}
       </ul>
