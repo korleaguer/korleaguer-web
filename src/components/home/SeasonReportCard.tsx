@@ -10,11 +10,12 @@ import BandPhoto from "@/components/my/BandPhoto";
 import { StatusBadge } from "@/components/my/FormSummary";
 import MyPlayerToggle from "@/components/my/MyPlayerToggle";
 import LinkedTeams from "@/components/home/LinkedTeams";
+import MonthBars from "@/components/home/MonthBars";
 import { type BadgeTone, levelKo, metaLine, otherTotalsLine, statusBadge } from "@/components/my/formLabels";
 
 /**
  * 판정 딱지(사용자 11-13 결정 'B4 채움 사다리', 이슈 #192): 알약은 칭찬에만 쓴다.
- * 좋은·짧았지만 좋았던 시즌 = 옅은 주황 알약(좋은 활약 색, 아래 🔥 자랑 알약과 한 식구), 제 몫 한 시즌 = 회색 알약,
+ * 좋은·짧았지만 좋았던 시즌 = 옅은 주황 알약(좋은 활약 색, 달별 막대의 주황 숫자와 한 식구), 제 몫 한 시즌 = 회색 알약,
  * 트리플A·마이너·출전 적음·아쉬운 시즌 = 알약 없이 흐린 글자. 아쉬운 시즌에 도장을 찍지 않아 11-12 '혹평 막기'를 지킨다.
  * 예전 초록(좋은 시즌)·파랑(제 몫)은 다른 화면의 '복귀·계약'·'나빠짐'과 뜻이 부딪혀 뺐다(Signal Color Rule).
  * 숫자 칸은 판정과 상관없이 회색이다.
@@ -39,7 +40,7 @@ const PILL_TONE: Record<BadgeTone, string> = {
 
 /**
  * 비시즌 홈 '시즌 성적표'의 선수 한 명(사용자 11-12 확정안). 판정 딱지 → 한 줄 제목 → 이유 한 줄 → 숫자 넷 →
- * 자랑 알약(서버가 잘한 시즌·트리플A 시즌에만 준다) → 이번 겨울 이동. '좋은 시즌'만 팀 색 무대와 큰 사진으로 키운다.
+ * 달별 막대(4~9월, 사용자 11-16 'B 보완') → 이번 겨울 이동. '좋은 시즌'만 팀 색 무대와 큰 사진으로 키운다.
  * 카드 어디를 눌러도 선수 페이지로 간다(이슈 #155, 이름 링크를 카드 전체로 넓힘). 별 버튼은 링크 위에서 제 동작만 한다.
  */
 export default function SeasonReportCard({
@@ -108,15 +109,8 @@ export default function SeasonReportCard({
 
         <Numbers entry={entry} report={report} />
 
-        {report.stories.length > 0 && (
-          <ul className="mt-2.5 flex flex-wrap gap-1.5">
-            {report.stories.map((s) => (
-              <li key={s}>
-                <StoryPill text={s} />
-              </li>
-            ))}
-          </ul>
-        )}
+        {/* 시즌 흐름: 달마다 막대(자랑 알약은 하루·한 구간이라 시즌을 설명하지 못해 바꿨다, 이슈 #239). 옛 api면 없다 */}
+        {report.months && <MonthBars months={report.months} pitcher={entry.player.role === "PITCHER"} />}
 
         {(report.winterMoves.length > 0 || news.length > 0 || linked) && (
           // 링크 위(relative z-10)에 올려 기사 줄·전체 기사 보기가 제 동작을 한다(카드 링크는 선수 페이지)
@@ -169,18 +163,6 @@ function StatusPill({ status }: { status: CardStatus }) {
     >
       <span aria-hidden className={`size-[7px] shrink-0 rounded-full ${badge.tone === "neutral" ? "bg-muted" : "bg-current"}`} />
       {badge.text}
-    </span>
-  );
-}
-
-/** 자랑 알약(연속 기록·최고 경기). 주황 = 기록이 만든 순간(The Hot Is Earned Rule) */
-function StoryPill({ text }: { text: string }) {
-  return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-hot-soft px-2 py-0.5 text-badge text-hot-ink">
-      <svg aria-hidden viewBox="0 0 12 12" className="size-3 fill-current">
-        <path d="M6.6 1c.3 1.7-.6 2.6-1.4 3.5C4.3 5.4 3.5 6.3 3.5 7.7 3.5 9.6 4.9 11 6.7 11c1.9 0 3.3-1.4 3.3-3.4 0-1.3-.6-2.2-1.2-2.8 0 .9-.4 1.5-1 1.8C8.1 4.6 7.9 2.4 6.6 1Z" />
-      </svg>
-      {text}
     </span>
   );
 }

@@ -369,14 +369,36 @@ export interface SeasonReport {
   level: "MLB" | "MINORS";
   /** 메이저 WAR(소수 한 자리). 좋은·제 몫 시즌에만 보인다 */
   war: number | null;
-  /** 자랑 알약(시즌 최장 연속 기록·최고 경기). 아쉬운·출전 적었던 시즌은 빈 목록 */
-  stories: string[];
+  /** 정규시즌 달마다 어디서 뛰었나와 타율·평균자책점(카드의 달별 막대, korleaguer-server#170). 옛 api면 없다 */
+  months?: SeasonMonth[];
   /** 시즌이 끝난 뒤 이동(FA 선언 등), 최근 순 */
   winterMoves: { date: string; label: string }[];
   /** 시즌이 끝난 뒤 나온 이 선수 기사(늦은 순, 같은 기사는 한 줄, 12건까지). 옛 api면 없다 */
   news?: NewsHeadline[];
   /** FA 선수의 행선지로 거론된 구단(최근 7일, 직전 구단 뺌). FA가 아니거나 거론이 없으면 null, 옛 api면 없다 */
   linkedTeams?: LinkedTeams | null;
+}
+
+/**
+ * 성적표 달 한 칸. kind: MLB 메이저 · MINORS 마이너(levelKo 단계) · INJURED 부상(재활 경기만 뛰었거나 경기 없이 부상자 명단) ·
+ * FREE_AGENT 팀 없음 · NONE 기록 없음. 기록(avg·era)은 MLB·MINORS에만 있다
+ */
+export interface SeasonMonth {
+  /** 4~9. 개막 직후 며칠(3월 말)은 4월 칸에 들어 있다 */
+  month: number;
+  kind: "MLB" | "MINORS" | "INJURED" | "FREE_AGENT" | "NONE";
+  /** 마이너 단계 이름("트리플A"). MINORS가 아니면 null */
+  levelKo: string | null;
+  /** 기록을 낸 경기 수(타자 경기, 투수 등판). 재활 경기는 세지 않는다 */
+  games: number;
+  /** 타자 타율. 투수거나 타수가 없으면 null */
+  avg: number | null;
+  /** 투수 평균자책점. 타자거나 아웃이 없으면 null */
+  era: number | null;
+  /** 경기가 적은 달(타자 10경기·투수 5등판 미만). 막대를 옅게 */
+  few: boolean;
+  /** 아주 잘한 달(메이저 타자 15경기 .330 이상, 투수 15이닝 2.00 이하). 숫자를 주황으로 */
+  hot: boolean;
 }
 
 /** GET /api/players 의 한 항목. 매칭 전 선수는 이름(한글)·역할 말고는 null일 수 있다 */
