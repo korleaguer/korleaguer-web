@@ -1,6 +1,7 @@
 "use client"; // 구단을 누르면 창을 열고, '외 n개 구단'에 마우스를 올리면 목록을 띄워야 해서 클라이언트 컴포넌트다.
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useId, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
+import { createPortal } from "react-dom";
 import type { LinkedTeams as LinkedTeamCounts } from "@/lib/api";
 import { haptic } from "@/lib/app";
 import { withTopicParticle } from "@/lib/format";
@@ -169,112 +170,144 @@ function Chevron() {
 
 /** 마우스를 떼고 이만큼 지나면 닫는다(글자에서 목록으로 옮겨 가는 사이에 닫히지 않게) */
 const HOVER_CLOSE_MS = 150;
+/** 목록 폭(px, w-64) */
+const LIST_WIDTH = 256;
 
 /**
  * '외 n개 구단'. PC는 마우스를 올리면, 휴대폰·키보드는 누르면 나머지 구단 목록이 뜬다(사용자 11-16).
- * 마우스 올리기만으로 열면 터치 노트북·키보드로는 볼 수 없어서 누르기로도 연다. 바깥을 누르거나 Esc로 닫는다.
+ * 마우스 올리기만으로 열면 터치 노트북·키보드로는 볼 수 없어서 누르기로도 연다. 바깥을 누르거나 Esc·스크롤로 닫는다.
+ * 목록은 body에 고정 위치로 띄운다(성적표 카드는 overflow-hidden이라 카드 안에 두면 아래가 잘린다).
  */
 function MoreTeams({ teams, onPick }: { teams: Team[]; onPick: (t: Team) => void }) {
-  const [open, setOpen] = useState(false);
-  const [alignRight, setAlignRight] = useState(false);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  const open = pos != null;
   const boxRef = useRef<HTMLSpanElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const closeTimer = useRef<number | null>(null);
+  /** 마우스를 올려서 열렸나(그 상태에서 누르면 닫지 않고 그대로 둔다) */
+  const byHover = useRef(false);
+  const listId = useId();
 
-  const show = () => {
+  const cancelClose = () => {
     if (closeTimer.current != null) window.clearTimeout(closeTimer.current);
     closeTimer.current = null;
-    // 목록 폭(256px)이 화면 오른쪽을 넘으면 글자 오른쪽 끝에 맞춘다(휴대폰에서 알약 줄 끝에 있을 때)
-    const rect = boxRef.current?.getBoundingClientRect();
-    setAlignRight(rect != null && rect.left + 256 > window.innerWidth - 16);
-    setOpen(true);
+  };
+  const show = (hover: boolean) => {
+    cancelClose();
+    const rect = buttonRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    byHover.current = hover;
+    // 화면 오른쪽을 넘으면 글자 오른쪽 끝에 맞춘다(휴대폰에서 알약 줄 끝에 있을 때)
+    const left = rect.left + LIST_WIDTH > window.innerWidth - 16 ? Math.max(16, rect.right - LIST_WIDTH) : rect.left;
+    setPos({ top: rect.bottom + 4, left });
+  };
+  const hide = () => {
+    cancelClose();
+    setPos(null);
+  };
+  const hideSoon = (e: ReactPointerEvent) => {
+    if (e.pointerType !== "mouse" || !byHover.current) return;
+    cancelClose();
+    closeTimer.current = window.setTimeout(() => setPos(null), HOVER_CLOSE_MS);
   };
 
   useEffect(() => {
     if (!open) return;
     const onDown = (e: PointerEvent) => {
-      if (!boxRef.current?.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      if (!boxRef.current?.contains(target) && !listRef.current?.contains(target)) setPos(null);
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        setOpen(false);
+        setPos(null);
         buttonRef.current?.focus();
       }
     };
+    const onScroll = () => setPos(null);
     document.addEventListener("pointerdown", onDown);
     document.addEventListener("keydown", onKey);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
     return () => {
       document.removeEventListener("pointerdown", onDown);
       document.removeEventListener("keydown", onKey);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
     };
   }, [open]);
 
-  useEffect(() => () => {
-    if (closeTimer.current != null) window.clearTimeout(closeTimer.current);
-  }, []);
+  useEffect(() => cancelClose, []);
 
-  const listId = `more-teams-${teams.map((t) => t.abbreviation).join("-")}`;
   return (
     <span
       ref={boxRef}
-      className="relative inline-block"
+      className="inline-block"
       onPointerEnter={(e) => {
-        if (e.pointerType === "mouse") show();
+        if (e.pointerType === "mouse" && (!open || byHover.current)) show(true);
       }}
-      onPointerLeave={(e) => {
-        if (e.pointerType !== "mouse") return;
-        closeTimer.current = window.setTimeout(() => setOpen(false), HOVER_CLOSE_MS);
-      }}
+      onPointerLeave={hideSoon}
     >
       <button
         ref={buttonRef}
         type="button"
         aria-expanded={open}
-        aria-controls={listId}
-        onClick={() => (open ? setOpen(false) : show())}
+        aria-controls={open ? listId : undefined}
+        onClick={() => {
+          // 마우스를 올려 열린 목록을 누르면 닫지 않고 고정한다(누른 사람은 보려는 것이다)
+          if (open && byHover.current) byHover.current = false;
+          else if (open) hide();
+          else show(false);
+        }}
         className="cursor-pointer py-1 text-caption text-muted underline decoration-dotted underline-offset-2 tabular-nums hover:text-foreground"
       >
         외 {teams.length}개 구단
       </button>
-      {open && (
-        <span
-          id={listId}
-          className={`absolute top-full z-20 mt-1 block w-64 rounded-xl border border-line bg-surface p-1.5 shadow-[var(--shadow-card-hover)] ${alignRight ? "right-0" : "left-0"}`}
-        >
-          <ul>
-            {teams.map((t) => {
-              const row = (
-                <>
-                  <TeamMark logoUrl={teamLogoUrl(t.abbreviation)} color={teamColor(t.abbreviation)} size="sm" />
-                  <span className="min-w-0 flex-1 truncate">{t.nameKo}</span>
-                  <span className="font-bold tabular-nums">{t.linked}건</span>
-                  {t.today && <span className="text-caption font-bold text-accent-ink">오늘</span>}
-                </>
-              );
-              return (
-                <li key={t.abbreviation}>
-                  {canOpen(t) ? (
-                    <button
-                      type="button"
-                      aria-haspopup="dialog"
-                      onClick={() => {
-                        setOpen(false);
-                        onPick(t);
-                      }}
-                      className="flex w-full cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-left text-label text-foreground no-underline hover:bg-surface-2"
-                    >
-                      {row}
-                      <Chevron />
-                    </button>
-                  ) : (
-                    <span className="flex items-center gap-2 px-2 py-1.5 text-label text-foreground">{row}</span>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        </span>
-      )}
+      {pos &&
+        createPortal(
+          <div
+            ref={listRef}
+            id={listId}
+            onPointerEnter={cancelClose}
+            onPointerLeave={hideSoon}
+            style={{ top: pos.top, left: pos.left, width: LIST_WIDTH }}
+            className="fixed z-40 rounded-xl border border-line bg-surface p-1.5 text-foreground shadow-[var(--shadow-card-hover)]"
+          >
+            <ul>
+              {teams.map((t) => {
+                const row = (
+                  <>
+                    <TeamMark logoUrl={teamLogoUrl(t.abbreviation)} color={teamColor(t.abbreviation)} size="sm" />
+                    <span className="min-w-0 flex-1 truncate">{t.nameKo}</span>
+                    <span className="font-bold tabular-nums">{t.linked}건</span>
+                    {t.today && <span className="text-caption font-bold text-accent-ink">오늘</span>}
+                  </>
+                );
+                return (
+                  <li key={t.abbreviation}>
+                    {canOpen(t) ? (
+                      <button
+                        type="button"
+                        aria-haspopup="dialog"
+                        onClick={() => {
+                          hide();
+                          onPick(t);
+                        }}
+                        className="flex w-full cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-left text-label hover:bg-surface-2"
+                      >
+                        {row}
+                        <Chevron />
+                      </button>
+                    ) : (
+                      <span className="flex items-center gap-2 px-2 py-1.5 text-label">{row}</span>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>,
+          document.body,
+        )}
     </span>
   );
 }
