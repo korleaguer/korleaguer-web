@@ -134,7 +134,7 @@ export default function SeasonReportCard({
             )}
             {/* FA 선수: 노시환 MLB 도전 카드와 같은 '행선지로 거론된 구단' 칩(이슈 #191, 서버가 FA에게만 준다).
                 FA 선언(이동) 다음, 기사 앞에 둔다 */}
-            {linked && <LinkedTeams counts={linked} className="mb-1 mt-3" />}
+            {linked && <LinkedTeams counts={linked} className="mb-1 mt-3" playerPhotoUrl={player.photoUrl} />}
             {news.length > 0 && (
               <>
                 <NewsTitleList items={news.slice(0, WINTER_NEWS_SHOWN)} />
