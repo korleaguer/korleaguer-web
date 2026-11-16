@@ -83,7 +83,7 @@ export function buildFloors(players: MyPlayer[], mine: readonly number[]): Floor
 export function findDerby(players: MyPlayer[]): [GameLine, GameLine] | null {
   const byGame = new Map<number, GameLine[]>();
   for (const entry of players) {
-    const last = entry.games[0];
+    const last = shownGame(entry);
     if (!last || !last.played || floorOf(entry).key !== "MLB") continue;
     byGame.set(last.gameId, [...(byGame.get(last.gameId) ?? []), last]);
   }
@@ -95,6 +95,14 @@ export function findDerby(players: MyPlayer[]): [GameLine, GameLine] | null {
   return null;
 }
 
+/**
+ * 보여 줄 경기: 최신 줄이 아직 시작 전(오늘 저녁 경기 등)이면 그 전의 끝난·진행 중 경기를 쓴다.
+ * 아침에 홈을 열었을 때 '경기 전'이 어젯밤 결과를 가리지 않게. 끝난 경기가 없으면 최신 줄 그대로
+ */
+function shownGame(entry: MyPlayer): GameLine | null {
+  return entry.games.find((g) => g.gameStatus !== "scheduled" && g.gameStatus !== "postponed") ?? entry.games[0] ?? null;
+}
+
 /** "2026-07-07" → "7월 7일" */
 function monthDay(date: string): string {
   const [, m, d] = date.split("-");
@@ -104,7 +112,7 @@ function monthDay(date: string): string {
 /** 이름 아래 한 줄: 마지막 경기 한 줄 기록(부상이면 재활 경기, FA면 마지막 경기) */
 function lineOf(entry: MyPlayer): { text: string; game: GameLine | null } {
   const status = entry.status;
-  const game = entry.games[0] ?? null;
+  const game = shownGame(entry);
   if (status?.kind === "IL" || status?.kind === "MINORS_IL") {
     if (entry.basis === "REHAB" && game) return { text: `재활 경기 ${formatSummary(game.summary)}`, game };
     return { text: status.kind === "IL" ? "부상자 명단" : "마이너 부상자 명단", game: null };
@@ -241,7 +249,8 @@ function FloorRow({ entry, starred }: { entry: MyPlayer; starred: boolean }) {
           {move && <span className="mt-0.5 block text-label text-success-fg">{move}</span>}
         </span>
         <span className="flex shrink-0 flex-col items-end gap-1">
-          {game && <ResultPill result={game.result} />}
+          {/* 결장한 경기의 팀 승패는 그 선수 이야기가 아니라 뺀다 */}
+          {game && game.played && <ResultPill result={game.result} />}
           {side && <span className="text-caption text-muted tabular-nums">{side}</span>}
         </span>
       </Link>
