@@ -8,9 +8,9 @@ import LoadingBlock from "@/components/LoadingBlock";
 import NotFoundNotice from "@/components/NotFoundNotice";
 import CareerSeasons from "@/components/player/CareerSeasons";
 import GameLog from "@/components/player/GameLog";
+import JumpNav, { type JumpTarget } from "@/components/player/JumpNav";
 import LeaguePosition from "@/components/player/LeaguePosition";
 import PlayerHeader from "@/components/player/PlayerHeader";
-import PlayerInfo from "@/components/player/PlayerInfo";
 import PlayerNews from "@/components/player/PlayerNews";
 import RosterMoves from "@/components/player/RosterMoves";
 import SeasonSummary from "@/components/player/SeasonSummary";
@@ -83,11 +83,21 @@ async function PlayerContent({ params }: Pick<Props, "params">) {
   } = result.data;
   // 타격 흐름(누적 wRC+)은 타자만. 마지막 점을 MLB 공식 시즌 wRC+에 맞춘다
   const trend = saber?.kind === "hitter" && saber.wrcPlus != null ? buildWrcTrend(games, saber.wrcPlus) : null;
+  // 바로 가기 탭(휴대폰·태블릿): 있는 칸만, 휴대폰에서 쌓이는 순서대로. id는 각 칸 제목(h2)
+  const jumps: JumpTarget[] = [
+    { id: "season-title", label: "성적" },
+    ...(news.length > 0 ? [{ id: "news-title", label: "기사" }] : []),
+    { id: "games-title", label: "경기" },
+    ...(seasons.length > 0 ? [{ id: "seasons-title", label: "시즌별" }] : []),
+    ...(moves ? [{ id: "moves-title", label: "이동" }] : []),
+  ];
   return (
     <div className="space-y-4 sm:space-y-5">
       <DataBanners dataMode={dataMode} statsAvailable={statsAvailable} />
       <PlayerHeader player={player} isMine={myIds.includes(player.id)} />
-      {/* 넓은 화면: 왼쪽 시즌 성적·MLB 중 위치(백분위)·흐름·경기 기록·시즌별 기록 | 오른쪽 선수 정보·기사·이동 기록 */}
+      <JumpNav targets={jumps} />
+      {/* 넓은 화면: 왼쪽 시즌 성적·MLB 중 위치(백분위)·흐름·경기 기록·시즌별 기록 | 오른쪽 기사·이동 기록.
+          선수 정보(투타·키·생년월일·데뷔)는 머리 카드 알약 아래 한 줄이다(이슈 #236) */}
       <div className="space-y-7 pt-2 lg:grid lg:grid-cols-[minmax(0,1fr)_21.25rem] lg:items-start lg:gap-x-4 lg:space-y-0">
         <div className="min-w-0 space-y-7">
           <SeasonSummary
@@ -113,9 +123,8 @@ async function PlayerContent({ params }: Pick<Props, "params">) {
           <GameLog playerId={player.id} games={games} minorGames={minorGames} moves={moves ?? []} role={player.role} />
           <CareerSeasons seasons={seasons} />
         </div>
-        {/* 오른쪽 칸: 선수 정보 + 기사(PC) + 이동 기록(메이저·마이너 오간 날짜) */}
+        {/* 오른쪽 칸: 기사(PC) + 이동 기록(메이저·마이너 오간 날짜) */}
         <div className="min-w-0 space-y-7">
-          <PlayerInfo player={player} />
           {news.length > 0 && (
             <div className="hidden lg:block">
               <PlayerNews id="news-title-pc" news={news} photoUrl={player.photoUrl} player={player.nameKo} />

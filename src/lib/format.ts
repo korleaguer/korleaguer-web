@@ -121,13 +121,13 @@ export function formatBirthDate(value: string | null): string | null {
   return m ? `${m[1]}.${m[2]}.${m[3]}` : null;
 }
 
-/** 키·몸무게: "188cm · 86kg". 하나만 있으면 그것만, 둘 다 없으면 null */
+/** 키·몸무게: "188cm 86kg"(가운뎃점으로 나눈 정보 줄 안에 들어가서 둘 사이는 띄어쓰기). 하나만 있으면 그것만, 둘 다 없으면 null */
 export function formatBody(heightCm: number | null, weightKg: number | null): string | null {
   const parts = [
     heightCm != null && `${Math.round(heightCm)}cm`,
     weightKg != null && `${Math.round(weightKg)}kg`,
   ].filter(Boolean);
-  return parts.length > 0 ? parts.join(" · ") : null;
+  return parts.length > 0 ? parts.join(" ") : null;
 }
 
 /** 마지막 글자가 받침 있는 한글인지. 한글이 아닌 글자로 끝나면 false */
