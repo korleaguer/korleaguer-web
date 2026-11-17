@@ -29,7 +29,7 @@ interface Floor {
   key: FloorKey;
   title: string;
   /** 왼쪽 점·제목 색 */
-  tone: "accent" | "muted" | "danger" | "fa" | "success";
+  tone: "accent" | "muted" | "danger" | "fa";
   players: MyPlayer[];
 }
 
@@ -51,7 +51,9 @@ function floorOf(entry: MyPlayer): { key: FloorKey; title: string; tone: Floor["
     case "FA":
       return { key: "FA", title: "FA · 팀 찾는 중", tone: "fa" };
     case "KBO":
-      return { key: "KBO", title: "한국 복귀", tone: "success" };
+      // 국내 리그로 돌아간 선수는 상태 배지처럼 회색 점이다(초록은 부상 해제·계약 뜻, 전수조사 L306).
+      // '시즌 끝'처럼 지금 해외에서 뛰지 않는 층이라 제목도 같이 흐리게 둔다
+      return { key: "KBO", title: "한국 복귀", tone: "muted" };
     default:
       return { key: "OVER", title: "시즌 끝", tone: "muted" };
   }
@@ -150,28 +152,33 @@ function sideText(entry: MyPlayer, game: GameLine | null): string | null {
   return status.days != null ? `${status.days}일째` : null;
 }
 
-/** 이름 아래 초록 한 줄: 메이저로 올라옴·부상 복귀(7일 안) */
-function moveText(entry: MyPlayer): string | null {
+/**
+ * 이름 아래 한 줄(7일 안): 메이저로 올라옴은 '콜업 N일째' 배지와 같은 진한 파랑, 부상 복귀는 복귀 초록(DESIGN.md 신호색).
+ * 예전에는 둘 다 초록이었다(초록은 부상 해제·계약 뜻, 전수조사 L306)
+ */
+function moveText(entry: MyPlayer): { text: string; color: string } | null {
   const status = entry.status;
   if (!status?.since) return null;
-  if (status.kind === "CALLED_UP") return `↑ ${monthDay(status.since)} 메이저로 올라옴`;
-  if (status.kind === "RETURNED") return `↑ ${monthDay(status.since)} 부상에서 돌아옴`;
+  if (status.kind === "CALLED_UP") return { text: `↑ ${monthDay(status.since)} 메이저로 올라옴`, color: "text-accent-ink" };
+  if (status.kind === "RETURNED") return { text: `↑ ${monthDay(status.since)} 부상에서 돌아옴`, color: "text-success-fg" };
   return null;
 }
 
+/*
+ * 층 점과 제목 색(전수조사 L306). 층의 뜻은 점이 맡는다: 메이저 채운 파랑, 마이너·한국 복귀·시즌 끝 회색, 위기 빨강, FA 보라.
+ * 제목은 파랗게 칠하지 않는다(DESIGN.md One Blue Rule): 메이저도 본문 글자이고, 지금 해외에서 안 뛰는 층은 흐린 글자다
+ */
 const DOT: Record<Floor["tone"], string> = {
   accent: "bg-accent",
   muted: "bg-muted",
   danger: "bg-danger-fg",
   fa: "bg-fa-fg",
-  success: "bg-success-fg",
 };
 const TITLE: Record<Floor["tone"], string> = {
-  accent: "text-accent-ink",
+  accent: "text-foreground",
   muted: "text-muted",
   danger: "text-danger-fg",
   fa: "text-fa-fg",
-  success: "text-success-fg",
 };
 
 interface Props {
@@ -263,7 +270,7 @@ function FloorRow({ entry, starred }: { entry: MyPlayer; starred: boolean }) {
               </span>
             )}
           </span>
-          {move && <span className="mt-0.5 block text-label text-success-fg">{move}</span>}
+          {move && <span className={`mt-0.5 block text-label ${move.color}`}>{move.text}</span>}
         </span>
         <span className="flex shrink-0 flex-col items-end gap-1">
           {/* 결장한 경기의 팀 승패는 그 선수 이야기가 아니라 뺀다 */}
@@ -287,7 +294,8 @@ function DerbyCard({ pair: [a, b] }: { pair: [GameLine, GameLine] }) {
   return (
     <div className="card mb-3 p-3.5">
       <div className="flex items-baseline justify-between">
-        <span className="text-label text-danger-fg">오늘 맞대결</span>
+        {/* 빨강은 위기(부상·DFA) 뜻이라 쓰지 않고 본문 글자를 한 단계 굵게(700) 둔다('오늘 새 기사'처럼, 전수조사 L306) */}
+        <span className="text-label font-bold">오늘 맞대결</span>
         <span className="text-caption text-muted tabular-nums">{formatTime(a.startTimeKst)} 시작</span>
       </div>
       {/* 문서 순서도 화면과 같은 원정 선수 → 점수 → 홈 선수다. 예전에는 grid order로 점수만 가운데로 옮겨서, 화면 낭독기가
