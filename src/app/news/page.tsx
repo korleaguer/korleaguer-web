@@ -90,7 +90,7 @@ async function NewsContent({ searchParams }: Pick<Props, "searchParams">) {
           <div className="flex justify-end px-1">
             <Link
               href={`/players/${selected.playerId}`}
-              className="press-soft text-meta font-semibold text-accent-ink hover:underline"
+              className="press-soft tap-target text-meta font-semibold text-accent-ink hover:underline"
             >
               {`${selected.nameKo} 선수 화면 ›`}
             </Link>

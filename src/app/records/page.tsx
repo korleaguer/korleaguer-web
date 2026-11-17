@@ -79,7 +79,7 @@ function StatPills({
     <PillNav
       label={label}
       scroll={false}
-      className="no-scrollbar -mx-1 mb-2.5 gap-1 overflow-x-auto px-1"
+      className="no-scrollbar -mx-1 mb-1 gap-1 overflow-x-auto px-1 py-1.5"
       itemClass="whitespace-nowrap px-3 py-1.5 text-button"
       idleClass="text-muted hover:bg-surface-2 hover:text-foreground"
       items={items.map((i) => ({ href: href(i.key), label: i.label, current: i.key === current ? "page" : undefined }))}
