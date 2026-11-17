@@ -42,8 +42,9 @@
    * 의미 색. 승패(파랑·회색)에는 쓰지 않는다.
    * 빨강 = 위기(부상자 명단 등재·이동, DFA, 방출, 출장 정지), 초록 = 복귀·계약(명단 해제, 정지 해제, 계약),
    * 보라 = 소속이 바뀜(FA, FA 선언, 트레이드, 웨이버 클레임)
+   * 빨강은 점과 그래프에만 쓰고 글자·바탕에는 쓰지 않는다(위기 알약은 회색 바탕 + 빨간 점 + 본문 글자). 빨간 글자·바탕은
+   * 좋은 활약 주황과 거의 같은 색이라(글자 색차 9.1, 바탕 5.6) 색만으로 헷갈렸다(사용자 11-17 '추천대로'). 그래서 빨간 바탕 색은 없다
    */
-  --danger-bg: #fde8e7;
   --danger-fg: #b42318;
   --success-bg: #e2f5e9;
   --success-fg: #13703a;
@@ -92,7 +93,6 @@
     --toast-success: #4ade80;
     --toast-error: #ff8a80;
 
-    --danger-bg: #3a1615;
     --danger-fg: #ffa39b;
     --success-bg: #0f2c1b;
     --success-fg: #80dea4;
@@ -144,7 +144,6 @@
   --color-toast-action: var(--toast-action);
   --color-toast-success: var(--toast-success);
   --color-toast-error: var(--toast-error);
-  --color-danger-bg: var(--danger-bg);
   --color-danger-fg: var(--danger-fg);
   --color-success-bg: var(--success-bg);
   --color-success-fg: var(--success-fg);

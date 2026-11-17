@@ -4,11 +4,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { GameLine, MinorGameLine, Role, RosterMove } from "@/lib/api";
 import { buildGameCalendar, lineOf, monthCells, monthSummary, type CalendarDay, type DayTone } from "@/lib/gameLog";
 import { haptic } from "@/lib/app";
-import { moveTone } from "@/lib/moves";
 import { teamColor, teamColorById, teamLogoUrl, teamLogoUrlById } from "@/lib/teams";
 import TeamMark from "@/components/TeamMark";
 import GameRow from "./GameRow";
 import GameDetailSheet, { gamePkOf } from "./GameDetailSheet";
+import MovePill from "./MovePill";
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -292,7 +292,7 @@ export default function GameCalendar({
           {monthMoves.map((m, i) => (
             <li key={`${m.date}-${m.typeCode}-${i}`} className="inline-flex items-center gap-1.5">
               <span className="text-caption text-muted tabular-nums">{moveDay(m.date)}</span>
-              <span className={`rounded-full px-2 py-0.5 text-badge ${moveTone(m)}`}>{m.labelKo}</span>
+              <MovePill move={m} className="px-2" />
             </li>
           ))}
         </ul>

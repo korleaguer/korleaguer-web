@@ -1,17 +1,17 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
-import type { CardStatus, LevelTotals, MyPlayer, SeasonReport, SeasonTier } from "@/lib/api";
+import type { LevelTotals, MyPlayer, SeasonReport, SeasonTier } from "@/lib/api";
 import { formatEra, formatRate } from "@/lib/format";
 import { teamColor } from "@/lib/teams";
 import PlayerAvatar from "@/components/PlayerAvatar";
 import AllNewsLink from "@/components/news/AllNewsLink";
 import NewsTitleList from "@/components/news/NewsTitleList";
 import BandPhoto from "@/components/my/BandPhoto";
-import { StatusBadge } from "@/components/my/FormSummary";
+import { StatusBadge, StatusPill } from "@/components/my/FormSummary";
 import MyPlayerToggle from "@/components/my/MyPlayerToggle";
 import LinkedTeams from "@/components/home/LinkedTeams";
 import MonthBars from "@/components/home/MonthBars";
-import { type BadgeTone, levelKo, metaLine, otherTotalsLine, statusBadge } from "@/components/my/formLabels";
+import { levelKo, metaLine, otherTotalsLine } from "@/components/my/formLabels";
 
 /**
  * 판정 딱지(사용자 11-13 결정 'B4 채움 사다리', 이슈 #192): 알약은 칭찬에만 쓴다.
@@ -27,15 +27,6 @@ const TIER_CHIP: Record<SeasonTier, string> = {
   MINORS: "text-muted",
   SHORT: "text-muted",
   POOR: "text-muted",
-};
-
-/** 이름 옆 상태 알약(무대가 없는 카드). 무대 위 배지(StatusBadge)와 같은 글·색 */
-const PILL_TONE: Record<BadgeTone, string> = {
-  danger: "bg-danger-bg text-danger-fg",
-  success: "bg-success-bg text-success-fg",
-  accent: "bg-accent-soft text-accent-ink",
-  fa: "bg-fa-bg text-fa-fg",
-  neutral: "bg-neutral-pill text-neutral-pill-fg",
 };
 
 /**
@@ -161,19 +152,6 @@ const WINTER_NEWS_SHOWN = 2;
 function monthDay(date: string): string {
   const [, m, d] = date.split("-");
   return `${Number(m)}월 ${Number(d)}일`;
-}
-
-function StatusPill({ status }: { status: CardStatus }) {
-  const badge = statusBadge(status);
-  if (!badge) return null;
-  return (
-    <span
-      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-0.5 text-badge ${PILL_TONE[badge.tone]}`}
-    >
-      <span aria-hidden className={`size-[7px] shrink-0 rounded-full ${badge.tone === "neutral" ? "bg-muted" : "bg-current"}`} />
-      {badge.text}
-    </span>
-  );
 }
 
 /**
