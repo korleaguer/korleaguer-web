@@ -39,8 +39,9 @@ function isFingerDevice(): boolean {
  * 고른 선수 안에서). 요약은 찾지 않는다: 목록에 제목만 보여 요약에만 있는 기사는 왜 나왔는지 알 수 없었다(이슈 #217).
  * - 휴대폰: 검색창 대신 자주 나온 말 알약 줄(가로로 밀어 본다). 이 탭은 새 소식을 훑으러 오고 글자를 쳐서 찾는 일은 드물어,
  *   키보드 없이 눌러 보게 했다(사용자 11-15 시안 C). 누르면 그 말로 거르고 파랗게 켜지며, 켜진 알약을 다시 누르면 끈다.
- *   줄 맨 앞 '검색' 버튼(돋보기 + 글자, 사용자 결정 11-17)을 누르면 입력칸이 열린다. 취소는 열기 전 상태로 돌린다. 직접 친 말(알약에 없는 말)은 줄 맨 앞에 켜진 알약으로
- *   남아 무엇으로 걸렀는지 늘 보인다. 보일 알약이 없으면(말이 적은 선수) 입력칸만 보인다.
+ *   줄 맨 앞 '검색' 버튼(돋보기 + 글자, 사용자 결정 11-17)을 누르면 입력칸이 열린다. 취소는 열기 전 상태로 돌린다.
+ *   직접 친 말(알약에 없는 말)은 줄 맨 앞에 켜진 알약으로 남아 무엇으로 걸렀는지 늘 보인다. 자주 나온 말이 없는 선수도
+ *   같은 자리에 같은 '검색' 버튼을 둔다(예전에는 입력칸이 대신 나와 선수에 따라 조작이 달랐다, 사용자 결정 11-17).
  * - PC: 입력칸은 늘 보이고 그 밑에 알약을 늘 보인다(자리가 넉넉하다).
  * - 입력하다 잠깐 멈추면 바로 찾고(한글을 치는 도중에는 조금 더 기다린다, typingPause), 검색 키(엔터)를 누르면 곧바로
  *   찾으면서 키보드를 내린다. 친 말은 기록을 쌓지 않는다(replace, 글자마다 '뒤로'가 쌓이지 않게). 알약은 브라우저에서만 기록을
@@ -144,7 +145,7 @@ export default function NewsSearch({
   /**
    * '검색' 버튼으로 연 입력칸을 닫고(update로 입력칸 글도 함께 바꾼다) 포커스를 둘 곳을 정한다(APG 펼침 버튼: 닫으면 연 버튼으로).
    * 휴대폰 배치는 입력칸이 사라지니 먼저 화면에 그린 뒤 '검색' 버튼으로 옮긴다(그대로 두면 포커스가 사라진 칸에 남아 화면 낭독기와
-   * 키보드가 문서 처음으로 돌아갔다). 입력칸이 그대로 보이면(PC 배치·알약 없는 휴대폰) 손가락 기기만 키보드를 내리고,
+   * 키보드가 문서 처음으로 돌아갔다). 입력칸이 그대로 보이면(PC 배치) 손가락 기기만 키보드를 내리고,
    * 마우스·키보드 기기는 입력칸에 둔다. 화면은 움직이지 않는다(아이폰이 버튼 쪽으로 튀지 않게).
    * 옮긴 버튼의 포커스 테두리는 키보드로 닫았을 때만 그린다(byKeyboard, 아는 브라우저만). 손으로 누른 뒤 파란 테두리가
    * 남으면 고른 것처럼 보인다. 기기 종류(손가락 기기)로 나누면 키보드를 단 태블릿에서 Tab·엔터로 닫아도 테두리가 사라졌다
@@ -178,11 +179,13 @@ export default function NewsSearch({
   // 지금 검색어가 알약의 말이면 그 알약을 켠다(대소문자 상관없이). 아니면 직접 친 말이라 줄 맨 앞에 켜진 알약으로 보인다
   const selected = query === null ? null : (shownTopics.find((t) => t.word.toLowerCase() === query.toLowerCase())?.word ?? null);
   const typed = query !== null && selected === null ? query : null;
-  const hasRow = shownTopics.length > 0 || query !== null;
-  // 휴대폰에서 입력칸을 보일 때: 돋보기로 열었거나, 줄에 보일 것이 없을 때
-  const inputOnPhone = open || !hasRow;
+  const hasTopics = shownTopics.length > 0;
+  // 휴대폰에서 입력칸은 '검색' 버튼으로 열었을 때만 보인다. 자주 나온 말이 없는 선수도 줄 맨 앞 같은 버튼으로 연다(예전에는
+  // 그 선수만 같은 자리에 입력칸이 대신 나와 선수에 따라 조작이 달랐다, 운영 5명 중 2명, 사용자 결정 11-17).
+  // 버튼 줄과 입력칸은 같은 높이(44px)라 열고 닫아도 아래 목록이 움직이지 않는다
+  const inputOnPhone = open;
   // 휴대폰에서 연 입력칸이 비어 있으면 그 밑에 자주 나온 말(누르면 그 말로 찾고 줄로 돌아간다). PC는 줄이 늘 보인다
-  const showTopicsUnderInput = open && focused && value.trim() === "" && shownTopics.length > 0;
+  const showTopicsUnderInput = open && focused && value.trim() === "" && hasTopics;
   // 요약·본문은 찾지 않아 '제목'을 늘 적는다(선수를 고른 때도 빠지지 않게). 입력칸 이름(화면 낭독기)으로도 같은 말을 써서
   // 보이는 말과 음성 명령으로 부르는 말이 같다(WCAG 2.5.3). '…제목에서 찾기'는 375px 휴대폰 큰 글씨 1.5배에서 끝이 잘렸다
   const placeholder = player ? `${player} 기사 제목 검색` : "기사 제목 검색";
@@ -288,59 +291,60 @@ export default function NewsSearch({
           </div>
         )}
       </div>
-      {hasRow && (
-        // PC: 입력칸 밑에 이름표 '자주 나온 말'과 알약(여러 줄로). 이름표는 목록 밖에 두고 목록 이름으로 잇는다(예전에는
-        // 목록 항목이라 화면 낭독기가 알약 수를 하나 더 셌다). 이름표는 알약 첫 줄 가운데 높이에 맞춘다(알약 2.25rem, 글 1rem)
-        <div className="lg:mt-2.5 lg:flex lg:items-start lg:gap-1.5">
-          {/* 휴대폰은 이름표를 보이지 않는다('검색' 버튼과 알약만, 사용자 11-15 시안 C). 목록 이름에는 어느 범위인지 붙인다 */}
-          <p id={topicsLabelId} className="hidden shrink-0 pr-1 pt-2.5 text-caption text-muted lg:block">
-            <span className="sr-only">{player ? `${player} 기사에 ` : "요즘 기사에 "}</span>
-            자주 나온 말
-          </p>
-          <ul
-            aria-labelledby={topicsLabelId}
-            // 휴대폰: 화면 양끝까지 밀어 볼 수 있게 main의 좌우 여백만큼 넓힌다(선수 알약 줄과 같다). PC: 이름표 옆에 여러 줄로
-            className={`${inputOnPhone ? "hidden" : "flex"} no-scrollbar -mx-3 items-center gap-1.5 overflow-x-auto overflow-y-hidden px-3 py-[max(0.25rem,calc(22px-1.125rem))] sm:-mx-6 sm:px-6 lg:mx-0 lg:flex lg:min-w-0 lg:flex-1 lg:flex-wrap lg:overflow-visible lg:px-0 lg:py-0`}
-          >
+      {/* 휴대폰은 이 줄이 늘 있다(맨 앞 '검색' 버튼, 자주 나온 말이 없는 선수도). PC는 자주 나온 말이 있을 때만 보인다
+          (입력칸은 위에 늘 있고 직접 친 말 알약은 휴대폰에만 둔다. 예전에는 말이 없는 선수를 검색하면 PC에 이름표만 남았다).
+          PC: 입력칸 밑에 이름표 '자주 나온 말'과 알약(여러 줄로). 이름표는 목록 밖에 두고 목록 이름으로 잇는다(예전에는
+          목록 항목이라 화면 낭독기가 알약 수를 하나 더 셌다). 이름표는 알약 첫 줄 가운데 높이에 맞춘다(알약 2.25rem, 글 1rem) */}
+      <div className={`lg:mt-2.5 lg:items-start lg:gap-1.5 ${hasTopics ? "lg:flex" : "lg:hidden"}`}>
+        {/* 휴대폰은 이름표를 보이지 않는다('검색' 버튼과 알약만, 사용자 11-15 시안 C). 목록 이름에는 어느 범위인지 붙인다 */}
+        <p id={topicsLabelId} className="hidden shrink-0 pr-1 pt-2.5 text-caption text-muted lg:block">
+          <span className="sr-only">{player ? `${player} 기사에 ` : "요즘 기사에 "}</span>
+          자주 나온 말
+        </p>
+        <ul
+          // 자주 나온 말이 없으면 '검색' 버튼(과 직접 친 말)뿐이라 '자주 나온 말' 목록 이름을 달지 않는다
+          aria-labelledby={hasTopics ? topicsLabelId : undefined}
+          // 휴대폰: 화면 양끝까지 밀어 볼 수 있게 main의 좌우 여백만큼 넓힌다(선수 알약 줄과 같다). PC: 이름표 옆에 여러 줄로
+          className={`${inputOnPhone ? "hidden" : "flex"} no-scrollbar -mx-3 items-center gap-1.5 overflow-x-auto overflow-y-hidden px-3 py-[max(0.25rem,calc(22px-1.125rem))] sm:-mx-6 sm:px-6 lg:mx-0 lg:flex lg:min-w-0 lg:flex-1 lg:flex-wrap lg:overflow-visible lg:px-0 lg:py-0`}
+        >
+          <li className="shrink-0 lg:hidden">
+            <button
+              ref={openButtonRef}
+              type="button"
+              // 돋보기만 있으면 검색인 줄 알아보기 어려워 '검색' 글자를 붙인다(아이콘 + 글자, 사용자 결정 11-17).
+              // 높이는 옆 알약과 같은 36px라 줄 높이가 그대로다. 글자는 돋보기와 같은 흐린 색이라 자주 나온 말(본문 글자)보다
+              // 앞에 나서지 않는다. 이름은 보이는 글자로 시작한다(음성 명령으로 부를 수 있게, WCAG 2.5.3)
+              aria-label={`검색, ${player ? `${player} ` : ""}기사 제목에서 찾기`}
+              onClick={openInput}
+              className="press tap-target flex h-9 cursor-pointer items-center gap-1 whitespace-nowrap rounded-full bg-surface pl-2.5 pr-3 text-label text-muted shadow-[0_0_0_1px_var(--line)] hover:bg-surface-2"
+            >
+              <SearchIcon className="size-4 shrink-0" />
+              검색
+            </button>
+          </li>
+          {typed && (
+            // 직접 친 말. PC는 입력칸에 이미 보여 알약은 휴대폰에만. 숫자는 다른 알약과 같은 셈이고, 모르거나 0이면 두지 않는다
+            // (0건은 바로 밑 결과 없음 안내가 같은 말을 한다)
             <li className="shrink-0 lg:hidden">
-              <button
-                ref={openButtonRef}
-                type="button"
-                // 돋보기만 있으면 검색인 줄 알아보기 어려워 '검색' 글자를 붙인다(아이콘 + 글자, 사용자 결정 11-17).
-                // 높이는 옆 알약과 같은 36px라 줄 높이가 그대로다. 글자는 돋보기와 같은 흐린 색이라 자주 나온 말(본문 글자)보다
-                // 앞에 나서지 않는다. 이름은 보이는 글자로 시작한다(음성 명령으로 부를 수 있게, WCAG 2.5.3)
-                aria-label={`검색, ${player ? `${player} ` : ""}기사 제목에서 찾기`}
-                onClick={openInput}
-                className="press tap-target flex h-9 cursor-pointer items-center gap-1 whitespace-nowrap rounded-full bg-surface pl-2.5 pr-3 text-label text-muted shadow-[0_0_0_1px_var(--line)] hover:bg-surface-2"
-              >
-                <SearchIcon className="size-4 shrink-0" />
-                검색
-              </button>
+              <TopicChip word={typed} count={queryCount || null} href={newsHref(player, null)} on replace={inApp} />
             </li>
-            {typed && (
-              // 직접 친 말. PC는 입력칸에 이미 보여 알약은 휴대폰에만. 숫자는 다른 알약과 같은 셈이고, 모르거나 0이면 두지 않는다
-              // (0건은 바로 밑 결과 없음 안내가 같은 말을 한다)
-              <li className="shrink-0 lg:hidden">
-                <TopicChip word={typed} count={queryCount || null} href={newsHref(player, null)} on replace={inApp} />
+          )}
+          {shownTopics.map((t) => {
+            const on = t.word === selected;
+            return (
+              <li key={t.word} className="shrink-0">
+                <TopicChip
+                  word={t.word}
+                  count={t.count}
+                  href={newsHref(player, on ? null : t.word)}
+                  on={on}
+                  replace={inApp}
+                />
               </li>
-            )}
-            {shownTopics.map((t) => {
-              const on = t.word === selected;
-              return (
-                <li key={t.word} className="shrink-0">
-                  <TopicChip
-                    word={t.word}
-                    count={t.count}
-                    href={newsHref(player, on ? null : t.word)}
-                    on={on}
-                    replace={inApp}
-                  />
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      )}
+            );
+          })}
+        </ul>
+      </div>
       <p role="status" className="sr-only">
         {spoken}
       </p>
