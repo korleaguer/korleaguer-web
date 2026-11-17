@@ -17,13 +17,16 @@ import { BestRow, groupPassed, LeaderRow, NextRow, PassedRow } from "@/component
  */
 const TITLE = "한국인 메이저리거 역대 기록";
 // <title>: "한국인 메이저리거 역대 기록 · KOR Leaguer" (뒷부분은 layout의 template이 붙인다)
-// 공유 카드에는 제목(TITLE)과 함께 나오므로 제목의 말을 되풀이하지 않는다
+// 공유 카드 제목은 TITLE만 쓴다. 카드에 사이트 이름(og:site_name)이 따로 붙어서, 제목에도 넣으면 'KOR Leaguer'가 두 번 보인다
+// (앱 공유 버튼이 제목에서 ' · KOR Leaguer'를 떼고 보내는 것과 같은 규칙, ShareButton)
+// 설명은 공유 카드에 제목(TITLE)과 함께 나오므로 제목의 말을 되풀이하지 않는다
 const DESCRIPTION = "박찬호부터 이정후까지 통산 순위와 한 시즌 최다, 지금 선수가 넘은 기록과 다음에 넘을 기록.";
 
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
-  ...shareMeta(`${TITLE} · KOR Leaguer`, DESCRIPTION),
+  // 공유 주소(og:url)는 두지 않는다. 고른 순위표(?stat=홈런 등)를 보낸 링크가 '/records'의 첫 순위표로 열린다
+  ...shareMeta(TITLE, DESCRIPTION),
 };
 
 type Props = PageProps<"/records">;
