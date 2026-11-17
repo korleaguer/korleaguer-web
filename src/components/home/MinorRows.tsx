@@ -1,4 +1,4 @@
-// 시즌 기록 표의 마이너 줄에 쓰는 작은 조각들(이슈 #88).
+// 시즌 기록 표의 마이너 줄과 묶음 띠에 쓰는 작은 조각들(이슈 #88).
 
 /**
  * 같은 선수의 메이저 줄 바로 밑 마이너 줄의 이름 칸. 사진(24px) + 간격(8px)만큼 들여 이름 밑에 맞춘다.
@@ -13,10 +13,10 @@ export function MinorRowLabel({ nameKo }: { nameKo: string }) {
 }
 
 /**
- * 메이저 줄이 없는(마이너에서만 뛴) 선수 묶음의 제목 줄. 표 전체 너비를 차지하고,
- * 표를 가로로 밀어도 글자는 왼쪽에 붙어 있다. 화면 낭독기에는 아래 줄들의 묶음 제목으로 읽힌다.
+ * 표 안 묶음의 제목 줄(띠): '마이너에서만 뛴 선수'(이슈 #88), 순위 대상 아래 묶음 '타석이 적거나 주로 마이너에서 뛴 선수'
+ * (이슈 #277). 표 전체 너비를 차지하고, 표를 가로로 밀어도 글자는 왼쪽에 붙어 있다. 화면 낭독기에는 묶음 제목으로 읽힌다.
  */
-export function MinorsOnlyHeader({ colSpan }: { colSpan: number }) {
+export function GroupHeader({ colSpan, label }: { colSpan: number; label: string }) {
   return (
     <tr>
       <th
@@ -24,7 +24,7 @@ export function MinorsOnlyHeader({ colSpan }: { colSpan: number }) {
         colSpan={colSpan}
         className="border-t border-line bg-surface-2 px-2.5 py-1.5 text-left text-caption font-semibold text-muted"
       >
-        <span className="sticky left-4">마이너에서만 뛴 선수</span>
+        <span className="sticky left-4">{label}</span>
       </th>
     </tr>
   );
