@@ -97,10 +97,10 @@ export default async function FormCard({ entry, days, statsAvailable, isMine = t
         ) : period ? (
           <>
             {entry.hitting && (
-              <HitterNumbers period={periodLabel(basis, level, days, entry.isFallback)} hitting={entry.hitting} />
+              <HitterNumbers period={periodLabel(basis, level, days, entry.isFallback)} hitting={entry.hitting} minors={minors} />
             )}
             {entry.pitching && (
-              <PitcherNumbers period={periodLabel(basis, level, days, entry.isFallback)} pitching={entry.pitching} />
+              <PitcherNumbers period={periodLabel(basis, level, days, entry.isFallback)} pitching={entry.pitching} minors={minors} />
             )}
             {/* 기간이 바뀌면 막대 자리도 바뀌므로 고른 막대를 처음부터 다시 정한다(key).
                 막대 사이 빈틈을 잘못 눌러 페이지가 바뀌지 않게 그래프 묶음 전체를 링크 위에 둔다 */}
@@ -137,12 +137,12 @@ export default async function FormCard({ entry, days, statsAvailable, isMine = t
   );
 }
 
-function HitterNumbers({ period, hitting }: { period: string; hitting: HitterPeriod }) {
+function HitterNumbers({ period, hitting, minors }: { period: string; hitting: HitterPeriod; minors: boolean }) {
   return (
     <Numbers
       label={`${period} 타율`}
       value={formatRate(hitting.avg)}
-      note={<RateDelta value={hitting.avg} season={hitting.seasonAvg} played={hitting.games > 0} />}
+      note={<RateDelta value={hitting.avg} season={hitting.seasonAvg} played={hitting.games > 0} minors={minors} />}
       small={[
         ["안타", hitting.hits],
         ["홈런", hitting.homeRuns],
@@ -152,12 +152,12 @@ function HitterNumbers({ period, hitting }: { period: string; hitting: HitterPer
   );
 }
 
-function PitcherNumbers({ period, pitching }: { period: string; pitching: PitcherPeriod }) {
+function PitcherNumbers({ period, pitching, minors }: { period: string; pitching: PitcherPeriod; minors: boolean }) {
   return (
     <Numbers
       label={`${period} 평균자책점`}
       value={formatEra(pitching.era)}
-      note={<EraDelta value={pitching.era} season={pitching.seasonEra} played={pitching.games > 0} />}
+      note={<EraDelta value={pitching.era} season={pitching.seasonEra} played={pitching.games > 0} minors={minors} />}
       small={[
         ["등판", pitching.games],
         ["이닝", pitching.inningsText],
@@ -167,24 +167,46 @@ function PitcherNumbers({ period, pitching }: { period: string; pitching: Pitche
   );
 }
 
-/** "시즌 .301보다 ▲.047". 타수가 없거나 시즌 기록이 없으면 그 사실만 */
-function RateDelta({ value, season, played }: { value: number | null; season: number | null; played: boolean }) {
+/**
+ * 비교하는 시즌 이름. 마이너 카드의 시즌 값은 그해 마이너 전체(여러 단계를 더한 값)라 '마이너 시즌'이다.
+ * 그냥 '시즌 .262보다'면 트리플A 최근 기록을 메이저 시즌과 견준 것처럼 읽혔다(11-17 점검)
+ */
+function seasonName(minors: boolean): string {
+  return minors ? "마이너 시즌" : "시즌";
+}
+
+/** "시즌 .301보다 ▲.047"(마이너 카드는 "마이너 시즌 .262보다"). 타수가 없거나 시즌 기록이 없으면 그 사실만 */
+function RateDelta({ value, season, played, minors }: { value: number | null; season: number | null; played: boolean; minors: boolean }) {
   if (!played) return <>이 기간 출전 없음</>;
   if (value == null) return <>이 기간 타수 없음</>;
   if (season == null) return null;
   // 소수 셋째 자리에서 비교해 화면 숫자와 어긋나지 않게 한다. 타율은 높을수록 좋다
   const diff = Math.round(value * 1000) - Math.round(season * 1000);
-  return <Delta seasonText={formatRate(season)} diff={diff} better={diff > 0} amount={formatRate(Math.abs(diff) / 1000)} />;
+  return (
+    <Delta
+      seasonText={`${seasonName(minors)} ${formatRate(season)}`}
+      diff={diff}
+      better={diff > 0}
+      amount={formatRate(Math.abs(diff) / 1000)}
+    />
+  );
 }
 
 /** "시즌 3.12보다 ▼0.85". 평균자책점은 낮을수록 좋다. 등판이 없거나 시즌 기록이 없으면 그 사실만 */
-function EraDelta({ value, season, played }: { value: number | null; season: number | null; played: boolean }) {
+function EraDelta({ value, season, played, minors }: { value: number | null; season: number | null; played: boolean; minors: boolean }) {
   if (!played) return <>이 기간 등판 없음</>;
   if (season == null) return null;
-  if (value == null) return <>{`시즌 ${formatEra(season)}`}</>;
+  if (value == null) return <>{`${seasonName(minors)} ${formatEra(season)}`}</>;
   // 소수 둘째 자리(화면 숫자)에서 비교한다
   const diff = Math.round(value * 100) - Math.round(season * 100);
-  return <Delta seasonText={formatEra(season)} diff={diff} better={diff < 0} amount={(Math.abs(diff) / 100).toFixed(2)} />;
+  return (
+    <Delta
+      seasonText={`${seasonName(minors)} ${formatEra(season)}`}
+      diff={diff}
+      better={diff < 0}
+      amount={(Math.abs(diff) / 100).toFixed(2)}
+    />
+  );
 }
 
 /**
@@ -193,11 +215,11 @@ function EraDelta({ value, season, played }: { value: number | null; season: num
  * 정반대 뜻이 됐다(11-17 점검, 사용자 결정 '추천대로'). 화면 낭독기는 "좋아짐/나빠짐"도 읽는다.
  */
 function Delta({ seasonText, diff, better, amount }: { seasonText: string; diff: number; better: boolean; amount: string }) {
-  if (diff === 0) return <>{`시즌 ${seasonText} · 차이 없음`}</>;
+  if (diff === 0) return <>{`${seasonText} · 차이 없음`}</>;
   const up = diff > 0;
   return (
     <span className="inline-flex items-center gap-0.5">
-      {`시즌 ${seasonText}보다`}
+      {`${seasonText}보다`}
       <span className={`ml-0.5 inline-flex items-center gap-0.5 font-semibold ${better ? "text-hot-ink" : "text-foreground"}`}>
         <svg aria-hidden viewBox="0 0 10 10" className={`size-2.5 fill-current ${up ? "" : "rotate-180"}`}>
           <path d="M5 1.5 9 8.5H1z" />
