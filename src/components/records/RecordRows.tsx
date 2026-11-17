@@ -80,7 +80,8 @@ export function NextRow({ next }: { next: RecordNext }) {
           <span className="flex flex-wrap items-baseline justify-between gap-x-3">
             <span className="min-w-0 flex-1 basis-[6rem]">
               <span className="text-heading">{next.nameKo}</span>{" "}
-              <span className="text-meta text-muted tabular-nums">
+              {/* '통산 226타점'은 한 덩어리로(큰 글씨에서 '통산/226타점'으로 갈리지 않게) */}
+              <span className="whitespace-nowrap text-meta text-muted tabular-nums">
                 통산 {count(next.value)}
                 {next.unit}
               </span>

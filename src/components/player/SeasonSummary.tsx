@@ -117,21 +117,29 @@ function LevelBlock({ label, children }: { label: string; children: ReactNode })
 function StatBlock({ big, main, rest }: { big: Stat[]; main: Stat[]; rest: RestStat[] }) {
   return (
     <>
-      <dl className="grid grid-cols-2 gap-2.5 md:grid-cols-4">
-        {big.map(([label, value]) => (
-          <div key={label} className="card min-w-0 px-4 py-3.5">
-            <dt className="text-caption text-muted">{label}</dt>
-            <dd className="text-stat-hero tabular-nums">
-              {/* 처음부터 최종 값. 새 기록이 와서 값이 바뀔 때만 굴러간다 */}
-              <RollingNumber value={String(value)} />
-            </dd>
-          </div>
-        ))}
-      </dl>
-      <div className="card px-3 pt-3.5 pb-3">
-        <dl className="grid grid-cols-4">
+      {/* 큰 숫자 카드 줄이 13rem보다 좁으면(큰 글씨) 한 칸에 하나씩, 이름표 왼쪽·숫자 오른쪽으로. 두 칸이면 2배에서
+          '.276'이 '.'/'276'으로, '평균자책점'이 두 줄로 갈렸다(이슈 #264) */}
+      <div className="@container">
+        <dl className="grid grid-cols-2 gap-2.5 md:grid-cols-4 @max-[13rem]:grid-cols-1 @max-[13rem]:gap-2 @max-[13rem]:*:flex @max-[13rem]:*:items-baseline @max-[13rem]:*:justify-between @max-[13rem]:*:gap-3">
+          {big.map(([label, value]) => (
+            <div key={label} className="card min-w-0 px-4 py-3.5">
+              <dt className="text-caption text-muted">{label}</dt>
+              <dd className="text-stat-hero tabular-nums">
+                {/* 처음부터 최종 값. 새 기록이 와서 값이 바뀔 때만 굴러간다 */}
+                <RollingNumber value={String(value)} />
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+      {/* 세부 넷: 칸이 11.5rem보다 좁으면(큰 글씨) 두 줄 두 칸으로(한 칸에 '149'가 '14'/'9'로 갈렸다). 둘째 줄 첫 칸은 세로선 없이 */}
+      <div className="@container card px-3 pt-3.5 pb-3">
+        <dl className="grid grid-cols-4 @max-[11.5rem]:grid-cols-2 @max-[11.5rem]:gap-y-2.5">
           {main.map(([label, value], i) => (
-            <div key={label} className={`min-w-0 text-center ${i > 0 ? "border-l border-line" : ""}`}>
+            <div
+              key={label}
+              className={`min-w-0 text-center ${i > 0 ? "border-l border-line" : ""} ${i === 2 ? "@max-[11.5rem]:border-l-0" : ""}`}
+            >
               <dt className="text-caption text-muted">{label}</dt>
               <dd className="text-stat tabular-nums">{value}</dd>
             </div>

@@ -520,7 +520,7 @@
     position: relative;
     overflow: hidden;
     background:
-      radial-gradient(4.5rem 3.75rem at calc(100% - 3.9rem) 38%, color-mix(in srgb, white 34%, transparent), transparent 70%),
+      radial-gradient(72px 60px at calc(100% - 62px) 38%, color-mix(in srgb, white 34%, transparent), transparent 70%),
       linear-gradient(100deg, color-mix(in srgb, var(--stage) 78%, var(--surface)) 0%, var(--stage) 55%, color-mix(in oklab, var(--stage), black 18%) 100%);
   }
 
@@ -528,7 +528,7 @@
     content: "";
     position: absolute;
     inset: auto 0 0;
-    height: 1.375rem;
+    height: 22px;
     background: linear-gradient(transparent, rgb(0 0 0 / 0.12));
     pointer-events: none;
   }
@@ -735,6 +735,25 @@
   .cal-label {
     font-size: var(--cal-label);
     line-height: calc(4 / 3);
+  }
+
+  /*
+   * 홈 성적표 달별 막대(MonthBars, 이슈 #264). 여섯 칸이 카드 폭에 묶여 있어 글자만 키우면 막대 위 '118'·둘째 줄 '12.54'·
+   * 아래 '10월'이 칸 밖으로 넘친다(2배에서 '11454 67101'처럼 붙어 읽혔다). 칸 폭(100cqi / 6)이 허락하는 만큼만 키운다.
+   * 나누는 수는 글자 폭(em): 위 숫자 세 자리 굵게 약 1.8em, '12.54' 약 2.7em. 보통 크기에서는 그대로다.
+   */
+  .month-bars {
+    container-type: inline-size;
+  }
+
+  .month-bars-num {
+    font-size: min(var(--text-label), calc(100cqi / 6 / 1.9));
+    line-height: var(--text-label--line-height);
+  }
+
+  .month-bars-small {
+    font-size: min(var(--text-micro), calc(100cqi / 6 / 2.9));
+    line-height: var(--text-micro--line-height);
   }
 }
 

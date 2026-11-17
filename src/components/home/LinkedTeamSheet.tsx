@@ -203,12 +203,19 @@ function ArticleRow({ article: a, playerPhotoUrl }: { article: LinkedArticle; pl
         </span>
         <span className="flex min-w-0 whitespace-nowrap text-caption text-muted tabular-nums @max-[14rem]:block @max-[14rem]:whitespace-normal">
           <span className="min-w-0 truncate @max-[14rem]:whitespace-normal">{a.publisher}</span>
+          {/* 조각 사이 간격은 NewsTitleList와 같다(한 줄이면 왼쪽 여백, 흘리면 보통 공백이 간격·줄바꿈 자리) */}
           {a.alsoBy.length > 0 && (
-            <span className="shrink-0" title={`같은 기사: ${a.alsoBy.join(", ")}`}>
-              {` 외 ${a.alsoBy.length}곳`}
-            </span>
-          )}
-          <span className="shrink-0">{` · ${formatDate(a.publishedAt)}`}</span>
+            <>
+              {" "}
+              <span
+                className="shrink-0 whitespace-nowrap pl-[0.25em] @max-[14rem]:pl-0"
+                title={`같은 기사: ${a.alsoBy.join(", ")}`}
+              >
+                {`외 ${a.alsoBy.length}곳`}
+              </span>
+            </>
+          )}{" "}
+          <span className="shrink-0 pl-[0.25em] @max-[14rem]:pl-0">{`· ${formatDate(a.publishedAt)}`}</span>
         </span>
       </span>
       <NewsThumb newsId={a.id} url={a.imageUrl} fallback={playerPhotoUrl} />

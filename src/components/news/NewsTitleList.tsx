@@ -113,13 +113,22 @@ function NewsTitleRow({
         </span>
         {/* 언론사만 다른 같은 기사는 서버가 한 줄로 묶었다. 같은 글을 실은 다른 언론사 수만 보인다
             (이름은 PC에서 마우스를 올리면 보이고, 마우스를 못 쓰는 화면 낭독기에는 읽어 준다) */}
+        {/* 조각 사이 간격: 한 줄(flex)일 때는 왼쪽 여백(공백만 있는 글은 flex에서 사라진다), 흘릴 때(block)는 그 자리의 보통
+            공백이 간격이자 줄바꿈 자리다. '외 N곳'과 '·날짜'는 각각 한 덩어리로 다음 줄에 넘어가고, 긴 날짜만 '11월'/'17일(화)'
+            사이에서 갈린다(전에는 '·'만 윗줄에 남거나 날짜가 언론사 이름에 붙어 '17'이 갈렸다) */}
         {n.alsoBy.length > 0 && (
-          <span className="shrink-0" title={`같은 기사: ${n.alsoBy.join(", ")}`}>
-            {`\u00a0외 ${n.alsoBy.length}곳`}
-            <span className="sr-only">{`(같은 기사: ${n.alsoBy.join(", ")})`}</span>
-          </span>
-        )}
-        <span className="shrink-0">{`\u00a0· ${timeOnly ? formatTime(n.publishedAt) : formatDate(n.publishedAt)}`}</span>
+          <>
+            {" "}
+            <span
+              className="shrink-0 whitespace-nowrap pl-[0.25em] @max-[14rem]:pl-0"
+              title={`같은 기사: ${n.alsoBy.join(", ")}`}
+            >
+              {`외 ${n.alsoBy.length}곳`}
+              <span className="sr-only">{`(같은 기사: ${n.alsoBy.join(", ")})`}</span>
+            </span>
+          </>
+        )}{" "}
+        <span className="shrink-0 pl-[0.25em] @max-[14rem]:pl-0">{`·\u00a0${timeOnly ? formatTime(n.publishedAt) : formatDate(n.publishedAt)}`}</span>
       </span>
     </span>
   );

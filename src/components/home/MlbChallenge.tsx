@@ -62,12 +62,20 @@ function deadlineUs(iso: string): string {
 /** "11월 2일"(한국 날짜) */
 const kstDay = (iso: string) => parts(iso, "Asia/Seoul").md;
 
+/**
+ * 천 단위 쉼표 숫자. 쉼표 뒤에 단어 잇기(U+2060, 보이지 않음)를 넣어 숫자 중간에서 줄이 바뀌지 않게 한다.
+ * 아이폰(WebKit)은 낱말 줄바꿈(keep-all)에서 쉼표 뒤를 줄바꿈 자리로 봐서, 큰 글씨에서 '5년 6,' / '000만 달러'로 갈랐다(이슈 #264)
+ */
+function grouped(n: number): string {
+  return n.toLocaleString("ko-KR").replace(/,/g, ",\u2060");
+}
+
 /** 1억 1,300만 달러 · 800만 달러 */
 export function formatUsd(usd: number): string {
   const man = Math.round(usd / 10_000);
   const eok = Math.floor(man / 10_000);
   const rest = man % 10_000;
-  const parts = [eok > 0 ? `${eok}억` : "", rest > 0 ? `${rest.toLocaleString("ko-KR")}만` : ""].filter(Boolean);
+  const parts = [eok > 0 ? `${eok}억` : "", rest > 0 ? `${grouped(rest)}만` : ""].filter(Boolean);
   return `${parts.join(" ")} 달러`;
 }
 
@@ -76,11 +84,11 @@ export function formatUsd(usd: number): string {
  * 합의일 환율로 계산한 '대략'이라 앞에 '약'을 붙여 쓴다.
  */
 export function formatKrw(won: number): string {
-  if (won < 100_000_000) return `${Math.round(won / 10_000).toLocaleString("ko-KR")}만 원`;
+  if (won < 100_000_000) return `${grouped(Math.round(won / 10_000))}만 원`;
   const eokTotal = Math.round(won / 100_000_000);
   const jo = Math.floor(eokTotal / 10_000);
   const eok = eokTotal % 10_000;
-  const parts = [jo > 0 ? `${jo}조` : "", eok > 0 ? `${eok.toLocaleString("ko-KR")}억` : ""].filter(Boolean);
+  const parts = [jo > 0 ? `${jo}조` : "", eok > 0 ? `${grouped(eok)}억` : ""].filter(Boolean);
   return `${parts.join(" ")} 원`;
 }
 

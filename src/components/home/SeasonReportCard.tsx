@@ -64,7 +64,7 @@ export default function SeasonReportCard({
     <li className="card card-link relative flex flex-col self-start overflow-hidden has-[h3_a:focus-visible]:outline-2 has-[h3_a:focus-visible]:outline-offset-2 has-[h3_a:focus-visible]:outline-accent">
       {good && (
         // 잘한 시즌은 팀 색 무대에 사진을 크게(내 선수 카드와 같은 무대). isolate: 배지의 z-10이 무대 안에서만 통하게
-        <div className="player-stage isolate h-[6.5rem]" style={{ "--team": teamColor(player.teamAbbr) } as CSSProperties}>
+        <div className="player-stage @container isolate h-[104px]" style={{ "--team": teamColor(player.teamAbbr) } as CSSProperties}>
           {status && <StatusBadge status={status} />}
           <BandPhoto nameKo={player.nameKo} photoUrl={player.photoUrl} teamAbbr={player.teamAbbr} />
         </div>
@@ -197,7 +197,7 @@ function Numbers({ entry, report }: { entry: MyPlayer; report: SeasonReport }) {
       {/* 칸이 16rem보다 좁으면(큰 글씨) 넷을 두 줄 두 칸으로. 한 줄 네 칸이면 '.276'이 세 줄로 갈렸다(앱 2배, 이슈 #264).
           그보다 더 좁으면(2배) 두 칸에도 '평균자책점'이 '평균자책/점'으로 갈려서, 한 줄에 이름표·숫자를 양 끝으로 둔 목록으로.
           모든 카드가 같은 폭이라 함께 바뀐다(카드 통일) */}
-      <dl className="grid grid-cols-4 gap-1 @max-[16rem]:grid-cols-2 @max-[16rem]:gap-y-1.5 @max-[7.75rem]:grid-cols-1 @max-[7.75rem]:gap-y-0.5 @max-[7.75rem]:*:flex @max-[7.75rem]:*:items-baseline @max-[7.75rem]:*:justify-between @max-[7.75rem]:*:gap-3">
+      <dl className="grid grid-cols-4 gap-1 @max-[16rem]:grid-cols-2 @max-[16rem]:gap-y-1.5 @max-[7.75rem]:grid-cols-1 @max-[7.75rem]:gap-y-0.5 @max-[7.75rem]:*:flex @max-[7.75rem]:*:items-baseline @max-[7.75rem]:*:justify-between @max-[7.75rem]:*:gap-2">
         {items.map(([k, v]) => (
           <div key={k}>
             <dt className="text-caption text-muted">{k}</dt>

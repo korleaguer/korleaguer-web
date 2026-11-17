@@ -131,13 +131,14 @@ export default function PhotoStage({
                   type="button"
                   aria-pressed={active}
                   onClick={() => pick(i)}
-                  className={`press tap-target inline-flex min-h-8 items-center gap-1.5 rounded-full px-2.5 text-label transition duration-150 motion-reduce:transition-none ${
+                  // 큰 글씨에서 한 줄에 못 들어가면 팀 이름은 그대로 두고 연도만 알약 안 다음 줄로('키움/히어로즈'로 갈리지 않게, 이슈 #264)
+                  className={`press tap-target inline-flex min-h-8 flex-wrap items-center gap-x-1.5 rounded-full px-2.5 text-label transition duration-150 motion-reduce:transition-none ${
                     active ? "bg-accent-soft text-accent-ink" : "bg-surface-2 text-muted hover:text-foreground"
                   }`}
                 >
                   <span aria-hidden className="size-2 shrink-0 rounded-full" style={{ backgroundColor: s.color }} />
                   {/* 고른 사진 알약은 이름도 굵게(이슈 #260) */}
-                  <span className={`bold-reserve ${active ? "font-extrabold" : ""}`} data-text={s.label}>
+                  <span className={`bold-reserve whitespace-nowrap ${active ? "font-extrabold" : ""}`} data-text={s.label}>
                     {s.label}
                   </span>
                   {s.years && <span className="font-normal tabular-nums">{s.years}</span>}
