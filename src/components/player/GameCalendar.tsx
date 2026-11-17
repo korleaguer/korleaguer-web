@@ -25,6 +25,18 @@ const TONE: Record<Exclude<DayTone, "rest">, string> = {
   pending: "border border-line text-muted",
 };
 
+/**
+ * 범례의 색 네모(칸 색과 같다). 연파랑·회색 칸은 큰 칸에서는 글자로 보이지만 10px 네모로는 흰 카드에 묻혀서
+ * 같은 계열의 옅은 테두리를 안쪽에 두른다
+ */
+const SWATCH: Record<"hr" | "multi" | "hit" | "zero" | "off", string> = {
+  hr: "bg-hot-strong",
+  multi: "bg-accent",
+  hit: "bg-accent-soft ring-1 ring-inset ring-accent/30",
+  zero: "bg-surface-2 ring-1 ring-inset ring-muted/30",
+  off: "border-[1.5px] border-dashed border-muted",
+};
+
 /** 채운 칸(흰 글자). 넓은 칸의 팀 로고는 흰 바탕에 올린다 */
 function filled(tone: DayTone): boolean {
   return tone === "hr" || tone === "multi";
@@ -358,6 +370,7 @@ export default function GameCalendar({
           return <DayCell key={key} day={day} on={key === shownDay} tabbable={key === tabDay} onPick={pickDay} />;
         })}
       </div>
+      <CalendarLegend pitcher={pitcher} />
 
       {/* 그달 이동(콜업·강등·부상자 명단 등). 알약 색은 이동 기록 칸과 같다 */}
       {monthMoves.length > 0 && (
@@ -425,6 +438,41 @@ export default function GameCalendar({
         />
       )}
     </div>
+  );
+}
+
+/**
+ * 달력 아래 칸 색 뜻 한 줄(경기별 막대 범례와 같은 Micro). 칸마다 결과 글이 있어도 색의 차례(주황 > 파랑 > 연파랑 > 회색)는
+ * 알려 주지 않으면 몰랐다(11-17 전수조사). 투수는 결정 그림 ③의 말('주황 2이닝 이상 무실점 · 파랑 무실점 · 회색 실점')을
+ * 네모로 옮기고(파랑 둘은 1이닝 이상·미만 무실점), 칸에서 뺀 승·세이브가 어디 있는지 덧붙인다.
+ * 네모는 그림이라 화면 낭독기는 건너뛴다(칸마다 낭독 글에 결과가 있다)
+ */
+function CalendarLegend({ pitcher }: { pitcher: boolean }) {
+  const items: [(keyof typeof SWATCH)[], string][] = pitcher
+    ? [
+        [["hr"], "2이닝 이상 무실점"],
+        [["multi", "hit"], "무실점"],
+        [["zero"], "실점"],
+      ]
+    : [
+        [["hr"], "홈런"],
+        [["multi"], "2안타 이상"],
+        [["hit"], "1안타"],
+        [["zero"], "무안타"],
+        [["off"], "결장"],
+      ];
+  return (
+    <p className="flex flex-wrap gap-x-3 gap-y-1 px-3.5 pb-3 text-micro text-muted sm:px-4">
+      {items.map(([tones, label]) => (
+        <span key={label} className="inline-flex items-center gap-1 whitespace-nowrap">
+          {tones.map((tone) => (
+            <span key={tone} aria-hidden className={`size-2.5 shrink-0 rounded-[3px] ${SWATCH[tone]}`} />
+          ))}
+          {label}
+        </span>
+      ))}
+      {pitcher && <span>승·세이브는 아래 경기 줄에</span>}
+    </p>
   );
 }
 

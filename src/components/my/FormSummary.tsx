@@ -59,12 +59,19 @@ export function SummaryLines({ entry }: { entry: MyPlayer }) {
   return (
     <>
       {hitter && play?.recent && (
-        // 칸은 눈으로만 보고, 화면 낭독기는 옆 글자("팀 최근 10경기 선발 9 · 교체 1 · 결장 0")를 읽는다
+        // 칸은 눈으로만 보고, 화면 낭독기는 옆 글자("팀 최근 10경기 선발 9 · 교체 1 · 결장 0")를 읽는다.
+        // 칸 아래 '← 오래된 · 최근 →': 어느 쪽이 최근 경기인지 알려 주는 것이 없었다(11-17 전수조사). 큰 글씨면 칸 묶음이 글자만큼 넓어진다
         <p className="mt-2 flex items-center gap-2">
-          <span aria-hidden className="inline-flex shrink-0 gap-[3px]">
-            {play.recent.map((code, i) => (
-              <span key={i} className={`size-[9px] rounded-[2.5px] ${STRIP[code]}`} />
-            ))}
+          <span aria-hidden className="inline-flex shrink-0 flex-col gap-0.5">
+            <span className="inline-flex gap-[3px]">
+              {play.recent.map((code, i) => (
+                <span key={i} className={`size-[9px] rounded-[2.5px] ${STRIP[code]}`} />
+              ))}
+            </span>
+            <span className="flex justify-between gap-2 whitespace-nowrap text-micro text-muted">
+              <span>← 오래된</span>
+              <span>최근 →</span>
+            </span>
           </span>
           <span className="flex min-w-0 flex-col">
             <span className="text-caption text-muted">{hitter.label}</span>
