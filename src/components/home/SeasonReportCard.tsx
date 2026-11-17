@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
 import type { LevelTotals, MyPlayer, SeasonReport, SeasonTier } from "@/lib/api";
-import { formatEra, formatRate } from "@/lib/format";
+import { formatEra, formatRate, formatWar } from "@/lib/format";
 import { teamColor } from "@/lib/teams";
 import PlayerAvatar from "@/components/PlayerAvatar";
 import AllNewsLink from "@/components/news/AllNewsLink";
@@ -195,7 +195,7 @@ function hitterItems(t: LevelTotals, war: number | null): [string, string][] {
   const items: [string, string][] = [["타율", formatRate(t.avg)]];
   if (war == null) items.push(["경기", String(t.games)]);
   items.push(["안타", String(t.hits)], ["홈런", String(t.homeRuns)]);
-  if (war != null) items.push(["WAR", war.toFixed(1)]);
+  if (war != null) items.push(["WAR", formatWar(war)]);
   return items;
 }
 

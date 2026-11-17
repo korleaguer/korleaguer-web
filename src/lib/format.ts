@@ -92,6 +92,17 @@ export function formatRate(value: number | null): string {
   return value.toFixed(3).replace(/^0\./, ".");
 }
 
+/**
+ * WAR(소수 한 자리): 3.24 → "3.2", -0.4 → "−0.4", null → "-".
+ * 음수는 하이픈이 아니라 빼기 글자(−)로 쓴다. 홈 성적표만 하이픈이라 선수 화면('−0.4')과 달랐다(전수조사).
+ * 반올림해 0이 되면 "−0.0" 대신 "0.0"
+ */
+export function formatWar(value: number | null): string {
+  if (value == null) return "-";
+  const fixed = value.toFixed(1);
+  return Number(fixed) === 0 ? "0.0" : fixed.replace("-", "−");
+}
+
 /** 아웃 수 → 이닝 글자: 152 → "50⅔", null → "-" */
 export function formatInningsOuts(outs: number | null): string {
   if (outs == null) return "-";
