@@ -118,7 +118,8 @@ export default function NewsSearch({
   const inputOnPhone = open || !hasRow;
   // 휴대폰에서 연 입력칸이 비어 있으면 그 밑에 자주 나온 말(누르면 그 말로 찾고 줄로 돌아간다). PC는 줄이 늘 보인다
   const showTopicsUnderInput = open && focused && value.trim() === "" && shownTopics.length > 0;
-  const placeholder = player ? `${player} 기사에서 찾기` : "기사 제목으로 찾기";
+  // 요약·본문은 찾지 않아 '제목'을 늘 적는다(선수를 고른 때도 빠지지 않게)
+  const placeholder = player ? `${player} 기사 제목에서 찾기` : "기사 제목에서 찾기";
 
   return (
     <div>
@@ -138,7 +139,7 @@ export default function NewsSearch({
             ref={inputRef}
             type="search"
             enterKeyHint="search"
-            aria-label={player ? `${player} 기사 검색` : "기사 검색"}
+            aria-label={player ? `${player} 기사 제목 검색` : "기사 제목 검색"}
             placeholder={placeholder}
             maxLength={NEWS_QUERY_MAX}
             value={value}

@@ -108,11 +108,12 @@ async function NewsContent({ searchParams }: Pick<Props, "searchParams">) {
             }
           />
         ) : items.length === 0 && next === null && q ? (
-          // 검색 결과가 없을 때(먼저 설계할 화면): 무엇을 찾았는지와 다음에 할 일
+          // 검색 결과가 없을 때(먼저 설계할 화면): 무엇을 어디서 찾았는지와 다음에 할 일.
+          // 제목만 찾는다는 것과 고른 선수를 제목 한 줄에 넣는다(설명 줄에 '…제목에는 없어요'를 또 쓰면 같은 말 두 번이다)
           <StateNotice
             emoji="🔎"
-            title={`‘${q}’ 기사가 없어요`}
-            detail={player ? `${player} 기사에는 없어요. 전체에서 찾거나 다른 말로 찾아보세요.` : "다른 말로 찾아보세요."}
+            title={`제목에 ‘${q}’ 들어간 ${player ? `${player} ` : ""}기사가 없어요`}
+            detail={player ? "전체에서 찾거나 다른 말로 찾아보세요." : "다른 말로 찾아보세요."}
             action={
               <Link href={player ? newsHref(null, q) : newsHref(null)} replace className={stateActionClass}>
                 {player ? "전체 기사에서 찾기" : "검색 지우기"}
