@@ -69,9 +69,12 @@ export function LeaderRow({ leader, unit }: { leader: RecordLeader; unit: string
   );
 }
 
-/** 다음에 넘을 기록 한 줄: 사진 · 지금 값 · 누구를 넘으면 몇 위 · 남은 수 · 막대 */
+/**
+ * 다음에 넘을 기록 한 줄: 사진 · 지금 값 · 누구를 넘으면 몇 위 · 남은 수.
+ * 진행 막대(지금 값 ÷ 넘을 값)는 뺐다. api가 선수마다 남은 비율이 가장 작은 기록을 먼저 주므로 막대가 늘 85~95%에 몰려
+ * 차이가 안 보였고, 남은 수가 가장 적은 선수의 막대가 가장 짧기도 해서 큰 남은 수와 거꾸로 읽혔다(11-17 UI/UX 전수조사)
+ */
 export function NextRow({ next }: { next: RecordNext }) {
-  const pct = Math.min(100, Math.round((next.value / next.targetValue) * 100));
   return (
     <li>
       <RowShell playerId={next.playerId}>
@@ -93,9 +96,6 @@ export function NextRow({ next }: { next: RecordNext }) {
           </span>
           <span className="mt-0.5 block text-meta text-muted">
             {`${next.targetNameKo} ${count(next.targetValue)}${next.unit} 넘으면 한국인 ${next.rankAfter}위`}
-          </span>
-          <span aria-hidden className="mt-2 block h-1.5 overflow-hidden rounded-full bg-surface-2">
-            <span className="block h-full rounded-full bg-accent" style={{ width: `${pct}%` }} />
           </span>
         </span>
       </RowShell>
