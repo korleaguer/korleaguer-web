@@ -4,7 +4,7 @@ import { getMyPlayers, getPlayers } from "@/lib/api";
 import { formatLineup, formatSummary, formatTime, kstDayKey } from "@/lib/format";
 import { readMyPlayers } from "@/lib/myPlayers";
 import { teamColor, teamLogoUrl } from "@/lib/teams";
-import { levelKo } from "@/components/my/formLabels";
+import { levelKo, statusBadge } from "@/components/my/formLabels";
 import PlayerAvatar from "@/components/PlayerAvatar";
 import ResultPill from "@/components/ResultPill";
 import ScoreText from "@/components/ScoreText";
@@ -144,13 +144,33 @@ function teamText(entry: MyPlayer): string | null {
   return team;
 }
 
-/** 오른쪽: 메이저는 선발·교체·구원, 그 밖은 그 상태 며칠째 */
+/**
+ * 오른쪽 작은 글씨: 메이저는 선발·교체·구원, 그 밖은 무슨 상태로 며칠째인지(전수조사 L308). 'n일째'만 쓰던 때는
+ * '출장 정지·지명 할당' 층처럼 두 상태가 섞이면 무엇의 날수인지 알 수 없었다.
+ * 말은 '내 선수' 상태 배지와 같다('부상자 명단 12일째'·'지명 할당(DFA) 5일째'·'FA 19일째'). 마이너 배지에는 날수가 없어
+ * 단계 이름에 붙이고('트리플A 12일째'), 이름 아래 줄이 이미 '부상자 명단'이면 날수만 둔다(같은 말 두 번 금지).
+ * 날수를 모르면 비운다. 마이너 부상자 명단은 오른 날을 믿기 어려워(배지에도 날수가 없다), 국내 복귀·시즌 끝은
+ * 이름 아래 '마지막 경기' 줄이 말해서 비운다
+ */
 function sideText(entry: MyPlayer, game: GameLine | null): string | null {
   const status = entry.status;
   if (!status || status.kind === "CALLED_UP" || status.kind === "RETURNED") {
     return game && game.played ? (formatLineup(game) ?? (game.role === "PITCHER" ? "등판" : null)) : null;
   }
-  return status.days != null ? `${status.days}일째` : null;
+  if (status.days == null) return null;
+  switch (status.kind) {
+    case "MINORS":
+      return `${levelKo(status.level)} ${status.days}일째`;
+    case "IL":
+      // 재활 경기가 없으면 이름 아래 줄이 '부상자 명단'이다(lineOf)
+      return game ? (statusBadge(status)?.text ?? null) : `${status.days}일째`;
+    case "SUSPENDED":
+    case "DFA":
+    case "FA":
+      return statusBadge(status)?.text ?? null;
+    default:
+      return null;
+  }
 }
 
 /**
@@ -245,8 +265,14 @@ function FloorRow({ entry, starred }: { entry: MyPlayer; starred: boolean }) {
   const move = moveText(entry);
   const team = teamText(entry);
   return (
-    <li>
-      <Link href={`/players/${entry.player.id}`} className="press-soft flex min-h-16 items-center gap-3 px-3.5 py-2.5">
+    // 큰 글씨로 줄이 18rem보다 좁아지면 오른쪽 칸(결과 알약·상태 날수)을 기록 아래 줄로 내린다. 이름·기록 칸이
+    // 한두 글자 폭으로 찌그러져 이름이 오른쪽 칸 위로 넘치지 않게(rem 조건이라 글자 배율을 따라간다, #269와 같은 방식).
+    // 보통 크기는 360px 휴대폰에서도 19.5rem이라 그대로다
+    <li className="@container">
+      <Link
+        href={`/players/${entry.player.id}`}
+        className="press-soft flex min-h-16 items-center gap-3 px-3.5 py-2.5 @max-[18rem]:flex-wrap @max-[18rem]:gap-y-1.5"
+      >
         <span className={`shrink-0 rounded-full ${starred ? "ring-2 ring-accent ring-offset-2 ring-offset-surface" : ""}`}>
           <PlayerAvatar
             nameKo={entry.player.nameKo}
@@ -278,10 +304,16 @@ function FloorRow({ entry, starred }: { entry: MyPlayer; starred: boolean }) {
           </span>
           {move && <span className={`mt-0.5 block text-label ${move.color}`}>{move.text}</span>}
         </span>
-        <span className="flex shrink-0 flex-col items-end gap-1">
+        {/* 상태 말이 길면('지명 할당(DFA) 12일째') 6.5rem 안에서 낱말 단위로 줄을 바꾼다. 아래 줄로 내려가면 기록 칸과
+            왼쪽을 맞추고(사진 44px + 간격), 비었으면 그 줄을 만들지 않는다 */}
+        <span className="flex max-w-[6.5rem] shrink-0 flex-col items-end gap-1 text-right @max-[18rem]:max-w-none @max-[18rem]:basis-full @max-[18rem]:flex-row @max-[18rem]:items-center @max-[18rem]:gap-2 @max-[18rem]:pl-[calc(44px+0.75rem)] @max-[18rem]:text-left @max-[18rem]:empty:hidden">
           {/* 결장한 경기의 팀 승패는 그 선수 이야기가 아니라 뺀다 */}
           {game && game.played && <ResultPill result={game.result} />}
-          {side && <span className="text-caption text-muted tabular-nums">{side}</span>}
+          {side && (
+            <span className="text-caption text-muted tabular-nums">
+              <Words text={side} />
+            </span>
+          )}
         </span>
       </Link>
     </li>
