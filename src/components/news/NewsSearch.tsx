@@ -150,7 +150,9 @@ export default function NewsSearch({
               // 지운 경우(빈 칸)도 닫혀 빈 입력칸이 남지 않고, 찾은 말은 줄 맨 앞 알약으로 보인다
               if (open && value.trim() === (requested.current ?? "")) setOpen(false);
             }}
-            className="min-w-0 flex-1 self-stretch bg-transparent text-body outline-none placeholder:text-muted [&::-webkit-search-cancel-button]:hidden"
+            // 손가락 기기에서는 글자를 16px 아래로 두지 않는다: 아이폰은 16px보다 작은 입력칸을 누르면 화면을 저절로 키운다
+            // (사파리는 원래 그랬고, 앱도 손가락 확대를 풀어 같아졌다, 이슈 #264)
+            className="min-w-0 flex-1 self-stretch bg-transparent text-body outline-none placeholder:text-muted pointer-coarse:text-[length:max(16px,0.9375rem)] [&::-webkit-search-cancel-button]:hidden"
           />
           {/* 찾는 동안 점 3개(결과가 오면 사라진다) */}
           {pending && (
