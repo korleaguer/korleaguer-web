@@ -60,7 +60,7 @@ export function OgBrand({ scale = 1 }: { scale?: number }) {
 
 /**
  * 그릴 선수·기사를 못 받았을 때(없는 주소, api 오류)의 그림: 로고만. 선수·기사 그림 경로가 같이 쓴다.
- * 잠깐의 api 오류로 그린 그림을 카톡 등 수집기가 저장해 두지 않게 저장 금지(no-store)로 보낸다. 다음 공유 때 다시 받아 간다
+ * 잠깐의 api 오류로 그린 그림이 오래 남지 않게 저장 금지(no-store)로 보낸다. 브라우저와 대개의 수집기는 다음에 다시 받아 가지만, 카카오톡 서버에 이미 저장된 썸네일은 카카오 정책을 따라 우리가 지울 수 없다
  * (기본은 'public, max-age=0, must-revalidate'라 저장해 두고 다시 물어보기만 한다).
  */
 export function ogFallbackImage(fonts: Awaited<ReturnType<typeof ogFonts>>) {
