@@ -4,7 +4,7 @@ import { formatDate } from "@/lib/format";
 import { readMyPlayers } from "@/lib/myPlayers";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import Section from "@/components/Section";
-import Words from "@/components/Words";
+import { WordGroup } from "@/components/Words";
 import FormCard from "@/components/my/FormCard";
 import SeasonReportCard from "@/components/home/SeasonReportCard";
 import MyPlayersLink from "@/components/home/MyPlayersLink";
@@ -76,10 +76,16 @@ export default async function OffseasonPlayers({
       ? [...my.players].sort((a, b) => (report.get(a.player.id)?.i ?? 99) - (report.get(b.player.id)?.i ?? 99))
       : order(my.players, myIds)
     : [];
-  // 제목 옆: 순서 이름, 받았으면 그 뒤에 기준 시각. 큰 글씨에서는 띄어쓰기에서만 줄을 바꾸고
-  // '·'는 '기준'에 붙여 줄 끝에 홀로 남지 않게 한다(선수 목록 머리 줄과 같은 꼴)
+  // 제목 옆: 순서 이름, 받았으면 그 뒤에 기준 시각(선수 목록·내 선수 머리 줄과 같은 꼴). 기준 시각은 한 덩어리라
+  // 큰 글씨에서는 '잘한 순' 다음에서 통째로 내려가고, '·'는 '기준'에 붙여 줄 끝에 홀로 남지 않는다
   const orderName = report.size > 0 ? "잘한 순" : null;
-  const aside = asOf ? <Words text={orderName ? `${orderName} ·\u00a0${asOf}` : asOf} /> : orderName;
+  const aside =
+    asOf && orderName ? (
+      <>
+        {`${orderName} `}
+        <WordGroup text={`·\u00a0${asOf}`} />
+      </>
+    ) : (asOf ?? orderName);
 
   return (
     <Section
