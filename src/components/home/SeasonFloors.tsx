@@ -182,13 +182,15 @@ export default async function SeasonFloors({ recent, asOf }: Props) {
   }
   const players = myResult.data.players;
   const floors = buildFloors(players, mine);
+  // 입구의 '내 선수 n명'은 /my 머리말과 같은 기준: 쿠키에 남은 없는 선수 id는 뺀다(리뷰 지적, 이슈 #262)
+  const myCount = playersResult.ok ? mine.filter((id) => playersResult.data.some((p) => p.id === id)).length : mine.length;
   const derby = findDerby(players);
 
   return (
     <Section id="floors-title" title="지금 어디서 뛰나" aside={asOf}>
       {/* '내 선수'(/my)로 가는 입구(이슈 #262). 내 선수는 층마다 파란 고리로 먼저 놓인다 */}
       <div className="-mt-1 mb-2 flex justify-end px-1">
-        <MyPlayersLink count={mine.length} />
+        <MyPlayersLink count={myCount} />
       </div>
       {derby && <DerbyCard pair={derby} />}
       {/* PC: 층을 두 칸에 나눠 놓는다(한 줄이 화면 끝까지 늘어나지 않게). 층을 잇는 세로선은 휴대폰에서만 */}
