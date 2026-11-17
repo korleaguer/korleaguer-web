@@ -77,7 +77,7 @@ export default function MyHeader({ subtitle, players, selectedIds }: Props) {
         <section id="my-picker" aria-label="선수 고르기" className={`card mt-3 p-2 ${opened ? "reveal" : ""}`}>
           {ordered.length >= 2 && (
             <div className="mb-2 border-b border-line pb-2">
-              <h2 className="px-2 pb-1 pt-1 text-label text-muted">화면 순서 · 손잡이를 끌어서 바꾸기</h2>
+              <h2 className="px-2 pb-1 pt-1 text-label text-muted">화면 순서 · 끌거나 화살표로 바꾸기</h2>
               <OrderList players={ordered} />
             </div>
           )}
