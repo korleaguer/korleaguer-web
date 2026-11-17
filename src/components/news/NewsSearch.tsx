@@ -29,6 +29,11 @@ function typingPause(text: string): number | null {
   return TYPING_PAUSE_MS;
 }
 
+/** 손가락으로 쓰는 기기(휴대폰·태블릿). 화면 자판을 쓰니 검색 뒤 키보드를 내리고, 엔터는 손으로 누른 것으로 본다 */
+function isFingerDevice(): boolean {
+  return window.matchMedia("(pointer: coarse)").matches;
+}
+
 /**
  * 뉴스 탭의 '자주 나온 말' 줄과 검색(이슈 #214·#219). 제목(영어 기사는 한국어 제목)에 그 말이 있는 기사만 보인다(주소 ?q=,
  * 고른 선수 안에서). 요약은 찾지 않는다: 목록에 제목만 보여 요약에만 있는 기사는 왜 나왔는지 알 수 없었다(이슈 #217).
@@ -140,34 +145,34 @@ export default function NewsSearch({
    * 돋보기로 연 입력칸을 닫고(update로 입력칸 글도 함께 바꾼다) 포커스를 둘 곳을 정한다(APG 펼침 버튼: 닫으면 연 버튼으로).
    * 휴대폰 배치는 입력칸이 사라지니 먼저 화면에 그린 뒤 돋보기로 옮긴다(그대로 두면 포커스가 사라진 칸에 남아 화면 낭독기와
    * 키보드가 문서 처음으로 돌아갔다). 입력칸이 그대로 보이면(PC 배치·알약 없는 휴대폰) 손가락 기기만 키보드를 내리고,
-   * 마우스·키보드 기기는 입력칸에 둔다. 손가락 기기에서는 옮긴 돋보기에 포커스 테두리를 그리지 말라고 알린다(아는 브라우저만,
-   * 손으로 누른 뒤 파란 테두리가 남아 고른 것처럼 보이지 않게). 화면은 움직이지 않는다(아이폰이 돋보기 쪽으로 튀지 않게)
+   * 마우스·키보드 기기는 입력칸에 둔다. 화면은 움직이지 않는다(아이폰이 돋보기 쪽으로 튀지 않게).
+   * 옮긴 돋보기의 포커스 테두리는 키보드로 닫았을 때만 그린다(byKeyboard, 아는 브라우저만). 손으로 누른 뒤 파란 테두리가
+   * 남으면 고른 것처럼 보인다. 기기 종류(손가락 기기)로 나누면 키보드를 단 태블릿에서 Tab·엔터로 닫아도 테두리가 사라졌다
    */
-  function closeInput(update: () => void) {
+  function closeInput(update: () => void, byKeyboard: boolean) {
     flushSync(() => {
       update();
       setOpen(false);
     });
-    const finger = window.matchMedia("(pointer: coarse)").matches;
     const button = openButtonRef.current;
     if (button && button.getClientRects().length > 0) {
-      button.focus({ preventScroll: true, focusVisible: !finger } as FocusOptions);
-    } else if (finger) {
+      button.focus({ preventScroll: true, focusVisible: byKeyboard } as FocusOptions);
+    } else if (isFingerDevice()) {
       inputRef.current?.blur();
     }
   }
 
   /** 취소: 입력칸을 닫고 열기 전 검색어로 돌린다(그 사이 친 말은 버린다) */
-  function cancel() {
+  function cancel(byKeyboard: boolean) {
     const back = openedWith.current;
     go(back);
-    closeInput(() => setValue(back ?? ""));
+    closeInput(() => setValue(back ?? ""), byKeyboard);
   }
 
-  function pick(word: string) {
+  function pick(word: string, byKeyboard: boolean) {
     haptic("select");
     go(word);
-    closeInput(() => setValue(word));
+    closeInput(() => setValue(word), byKeyboard);
   }
 
   // 지금 검색어가 알약의 말이면 그 알약을 켠다(대소문자 상관없이). 아니면 직접 친 말이라 줄 맨 앞에 켜진 알약으로 보인다
@@ -202,7 +207,8 @@ export default function NewsSearch({
             onSubmit={(e) => {
               e.preventDefault();
               go(value);
-              closeInput(() => {});
+              // 손가락 기기의 엔터는 화면 자판의 '검색' 키라 손으로 누른 것으로 본다(키보드 테두리를 그리지 않는다)
+              closeInput(() => {}, !isFingerDevice());
             }}
             // 테두리는 입력칸 전용 색(바탕 대비 3:1 이상). 알약·돋보기의 옅은 line 선과 달리 '글을 치는 칸'으로 보여야 한다
             className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-xl bg-surface px-3 shadow-[0_0_0_1px_var(--field-line)] focus-within:shadow-[0_0_0_2px_var(--accent)]"
@@ -248,9 +254,10 @@ export default function NewsSearch({
           {open && (
             <button
               type="button"
-              // 누르는 순간 입력칸이 포커스를 잃어 버튼이 사라지기 전에 누르게 한다(닫기는 cancel이 한다)
+              // 누르는 순간 입력칸이 포커스를 잃어 버튼이 사라지기 전에 누르게 한다(닫기는 cancel이 한다).
+              // 키보드(엔터·스페이스)로 누른 click은 detail이 0이다
               onPointerDown={(e) => e.preventDefault()}
-              onClick={cancel}
+              onClick={(e) => cancel(e.detail === 0)}
               className="press tap-target shrink-0 cursor-pointer px-2 text-button text-accent-ink lg:hidden"
             >
               취소
@@ -266,9 +273,9 @@ export default function NewsSearch({
                 <li key={t.word}>
                   <button
                     type="button"
-                    // 누르는 순간 입력칸이 포커스를 잃어 알약이 사라지기 전에 고르게 한다
+                    // 누르는 순간 입력칸이 포커스를 잃어 알약이 사라지기 전에 고르게 한다(키보드로 누르면 detail이 0)
                     onPointerDown={(e) => e.preventDefault()}
-                    onClick={() => pick(t.word)}
+                    onClick={(e) => pick(t.word, e.detail === 0)}
                     aria-label={topicLabel(t.word, t.count, false)}
                     className="press tap-target inline-flex cursor-pointer items-center gap-1 rounded-full bg-surface px-3 py-1.5 text-button text-foreground shadow-[0_0_0_1px_var(--line)] hover:bg-surface-2"
                   >
