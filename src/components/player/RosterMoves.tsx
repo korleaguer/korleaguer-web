@@ -14,6 +14,8 @@ function dotDate(date: string): string {
 
 /**
  * 선수 이동 기록(최신부터): 날짜 · 무엇(알약) · 어디서 어디로. 알약은 MovePill(경기 달력 아래 이동 줄과 같다).
+ * 이동 기록은 시각 없이 미국 날짜만 와서, 한국 날짜인 경기 달력 칸과 하루 다를 수 있다. 그래서 제목 옆에 '미국 날짜'를
+ * 한 번 적는다(달력 아래 이동 줄과 같은 규칙, DESIGN.md 문구 원칙). 줄마다 붙이면 같은 말이 되풀이된다
  */
 export default async function RosterMoves({ moves }: { moves: RosterMove[] }) {
   // 잠깐 재사용: 같은 데이터면 30초 동안 그려 둔 것을 다시 쓴다(쿠키와 상관없는 부품이라 모두에게 같다).
@@ -24,7 +26,7 @@ export default async function RosterMoves({ moves }: { moves: RosterMove[] }) {
   const rest = moves.slice(VISIBLE);
 
   return (
-    <Section id="moves-title" title="이동 기록" aside={moves.length > 0 ? `${moves.length}건` : undefined}>
+    <Section id="moves-title" title="이동 기록" aside={moves.length > 0 ? `미국 날짜 · ${moves.length}건` : undefined}>
       {moves.length === 0 ? (
         <p className="card px-4 py-5 text-body text-muted">최근 두 시즌 동안 이동 기록이 없어요.</p>
       ) : (
