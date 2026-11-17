@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { RecordBest, RecordLeader, RecordNext, RecordPassed } from "@/lib/api";
+import Chevron from "@/components/Chevron";
 import PlayerAvatar from "@/components/PlayerAvatar";
 
 /** 1671 → "1,671" */
@@ -36,6 +37,22 @@ function RowShell({ playerId, children }: { playerId: number | null; children: R
   );
 }
 
+/**
+ * 순위 줄 오른쪽 끝: 값 묶음 + 선수 화면으로 가는 줄(명단 선수)에만 ›.
+ * 순위에는 지난 선수가 많아 못 누르는 줄이 더 많은데(11-17 통산 안타 14명 중 9명, 승·세이브는 모두) 모양이 같아서
+ * 눌러 봐야 알았다(11-17 UI/UX 전수조사). 못 누르는 줄은 › 폭만큼 비워 값 끝을 줄마다 맞춘다.
+ * ›를 값과 한 덩어리로 둬서 큰 글씨에서 값이 다음 줄로 내려가면 함께 내려간다.
+ * 넘은·넘을 기록 줄은 모두 누를 수 있어 ›를 두지 않는다(다른 목록 카드처럼)
+ */
+function RowEnd({ linked, children }: { linked: boolean; children: ReactNode }) {
+  return (
+    <span className="ml-auto flex shrink-0 items-center gap-1.5">
+      {children}
+      {linked ? <Chevron /> : <span className="w-3 shrink-0" />}
+    </span>
+  );
+}
+
 function ActiveTag() {
   return <span className="rounded-md bg-accent-soft px-1.5 text-badge text-accent-ink">현역</span>;
 }
@@ -60,10 +77,12 @@ export function LeaderRow({ leader, unit }: { leader: RecordLeader; unit: string
             <span className="text-caption text-muted tabular-nums">{years(leader.firstSeason, leader.lastSeason)}</span>
           )}
         </span>
-        <span className="ml-auto shrink-0 text-stat tabular-nums">
-          {count(leader.value)}
-          <span className="sr-only">{unit}</span>
-        </span>
+        <RowEnd linked={leader.playerId != null}>
+          <span className="text-stat tabular-nums">
+            {count(leader.value)}
+            <span className="sr-only">{unit}</span>
+          </span>
+        </RowEnd>
       </RowShell>
     </li>
   );
@@ -164,17 +183,19 @@ export function BestRow({ row, unit }: { row: RecordBest["rows"][number]; unit: 
           {row.rank}
         </span>
         <span className="min-w-0 flex-1 basis-[3.5rem] text-heading">{row.nameKo}</span>
-        {/* 시즌과 값은 붙여 둔다: 이름 칸이 모자라면 둘이 함께 다음 줄 오른쪽으로 내려간다 */}
-        <span className="ml-auto flex shrink-0 items-baseline gap-3">
-          <span className="text-caption text-muted tabular-nums">
-            {row.season}
-            <span className="sr-only">시즌</span>
+        {/* 시즌·값·›는 붙여 둔다: 이름 칸이 모자라면 함께 다음 줄 오른쪽으로 내려간다 */}
+        <RowEnd linked={row.playerId != null}>
+          <span className="flex items-baseline gap-3">
+            <span className="text-caption text-muted tabular-nums">
+              {row.season}
+              <span className="sr-only">시즌</span>
+            </span>
+            <span className="w-14 text-right text-stat tabular-nums">
+              {count(row.value)}
+              <span className="sr-only">{unit}</span>
+            </span>
           </span>
-          <span className="w-14 text-right text-stat tabular-nums">
-            {count(row.value)}
-            <span className="sr-only">{unit}</span>
-          </span>
-        </span>
+        </RowEnd>
       </RowShell>
     </li>
   );
