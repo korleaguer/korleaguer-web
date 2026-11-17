@@ -9,6 +9,7 @@ const CHIP =
 /**
  * 선수 기본 정보 알약: 메이저·마이너 · 팀(로고) · 포지션 · 나이. 값이 없는 칸은 뺀다. 하나도 없으면 그리지 않는다.
  * 등번호는 덜 중요한 정보라 알약 대신 영문 이름 옆(PlayerSubline)에 둔다.
+ * 선수 목록 카드에만 쓴다(카드 전체가 링크라 알약도 눌린다). 선수 머리 카드는 못 누르는 정보라 알약 없이 글자 한 줄이다(PlayerHeader).
  */
 export default function InfoChips({ player, className = "" }: { player: PlayerSummary; className?: string }) {
   const age = formatAge(player.age);
