@@ -110,6 +110,16 @@ export default function LinkedTeamSheet({
               </h2>
               <p className="text-caption text-muted tabular-nums">
                 최근 {days}일 행선지로 거론한 기사 {articles.length}건
+                {/* 줄마다 보이는 문장은 AI 요약에서 뽑은 것이라, 언론사 이름 밑에 있어도 그 언론사가 쓴 문장처럼 읽히지 않게 알린다
+                    (인공지능기본법 제31조 생성형 AI 결과 고지). 줄마다 달지 않고 이 줄 끝에 한 번만 둔다(기사 페이지 출처 줄의 'AI 요약'처럼,
+                    이슈 #277). 좁으면 '· 문장은 AI 요약'을 한 덩어리로 다음 줄에 내린다. 요약 문장이 없는 기사는 제목을 보이는데
+                    (11-17 운영 90줄 중 1줄), 모든 줄이 제목이면 붙이지 않는다 */}
+                {articles.some((a) => a.reason) && (
+                  <>
+                    {" "}
+                    <span className="whitespace-nowrap">· 문장은 AI 요약</span>
+                  </>
+                )}
               </p>
             </div>
             <button
@@ -207,14 +217,18 @@ function ArticleRow({ article: a, playerPhotoUrl }: { article: LinkedArticle; pl
         <span className="flex min-w-0 whitespace-nowrap text-caption text-muted tabular-nums @max-[11rem]:block @max-[11rem]:whitespace-normal">
           <span className="min-w-0 truncate @max-[11rem]:whitespace-normal">{a.publisher}</span>
           {/* 조각 사이 간격은 NewsTitleList와 같다(한 줄이면 왼쪽 여백, 흘리면 보통 공백이 간격·줄바꿈 자리) */}
+          {/* 같은 글을 실은 다른 언론사 이름은 PC에서 마우스를 올리면 보이고(title), 화면 낭독기에는 읽어 준다(NewsTitleList와
+              같다, 이슈 #277). relative: sr-only 글자(position: absolute)를 이 칸에 가둔다. 가두지 않으면 창(fixed)에 붙어
+              스크롤 칸 밖에 놓여 창의 스크롤 범위를 늘릴 수 있다(기록 표 TableScroll과 같은 이유) */}
           {a.alsoBy.length > 0 && (
             <>
               {" "}
               <span
-                className="shrink-0 whitespace-nowrap pl-[0.25em] @max-[11rem]:pl-0"
+                className="relative shrink-0 whitespace-nowrap pl-[0.25em] @max-[11rem]:pl-0"
                 title={`같은 기사: ${a.alsoBy.join(", ")}`}
               >
                 {`외 ${a.alsoBy.length}곳`}
+                <span className="sr-only">{`(같은 기사: ${a.alsoBy.join(", ")})`}</span>
               </span>
             </>
           )}{" "}
