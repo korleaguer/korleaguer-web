@@ -183,8 +183,9 @@ function EraDelta({ value, season, played }: { value: number | null; season: num
 }
 
 /**
- * 시즌과 비교한 차이. 화살표는 숫자가 오른 쪽(▲)·내린 쪽(▼), 색은 좋아짐(불꽃 주황)·나빠짐(진한 파랑).
- * 한국 중계·증권 화면처럼 오름 빨강 계열, 내림 파랑 계열로 읽힌다(타율 기준). 화면 낭독기는 "좋아짐/나빠짐"도 읽는다.
+ * 시즌과 비교한 차이. 화살표는 숫자가 오른 쪽(▲)·내린 쪽(▼), 좋아지면 불꽃 주황(좋은 활약 색), 나빠지면 색 없이 본문 글자.
+ * 예전에는 증권 화면처럼 나빠짐을 진한 파랑으로 칠했는데, 다른 화면의 파랑은 1위·좋음·고른 칸이라 같은 색이
+ * 정반대 뜻이 됐다(11-17 점검, 사용자 결정 '추천대로'). 화면 낭독기는 "좋아짐/나빠짐"도 읽는다.
  */
 function Delta({ seasonText, diff, better, amount }: { seasonText: string; diff: number; better: boolean; amount: string }) {
   if (diff === 0) return <>{`시즌 ${seasonText} · 차이 없음`}</>;
@@ -192,7 +193,7 @@ function Delta({ seasonText, diff, better, amount }: { seasonText: string; diff:
   return (
     <span className="inline-flex items-center gap-0.5">
       {`시즌 ${seasonText}보다`}
-      <span className={`ml-0.5 inline-flex items-center gap-0.5 font-semibold ${better ? "text-hot-ink" : "text-accent-ink"}`}>
+      <span className={`ml-0.5 inline-flex items-center gap-0.5 font-semibold ${better ? "text-hot-ink" : "text-foreground"}`}>
         <svg aria-hidden viewBox="0 0 10 10" className={`size-2.5 fill-current ${up ? "" : "rotate-180"}`}>
           <path d="M5 1.5 9 8.5H1z" />
         </svg>

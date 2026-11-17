@@ -79,14 +79,17 @@ export function SummaryLines({ entry }: { entry: MyPlayer }) {
   );
 }
 
-/** 한 줄 소식: 좋은 일은 옅은 주황, 안 좋은 일은 회색 바탕 + 진한 파랑 글자 */
+/**
+ * 한 줄 소식: 좋은 일은 옅은 주황, 안 좋은 일은 회색 바탕 + 본문 글자·흐린 점.
+ * 안 좋은 일을 파랑으로 칠하지 않는다: 다른 화면의 파랑은 1위·좋음·고른 칸이다(11-17 사용자 결정 '추천대로')
+ */
 function FactPill({ fact }: { fact: FormFact }) {
   const hot = fact.tone === "HOT";
   return (
     <p
-      className={`mt-2 inline-flex items-center gap-1.5 self-start rounded-full px-2.5 py-0.5 text-badge ${hot ? "bg-hot-soft text-hot-ink" : "bg-surface-2 text-accent-ink"}`}
+      className={`mt-2 inline-flex items-center gap-1.5 self-start rounded-full px-2.5 py-0.5 text-badge ${hot ? "bg-hot-soft text-hot-ink" : "bg-surface-2 text-foreground"}`}
     >
-      <span aria-hidden className={`size-1.5 shrink-0 rounded-full ${hot ? "bg-hot" : "bg-accent-ink"}`} />
+      <span aria-hidden className={`size-1.5 shrink-0 rounded-full ${hot ? "bg-hot" : "bg-muted"}`} />
       {fact.text}
     </p>
   );
