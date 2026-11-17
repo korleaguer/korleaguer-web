@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { haptic } from "@/lib/app";
+import { revealInRow } from "@/lib/scroll";
 
 /** 바로 가기 알약 하나: 그 칸 제목(h2)의 id와 알약 글자 */
 export interface JumpTarget {
@@ -92,12 +93,7 @@ export default function JumpNav({ targets }: { targets: JumpTarget[] }) {
   useEffect(() => {
     const list = listRef.current;
     const pill = list?.children[active] as HTMLElement | undefined;
-    if (!list || !pill) return;
-    const left = pill.offsetLeft - list.offsetLeft;
-    if (left < list.scrollLeft) list.scrollLeft = left - 8;
-    else if (left + pill.offsetWidth > list.scrollLeft + list.clientWidth) {
-      list.scrollLeft = left + pill.offsetWidth - list.clientWidth + 8;
-    }
+    if (list && pill) revealInRow(list, pill);
   }, [active]);
 
   const go = (event: MouseEvent<HTMLAnchorElement>, i: number) => {
@@ -132,7 +128,7 @@ export default function JumpNav({ targets }: { targets: JumpTarget[] }) {
       {/* 알약 32px(2rem)에 누르는 영역 44px(.tap-target, 이슈 #251). 가로로 밀리는 줄은 넘친 부분을 잘라서, 넓힌 영역이 들어가게
           줄 위아래에 (44px − 알약)/2 여백을 두고 그만큼 탭 줄 여백(py-2 → py-0.5)을 줄여 높이는 그대로다.
           앱에서 글자를 작게 하면 알약이 줄어드니 여백을 max(6px 상당, 22px − 1rem)로(이슈 #257) */}
-      <ul ref={listRef} className="flex gap-1.5 overflow-x-auto overflow-y-hidden py-[max(0.375rem,calc(22px-1rem))] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <ul ref={listRef} className="no-scrollbar flex gap-1.5 overflow-x-auto overflow-y-hidden py-[max(0.375rem,calc(22px-1rem))]">
         {targets.map((t, i) => {
           const on = i === active;
           return (

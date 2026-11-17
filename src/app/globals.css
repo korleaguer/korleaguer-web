@@ -1014,9 +1014,14 @@
   }
 }
 
-/* 옆으로 미는 줄(뉴스 탭 선수 고르기): 스크롤 막대를 숨긴다. 손가락·트랙패드로 밀고, 키보드는 칸마다 Tab으로 옮긴다 */
+/*
+ * 옆으로 미는 알약 줄(뉴스 선수·말 고르기, 기록 탭 고르기, 선수 페이지 바로 가기·달·하이라이트): 스크롤 막대를 숨긴다.
+ * 손가락·트랙패드로 밀고, 키보드는 칸마다 Tab으로 옮긴다. 줄 끝에 닿아도 페이지로 넘기지 않는다(overscroll-behavior-x):
+ * 맥 트랙패드로 줄을 끝까지 민 다음 밀기가 페이지 '뒤로 가기'가 됐다(11-17 전수조사)
+ */
 @utility no-scrollbar {
   scrollbar-width: none;
+  overscroll-behavior-x: contain;
   &::-webkit-scrollbar {
     display: none;
   }

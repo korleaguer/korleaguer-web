@@ -427,9 +427,10 @@ function DetailContent({
         <p className="text-meta text-muted">마이너리그 경기는 MLB 영상이 없어요.</p>
       ) : null}
 
-      {/* 하이라이트가 여럿이면 고르기 */}
+      {/* 하이라이트가 여럿이면 고르기. 휴대폰은 가로로 밀어 보고, 640px 이상 가운데 창은 3개씩 줄을 바꾼다
+          (가로로 밀면 4번째부터 창 밖으로 잘렸고, PC 마우스로는 옆으로 밀 수단이 없었다, 11-17 전수조사) */}
       {detail.highlights.length > 1 && (
-        <ul className="mt-3 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
+        <ul className="no-scrollbar mt-3 flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible">
           {detail.highlights.map((h, i) => {
             const on = clip?.key === `h-${i}`;
             return (

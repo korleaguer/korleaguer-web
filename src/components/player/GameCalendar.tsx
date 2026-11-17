@@ -1,10 +1,11 @@
 "use client"; // 달·날짜를 누르면 달력과 아래 경기 줄을 바꿔야 해서 클라이언트 컴포넌트다.
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { GameLine, MinorGameLine, Role, RosterMove } from "@/lib/api";
 import { buildGameCalendar, lineOf, monthCells, monthSummary, type CalendarDay, type DayTone } from "@/lib/gameLog";
 import { haptic } from "@/lib/app";
 import { moveTone } from "@/lib/moves";
+import { revealInRow } from "@/lib/scroll";
 import { teamColor, teamColorById, teamLogoUrl, teamLogoUrlById } from "@/lib/teams";
 import TeamMark from "@/components/TeamMark";
 import GameRow from "./GameRow";
@@ -248,6 +249,15 @@ export default function GameCalendar({
     (span.first === span.last && opener.isConnected ? opener : cell)?.focus();
   }, [sheetKey]);
 
+  // 고른 달 알약이 줄 밖이면 가로로만 밀어 보이게 한다. 3월~10월 여덟 알약은 375px 휴대폰에서도 줄을 넘쳐서
+  // 처음 고른 9월이 화면 밖에 있었다(11-17 전수조사). 페이지 세로 위치는 건드리지 않는다
+  const monthRowRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const row = monthRowRef.current;
+    const pill = row?.querySelector<HTMLElement>('[aria-current="true"]');
+    if (row && pill) revealInRow(row, pill);
+  }, [month?.key]);
+
   if (!month) return null;
 
   const pitcher = role === "PITCHER";
@@ -289,9 +299,10 @@ export default function GameCalendar({
     <div ref={rootRef} className="card overflow-hidden">
       {/* 달 칸: 기간 알약과 같은 모양(고른 달은 연파랑). 경기 없는 달은 흐리게 두고 누를 수 없다 */}
       <div
+        ref={monthRowRef}
         role="group"
         aria-label="달 고르기"
-        className="flex gap-1 overflow-x-auto border-b border-line p-2.5 [scrollbar-width:none] sm:p-3"
+        className="no-scrollbar flex gap-1 overflow-x-auto border-b border-line p-2.5 sm:p-3"
       >
         {calendar.months.map((m) => {
           const on = m.key === month.key;
