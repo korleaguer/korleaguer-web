@@ -230,6 +230,11 @@ export interface NewsPage {
   summary: string | null;
   /** 기사 첫머리(언론사 피드가 준 글자 200자 안팎). 요약이 없을 때 쓴다. 없으면 null */
   lead: string | null;
+  /**
+   * 같은 글을 실은 다른 언론사(낸 순, 이 기사의 언론사는 빼고). 출처 줄 아래 '같은 기사' 줄에 쓴다(이슈 #277).
+   * 서버가 아직 주지 않아(korleaguer-server에 더할 일) 옛 api면 빈 목록이고, 그때는 그 줄을 그리지 않는다
+   */
+  alsoBy: string[];
   /** 같은 선수의 다른 기사(늦은 순 5건, 이 기사는 빼고) */
   more: NewsHeadline[];
 }
@@ -964,9 +969,13 @@ function normalizeHeadline(n: NewsHeadline): NewsHeadline | null {
     summary: n.summary ?? null,
     // 기사 사진은 언론사 서버에서 브라우저가 직접 받는다. https 주소만 쓴다
     imageUrl: n.imageUrl?.startsWith("https://") ? n.imageUrl : null,
-    // 같은 글을 실은 다른 언론사. 옛 API는 이 칸을 주지 않는다
-    alsoBy: Array.isArray(n.alsoBy) ? n.alsoBy.filter((p) => typeof p === "string" && p.trim() !== "") : [],
+    alsoBy: alsoByOf(n.alsoBy),
   };
+}
+
+/** 같은 글을 실은 다른 언론사 이름. 옛 API는 이 칸을 주지 않아 빈 목록이다. 빈 이름은 뺀다 */
+function alsoByOf(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((p): p is string => typeof p === "string" && p.trim() !== "") : [];
 }
 
 function normalizeNewsPage(raw: NewsPage): NewsPage {
@@ -981,6 +990,8 @@ function normalizeNewsPage(raw: NewsPage): NewsPage {
     imageUrl: raw.imageUrl?.startsWith("https://") ? raw.imageUrl : null,
     summary: raw.summary ?? null,
     lead: raw.lead ?? null,
+    // 기사 상세의 같은 기사 언론사는 서버에 아직 없다(목록 응답에만 있다)
+    alsoBy: alsoByOf(raw.alsoBy),
     more: (raw.more ?? []).flatMap((n) => normalizeHeadline(n) ?? []),
   };
 }
