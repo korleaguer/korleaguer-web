@@ -396,10 +396,12 @@ function DayCell({ day, on, onPick }: { day: CalendarDay; on: boolean; onPick: (
       <span aria-hidden className="cal-label self-center whitespace-nowrap font-bold tracking-tight sm:hidden">
         {day.label}
       </span>
-      {/* 넓은 화면: 한 줄 + 팀 결과 */}
+      {/* 넓은 화면: 한 줄 + 팀 결과. 가운데 글은 두 줄까지 쓴다. PC 두 칸 배치(1024px)에서 칸 안쪽이 약 64px라
+          '1⅔이닝 무실점'이 한 줄에 들어가지 않아 '1⅔이닝 무…'로 잘렸다(11-17 전수조사). 두 줄이 76px 칸에 들어가게 줄 높이를 줄인다
+          (위 줄 약 19.5 + 가운데 두 줄 14.4×2 + 아래 11 ≈ 59px ≤ 칸 안쪽 60px) */}
       <span aria-hidden className="hidden min-w-0 sm:block">
-        <span className="cal-label block truncate font-bold tracking-tight">{day.detail}</span>
-        <span className={`cal-top block truncate tabular-nums ${dim}`}>{day.result || " "}</span>
+        <span className="cal-label line-clamp-2 font-bold leading-[1.2] tracking-tight">{day.detail}</span>
+        <span className={`cal-top block truncate leading-none tabular-nums ${dim}`}>{day.result || " "}</span>
       </span>
     </button>
   );
