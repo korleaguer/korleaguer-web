@@ -6,7 +6,8 @@ import { toast } from "@/lib/toast";
 
 /**
  * '내 선수' 넣기·빼기. 누르는 즉시 화면이 바뀌고(optimistic), 쿠키가 바뀌면 서버가 화면을 다시 그린다.
- * 결과는 알림 띠로 알린다(토스처럼): 넣으면 '보기', 빼면 '되돌리기' 버튼. 20명이 꽉 차서 못 넣으면 원래 모양으로 돌아가고 그렇다고 알린다.
+ * 결과는 알림 띠로 알린다(토스처럼): 넣으면 '보기', 빼면 '되돌리기' 버튼. 20명이 꽉 차서 못 넣으면 원래 모양으로 돌아가고,
+ * 한 명을 빼고 넣으라고 알린다(내 선수 화면이 아니면 '내 선수 정리' 버튼).
  */
 export function useMyPlayerToggle(playerId: number, initialOn: boolean, nameKo: string) {
   const [on, setOptimisticOn] = useOptimistic(initialOn);
@@ -21,14 +22,18 @@ export function useMyPlayerToggle(playerId: number, initialOn: boolean, nameKo: 
       setOptimisticOn(next);
       const ok = await setMyPlayer(playerId, next);
       if (next) haptic(ok ? "success" : "error");
+      // 이미 내 선수 화면이면 그 화면으로 가는 버튼('보기'·'내 선수 정리')은 필요 없다(누르는 때의 주소로 판단해 훅이 주소를 구독하지 않게)
+      const onMyPage = window.location.pathname === "/my";
       if (!ok) {
-        toast("내 선수는 20명까지 넣을 수 있어요", { tone: "error" });
+        // 무엇을 하면 되는지까지 알린다('20명까지 넣을 수 있어요'만 말하고 끝났다, 11-17 점검). 다른 화면이면 빼러 가는 버튼
+        toast("내 선수 20명이 다 찼어요. 한 명을 빼고 넣어 주세요", {
+          tone: "error",
+          action: onMyPage ? undefined : { label: "내 선수 정리", href: "/my" },
+        });
         return;
       }
       const name = withObjectParticle(nameKo);
       if (next) {
-        // 이미 내 선수 화면이면 '보기'는 필요 없다(누르는 때의 주소로 판단해 훅이 주소를 구독하지 않게)
-        const onMyPage = window.location.pathname === "/my";
         toast(`${name} 내 선수에 넣었어요`, {
           tone: "success",
           action: undo || onMyPage ? undefined : { label: "보기", href: "/my" },
