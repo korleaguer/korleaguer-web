@@ -13,14 +13,20 @@ export function useMyPlayerToggle(playerId: number, initialOn: boolean, nameKo: 
   const [on, setOptimisticOn] = useOptimistic(initialOn);
   const [pending, startTransition] = useTransition();
 
-  /** undo: '되돌리기'로 다시 넣는 중(이때는 '보기' 버튼을 붙이지 않는다) */
-  function set(next: boolean, undo = false) {
+  /**
+   * undoAt: '되돌리기'로 다시 넣는 중이면 빠지기 전 자리. 그 자리에 다시 넣고, '보기' 버튼은 붙이지 않는다
+   * (맨 뒤로 넣으면 내 선수 화면 카드·뉴스 선수 순서가 바뀌었다, 11-17 점검)
+   */
+  function set(next: boolean, undoAt?: number) {
+    const undo = undoAt !== undefined;
     // 앱 안이면 손끝 진동: 빼기는 누르는 순간 가벼운 톡.
     // 넣기는 꽉 차서(20명) 못 넣을 수 있어서, 서버 결과를 받은 뒤 성공 또는 실패 진동 하나만 울린다.
     if (!next) haptic("tap");
     startTransition(async () => {
       setOptimisticOn(next);
-      const ok = await setMyPlayer(playerId, next);
+      // 넣었으면 들어간 자리, 뺐으면 빠지기 전 자리. 20명이 차서 못 넣었으면 null
+      const index = await setMyPlayer(playerId, next, undoAt);
+      const ok = index != null;
       if (next) haptic(ok ? "success" : "error");
       // 이미 내 선수 화면이면 그 화면으로 가는 버튼('보기'·'내 선수 정리')은 필요 없다(누르는 때의 주소로 판단해 훅이 주소를 구독하지 않게)
       const onMyPage = window.location.pathname === "/my";
@@ -39,7 +45,7 @@ export function useMyPlayerToggle(playerId: number, initialOn: boolean, nameKo: 
           action: undo || onMyPage ? undefined : { label: "보기", href: "/my" },
         });
       } else {
-        toast(`${name} 내 선수에서 뺐어요`, { action: { label: "되돌리기", onClick: () => set(true, true) } });
+        toast(`${name} 내 선수에서 뺐어요`, { action: { label: "되돌리기", onClick: () => set(true, index) } });
       }
     });
   }
