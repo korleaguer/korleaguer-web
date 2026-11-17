@@ -66,6 +66,8 @@ export function LeaderRow({ leader, unit }: { leader: RecordLeader; unit: string
           className={`w-6 shrink-0 text-center text-heading tabular-nums ${leader.active ? "text-accent-ink" : "text-muted"}`}
         >
           {leader.rank}
+          {/* 낭독기는 '6 이정후'가 아니라 '6위 이정후'로(역대 포스팅 계약 목록과 같은 방식) */}
+          <span className="sr-only">위</span>
         </span>
         <PlayerAvatar nameKo={leader.nameKo} photoUrl={leader.photoUrl} teamAbbr={null} size={28} />
         {/* 이름 칸 기본 폭 3.5rem(세 글자 이름): 이만큼도 안 남으면 값이 다음 줄 오른쪽으로 내려간다 */}
@@ -159,7 +161,8 @@ export function PassedRow({ group }: { group: PassedGroup }) {
       <RowShell playerId={first.playerId}>
         <PlayerAvatar nameKo={first.nameKo} photoUrl={first.photoUrl} teamAbbr={null} size={28} />
         <span className="w-12 shrink-0 text-heading @max-[18rem]:w-auto">{first.nameKo}</span>
-        <span className="shrink-0 rounded-full bg-surface-2 px-2 text-label text-neutral-pill-fg">{first.label}</span>
+        {/* 기록 이름표는 누르는 것이 아니라 흐린 글자로 둔다(알약은 누르는 것·드문 상태만, 사용자 규칙 11-17) */}
+        <span className="shrink-0 text-label text-neutral-pill-fg">{first.label}</span>
         <span className="min-w-0 flex-1 text-meta tabular-nums @max-[18rem]:order-last @max-[18rem]:basis-full @max-[18rem]:pl-[calc(28px+0.75rem)]">
           {names.map((p) => `${p.passedNameKo} ${count(p.passedValue)}`).join(" · ")}
         </span>
@@ -181,6 +184,7 @@ export function BestRow({ row, unit }: { row: RecordBest["rows"][number]; unit: 
           className={`w-6 shrink-0 text-center text-heading tabular-nums ${row.active ? "text-accent-ink" : "text-muted"}`}
         >
           {row.rank}
+          <span className="sr-only">위</span>
         </span>
         <span className="min-w-0 flex-1 basis-[3.5rem] text-heading">{row.nameKo}</span>
         {/* 시즌·값·›는 붙여 둔다: 이름 칸이 모자라면 함께 다음 줄 오른쪽으로 내려간다 */}
