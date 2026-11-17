@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { GameLine, HomeResponse, MyPlayer } from "@/lib/api";
 import { getMyPlayers, getPlayers } from "@/lib/api";
-import { formatLineup, formatSummary, formatTime } from "@/lib/format";
+import { formatLineup, formatSummary, formatTime, kstDayKey } from "@/lib/format";
 import { readMyPlayers } from "@/lib/myPlayers";
 import { teamColor, teamLogoUrl } from "@/lib/teams";
 import { levelKo } from "@/components/my/formLabels";
@@ -81,12 +81,17 @@ export function buildFloors(players: MyPlayer[], mine: readonly number[]): Floor
     .sort((a, b) => floorRank(a.key) - floorRank(b.key));
 }
 
-/** 오늘 한국 선수끼리 같은 경기에서 뛴 짝(맞대결). 없으면 null */
-export function findDerby(players: MyPlayer[]): [GameLine, GameLine] | null {
+/**
+ * 오늘(한국 날짜) 한국 선수끼리 같은 경기에서 뛴 짝(맞대결). 없으면 null.
+ * 보여 줄 경기는 7일 안의 마지막 경기라, 날짜를 보지 않으면 며칠 전 맞대결도 '오늘 맞대결'로 맨 위에 떴다
+ * (전수조사 L291, 11-16 결정 '맞대결은 그날만'). today를 모르면 오늘인지 말할 수 없어 띄우지 않는다
+ */
+export function findDerby(players: MyPlayer[], today: string | null): [GameLine, GameLine] | null {
+  if (!today) return null;
   const byGame = new Map<number, GameLine[]>();
   for (const entry of players) {
     const last = shownGame(entry);
-    if (!last || !last.played || floorOf(entry).key !== "MLB") continue;
+    if (!last || !last.played || floorOf(entry).key !== "MLB" || kstDayKey(last.startTimeKst) !== today) continue;
     byGame.set(last.gameId, [...(byGame.get(last.gameId) ?? []), last]);
   }
   for (const lines of byGame.values()) {
@@ -185,7 +190,9 @@ export default async function SeasonFloors({ recent, asOf }: Props) {
   const floors = buildFloors(players, mine);
   // 입구의 '내 선수 n명'은 /my 머리말과 같은 기준: 쿠키에 남은 없는 선수 id는 뺀다(리뷰 지적, 이슈 #262)
   const myCount = playersResult.ok ? mine.filter((id) => playersResult.data.some((p) => p.id === id)).length : mine.length;
-  const derby = findDerby(players);
+  // '오늘'의 기준일: 지금 시각(new Date)이 아니라 경기 목록을 만든 응답 시각의 한국 날짜다. 캐시된 화면에서도 날짜 말이 목록과 맞는다
+  const today = kstDayKey(myResult.data.generatedAt);
+  const derby = findDerby(players, today);
 
   return (
     <Section id="floors-title" title="지금 어디서 뛰나" aside={asOf}>
