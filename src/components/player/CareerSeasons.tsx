@@ -25,8 +25,9 @@ export default function CareerSeasons({ seasons: all }: { seasons: CareerSeason[
     <Section id="seasons-title" title="시즌별 기록" aside="MLB 정규시즌">
       {/* 좁은 폰·앱 큰 글씨에서는 표가 카드보다 넓어 이 상자 안에서 가로로 민다. 사파리는 스크롤 상자에 저절로 포커스를 주지 않아
           키보드로 밀 수 있게 Tab이 머물게 한다(WCAG 2.1.1). 바깥 section이 이미 '시즌별 기록' 영역이라 같은 이름의 영역(region)을
-          또 만들지 않고 이름 붙은 묶음(group)으로 둔다 */}
-      <div tabIndex={0} role="group" aria-labelledby="seasons-title" className="card overflow-x-auto">
+          또 만들지 않고 이름 붙은 묶음(group)으로 둔다. relative: 칸 안 sr-only 글자(position: absolute)가 스크롤 상자 밖으로
+          빠져나와 페이지가 가로로 밀리지 않게(TableScroll과 같은 이유) */}
+      <div tabIndex={0} role="group" aria-labelledby="seasons-title" className="card relative overflow-x-auto">
         <table className="w-full min-w-[20rem] text-meta tabular-nums">
           <thead className="text-caption text-muted">
             <tr className="border-b border-line">
@@ -36,6 +37,8 @@ export default function CareerSeasons({ seasons: all }: { seasons: CareerSeason[
               {head.map((h, i) => (
                 <th key={h} scope="col" className={`py-2.5 text-right font-semibold ${i === head.length - 1 ? "pr-4" : "px-1.5"}`}>
                   {h}
+                  {/* 보이는 풀이는 위 'MLB 타자 중에서' 각주 한 곳에만 둔다(같은 안내 두 번 금지). 낭독기는 머리를 읽을 때 함께 듣는다 */}
+                  {h === "WAR" && <span className="sr-only">(대체 선수보다 더 번 승수, 0이 평균 아님)</span>}
                 </th>
               ))}
             </tr>
