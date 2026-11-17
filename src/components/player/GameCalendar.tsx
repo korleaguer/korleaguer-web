@@ -166,9 +166,10 @@ export default function GameCalendar({
     spanRef.current = null;
     openerRef.current = null;
     if (!span || !opener) return;
-    // 다른 곳에 이미 포커스가 있으면(창을 닫고 바로 다른 것을 누른 경우) 빼앗지 않는다
+    // 달력 밖 다른 곳에 이미 포커스가 있으면(창을 닫고 바로 다른 것을 누른 경우) 빼앗지 않는다. 포커스가 body이거나
+    // 달력 안(브라우저가 창을 닫으며 처음 연 칸으로 먼저 돌려준 경우)이면 우리가 정한 칸·버튼으로 옮긴다
     const focused = document.activeElement;
-    if (focused && focused !== document.body) return;
+    if (focused && focused !== document.body && !rootRef.current?.contains(focused)) return;
     const cell = rootRef.current?.querySelector<HTMLElement>(`[data-day="${span.last}"]`);
     (span.first === span.last && opener.isConnected ? opener : cell)?.focus();
   }, [sheetKey]);

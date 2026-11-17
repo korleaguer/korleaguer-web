@@ -29,8 +29,10 @@ const SKIN_STYLE = {
   "--media-border-radius": "12px",
   "--media-font-family": "var(--font-sans)",
   "--media-object-fit": "contain",
-  // 조작 버튼 36px → 44px(Apple 44pt, 이슈 #249). 스킨 기본값은 --media-spacing(4px) × 9
-  "--media-control-size": "44px",
+  // 조작 버튼 36px → 44px(Apple 44pt, 이슈 #249). 스킨 기본값은 --media-spacing(4px) × 9.
+  // 버튼 6개(재생·소리·자막·전송·화면 속 화면·전체 화면)와 시간 글자가 한 줄이라, 화면 폭 360px보다 좁으면
+  // 1px 좁아질 때마다 0.25px씩 줄인다(최소 36px). 재 보니 320px 36px·340px 39px·360px 44px에서 시간 글자와 겹치지 않는다
+  "--media-control-size": "clamp(36px, calc(44px - (360px - 100vw) / 4), 44px)",
 } as CSSProperties;
 
 /**
