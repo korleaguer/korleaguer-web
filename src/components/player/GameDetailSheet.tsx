@@ -342,7 +342,11 @@ function EntryDetail({
   if (load.state === "error") {
     return (
       <div className="px-4 pt-5 pb-2">
-        <p className="text-body text-muted">기록을 불러오지 못했어요. 잠시 뒤에 다시 해 주세요.</p>
+        {/* 화면 낭독기가 바로 읽게 alert(버튼은 밖에 둔다). '다시 시도'가 또 실패하면 받는 동안 뼈대로 바뀌었다가 이 문구가
+            새로 그려져 다시 읽힌다(11-17 전수조사) */}
+        <p role="alert" className="text-body text-muted">
+          기록을 불러오지 못했어요. 잠시 뒤에 다시 해 주세요.
+        </p>
         <button
           type="button"
           onClick={() => {
