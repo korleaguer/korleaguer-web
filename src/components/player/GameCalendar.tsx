@@ -93,6 +93,11 @@ export default function GameCalendar({
   const openerRef = useRef<HTMLElement | null>(null);
   /** 창이 처음 연 날짜와 마지막으로 보인 날짜(앞뒤 경기로 바뀌었나) */
   const spanRef = useRef<{ first: string; last: string } | null>(null);
+  /**
+   * 지금 주소 기록이 창을 열며 쌓은 것인가. history.state의 표시만 보면 앱이 화면으로 돌아올 때 부르는 router.refresh()가
+   * 표시를 지운 뒤 닫을 때 쌓은 기록이 빈 채로 남는다(이슈 #256). 쌓는 곳은 클릭 처리기(pickDay·'경기 상세' 버튼)다
+   */
+  const ownsEntryRef = useRef(false);
   /** 창에서 앞뒤로 넘길 날짜들(누를 수 있는 날, 오래된 날부터) */
   const order = useMemo(
     () => [...calendar.days.values()].filter((d) => d.selectable).map((d) => d.key).sort(),
@@ -130,7 +135,7 @@ export default function GameCalendar({
   };
 
   const closeSheet = () => {
-    if (window.history.state?.[SHEET_STATE]) {
+    if (ownsEntryRef.current) {
       // 쌓은 기록을 지우면 popstate가 창을 닫는다
       window.history.back();
     } else {
@@ -145,6 +150,7 @@ export default function GameCalendar({
       const raw = new URLSearchParams(window.location.search).get("game");
       const gamePk = raw && /^\d{1,10}$/.test(raw) ? Number(raw) : null;
       const day = gamePk ? dayOfGame(gamePk) : undefined;
+      ownsEntryRef.current = Boolean(window.history.state?.[SHEET_STATE]);
       if (day) showDay(day.key);
       else setSheetKey(null);
     };
@@ -192,7 +198,10 @@ export default function GameCalendar({
   const pickDay = (key: string, from: HTMLElement) => {
     haptic("select");
     setDayKey(key);
-    if (sheetKey === null) openerRef.current = from;
+    if (sheetKey === null) {
+      openerRef.current = from;
+      ownsEntryRef.current = true;
+    }
     openSheet(key);
   };
   const sheetDay = sheetKey ? (calendar.days.get(sheetKey) ?? null) : null;
@@ -306,10 +315,13 @@ export default function GameCalendar({
           type="button"
           onClick={(e) => {
             haptic("select");
-            if (sheetKey === null) openerRef.current = e.currentTarget;
+            if (sheetKey === null) {
+              openerRef.current = e.currentTarget;
+              ownsEntryRef.current = true;
+            }
             openSheet(selected.key);
           }}
-          className="press-soft flex w-full items-center justify-center gap-1 border-t border-line py-2.5 text-label text-accent-ink"
+          className="press-soft flex min-h-[max(2.75rem,44px)] w-full items-center justify-center gap-1 border-t border-line py-2.5 text-label text-accent-ink"
         >
           경기 상세 · 영상 보기
           <svg aria-hidden viewBox="0 0 16 16" className="size-3.5" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">

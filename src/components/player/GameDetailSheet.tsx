@@ -72,17 +72,18 @@ export default function GameDetailSheet({
   const panelRef = useRef<HTMLDivElement>(null);
   const prevRef = useRef<HTMLButtonElement>(null);
   const nextRef = useRef<HTMLButtonElement>(null);
-  const closeRef = useRef<HTMLButtonElement>(null);
-  /** 마지막으로 누른 앞뒤 버튼. 끝 경기에 닿아 그 버튼이 꺼지면 포커스가 사라지니 반대쪽(없으면 닫기)으로 옮긴다(이슈 #249) */
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  /**
+   * 마지막으로 누른 앞뒤 버튼. 끝 경기에 닿아 그 버튼이 꺼지면 포커스가 사라지니 날짜 제목으로 옮긴다(이슈 #249).
+   * 반대쪽 버튼으로 옮기면 Enter를 누르고 있을 때(키 반복) 앞뒤로 오락가락했다(이슈 #256). 제목에서 Shift+Tab이면 이전 경기
+   */
   const pressedRef = useRef<"prev" | "next" | null>(null);
   useEffect(() => {
     const pressed = pressedRef.current;
     pressedRef.current = null;
     if (!pressed) return;
     const same = pressed === "prev" ? prevRef.current : nextRef.current;
-    if (!same?.disabled) return;
-    const other = pressed === "prev" ? nextRef.current : prevRef.current;
-    (other && !other.disabled ? other : closeRef.current)?.focus();
+    if (same?.disabled) titleRef.current?.focus();
   }, [day.key]);
 
   // 열린 동안 뒤 페이지가 스크롤되지 않게 하고, 모달로 연다(포커스가 창 안에 머문다)
@@ -167,7 +168,7 @@ export default function GameDetailSheet({
                 })
               }
             />
-            <h2 id={titleId} className="min-w-0 flex-1 text-center text-heading tabular-nums">
+            <h2 ref={titleRef} id={titleId} tabIndex={-1} className="min-w-0 flex-1 text-center text-heading tabular-nums outline-none">
               {formatDate(day.key)}
             </h2>
             <NavButton
@@ -183,11 +184,10 @@ export default function GameDetailSheet({
               }
             />
             <button
-              ref={closeRef}
               type="button"
               aria-label="닫기"
               onClick={onClose}
-              className="press grid size-11 shrink-0 place-items-center rounded-full text-muted hover:bg-surface-2"
+              className="press grid size-[max(2.75rem,44px)] shrink-0 place-items-center rounded-full text-muted hover:bg-surface-2"
             >
               <svg aria-hidden viewBox="0 0 16 16" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
                 <path d="M4 4l8 8M12 4l-8 8" />
@@ -223,7 +223,7 @@ function NavButton({
         haptic("select");
         onClick?.();
       }}
-      className="press grid size-11 shrink-0 place-items-center rounded-full text-muted hover:bg-surface-2 disabled:opacity-30"
+      className="press grid size-[max(2.75rem,44px)] shrink-0 place-items-center rounded-full text-muted hover:bg-surface-2 disabled:opacity-30"
     >
       <svg aria-hidden viewBox="0 0 16 16" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
         <path d={dir === "prev" ? "M10 3 5 8l5 5" : "m6 3 5 5-5 5"} />
