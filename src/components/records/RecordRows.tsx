@@ -42,13 +42,14 @@ function RowShell({ playerId, children }: { playerId: number | null; children: R
  * 순위에는 지난 선수가 많아 못 누르는 줄이 더 많은데(11-17 통산 안타 14명 중 9명, 승·세이브는 모두) 모양이 같아서
  * 눌러 봐야 알았다(11-17 UI/UX 전수조사). 못 누르는 줄은 › 폭만큼 비워 값 끝을 줄마다 맞춘다.
  * ›를 값과 한 덩어리로 둬서 큰 글씨에서 값이 다음 줄로 내려가면 함께 내려간다.
- * 넘은·넘을 기록 줄은 모두 누를 수 있어 ›를 두지 않는다(다른 목록 카드처럼)
+ * 넘은·넘을 기록 줄은 api가 지금 명단 선수로만 만들어 모두 누를 수 있어 ›를 두지 않는다(다른 목록 카드처럼).
+ * › 자리(작은 › 0.625rem + 사이 0.25rem)는 큰 글씨 2배에서도 1.75rem이라 이름 칸을 적게 덜어 낸다
  */
 function RowEnd({ linked, children }: { linked: boolean; children: ReactNode }) {
   return (
-    <span className="ml-auto flex shrink-0 items-center gap-1.5">
+    <span className="ml-auto flex shrink-0 items-center gap-1">
       {children}
-      {linked ? <Chevron /> : <span className="w-3 shrink-0" />}
+      {linked ? <Chevron small /> : <span className="w-2.5 shrink-0" />}
     </span>
   );
 }
@@ -70,7 +71,7 @@ export function LeaderRow({ leader, unit }: { leader: RecordLeader; unit: string
           <span className="sr-only">위</span>
         </span>
         <PlayerAvatar nameKo={leader.nameKo} photoUrl={leader.photoUrl} teamAbbr={null} size={28} />
-        {/* 이름 칸 기본 폭 3.5rem(세 글자 이름): 이만큼도 안 남으면 값이 다음 줄 오른쪽으로 내려간다 */}
+        {/* 이름 칸 기본 폭 3.5rem(세 글자 이름): 값과 › 자리를 빼고 이만큼도 안 남으면 값이 다음 줄 오른쪽으로 내려간다 */}
         <span className="flex min-w-0 flex-1 basis-[3.5rem] flex-wrap items-center gap-x-2 gap-y-0.5">
           <span className="text-heading">{leader.nameKo}</span>
           {leader.active ? (
@@ -162,7 +163,7 @@ export function PassedRow({ group }: { group: PassedGroup }) {
         <PlayerAvatar nameKo={first.nameKo} photoUrl={first.photoUrl} teamAbbr={null} size={28} />
         <span className="w-12 shrink-0 text-heading @max-[18rem]:w-auto">{first.nameKo}</span>
         {/* 기록 이름표는 누르는 것이 아니라 흐린 글자로 둔다(알약은 누르는 것·드문 상태만, 사용자 규칙 11-17) */}
-        <span className="shrink-0 text-label text-neutral-pill-fg">{first.label}</span>
+        <span className="shrink-0 text-label text-muted">{first.label}</span>
         <span className="min-w-0 flex-1 text-meta tabular-nums @max-[18rem]:order-last @max-[18rem]:basis-full @max-[18rem]:pl-[calc(28px+0.75rem)]">
           {names.map((p) => `${p.passedNameKo} ${count(p.passedValue)}`).join(" · ")}
         </span>
