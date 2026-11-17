@@ -147,7 +147,10 @@ export default function JumpNav({ targets }: { targets: JumpTarget[] }) {
                     : `${stuck ? "bg-surface-2" : "bg-surface"} text-muted hover:text-foreground`
                 }`}
               >
-                {t.label}
+                {/* 지금 보는 칸은 글자도 굵게(색만으로 구분하지 않게, 이슈 #260) */}
+                <span className={`bold-reserve ${on ? "font-extrabold" : ""}`} data-text={t.label}>
+                  {t.label}
+                </span>
               </a>
             </li>
           );

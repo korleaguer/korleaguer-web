@@ -9,9 +9,10 @@ type AppWindow = Window & {
 
 /**
  * 앱이 할 수 있는 일. "stack" = 화면을 네이티브로 쌓는다(0.2.0~), "haptic" = 손끝 진동, "share" = 기기 공유 창,
- * "news-tab" = 아래 탭에 '뉴스'(/news)가 있고 앱이 보낸 "navigate" 이벤트로 그 탭의 주소를 바꾼다(korleaguer-app#40)
+ * "news-tab" = 아래 탭에 '뉴스'(/news)가 있고 앱이 보낸 "navigate" 이벤트로 그 탭의 주소를 바꾼다(korleaguer-app#40),
+ * "records-tab" = 아래 탭 4번째가 '내 선수'(/my) 대신 '기록'(/records)이라 /my는 쌓아 여는 하위 화면이다(korleaguer-app#46부터 알린다. #45만 있는 빌드는 알리지 않아 /my가 탭 첫 화면처럼 뒤로 버튼이 없다)
  */
-export type AppFeature = "stack" | "haptic" | "share" | "news-tab";
+export type AppFeature = "stack" | "haptic" | "share" | "news-tab" | "records-tab";
 
 /** 지금 이 웹을 띄운 앱이 그 기능을 갖고 있나. 브라우저나 옛 앱이면 false */
 export function appHas(feature: AppFeature): boolean {

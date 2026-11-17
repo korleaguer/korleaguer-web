@@ -136,7 +136,10 @@ export default function PhotoStage({
                   }`}
                 >
                   <span aria-hidden className="size-2 shrink-0 rounded-full" style={{ backgroundColor: s.color }} />
-                  {s.label}
+                  {/* 고른 사진 알약은 이름도 굵게(이슈 #260) */}
+                  <span className={`bold-reserve ${active ? "font-extrabold" : ""}`} data-text={s.label}>
+                    {s.label}
+                  </span>
                   {s.years && <span className="font-normal tabular-nums">{s.years}</span>}
                 </button>
               );

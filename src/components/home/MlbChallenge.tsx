@@ -10,6 +10,7 @@ import KboAvatar from "@/components/home/KboAvatar";
 import { PostingDot } from "@/components/home/PostingDot";
 import PostingNews from "@/components/home/PostingNews";
 import { cacheLife } from "next/cache";
+import MoneyUnitScope from "@/components/home/MoneyUnitScope";
 
 /** 지금 포스팅 제도의 협상 기간(일) */
 const WINDOW_DAYS = 30;
@@ -473,14 +474,7 @@ function SigningList({
   flush?: boolean;
 }) {
   const top = Math.max(...signings.map((s) => s.amount));
-  return (
-    <div className={flush ? "" : "mt-4 border-t border-line pt-3 lg:mt-0 lg:border-t-0 lg:pt-0"}>
-      {head && (
-        <p className="mb-1 flex items-baseline justify-between gap-2 text-label">
-          역대 포스팅 계약
-          <span className="shrink-0 text-caption text-muted">보장액 순</span>
-        </p>
-      )}
+  const list = (
       <ul className="money-flip-pause divide-y divide-line">
         {signings.map((s) => {
           // 1위 금액이 0이면(보장액 0만 있는 경우) 나눗셈이 NaN이 되지 않게 모두 최소 길이
@@ -523,6 +517,19 @@ function SigningList({
           );
         })}
       </ul>
+  );
+  return (
+    <div className={flush ? "" : "mt-4 border-t border-line pt-3 lg:mt-0 lg:border-t-0 lg:pt-0"}>
+      {head && (
+        <p className="mb-1 flex items-baseline justify-between gap-2 text-label">
+          역대 포스팅 계약
+          <span className="shrink-0 text-caption text-muted">보장액 순</span>
+        </p>
+      )}
+      {/* 원화가 있으면 번갈아 보이기를 멈추는 '달러·원화' 고르기를 목록 위에 둔다(이슈 #263). 접기 안(flush)에서는 바로 위가
+          '펼치기/접기' 버튼이라, 버튼(높이 20px)의 44px 누름 영역이 그 버튼 아래쪽을 덮지 않게 12px 띄운다(리뷰 지적).
+          환율이 없는 계약은 원화를 골라도 달러로 남는다(번갈아 보이지도 않는다) */}
+      {signings.some((s) => s.krw) ? <MoneyUnitScope className={flush ? "pt-3" : ""}>{list}</MoneyUnitScope> : list}
       {foot && (
         <p className="mt-1.5 pb-1 text-micro text-muted">
           보장액 기준(옵션 제외), 원화는 계약 당시 환율로 어림. 출처: MLB Trade Rumors 등
@@ -534,6 +541,7 @@ function SigningList({
 
 /**
  * 계약 금액: 달러와 원화(합의일 환율 어림)를 4초마다 번갈아 보인다(사용자 요청 11-11, globals.css .money-flip).
+ * 목록 위 '달러·원화'(MoneyUnitScope)를 누르면 그 금액으로 멈춘다(WCAG 2.2.2, 이슈 #263).
  * 두 값을 한 칸에 겹쳐 두어 바뀌어도 줄이 흔들리지 않는다. 연수("6년")도 함께 바꿔야 둘 다 오른쪽 끝에 붙는다
  * (연수를 칸 밖에 두면 짧은 원화일 때 연수와 금액 사이가 벌어진다). 화면 읽기 프로그램에는 두 값을 한 번에 읽힌다.
  * 모든 줄이 한꺼번에 바뀐다. 목록에 마우스를 올리면 멈춘다(.money-flip-pause).
