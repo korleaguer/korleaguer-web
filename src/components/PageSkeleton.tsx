@@ -192,8 +192,9 @@ export function PlayerSkeleton() {
           <Bone className="mt-2 h-[1.875rem] w-24 rounded-lg" />
           <Bone className="mt-1.5 h-3 w-32" />
           <div className="mt-3 flex gap-1.5">
-            {["w-16", "w-28", "w-14", "w-16"].map((w) => (
-              <Bone key={w} className={`h-7 ${w}`} />
+            {/* 칩 폭이 같은 것(w-16)이 둘이라 폭이 아니라 자리 번호를 key로 쓴다 */}
+            {["w-16", "w-28", "w-14", "w-16"].map((w, i) => (
+              <Bone key={i} className={`h-7 ${w}`} />
             ))}
           </div>
           <Bone className="mt-3 h-3.5 w-full" />
