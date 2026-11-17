@@ -66,7 +66,8 @@ export default function Toaster() {
           onPointerLeave={() => setHeld(false)}
           onFocus={() => setHeld(true)}
           onBlur={() => setHeld(false)}
-          className={`pointer-events-auto flex max-w-[26rem] touch-none items-center gap-2.5 rounded-2xl bg-toast-bg py-3 pl-4 pr-3 text-summary text-toast-fg shadow-[0_8px_24px_rgb(0_0_0/0.18)] ${shown.leaving ? "toast-out" : "toast-in"}`}
+          // 위로 밀어 치우는 띠라 글자가 잡히지 않게 select-none(앱 안 글자 선택은 누르는 것·끄는 곳에만 막는다)
+          className={`pointer-events-auto flex max-w-[26rem] touch-none select-none items-center gap-2.5 rounded-2xl bg-toast-bg py-3 pl-4 pr-3 text-summary text-toast-fg shadow-[0_8px_24px_rgb(0_0_0/0.18)] ${shown.leaving ? "toast-out" : "toast-in"}`}
         >
           {toastItem.tone !== "info" && <ToneIcon tone={toastItem.tone} />}
           <span className="min-w-0 flex-1 pr-1">{toastItem.message}</span>

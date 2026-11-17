@@ -94,8 +94,9 @@ export default function LinkedTeamSheet({
         ref={panelRef}
         className="game-sheet flex max-h-[84dvh] w-full flex-col overflow-hidden rounded-t-2xl bg-surface shadow-[var(--shadow-card-hover)] sm:max-h-[80dvh] sm:max-w-lg sm:rounded-2xl"
       >
+        {/* 끌어 닫는 머리: 앱 안에서도 길게 눌러 글자가 잡히지 않게 select-none */}
         <div
-          className="shrink-0 touch-none"
+          className="shrink-0 touch-none select-none"
           onPointerDown={onDragStart}
           onPointerMove={onDragMove}
           onPointerUp={onDragEnd}

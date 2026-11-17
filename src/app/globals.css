@@ -328,8 +328,8 @@
   }
 
   /*
-   * 앱 안: 브라우저 티가 나는 동작을 끈다(누를 때 회색 번쩍임, 길게 눌러 뜨는 링크·사진 메뉴, 글자 선택).
-   * 입력칸은 글자를 고칠 수 있게 그대로 둔다.
+   * 앱 안: 브라우저 티가 나는 동작을 끈다(누를 때 회색 번쩍임, 길게 눌러 뜨는 링크·사진 메뉴, 누르는 것의 글자 선택).
+   * 글자 선택은 아래에서 누르는 것에만 막는다(기사 요약 복사·'선택 항목 말하기'가 되게).
    */
   html[data-app] {
     /*
@@ -345,9 +345,21 @@
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
     -webkit-tap-highlight-color: transparent;
-    -webkit-touch-callout: none;
+  }
+
+  /*
+   * 앱 안 글자 선택은 누르는 것(링크·버튼·탭·알약·메뉴)에만 막는다. 길게 눌러 고르다 글자가 잡히면 앱답지 않다.
+   * 예전에는 문서 전체를 막아 기사 요약을 복사하거나 '선택 항목 말하기'(손쉬운 사용)로 들을 수 없었다(전수조사).
+   * 끌어서 쓰는 곳(내 선수 순서 손잡이는 버튼, 경기·구단 창 머리와 알림 띠는 select-none, 막대 훑기는 select-none)도 막힌 그대로다.
+   */
+  html[data-app] :is(a, button, [role="button"], [role="tab"], [role="slider"], summary, label, nav) {
     -webkit-user-select: none;
     user-select: none;
+  }
+
+  /* 링크·사진을 길게 눌러 뜨는 미리보기·저장 메뉴는 앱 안에서 계속 막는다(글자 선택 메뉴는 뜬다) */
+  html[data-app] :is(a, img) {
+    -webkit-touch-callout: none;
   }
 
   html[data-app] :is(input, textarea, [contenteditable="true"]) {
