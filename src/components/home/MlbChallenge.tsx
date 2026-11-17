@@ -23,13 +23,38 @@ const BAR_EXPONENT = Math.log2(1.5);
 /** 아무리 작은 계약도 막대가 점처럼 사라지지 않게 */
 const BAR_MIN_SHARE = 0.04;
 
-const STATUS: Record<PostingStatus, { label: string; className: string }> = {
-  UPCOMING: { label: "협상 시작 전", className: "bg-fa-bg text-fa-fg" },
-  NEGOTIATING: { label: "협상 중", className: "bg-fa-bg text-fa-fg" },
-  SIGNED: { label: "계약", className: "bg-success-bg text-success-fg" },
-  NO_DEAL: { label: "결렬", className: "bg-neutral-pill text-neutral-pill-fg" },
-  CLOSED: { label: "결과 확인 중", className: "bg-neutral-pill text-neutral-pill-fg" },
+/** 상태 알약의 뜻(DESIGN.md 신호색): 협상은 소속이 바뀌는 일이라 이적 보라, 계약은 초록, 결렬·결과 확인 중은 회색 */
+type StatusTone = "fa" | "success" | "neutral";
+
+const STATUS: Record<PostingStatus, { label: string; tone: StatusTone }> = {
+  UPCOMING: { label: "협상 시작 전", tone: "fa" },
+  NEGOTIATING: { label: "협상 중", tone: "fa" },
+  SIGNED: { label: "계약", tone: "success" },
+  NO_DEAL: { label: "결렬", tone: "neutral" },
+  CLOSED: { label: "결과 확인 중", tone: "neutral" },
 };
+
+/** 이름 옆·여러 명 줄의 알약: 옅은 신호색 바탕 + 진한 글자(성적표 상태 알약과 같다) */
+const PILL_TONE: Record<StatusTone, string> = {
+  fa: "bg-fa-bg text-fa-fg",
+  success: "bg-success-bg text-success-fg",
+  neutral: "bg-neutral-pill text-neutral-pill-fg",
+};
+
+/** 휴대폰 구단 색 띠 위 흰 알약: 점과 글자만 신호색('내 선수' 무대 배지와 같다) */
+const BADGE_TONE: Record<StatusTone, string> = {
+  fa: "text-fa-fg",
+  success: "text-success-fg",
+  neutral: "text-foreground",
+};
+
+/**
+ * 상태 알약 앞 7px 점. 성적표 상태 알약·'내 선수' 무대 배지는 점이 있는데 이 카드만 없어서 같은 '상태'가 달라 보였다
+ * (이슈 #277). 점은 글자색을 따르고, 회색 상태는 흐린 점이다(다른 상태 표시와 같다)
+ */
+function StatusDot({ tone }: { tone: StatusTone }) {
+  return <span aria-hidden className={`size-[7px] shrink-0 rounded-full ${tone === "neutral" ? "bg-muted" : "bg-current"}`} />;
+}
 
 /** 그 시간대의 월·일·요일·시 */
 function parts(iso: string, timeZone: string) {
@@ -286,11 +311,13 @@ function HeadBand({ player: p }: { player: PostingPlayer }) {
       style={{ "--team": kboTeamColor(p.kboTeam) } as CSSProperties}
     >
       {/* 휴대폰만. PC는 띠가 넓어 알약이 이름에서 멀리 떨어지므로 이름 옆에 둔다(PlayerHead) */}
-      {/* 화면 읽기는 이름 다음의 알약이 맡는다(이름보다 먼저 읽히지 않게) */}
+      {/* 화면 읽기는 이름 다음의 알약이 맡는다(이름보다 먼저 읽히지 않게).
+          글자색은 상태를 따른다(예전에는 늘 보라라 계약한 날에도 '계약'이 보라였다) */}
       <span
         aria-hidden
-        className="absolute right-3 top-3 z-10 rounded-full bg-surface px-2.5 py-0.5 text-badge text-fa-fg shadow-[var(--shadow-card)] lg:hidden"
+        className={`absolute right-3 top-3 z-10 inline-flex items-center gap-1.5 rounded-full bg-surface px-2.5 py-0.5 text-badge shadow-[var(--shadow-card)] lg:hidden ${BADGE_TONE[status.tone]}`}
       >
+        <StatusDot tone={status.tone} />
         {status.label}
       </span>
     </div>
@@ -312,9 +339,12 @@ function PlayerHead({ player: p }: { player: PostingPlayer }) {
         <div className="min-w-0 pt-[2.75rem]">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <h3 className="text-display">{p.nameKo}</h3>
+            {/* 휴대폰은 화면 읽기에만(눈에는 띠 위 알약). 'sr-only lg:not-sr-only'로 쓰면 not-sr-only가 여백을 0으로 되돌려
+                PC 알약이 글자에 붙어 보였다(운영 1280px 실측 padding 0). 그래서 1024px 미만에만 sr-only를 건다 */}
             <span
-              className={`sr-only whitespace-nowrap rounded-full px-2.5 py-0.5 text-badge lg:not-sr-only lg:inline-block ${status.className}`}
+              className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-badge max-lg:sr-only ${PILL_TONE[status.tone]}`}
             >
+              <StatusDot tone={status.tone} />
               {status.label}
             </span>
           </div>
@@ -420,7 +450,8 @@ function RowResult({
 }) {
   const status = STATUS[p.status] ?? STATUS.CLOSED;
   const pill = (
-    <span className={`whitespace-nowrap rounded-full px-2.5 py-0.5 text-badge ${status.className}`}>
+    <span className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-badge ${PILL_TONE[status.tone]}`}>
+      <StatusDot tone={status.tone} />
       {status.label}
     </span>
   );
