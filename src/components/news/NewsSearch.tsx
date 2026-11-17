@@ -150,7 +150,7 @@ export default function NewsSearch({
               // 지운 경우(빈 칸)도 닫혀 빈 입력칸이 남지 않고, 찾은 말은 줄 맨 앞 알약으로 보인다
               if (open && value.trim() === (requested.current ?? "")) setOpen(false);
             }}
-            className="min-w-0 flex-1 bg-transparent text-body outline-none placeholder:text-muted [&::-webkit-search-cancel-button]:hidden"
+            className="min-w-0 flex-1 self-stretch bg-transparent text-body outline-none placeholder:text-muted [&::-webkit-search-cancel-button]:hidden"
           />
           {/* 찾는 동안 점 3개(결과가 오면 사라진다) */}
           {pending && (
@@ -171,7 +171,7 @@ export default function NewsSearch({
                 go("");
                 inputRef.current?.focus();
               }}
-              className="press -mr-1.5 grid size-8 shrink-0 cursor-pointer place-items-center rounded-full text-muted hover:bg-surface-2"
+              className="press tap-target -mr-1.5 grid size-8 shrink-0 cursor-pointer place-items-center rounded-full text-muted hover:bg-surface-2"
             >
               <ClearIcon className="size-4" />
             </button>
@@ -214,7 +214,7 @@ export default function NewsSearch({
         <ul
           aria-label={player ? `${player} 기사에 자주 나온 말` : "요즘 기사에 자주 나온 말"}
           // 휴대폰: 화면 양끝까지 밀어 볼 수 있게 main의 좌우 여백만큼 넓힌다(선수 알약 줄과 같다). PC: 입력칸 밑에 여러 줄로
-          className={`${inputOnPhone ? "hidden" : "flex"} no-scrollbar -mx-3 items-center gap-1.5 overflow-x-auto px-3 sm:-mx-6 sm:px-6 lg:mx-0 lg:mt-2.5 lg:flex lg:flex-wrap lg:overflow-visible lg:px-0`}
+          className={`${inputOnPhone ? "hidden" : "flex"} no-scrollbar -mx-3 items-center gap-1.5 overflow-x-auto px-3 py-1 sm:-mx-6 sm:px-6 lg:mx-0 lg:mt-2.5 lg:flex lg:flex-wrap lg:overflow-visible lg:px-0 lg:py-0`}
         >
           <li className="shrink-0 lg:hidden">
             <button
