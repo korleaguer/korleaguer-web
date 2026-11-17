@@ -197,7 +197,9 @@ export default async function SeasonFloors({ recent, asOf }: Props) {
       {/* PC: 층을 두 칸에 나눠 놓는다(한 줄이 화면 끝까지 늘어나지 않게). 층을 잇는 세로선은 휴대폰에서만 */}
       <div className="space-y-3 lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-6 lg:gap-y-4 lg:space-y-0">
         {floors.map((floor, index) => (
-          <section key={floor.key} aria-label={`${floor.title} ${floor.players.length}명`} className="relative pl-6">
+          // 층은 이름 붙은 영역(section)으로 두지 않는다: 층 수만큼 랜드마크가 늘어 '지금 어디서 뛰나' 하나만 남긴다(전수조사 L304).
+          // 층 이름과 사람 수는 제목 하나에 넣어, 제목으로 훑으면 '메이저 3명'으로 읽힌다
+          <div key={floor.key} className="relative pl-6">
             {/* 층을 잇는 세로선과 층 점 */}
             {index < floors.length - 1 && (
               <span aria-hidden className="absolute top-2.5 bottom-[-0.75rem] left-[0.4375rem] w-0.5 bg-line lg:hidden" />
@@ -206,16 +208,16 @@ export default async function SeasonFloors({ recent, asOf }: Props) {
               aria-hidden
               className={`absolute top-1 left-0 size-4 rounded-full border-4 border-background ${DOT[floor.tone]}`}
             />
-            <div className="mb-1.5 flex items-baseline justify-between px-0.5">
-              <h3 className={`text-label ${TITLE[floor.tone]}`}>{floor.title}</h3>
+            <h3 className="mb-1.5 flex items-baseline justify-between px-0.5 text-label">
+              <span className={TITLE[floor.tone]}>{floor.title}</span>{" "}
               <span className="text-caption text-muted tabular-nums">{floor.players.length}명</span>
-            </div>
+            </h3>
             <ul className="card divide-y divide-line overflow-hidden">
               {floor.players.map((entry) => (
                 <FloorRow key={entry.player.id} entry={entry} starred={mine.includes(entry.player.id)} />
               ))}
             </ul>
-          </section>
+          </div>
         ))}
       </div>
     </Section>
@@ -266,6 +268,12 @@ function FloorRow({ entry, starred }: { entry: MyPlayer; starred: boolean }) {
   );
 }
 
+/** 맞대결 점수 낭독: '샌디에이고 3, 다저스 2'(화면처럼 원정 먼저). 점수를 모르면 '샌디에이고 대 다저스' */
+function derbyScoreLabel(away: GameLine, home: GameLine): string {
+  if (away.teamScore == null || home.teamScore == null) return `${away.teamKo} 대 ${home.teamKo}`;
+  return `${away.teamKo} ${away.teamScore}, ${home.teamKo} ${home.teamScore}`;
+}
+
 /** 맞대결 카드: 같은 경기에서 뛴 두 선수와 점수 */
 function DerbyCard({ pair: [a, b] }: { pair: [GameLine, GameLine] }) {
   const [home, away] = a.home ? [a, b] : [b, a];
@@ -275,30 +283,38 @@ function DerbyCard({ pair: [a, b] }: { pair: [GameLine, GameLine] }) {
         <span className="text-label text-danger-fg">오늘 맞대결</span>
         <span className="text-caption text-muted tabular-nums">{formatTime(a.startTimeKst)} 시작</span>
       </div>
+      {/* 문서 순서도 화면과 같은 원정 선수 → 점수 → 홈 선수다. 예전에는 grid order로 점수만 가운데로 옮겨서, 화면 낭독기가
+          두 선수를 다 읽은 뒤 팀 이름 없는 '3 : 2'를 읽었다(전수조사 L303) */}
       <div className="mt-2.5 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
-        {[away, home].map((line, i) => (
-          <Link
-            key={line.playerId}
-            href={`/players/${line.playerId}`}
-            className={`press-soft flex min-w-0 flex-col items-center gap-1 text-center ${i === 1 ? "order-3" : ""}`}
-          >
-            <PlayerAvatar nameKo={line.nameKo} photoUrl={line.photoUrl} teamAbbr={line.teamAbbr} size={44} />
-            <span className="text-heading">{line.nameKo}</span>
-            <span className="text-caption text-muted">
-              <Words text={formatSummary(line.summary)} />
-            </span>
-          </Link>
-        ))}
-        <div className="order-2 text-center">
-          <span className="flex items-center justify-center gap-1.5">
+        <DerbyPlayer line={away} />
+        <div className="text-center">
+          <span aria-hidden className="flex items-center justify-center gap-1.5">
             <TeamMark logoUrl={teamLogoUrl(away.teamAbbr)} color={teamColor(away.teamAbbr)} size="sm" />
             <span className="text-score tabular-nums">
               {away.teamScore ?? "-"} : {home.teamScore ?? "-"}
             </span>
             <TeamMark logoUrl={teamLogoUrl(home.teamAbbr)} color={teamColor(home.teamAbbr)} size="sm" />
           </span>
+          {/* 로고는 그림이라 낭독에는 팀 이름을 붙인다 */}
+          <span className="sr-only">{derbyScoreLabel(away, home)}</span>
         </div>
+        <DerbyPlayer line={home} />
       </div>
     </div>
+  );
+}
+
+function DerbyPlayer({ line }: { line: GameLine }) {
+  return (
+    <Link
+      href={`/players/${line.playerId}`}
+      className="press-soft flex min-w-0 flex-col items-center gap-1 text-center"
+    >
+      <PlayerAvatar nameKo={line.nameKo} photoUrl={line.photoUrl} teamAbbr={line.teamAbbr} size={44} />
+      <span className="text-heading">{line.nameKo}</span>
+      <span className="text-caption text-muted">
+        <Words text={formatSummary(line.summary)} />
+      </span>
+    </Link>
   );
 }
