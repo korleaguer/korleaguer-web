@@ -242,7 +242,8 @@ export default function GameCalendar({
             <button
               key={m.key}
               type="button"
-              aria-pressed={on}
+              // 하나만 고르는 칸이라 켜고 끄는 버튼(aria-pressed)이 아니라 '지금 보는 달'로 알린다(WAI-ARIA APG, 11-17 전수조사)
+              aria-current={on ? "true" : undefined}
               disabled={empty}
               aria-label={empty ? `${m.month}월 경기 없음` : `${m.month}월`}
               onClick={() => pickMonth(m.key)}
@@ -381,7 +382,9 @@ function DayCell({ day, on, onPick }: { day: CalendarDay; on: boolean; onPick: (
   return (
     <button
       type="button"
-      aria-pressed={on}
+      // 고른 날은 aria-pressed(켬·끔) 대신 aria-current. 'date'는 '오늘'이라는 뜻이라 쓰지 않는다. 누르면 상세 창이 열린다
+      aria-current={on ? "true" : undefined}
+      aria-haspopup="dialog"
       aria-label={day.speech}
       data-day={day.key}
       onClick={(e) => onPick(day.key, e.currentTarget)}

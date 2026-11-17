@@ -219,7 +219,8 @@ function SheetBody({ playerId, role, day }: { playerId: number; role: Role; day:
             <button
               key={`${gamePkOf(day.entries[i])}`}
               type="button"
-              aria-pressed={i === index}
+              // 하나만 고르는 탭이라 aria-pressed(켬·끔) 대신 '지금 보는 경기'로 알린다(11-17 전수조사)
+              aria-current={i === index ? "true" : undefined}
               onClick={() => setIndex(i)}
               className={`tap-target rounded-full px-3 py-1.5 text-label ${i === index ? "bg-accent-soft text-accent-ink" : "text-muted hover:bg-surface-2"}`}
             >
@@ -435,7 +436,8 @@ function DetailContent({
               <li key={`${h.title}-${i}`} className="w-36 shrink-0">
                 <button
                   type="button"
-                  aria-pressed={on}
+                  // 하나만 고르는 영상이라 aria-pressed(켬·끔) 대신 '지금 보는 영상'으로 알린다(11-17 전수조사)
+                  aria-current={on ? "true" : undefined}
                   onClick={() => showHighlight(i)}
                   className={`press-soft block w-full rounded-lg text-left ${on ? "ring-2 ring-foreground ring-offset-1 ring-offset-surface" : ""}`}
                 >
@@ -560,7 +562,9 @@ function PlayRow({
       {canClip && (
         <button
           type="button"
-          aria-label={`${playTitle(play)} 영상 보기`}
+          // 재생 중인 타석은 채운 파랑(눈)만으로 알렸다. 화면 낭독기에도 '지금 보는 영상'과 이름으로 알린다(11-17 전수조사)
+          aria-current={playing ? "true" : undefined}
+          aria-label={playing ? `${playTitle(play)} 영상 보는 중` : `${playTitle(play)} 영상 보기`}
           onClick={onPlay}
           className={`press tap-target grid size-9 shrink-0 place-items-center rounded-full ${playing ? "bg-accent text-accent-fg" : "bg-surface-2 text-foreground"}`}
         >
