@@ -67,7 +67,8 @@ export default function MyHeader({ subtitle, players, selectedIds }: Props) {
           }}
           className="inline-flex shrink-0 items-center gap-1 rounded-full bg-surface px-3.5 py-1.5 text-label shadow-[var(--shadow-card)] transition duration-150 hover:shadow-[var(--shadow-card-hover)] press tap-target"
         >
-          선수 고르기
+          {/* 2명 이상이면 화면 순서도 이 안에서 바꾼다고 적는다(순서 목록은 2명부터 생기는데 열어 봐야 알 수 있었다, 11-17 점검) */}
+          {ordered.length >= 2 ? "선수 고르기 · 순서" : "선수 고르기"}
           <svg
             aria-hidden
             viewBox="0 0 16 16"
