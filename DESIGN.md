@@ -7,6 +7,7 @@ colors:
   surface: "#ffffff"
   surface-2: "#f4f5f7"
   line: "#eceef1"
+  field-line: "#838994"
   avatar-bg: "#e8ebef"
   muted: "#5b6270"
   accent: "#2563eb"
@@ -23,6 +24,7 @@ colors:
   surface-dark: "#191d24"
   surface-2-dark: "#222731"
   line-dark: "#2a303a"
+  field-line-dark: "#6b7280"
   avatar-bg-dark: "#2c323c"
   muted-dark: "#9aa3b0"
   accent-ink-dark: "#8db1ff"
@@ -424,6 +426,7 @@ components:
 - **흰 카드** (`surface`): 모든 카드와 머리글.
 - **한 단계 진한 회색** (`surface-2`): 카드 안 점수 띠, 정보 칩, 메뉴 마우스 올림, '내 선수' 카드의 작은 숫자 칸과 고른 경기 한 줄 칸.
 - **구분선** (`line`): 카드 안 구분선, 표 머리 밑줄, 머리글 아래 1px 선.
+- **입력칸 테두리** (`field-line`): 글자를 치는 칸(뉴스 검색칸)의 1px 테두리에만. 칸 안(흰색)과 칸 밖(페이지 바탕) 모두와 3:1 이상이라 칸 모양이 보인다(밝은 모드 3.5:1·3.1:1, 다크 모드 3.5:1·3.9:1, WCAG 1.4.11). `line`(1.16:1)으로는 흰 칸이 바탕에 묻혔다. 포커스 때는 파랑 2px로 바뀐다. 알약·돋보기 버튼 테두리와 카드 안 선은 `line` 그대로다.
 - **사진 원 바탕** (`avatar-bg`): 흰 유니폼이 묻히지 않을 만큼만 진한 회색.
 - **흐린 글자** (`muted`): 기준 시각, 표 머리, 라벨, 안 뛴 선수의 한 줄.
 - **회색 알약** (`neutral-pill`, `neutral-pill-fg`): '패'·'무' 알약, 시즌 성적표의 '제 몫 한 시즌' 판정 알약. `neutral-pill-fg`는 정보 칩과 요약 알약 글자에도 쓴다.

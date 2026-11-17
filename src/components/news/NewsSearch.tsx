@@ -203,7 +203,8 @@ export default function NewsSearch({
               go(value);
               closeInput(() => {});
             }}
-            className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-xl bg-surface px-3 shadow-[0_0_0_1px_var(--line)] focus-within:shadow-[0_0_0_2px_var(--accent)]"
+            // 테두리는 입력칸 전용 색(바탕 대비 3:1 이상). 알약·돋보기의 옅은 line 선과 달리 '글을 치는 칸'으로 보여야 한다
+            className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-xl bg-surface px-3 shadow-[0_0_0_1px_var(--field-line)] focus-within:shadow-[0_0_0_2px_var(--accent)]"
           >
             <SearchIcon className="size-4 shrink-0 text-muted" />
             <input
