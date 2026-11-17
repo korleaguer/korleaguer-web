@@ -3,29 +3,13 @@
 // 앱(웹뷰) 안에서만 보이는 '뒤로' 버튼. 앱에는 브라우저의 뒤로 버튼이 없어서, 탭 첫 화면이 아닌 화면(선수 페이지 등)에 둔다.
 // 일반 브라우저에서는 in-app 변형이 꺼져 있어 보이지 않는다(globals.css의 @custom-variant in-app).
 import { usePathname, useRouter } from "next/navigation";
-import { useSyncExternalStore } from "react";
-import { appHas, postToApp, type AppFeature } from "@/lib/app";
+import { appHas, postToApp, useAppFeature } from "@/lib/app";
 
 /**
  * 앱 아래 탭의 첫 화면. 여기서는 뒤로 버튼을 두지 않는다. 앱(korleaguer-app src/app)의 탭과 같다.
  * 기록(/records)은 '내 선수' 자리에 새로 들어간 탭이다(이슈 #244). 내 선수(/my)와 뉴스(/news)는 앱에 따라 다르다(아래).
  */
 const TAB_ROOTS = new Set(["/", "/players", "/records"]);
-
-/** 앱 기능은 바뀌지 않으므로 구독할 것이 없다 */
-function subscribeNothing(): () => void {
-  return () => {};
-}
-
-/**
- * 앱에 이 기능이 있나("news-tab": 뉴스 탭, "records-tab": '내 선수' 자리에 기록 탭). 서버에는 앱 정보가 없어 지금 앱(둘 다 있음)으로
- * 보고 그리고, 브라우저에서 화면을 이어받은 뒤 실제 값으로 다시 그린다(렌더 중에 window를 바로 읽으면 서버 HTML과 첫 화면이 달라
- * React가 화면을 통째로 다시 그린다). 서버를 '없음'으로 두면 지금 앱에서 /my를 열 때마다 버튼이 뒤늦게 끼어들어 로고가 옆으로
- * 튀었다(리뷰 지적, 이슈 #262). 이제는 옛 빌드에서만 고쳐 그린다
- */
-function useAppFeature(feature: AppFeature): boolean {
-  return useSyncExternalStore(subscribeNothing, () => appHas(feature), () => true);
-}
 
 /** 돌아갈 기록이 없을 때 갈 곳: 선수 페이지는 선수 목록, 기사 한 건은 뉴스, 나머지는 홈 */
 function parentOf(pathname: string): string {

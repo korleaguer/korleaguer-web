@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState, useTransition, type ReactNode } from "react";
 import { flushSync } from "react-dom";
 import type { NewsTopic } from "@/lib/api";
-import { haptic } from "@/lib/app";
+import { haptic, useInApp } from "@/lib/app";
 import { NEWS_QUERY_MAX, newsHref } from "@/lib/news";
 import LoadingDots from "@/components/LoadingDots";
 
@@ -38,7 +38,8 @@ function typingPause(text: string): number | null {
  *   남아 무엇으로 걸렀는지 늘 보인다. 보일 알약이 없으면(말이 적은 선수) 입력칸만 보인다.
  * - PC: 입력칸은 늘 보이고 그 밑에 알약을 늘 보인다(자리가 넉넉하다).
  * - 입력하다 잠깐 멈추면 바로 찾고(한글을 치는 도중에는 조금 더 기다린다, typingPause), 검색 키(엔터)를 누르면 곧바로
- *   찾으면서 키보드를 내린다. 기록은 쌓지 않는다(replace).
+ *   찾으면서 키보드를 내린다. 친 말은 기록을 쌓지 않는다(replace, 글자마다 '뒤로'가 쌓이지 않게). 알약은 브라우저에서만 기록을
+ *   쌓아 '뒤로'가 앞에 고른 말로 돌아간다(선수 고르기와 같다, NewsPlayerPicker).
  * - 알약의 말은 api가 지금 범위의 최근 기사에서 고르고, 숫자는 누르면 나오는 줄 수다(기사 전체, korleaguer-server#167).
  * - 거르기·검색 결과가 오면 화면 낭독기에 한 줄로 알린다(늘 있는 상태 줄, WCAG 4.1.3). 눈으로는 알약 숫자와 목록이 같은 말이라
  *   목록 위에 건수 줄을 따로 두지 않는다.
@@ -73,6 +74,7 @@ export default function NewsSearch({
   const [open, setOpen] = useState(false);
   const openedWith = useRef<string | null>(null);
   const topicsLabelId = useId();
+  const inApp = useInApp();
 
   // 주소의 검색어가 밖에서 바뀌면(알약, 뒤로 가기, 선수 바꾸기) 입력칸도 맞춘다. 입력하는 중에는 건드리지 않는다
   const [shownQuery, setShownQuery] = useState(query);
@@ -306,14 +308,20 @@ export default function NewsSearch({
               // 직접 친 말. PC는 입력칸에 이미 보여 알약은 휴대폰에만. 숫자는 다른 알약과 같은 셈이고, 모르거나 0이면 두지 않는다
               // (0건은 바로 밑 결과 없음 안내가 같은 말을 한다)
               <li className="shrink-0 lg:hidden">
-                <TopicChip word={typed} count={queryCount || null} href={newsHref(player, null)} on />
+                <TopicChip word={typed} count={queryCount || null} href={newsHref(player, null)} on replace={inApp} />
               </li>
             )}
             {shownTopics.map((t) => {
               const on = t.word === selected;
               return (
                 <li key={t.word} className="shrink-0">
-                  <TopicChip word={t.word} count={t.count} href={newsHref(player, on ? null : t.word)} on={on} />
+                  <TopicChip
+                    word={t.word}
+                    count={t.count}
+                    href={newsHref(player, on ? null : t.word)}
+                    on={on}
+                    replace={inApp}
+                  />
                 </li>
               );
             })}
@@ -336,12 +344,27 @@ function topicLabel(word: string, count: number | null, on: boolean): string {
   return `${shown}, ${on ? "검색 끄기" : "이 말이 나온 기사만 보기"}`;
 }
 
-/** 자주 나온 말 알약 하나. 누르면 그 말로 거르고(켜짐), 켜진 것을 누르면 끈다. 주소만 바꾸고 기록은 쌓지 않는다 */
-function TopicChip({ word, count, href, on }: { word: string; count: number | null; href: string; on: boolean }) {
+/**
+ * 자주 나온 말 알약 하나. 누르면 그 말로 거르고(켜짐), 켜진 것을 누르면 끈다. 주소만 바꾸고, 기록은 브라우저에서만 쌓는다
+ * (replace는 앱 안: 앱의 뒤로 버튼·안드로이드 뒤로 키가 알약을 한 칸씩 되돌리지 않게)
+ */
+function TopicChip({
+  word,
+  count,
+  href,
+  on,
+  replace,
+}: {
+  word: string;
+  count: number | null;
+  href: string;
+  on: boolean;
+  replace: boolean;
+}) {
   return (
     <Link
       href={href}
-      replace
+      replace={replace}
       scroll={false}
       aria-current={on ? "true" : undefined}
       aria-label={topicLabel(word, count, on)}
