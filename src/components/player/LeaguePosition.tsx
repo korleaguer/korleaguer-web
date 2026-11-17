@@ -88,9 +88,16 @@ export default async function LeaguePosition({ saber }: { saber: PlayerSaber }) 
             {hitter ? `${sample}뿐이라 더 뛰면 크게 바뀔 수 있어요` : `${sample}뿐이라 더 던지면 크게 바뀔 수 있어요`}
           </p>
         )}
-        <ul className="space-y-3">
+        {/* @container: 칸이 좁으면(앱 큰 글씨 등) 줄 모양을 바꾼다(PositionRow) */}
+        <ul className="@container space-y-3">
           {rows.map((r) => (
-            <PositionRow key={r.label} row={r} who={who} labelCol={hitter ? "2.5rem" : "4.25rem"} />
+            <PositionRow
+              key={r.label}
+              row={r}
+              who={who}
+              // 이름 칸: 타자 2.5rem(두 글자), 투수 4.25rem('실점 억제'). Tailwind가 읽게 클래스를 통째로 적는다
+              cols={hitter ? "grid-cols-[2.5rem_minmax(0,1fr)_4.5rem]" : "grid-cols-[4.25rem_minmax(0,1fr)_4.5rem]"}
+            />
           ))}
         </ul>
         {raws.length > 0 && (
@@ -112,19 +119,23 @@ export default async function LeaguePosition({ saber }: { saber: PlayerSaber }) 
   );
 }
 
-/** 한 줄: 이름 | 막대(가운데 선 = MLB 중간) | 순위. 이름 칸 폭을 줄마다 같게 해 막대 시작점을 맞춘다 */
-function PositionRow({ row, who, labelCol }: { row: Row; who: string; labelCol: string }) {
+/**
+ * 한 줄: 이름 | 막대(가운데 선 = MLB 중간) | 순위. 이름 칸 폭을 줄마다 같게 해 막대 시작점을 맞춘다.
+ * 칸이 15rem보다 좁으면(앱 큰 글씨 1.5배 이상, 휴대폰) 이름·순위 한 줄 아래에 막대를 칸 폭 그대로 둔다.
+ * 한 줄로 두면 이름·순위 칸(rem)이 커져 막대 칸이 0이 되고 점만 남았다(2배 375px)
+ */
+function PositionRow({ row, who, cols }: { row: Row; who: string; cols: string }) {
   const { label, pct } = row;
   const top = pct != null && pct >= 50;
   const verdict = pct == null ? "비교 전" : top ? `상위 ${100 - pct}%` : "평균 아래";
   return (
-    <li
-      className="grid items-center gap-x-3"
-      style={{ gridTemplateColumns: `${labelCol} minmax(0, 1fr) 4.5rem` }}
-    >
+    <li className={`grid items-center gap-x-3 ${cols} @max-[15rem]:grid-cols-[minmax(0,1fr)_auto] @max-[15rem]:gap-y-1.5`}>
       <span className="text-summary">{label}</span>
       {/* 바탕은 옅은 안쪽 테두리로 0~100 양 끝을 보인다(흰 카드 위 surface-2만으로는 막대 끝이 거의 안 보였다) */}
-      <div aria-hidden className="relative h-2 rounded-full bg-surface-2 ring-1 ring-muted/30 ring-inset">
+      <div
+        aria-hidden
+        className="relative h-2 rounded-full bg-surface-2 ring-1 ring-muted/30 ring-inset @max-[15rem]:order-last @max-[15rem]:col-span-2"
+      >
         {pct != null && (
           <span className={`absolute inset-y-0 left-0 rounded-full ${top ? "bg-accent" : "bg-muted/40"}`} style={{ width: `${pct}%` }} />
         )}
