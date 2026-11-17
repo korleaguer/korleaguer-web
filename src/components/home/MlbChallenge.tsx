@@ -238,7 +238,14 @@ function rank(p: PostingPlayer): number {
  *   기사가 없으면 PC 오른쪽은 역대 계약.
  * 포스팅 선수가 여러 명일 때 모양은 나중에 다듬는다(사용자 11-12 "흔한 상황이 아니라 묻어둘게").
  */
-export default async function MlbChallenge({ posting }: { posting: PostingSummary }) {
+export default async function MlbChallenge({
+  posting,
+  asOf,
+}: {
+  posting: PostingSummary;
+  /** 제목 옆 데이터 기준 시각("기준 11월 17일(화) 09:00"). 비시즌 홈 맨 위 묶음이라 여기에 둔다(이슈 #277) */
+  asOf?: string;
+}) {
   // 잠깐 재사용: 같은 데이터면 30초 동안 그려 둔 것을 다시 쓴다(쿠키와 상관없는 부품이라 모두에게 같다).
   // 운영 서버(라즈베리파이 4)는 화면 그리기가 느려서 큰 부품을 매번 그리지 않는다.
   "use cache";
@@ -268,7 +275,7 @@ export default async function MlbChallenge({ posting }: { posting: PostingSummar
   // 기사도 역대 계약도 없으면 오른쪽 칸 없이 한 칸으로 그린다
   const twoColumns = news.length > 0 || showHistory;
   return (
-    <Section id="mlb-challenge-title" title="이번 겨울 MLB 도전">
+    <Section id="mlb-challenge-title" title="이번 겨울 MLB 도전" aside={asOf}>
       <ul className="-mt-0.5 mb-2 flex flex-wrap gap-1.5 px-1">
         <li className="rounded-full bg-surface px-2.5 py-0.5 text-label text-neutral-pill-fg tabular-nums">
           포스팅 {players.length}명

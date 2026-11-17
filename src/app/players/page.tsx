@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getHome, getPlayers } from "@/lib/api";
+import { formatAsOf } from "@/lib/format";
 import { readMyPlayers } from "@/lib/myPlayers";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import DataBanners from "@/components/DataBanners";
@@ -7,6 +8,7 @@ import LoadingBlock from "@/components/LoadingBlock";
 import PlayerCard from "@/components/players/PlayerCard";
 import StateNotice from "@/components/StateNotice";
 import PageSuspense from "@/components/PageSuspense";
+import Words from "@/components/Words";
 import { shareMeta } from "@/lib/share";
 
 // <title>: "선수 · KOR Leaguer" (뒷부분은 layout의 template이 붙인다)
@@ -46,7 +48,12 @@ async function PlayersContent() {
   return (
     <div className="space-y-4">
       <DataBanners dataMode={home.dataMode} statsAvailable={home.statsAvailable} />
-      <p className="px-1 text-meta text-muted">{`${players.length}명 · ${home.season} 시즌 기록`}</p>
+      {/* 시즌 기록이 언제 것인지: 기록이 홈 응답에서 오므로 그 기준 시각(홈과 같은 꼴, 이슈 #277).
+          기준 글은 띄어쓰기에서만 줄을 바꾸고 '·'는 '기준'에 붙여 줄 끝에 홀로 남지 않게 한다 */}
+      <p className="px-1 text-meta text-muted">
+        {`${players.length}명 · ${home.season} 시즌 기록 `}
+        <Words text={`· ${formatAsOf(home.generatedAt)}`} />
+      </p>
       {players.length === 0 ? (
         <StateNotice emoji="⚾" title="아직 등록된 선수가 없어요" detail="선수가 등록되면 여기에 선수마다 카드가 생겨요." />
       ) : (

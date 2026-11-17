@@ -1,5 +1,5 @@
 import { getHome } from "@/lib/api";
-import { formatDate, formatTime } from "@/lib/format";
+import { formatAsOf } from "@/lib/format";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import DataBanners from "@/components/DataBanners";
 import LoadingBlock from "@/components/LoadingBlock";
@@ -28,7 +28,8 @@ async function HomeContent() {
   if (!result.ok) return <ApiErrorNotice failure={result.failure} />;
 
   const home = result.data;
-  const asOf = `기준 ${formatDate(home.generatedAt)} ${formatTime(home.generatedAt)}`;
+  // 데이터 기준 시각은 화면 맨 위 묶음 제목 옆에 둔다(시즌 중 층, 비시즌 MLB 도전 카드, 이슈 #277)
+  const asOf = formatAsOf(home.generatedAt);
   return (
     <div className="space-y-7">
       <DataBanners dataMode={home.dataMode} statsAvailable={home.statsAvailable} />
@@ -36,7 +37,7 @@ async function HomeContent() {
       {home.offseason ? (
         <>
           {/* 포스팅 시즌: 이번 겨울 MLB에 도전하는 KBO 선수와 선배들의 계약 시기 */}
-          {home.posting && <MlbChallenge posting={home.posting} />}
+          {home.posting && <MlbChallenge posting={home.posting} asOf={asOf} />}
           <OffseasonPlayers offseason={home.offseason} />
         </>
       ) : (

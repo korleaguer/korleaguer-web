@@ -582,6 +582,11 @@ export interface PlayerResponse {
   dataMode: DataMode;
   statsAvailable: boolean;
   season: number;
+  /**
+   * 이 응답을 만든 시각(ISO). 시즌 성적 제목 옆 '기준 …'(이슈 #277). 서버가 아직 주지 않아(korleaguer-server에 더할 일)
+   * 옛 api면 null이고, 그때는 기준 글을 빼고 그린다
+   */
+  generatedAt: string | null;
   player: PlayerDetail;
   hitting: HitterSeason | null;
   pitching: PitcherSeason | null;
@@ -1097,6 +1102,7 @@ function normalizePlayer(raw: PlayerResponse): PlayerResponse {
   const p = raw.player;
   return {
     ...raw,
+    generatedAt: typeof raw.generatedAt === "string" ? raw.generatedAt : null,
     player: {
       ...normalizeSummary(p),
       teamEn: p.teamEn ?? null,
