@@ -1,6 +1,15 @@
 "use client"; // 구단을 누르면 창을 열고, '외 n개 구단'에 마우스를 올리면 목록을 띄워야 해서 클라이언트 컴포넌트다.
 
-import { useEffect, useId, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
+import {
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type FocusEvent as ReactFocusEvent,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { createPortal } from "react-dom";
 import type { LinkedTeams as LinkedTeamCounts } from "@/lib/api";
 import { haptic } from "@/lib/app";
@@ -13,11 +22,25 @@ import { teamColor, teamLogoUrl } from "@/lib/teams";
 const LINKED_SHOWN = 3;
 /** 반대 전망 한 줄: 한 구단의 반대 전망이 이보다 많고 거론의 절반 이상일 때만 */
 const DOUBT_MIN = 3;
+/** 기사 창을 열며 쌓은 주소 기록 표시(history.state의 키). 값은 '<sheetKey>:<구단 약어>' */
+const SHEET_STATE = "korleaguerTeamSheet";
 
 type Team = LinkedTeamCounts["teams"][number];
 
 /** 기사 목록이 있으면(새 api) 눌러서 창을 연다. 옛 api면 지금처럼 누를 수 없는 알약 */
 const canOpen = (t: Team) => (t.articles?.length ?? 0) > 0;
+
+/** 주소 기록 표시가 이 칸(sheetKey)의 것이면 그 구단 약어 */
+function teamInHistory(state: unknown, sheetKey: string): string | null {
+  const mark = (state as Record<string, unknown> | null)?.[SHEET_STATE];
+  const prefix = `${sheetKey}:`;
+  return typeof mark === "string" && mark.startsWith(prefix) ? mark.slice(prefix.length) : null;
+}
+
+/** 지금 화면에 그려진 요소인가(휴대폰 알약·PC 막대 중 숨긴 쪽 버튼은 아니다) */
+function isShown(el: Element | null | undefined): el is HTMLElement {
+  return el instanceof HTMLElement && el.isConnected && el.getClientRects().length > 0;
+}
 
 /**
  * '행선지로 거론된 구단'(사용자 11-12 결정). 서버가 기사마다 AI로 고른 최근 며칠 거론을 센다.
@@ -28,14 +51,22 @@ const canOpen = (t: Team) => (t.articles?.length ?? 0) > 0;
  * pcBars면 PC(lg)에서는 알약 대신 한 구단 한 줄 막대로 보인다(MLB 도전 카드, 사용자 11-16: PC 왼쪽 칸이 비어 보인다).
  * 알약·막대 줄을 누르면 그 구단을 거론한 기사 창(LinkedTeamSheet, 사용자 11-16 시안 D)이 뜬다. '외 n개 구단'은 PC에서
  * 마우스를 올리면, 휴대폰·키보드는 누르면 나머지 구단 목록이 뜨고 거기서 구단을 누르면 같은 창이 뜬다(이슈 #238).
+ * 창은 경기 상세 창처럼 열 때 주소 기록을 하나 쌓아 뒤로 가기(안드로이드 뒤로 버튼 포함)로 닫히고, 닫으면 연 버튼으로
+ * 포커스를 돌려준다(이슈 #248). 알약은 보이는 높이 32px, 누르는 영역 44px(.tap-target)이고 줄 사이를 12px 띄워 겹치지 않는다.
  */
 export default function LinkedTeams({
   counts,
+  sheetKey,
   className,
   pcBars = false,
   playerPhotoUrl = null,
 }: {
   counts: LinkedTeamCounts;
+  /**
+   * 이 칸의 이름(한 페이지에서 겹치지 않게, 예: 선수 번호). 기사 창을 열 때 주소 기록에 남긴다:
+   * 뒤로 가기로 창이 닫히고, 창에서 기사로 갔다가 돌아오면 그 창이 다시 열린다
+   */
+  sheetKey: string;
   className?: string;
   /** PC(lg)에서 알약 대신 막대(휴대폰은 알약 그대로) */
   pcBars?: boolean;
@@ -43,6 +74,37 @@ export default function LinkedTeams({
   playerPhotoUrl?: string | null;
 }) {
   const [openTeam, setOpenTeam] = useState<string | null>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  /** 창을 닫으면 포커스를 돌려줄 버튼: 연 버튼('외 n개 구단' 목록에서 열었으면 '외 n개 구단') */
+  const returnRef = useRef<HTMLElement | null>(null);
+  /** 열려 있던 구단(창이 닫힌 뒤 포커스를 돌려줄 때 쓴다) */
+  const shownRef = useRef<string | null>(null);
+
+  // 뒤로·앞으로 가기: 주소 기록의 표시에 맞춰 창을 열고 닫는다(경기 상세 창과 같은 방식).
+  // 창에서 기사로 갔다가 돌아오면 그 기록 위라서 창이 다시 열린다
+  useEffect(() => {
+    const sync = () => setOpenTeam(teamInHistory(window.history.state, sheetKey));
+    sync();
+    window.addEventListener("popstate", sync);
+    return () => window.removeEventListener("popstate", sync);
+  }, [sheetKey]);
+
+  // 창이 닫히면 연 버튼으로 포커스를 돌려준다(WAI-ARIA APG Dialog). 창은 부품째 지워지며 닫혀서 브라우저가 돌려주지 못한다.
+  // 연 버튼이 없으면(돌아와서 다시 열린 창) 그 구단 알약, 그것도 없으면(목록 안 구단) '외 n개 구단'으로
+  useEffect(() => {
+    if (openTeam) {
+      shownRef.current = openTeam;
+      return;
+    }
+    const team = shownRef.current;
+    if (!team) return;
+    shownRef.current = null;
+    const back = returnRef.current;
+    returnRef.current = null;
+    const all = (selector: string) => [...(rootRef.current?.querySelectorAll<HTMLElement>(selector) ?? [])];
+    [back, ...all(`[data-team="${CSS.escape(team)}"]`), ...all("[data-more-teams]")].find(isShown)?.focus();
+  }, [openTeam]);
+
   const linked = counts.teams.filter((t) => t.linked > 0);
   if (linked.length === 0) return null;
   const shown = linked.slice(0, LINKED_SHOWN);
@@ -52,13 +114,24 @@ export default function LinkedTeams({
     .sort((a, b) => b.doubted - a.doubted)[0];
   // 막대 길이 기준: 보이는 구단 중 가장 많은 기사 수(서버가 많은 순으로 준다)
   const top = Math.max(...shown.map((t) => t.linked));
-  const open = (t: Team) => {
+  const open = (t: Team, from: HTMLElement | null) => {
     haptic("select");
+    returnRef.current = from;
+    const mark = `${sheetKey}:${t.abbreviation}`;
+    // 창 하나에 주소 기록 하나(이미 창 기록 위면 바꿔 쓴다). 주소는 그대로이고, Next가 우리 상태에 자기 상태를 덧붙인다
+    const state = window.history.state;
+    if (state?.[SHEET_STATE]) window.history.replaceState({ ...state, [SHEET_STATE]: mark }, "");
+    else window.history.pushState({ [SHEET_STATE]: mark }, "");
     setOpenTeam(t.abbreviation);
+  };
+  // 닫기·바깥 누르기·Esc·끌어 내리기: 쌓은 기록이면 뒤로 가기로 지우고(popstate가 창을 닫는다), 아니면 바로 닫는다
+  const close = () => {
+    if (teamInHistory(window.history.state, sheetKey)) window.history.back();
+    else setOpenTeam(null);
   };
   const sheetTeam = linked.find((t) => t.abbreviation === openTeam && canOpen(t));
   return (
-    <div className={className}>
+    <div ref={rootRef} className={className}>
       <p className="mb-2 flex items-baseline justify-between gap-2 text-label">
         <span>행선지로 거론된 구단</span>
         <span className="shrink-0 text-caption text-muted tabular-nums">최근 {counts.days}일 기사 수</span>
@@ -88,7 +161,8 @@ export default function LinkedTeams({
                   <button
                     type="button"
                     aria-haspopup="dialog"
-                    onClick={() => open(t)}
+                    data-team={t.abbreviation}
+                    onClick={(e) => open(t, e.currentTarget)}
                     className="-mx-2 flex w-[calc(100%+1rem)] cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1 text-left text-label hover:bg-surface-2"
                   >
                     {row}
@@ -107,7 +181,8 @@ export default function LinkedTeams({
           )}
         </ul>
       )}
-      <ul className={`flex flex-wrap items-center gap-1.5 ${pcBars ? "lg:hidden" : ""}`}>
+      {/* 알약 32px에 누르는 영역 44px: 위아래로 6px씩 넓어지니 줄 사이(gap-y-3)와 위아래 이웃(mb-2·mt-2)을 그만큼 띄운다 */}
+      <ul className={`flex flex-wrap items-center gap-x-1.5 gap-y-3 ${pcBars ? "lg:hidden" : ""}`}>
         {shown.map((t) => {
           const body = (
             <>
@@ -123,15 +198,16 @@ export default function LinkedTeams({
                 <button
                   type="button"
                   aria-haspopup="dialog"
-                  onClick={() => open(t)}
-                  className="press inline-flex cursor-pointer items-center gap-1 rounded-full bg-surface-2 py-1 pl-1 pr-2 text-label"
+                  data-team={t.abbreviation}
+                  onClick={(e) => open(t, e.currentTarget)}
+                  className="press tap-target inline-flex cursor-pointer items-center gap-1 rounded-full bg-surface-2 py-1.5 pl-1 pr-2 text-label"
                 >
                   {body}
                   {/* 누를 수 있다는 표시. 작게 붙여 알약 폭이 거의 늘지 않게(늘면 휴대폰에서 알약 줄이 하나 더 생긴다) */}
                   <Chevron small />
                 </button>
               ) : (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-2 py-1 pl-1.5 pr-3 text-label">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-2 py-1.5 pl-1.5 pr-3 text-label">
                   {body}
                 </span>
               )}
@@ -150,12 +226,7 @@ export default function LinkedTeams({
         </p>
       )}
       {sheetTeam && (
-        <LinkedTeamSheet
-          team={sheetTeam}
-          days={counts.days}
-          playerPhotoUrl={playerPhotoUrl}
-          onClose={() => setOpenTeam(null)}
-        />
+        <LinkedTeamSheet team={sheetTeam} days={counts.days} playerPhotoUrl={playerPhotoUrl} onClose={close} />
       )}
     </div>
   );
@@ -174,20 +245,38 @@ const HOVER_CLOSE_MS = 150;
 /** 목록 폭(px, w-64) */
 const LIST_WIDTH = 256;
 
+/** 브라우저가 popover(맨 위 층)를 아는가. 모르는 옛 브라우저(iOS 16 이하 등)는 예전처럼 body 끝에 띄운다 */
+function supportsPopover(): boolean {
+  return typeof HTMLElement !== "undefined" && "showPopover" in HTMLElement.prototype;
+}
+
+/** 버튼 바로 아래 목록 자리. 화면 오른쪽을 넘으면 버튼 오른쪽 끝에 맞춘다(휴대폰에서 알약 줄 끝에 있을 때) */
+function placeUnder(button: HTMLElement | null): { top: number; left: number } | null {
+  const rect = button?.getBoundingClientRect();
+  if (!rect) return null;
+  const left = rect.left + LIST_WIDTH > window.innerWidth - 16 ? Math.max(16, rect.right - LIST_WIDTH) : rect.left;
+  return { top: rect.bottom + 4, left };
+}
+
 /**
  * '외 n개 구단'. PC는 마우스를 올리면, 휴대폰·키보드는 누르면 나머지 구단 목록이 뜬다(사용자 11-16).
- * 마우스 올리기만으로 열면 터치 노트북·키보드로는 볼 수 없어서 누르기로도 연다. 바깥을 누르거나 Esc·스크롤로 닫는다.
- * 목록은 body에 고정 위치로 띄운다(성적표 카드는 overflow-hidden이라 카드 안에 두면 아래가 잘린다).
+ * 마우스 올리기만으로 열면 터치 노트북·키보드로는 볼 수 없어서 누르기로도 연다. 눌러서 열면 첫 구단으로 포커스를 옮긴다.
+ * 바깥을 누르거나 Esc를 누르거나 포커스가 버튼·목록 밖으로 나가면 닫는다. 스크롤하면 닫지 않고 버튼을 따라간다
+ * (포커스를 옮기다 화면이 조금 움직여도 열린 채로).
+ * 목록은 DOM에서 버튼 바로 뒤에 두고 popover로 맨 위 층에 띄운다(이슈 #248): Tab·화면 낭독기 순서가 버튼 다음이 되고
+ * (WAI-ARIA APG Disclosure), 성적표 카드(overflow-hidden)에 잘리거나 다음 카드에 가리지 않는다.
  */
-function MoreTeams({ teams, onPick }: { teams: Team[]; onPick: (t: Team) => void }) {
+function MoreTeams({ teams, onPick }: { teams: Team[]; onPick: (t: Team, from: HTMLElement | null) => void }) {
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
   const open = pos != null;
-  const boxRef = useRef<HTMLSpanElement>(null);
+  const boxRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const closeTimer = useRef<number | null>(null);
   /** 마우스를 올려서 열렸나(그 상태에서 누르면 닫지 않고 그대로 둔다) */
   const byHover = useRef(false);
+  /** 눌러서 열었나(목록이 뜨면 첫 구단으로 포커스를 옮긴다) */
+  const focusFirst = useRef(false);
   const listId = useId();
 
   const cancelClose = () => {
@@ -196,12 +285,11 @@ function MoreTeams({ teams, onPick }: { teams: Team[]; onPick: (t: Team) => void
   };
   const show = (hover: boolean) => {
     cancelClose();
-    const rect = buttonRef.current?.getBoundingClientRect();
-    if (!rect) return;
+    const next = placeUnder(buttonRef.current);
+    if (!next) return;
     byHover.current = hover;
-    // 화면 오른쪽을 넘으면 글자 오른쪽 끝에 맞춘다(휴대폰에서 알약 줄 끝에 있을 때)
-    const left = rect.left + LIST_WIDTH > window.innerWidth - 16 ? Math.max(16, rect.right - LIST_WIDTH) : rect.left;
-    setPos({ top: rect.bottom + 4, left });
+    focusFirst.current = !hover;
+    setPos(next);
   };
   const hide = () => {
     cancelClose();
@@ -212,6 +300,24 @@ function MoreTeams({ teams, onPick }: { teams: Team[]; onPick: (t: Team) => void
     cancelClose();
     closeTimer.current = window.setTimeout(() => setPos(null), HOVER_CLOSE_MS);
   };
+  // 포커스가 버튼·목록 밖으로 나가면 닫는다(Tab으로 목록을 지나가면 닫힘). 브라우저 창 밖으로 나간 것(relatedTarget 없음)은 그대로
+  const onBlur = (e: ReactFocusEvent) => {
+    const next = e.relatedTarget;
+    if (!open || !(next instanceof Node)) return;
+    if (boxRef.current?.contains(next) || listRef.current?.contains(next)) return;
+    hide();
+  };
+
+  // 목록이 그려지면 맨 위 층에 올리고, 눌러서 열었으면 첫 구단으로 포커스를 옮긴다
+  useLayoutEffect(() => {
+    const list = listRef.current;
+    if (!open || !list) return;
+    if (supportsPopover() && !list.matches(":popover-open")) list.showPopover();
+    if (focusFirst.current) {
+      focusFirst.current = false;
+      list.querySelector<HTMLElement>("button")?.focus();
+    }
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -220,38 +326,99 @@ function MoreTeams({ teams, onPick }: { teams: Team[]; onPick: (t: Team) => void
       if (!boxRef.current?.contains(target) && !listRef.current?.contains(target)) setPos(null);
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setPos(null);
-        buttonRef.current?.focus();
-      }
+      if (e.key !== "Escape") return;
+      // 목록·버튼에 있던 포커스는 버튼으로 돌려준다(마우스로 열어 둔 목록을 다른 곳에서 Esc로 닫으면 닫기만)
+      const focused = document.activeElement;
+      const inside = boxRef.current?.contains(focused) || listRef.current?.contains(focused);
+      setPos(null);
+      if (inside) buttonRef.current?.focus();
     };
-    const onScroll = () => setPos(null);
+    // 스크롤·창 크기 바꾸기: 닫지 않고 버튼을 따라간다(한 프레임에 한 번). 가로로 밀리는 칸 안 스크롤도 잡게 capture
+    let frame = 0;
+    const follow = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        const next = placeUnder(buttonRef.current);
+        if (next) setPos(next);
+      });
+    };
     document.addEventListener("pointerdown", onDown);
     document.addEventListener("keydown", onKey);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
+    window.addEventListener("scroll", follow, { capture: true, passive: true });
+    window.addEventListener("resize", follow);
     return () => {
       document.removeEventListener("pointerdown", onDown);
       document.removeEventListener("keydown", onKey);
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
+      window.removeEventListener("scroll", follow, { capture: true });
+      window.removeEventListener("resize", follow);
+      cancelAnimationFrame(frame);
     };
   }, [open]);
 
   useEffect(() => cancelClose, []);
 
+  const list = pos && (
+    <div
+      ref={listRef}
+      id={listId}
+      popover={supportsPopover() ? "manual" : undefined}
+      onPointerEnter={cancelClose}
+      onPointerLeave={hideSoon}
+      style={{ top: pos.top, left: pos.left, width: LIST_WIDTH }}
+      // popover 기본 모양(가운데 놓기·여백·테두리)을 지우고 버튼 아래 고정 자리에 둔다
+      className="fixed inset-auto z-40 m-0 rounded-xl border border-line bg-surface p-1.5 text-foreground shadow-[var(--shadow-card-hover)]"
+    >
+      <ul>
+        {teams.map((t) => {
+          const row = (
+            <>
+              <TeamMark logoUrl={teamLogoUrl(t.abbreviation)} color={teamColor(t.abbreviation)} size="sm" />
+              <span className="min-w-0 flex-1 truncate">{t.nameKo}</span>
+              <span className="font-bold tabular-nums">{t.linked}건</span>
+              {t.today && <span className="text-caption font-bold text-accent-ink">오늘</span>}
+            </>
+          );
+          return (
+            <li key={t.abbreviation}>
+              {canOpen(t) ? (
+                <button
+                  type="button"
+                  aria-haspopup="dialog"
+                  onClick={() => {
+                    hide();
+                    // 목록은 닫히니 창을 닫으면 '외 n개 구단'으로 돌아온다
+                    onPick(t, buttonRef.current);
+                  }}
+                  className="flex min-h-11 w-full cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-left text-label hover:bg-surface-2"
+                >
+                  {row}
+                  <Chevron />
+                </button>
+              ) : (
+                <span className="flex min-h-11 items-center gap-2 px-2 py-1.5 text-label">{row}</span>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+
   return (
-    <span
+    <div
       ref={boxRef}
       className="inline-block"
       onPointerEnter={(e) => {
         if (e.pointerType === "mouse" && (!open || byHover.current)) show(true);
       }}
       onPointerLeave={hideSoon}
+      onBlur={onBlur}
     >
       <button
         ref={buttonRef}
         type="button"
+        data-more-teams
         aria-expanded={open}
         aria-controls={open ? listId : undefined}
         onClick={() => {
@@ -260,55 +427,11 @@ function MoreTeams({ teams, onPick }: { teams: Team[]; onPick: (t: Team) => void
           else if (open) hide();
           else show(false);
         }}
-        className="cursor-pointer py-1 text-caption text-muted underline decoration-dotted underline-offset-2 tabular-nums hover:text-foreground"
+        className="tap-target inline-flex min-h-8 cursor-pointer items-center text-caption text-muted underline decoration-dotted underline-offset-2 tabular-nums hover:text-foreground"
       >
         외 {teams.length}개 구단
       </button>
-      {pos &&
-        createPortal(
-          <div
-            ref={listRef}
-            id={listId}
-            onPointerEnter={cancelClose}
-            onPointerLeave={hideSoon}
-            style={{ top: pos.top, left: pos.left, width: LIST_WIDTH }}
-            className="fixed z-40 rounded-xl border border-line bg-surface p-1.5 text-foreground shadow-[var(--shadow-card-hover)]"
-          >
-            <ul>
-              {teams.map((t) => {
-                const row = (
-                  <>
-                    <TeamMark logoUrl={teamLogoUrl(t.abbreviation)} color={teamColor(t.abbreviation)} size="sm" />
-                    <span className="min-w-0 flex-1 truncate">{t.nameKo}</span>
-                    <span className="font-bold tabular-nums">{t.linked}건</span>
-                    {t.today && <span className="text-caption font-bold text-accent-ink">오늘</span>}
-                  </>
-                );
-                return (
-                  <li key={t.abbreviation}>
-                    {canOpen(t) ? (
-                      <button
-                        type="button"
-                        aria-haspopup="dialog"
-                        onClick={() => {
-                          hide();
-                          onPick(t);
-                        }}
-                        className="flex w-full cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-left text-label hover:bg-surface-2"
-                      >
-                        {row}
-                        <Chevron />
-                      </button>
-                    ) : (
-                      <span className="flex items-center gap-2 px-2 py-1.5 text-label">{row}</span>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          </div>,
-          document.body,
-        )}
-    </span>
+      {list && (supportsPopover() ? list : createPortal(list, document.body))}
+    </div>
   );
 }
