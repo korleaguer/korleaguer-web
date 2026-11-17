@@ -5,6 +5,7 @@ import ApiErrorNotice from "@/components/ApiErrorNotice";
 import DataBanners from "@/components/DataBanners";
 import LoadingBlock from "@/components/LoadingBlock";
 import PlayerCard from "@/components/players/PlayerCard";
+import { StatsFailedBanner } from "@/components/DataBanners";
 import StateNotice from "@/components/StateNotice";
 import PageSuspense from "@/components/PageSuspense";
 import { shareMeta } from "@/lib/share";
@@ -34,7 +35,32 @@ async function PlayersContent() {
   // 목록은 /api/players, 시즌 성적은 /api/home에서 받아 playerId로 합친다.
   const [playersResult, homeResult, myIds] = await Promise.all([getPlayers(), getHome(), readMyPlayers()]);
   if (!playersResult.ok) return <ApiErrorNotice failure={playersResult.failure} />;
-  if (!homeResult.ok) return <ApiErrorNotice failure={homeResult.failure} />;
+  // 시즌 기록(홈 api)만 못 받았으면 오류 화면으로 카드까지 버리지 않는다. 받은 선수 카드는 그리고(기록 칸 없이) 맨 위 띠로
+  // 알린다(11-17 전수조사, 단계적 저하). 선수가 없으면 보여 줄 것이 없어 예전처럼 오류 안내다
+  if (!homeResult.ok) {
+    const players = playersResult.data;
+    if (players.length === 0) return <ApiErrorNotice failure={homeResult.failure} />;
+    return (
+      <div className="space-y-4">
+        <StatsFailedBanner />
+        <p className="px-1 text-meta text-muted">{`${players.length}명`}</p>
+        <ul className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+          {players.map((player) => (
+            <PlayerCard
+              key={player.id}
+              player={player}
+              hitting={null}
+              pitching={null}
+              minorHitting={null}
+              minorPitching={null}
+              statsMissing
+              isMine={myIds.includes(player.id)}
+            />
+          ))}
+        </ul>
+      </div>
+    );
+  }
 
   const players = playersResult.data;
   const home = homeResult.data;

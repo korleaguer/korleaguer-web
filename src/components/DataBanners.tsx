@@ -26,6 +26,18 @@ export default function DataBanners({ dataMode, statsAvailable }: Props) {
   );
 }
 
+/**
+ * 시즌 기록(홈 api)을 받지 못했을 때 맨 위 띠. 선수 목록은 오류 화면 대신 이 띠와 함께 카드를 먼저 그린다(11-17 전수조사).
+ * 카드의 기록 칸은 비워 두므로 왜 비었는지 여기서 한 번만 말한다
+ */
+export function StatsFailedBanner() {
+  return (
+    <Banner mark="안내" title="시즌 기록을 불러오지 못했어요">
+      선수 카드만 먼저 보여 드려요. 잠시 뒤 다시 불러와 주세요.
+    </Banner>
+  );
+}
+
 // 호박색 카드. 앞의 알약은 제목이 같은 말을 하므로 화면 낭독기는 건너뛴다.
 function Banner({ mark, title, children }: { mark: string; title: string; children: ReactNode }) {
   return (

@@ -16,10 +16,15 @@ interface Props {
   minorPitching: PitcherSeason | null;
   /** 내 선수로 골라 둔 선수인지 */
   isMine: boolean;
+  /**
+   * 시즌 기록(홈 api)을 받지 못했으면 true: 기록 칸을 그리지 않는다. '시즌 기록 없음'이라고 쓰면 정말 기록이 없는 것처럼
+   * 읽혀서, 이유는 목록 맨 위 띠(StatsFailedBanner)가 한 번만 말한다(11-17 전수조사)
+   */
+  statsMissing?: boolean;
 }
 
 /** 선수 목록의 카드 한 장. 카드 어디를 눌러도 선수 페이지로 가고, 오른쪽 위 별은 '내 선수' 넣기·빼기다. */
-export default function PlayerCard({ player, hitting, pitching, minorHitting, minorPitching, isMine }: Props) {
+export default function PlayerCard({ player, hitting, pitching, minorHitting, minorPitching, isMine, statsMissing = false }: Props) {
   // 올해 주로 뛴 단계의 기록. 메이저 4타석 .500 같은 작은 표본이 시즌 기록처럼 서지 않게 단계·경기 수를 함께 적는다(이슈 #184)
   const main = mainSeasonStats(player, { hitting, pitching, minorHitting, minorPitching });
 
@@ -48,25 +53,27 @@ export default function PlayerCard({ player, hitting, pitching, minorHitting, mi
       </div>
       <InfoChips player={player} className="mt-3" />
       {/* mt-auto: 같은 줄의 카드끼리 기록 칸이 같은 높이에 오도록 카드 아래 끝에 붙인다 */}
-      <div className="mt-auto pt-3.5">
-        {main ? (
-          <div className="border-t border-line pt-3">
-            <p className="mb-1.5 text-label text-muted">{main.label}</p>
-            <dl className="grid grid-cols-3">
-              {main.stats.map(({ label, value }) => (
-                <div key={label} className="min-w-0">
-                  <dt className="text-caption text-muted">{label}</dt>
-                  <dd className="mt-0.5 text-stat tabular-nums">
-                    {value}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-        ) : (
-          <p className="border-t border-line pt-3 text-body text-muted">시즌 기록 없음</p>
-        )}
-      </div>
+      {!statsMissing && (
+        <div className="mt-auto pt-3.5">
+          {main ? (
+            <div className="border-t border-line pt-3">
+              <p className="mb-1.5 text-label text-muted">{main.label}</p>
+              <dl className="grid grid-cols-3">
+                {main.stats.map(({ label, value }) => (
+                  <div key={label} className="min-w-0">
+                    <dt className="text-caption text-muted">{label}</dt>
+                    <dd className="mt-0.5 text-stat tabular-nums">
+                      {value}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          ) : (
+            <p className="border-t border-line pt-3 text-body text-muted">시즌 기록 없음</p>
+          )}
+        </div>
+      )}
     </li>
   );
 }
