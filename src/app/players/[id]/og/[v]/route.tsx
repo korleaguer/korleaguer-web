@@ -59,8 +59,10 @@ export async function GET(_request: Request, { params }: RouteContext<"/players/
             {subline && <div style={{ marginTop: 14, fontSize: 36, fontWeight: 700, color: OG_COLORS.muted }}>{subline}</div>}
             <div style={{ display: "flex", flex: 1, alignItems: "flex-end", justifyContent: "space-between" }}>
               {main && stats ? (
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  <div style={{ fontSize: 28, fontWeight: 700, color: OG_COLORS.muted }}>{main.label}</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  {/* 아래 숫자가 어느 단계·몇 경기 기록인지('트리플A 85경기'). 칸 이름표(28px 흐림)와 같은 모양이면 카톡 미리보기
+                      크기에서 '타율'과 같은 줄로 읽혀서, 크고 진하게 해 묶음 제목으로 둔다. 자리는 숫자 바로 위 그대로 */}
+                  <div style={{ fontSize: 36, fontWeight: 800, color: OG_COLORS.foreground }}>{main.label}</div>
                   <div style={{ display: "flex", gap: 56 }}>
                     {stats.map((s) => (
                       <div key={s.label} style={{ display: "flex", flexDirection: "column" }}>
