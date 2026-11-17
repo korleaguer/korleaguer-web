@@ -132,11 +132,13 @@ async function NewsContent({ searchParams }: Pick<Props, "searchParams">) {
           />
         ) : empty && searched !== null ? (
           // 검색 결과가 없을 때(먼저 설계할 화면): 무엇을 어디서 찾았는지와 다음에 할 일.
-          // 제목만 찾는다는 것과 고른 선수를 제목 한 줄에 넣는다(설명 줄에 '…제목에는 없어요'를 또 쓰면 같은 말 두 번이다)
+          // 제목만 찾는다는 것과 고른 선수를 제목 한 줄에 넣는다(설명 줄에 '…제목에는 없어요'를 또 쓰면 같은 말 두 번이다).
+          // 설명 줄은 버튼이 하지 않는 일만 말한다. 선수를 고른 때 '전체에서 찾거나'를 쓰면 바로 밑 '전체 기사에서 찾기'
+          // 버튼과 같은 말 두 번이었다(다른 빈 화면처럼 설명이 버튼을 되풀이하지 않는다)
           <StateNotice
             emoji="🔎"
             title={`${searched}가 없어요`}
-            detail={player ? "전체에서 찾거나 다른 말로 찾아보세요." : "다른 말로 찾아보세요."}
+            detail="다른 말로 찾아보세요."
             action={
               <Link href={player ? newsHref(null, q) : newsHref(null)} replace className={stateActionClass}>
                 {player ? "전체 기사에서 찾기" : "검색 지우기"}
