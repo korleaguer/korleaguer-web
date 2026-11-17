@@ -83,7 +83,8 @@ export default async function LeaguePosition({ saber }: { saber: PlayerSaber }) 
     >
       <div className="card px-4 py-4">
         {!steady && (
-          <p className="mb-3 text-caption text-muted">
+          // 휴대폰에서 두 줄로 감기므로 줄 간격 1.5(바닥글과 같은 이유)
+          <p className="mb-3 text-caption leading-normal text-muted">
             <span className="mr-1.5 rounded-md bg-surface-2 px-1.5 py-0.5 text-badge">참고용</span>
             {hitter ? `${sample}뿐이라 더 뛰면 크게 바뀔 수 있어요` : `${sample}뿐이라 더 던지면 크게 바뀔 수 있어요`}
           </p>
