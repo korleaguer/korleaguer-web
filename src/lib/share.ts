@@ -106,8 +106,9 @@ export function newsShareImage(news: NewsShareData): ShareImage {
  * 주소는 /opengraph-image/<OG_VERSION>)이다. 선수·기사는 playerShareImage·newsShareImage를 준다.
  * - title: 화면 제목만('선수'). 사이트 이름은 og:site_name으로 따로 붙어서, 넣으면 카드에 'KOR Leaguer'가 두 번 보인다
  *   (앱 공유 버튼도 제목에서 ' · KOR Leaguer'를 떼고 보낸다, ShareButton)
- * - path: 이 화면 주소(og:url, layout의 metadataBase로 절대 주소가 된다). 주소 뒤 ?값이 보이는 내용을 고르는 화면
- *   (/news?player=, /records?stat=)은 주지 않는다. og:url을 따르는 서비스(페이스북 등)가 거른 링크를 거르지 않은 화면으로 연다
+ * - path: 이 화면 주소(og:url, layout의 metadataBase로 절대 주소가 된다). 주소 뒤 ?값이 보이는 내용을 고르면 그 값까지
+ *   넣거나(선수 화면의 경기 상세 창 /players/{id}?game=) 주지 않는다(/news?player=, /records?stat=). 빠뜨리면 og:url을
+ *   따르는 서비스(페이스북 등)가 거른 링크를 거르지 않은 화면으로 연다. 카카오도 공유한 주소와 og:url을 같게 하거나 빼라고 안내한다
  */
 export function shareMeta(
   title: string,
