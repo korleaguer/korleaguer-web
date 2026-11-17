@@ -124,11 +124,13 @@ async function PlayerContent({ params }: Pick<Props, "params">) {
           <GameLog playerId={player.id} games={games} minorGames={minorGames} moves={moves ?? []} role={player.role} />
           <CareerSeasons seasons={seasons} />
         </div>
-        {/* 오른쪽 칸: 기사(PC) + 이동 기록(메이저·마이너 오간 날짜) */}
+        {/* 오른쪽 칸: 기사(PC) + 이동 기록(메이저·마이너 오간 날짜).
+            PC 기사는 본문 옆 보조 칸이라 aside(보조 영역 '기사')로 그려 낭독기 영역 목록에서 바로 간다(키보드로는 달력 버튼 30여 개 뒤).
+            이동 기록은 휴대폰에서 본문 끝이라 그대로 둔다 */}
         <div className="min-w-0 space-y-7">
           {news.length > 0 && (
             <div className="hidden lg:block">
-              <PlayerNews id="news-title-pc" news={news} photoUrl={player.photoUrl} player={player.nameKo} />
+              <PlayerNews id="news-title-pc" news={news} photoUrl={player.photoUrl} player={player.nameKo} as="aside" />
             </div>
           )}
           {moves && <RosterMoves moves={moves} />}
