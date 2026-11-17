@@ -46,7 +46,11 @@ export default async function FormCard({ entry, days, statsAvailable, isMine = t
   return (
     // 이름 링크를 카드 전체로 넓혀서(after:absolute) 카드 어디를 눌러도 선수 페이지로 간다(이슈 #155, 선수 목록 카드와 같은 방식).
     // 화면 낭독기는 이름만 읽는다. 별·막대·펼치기는 링크 위(relative z-10)에 올려 제 동작만 한다.
-    <li className="card card-link relative flex flex-col overflow-hidden has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-accent">
+    // data-player-id: 별로 이 카드를 빼서 포커스가 사라지면 옆 카드 이름으로 옮길 때 찾는다(useFocusAfterRemove)
+    <li
+      data-player-id={player.id}
+      className="card card-link relative flex flex-col overflow-hidden has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-accent"
+    >
       {/* isolate: 상태 배지의 z-10이 무대 안에서만 통하게 해서, 배지를 눌러도 카드 링크로 간다 */}
       <div className="player-stage @container isolate h-[92px]" style={{ "--team": team } as CSSProperties}>
         {entry.status && <StatusBadge status={entry.status} />}

@@ -1,10 +1,11 @@
 "use client"; // '선수 고르기'를 열고 닫는 상태가 있어서 클라이언트 컴포넌트다.
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { PlayerSummary } from "@/lib/api";
 import PlayerAvatar from "@/components/PlayerAvatar";
 import OrderList from "./OrderList";
 import StarIcon from "./StarIcon";
+import { useFocusAfterRemove } from "./useFocusAfterRemove";
 import { useMyPlayerToggle } from "./useMyPlayerToggle";
 
 interface Props {
@@ -34,6 +35,10 @@ export default function MyHeader({ subtitle, players, selectedIds }: Props) {
       setOpened(true);
     }
   }
+  // 카드의 별로 선수를 빼서 카드와 함께 포커스가 사라지면 다음 카드 이름(아무도 안 남으면 이 제목)으로 옮긴다.
+  // 늘 화면에 있고 고른 선수 목록을 받는 곳이 여기라서 카드 목록 대신 여기서 본다(0명이면 카드 목록 자체가 없어진다)
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  useFocusAfterRemove(selectedIds, titleRef);
   const selected = new Set(selectedIds);
   // 고른 순서대로 선수 정보. 화면 순서 목록에 쓴다
   const ordered = selectedIds
@@ -46,7 +51,10 @@ export default function MyHeader({ subtitle, players, selectedIds }: Props) {
           (버튼 옆에서 '내 선수'가 한 글자씩 세 줄로 갈렸다, 이슈 #264) */}
       <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-2 px-1">
         <div className="min-w-0 flex-1 basis-[5rem]">
-          <h1 className="text-display">내 선수</h1>
+          {/* tabIndex -1: 마지막 카드를 별로 빼면 포커스를 받는다(Tab 순서에는 넣지 않는다). 포커스 테두리가 글자에 붙게 w-fit */}
+          <h1 ref={titleRef} tabIndex={-1} className="w-fit text-display">
+            내 선수
+          </h1>
           <p className="mt-0.5 text-meta text-muted">{subtitle}</p>
         </div>
         <button
