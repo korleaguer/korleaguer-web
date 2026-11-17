@@ -101,6 +101,10 @@ export default function LinkedTeams({
     shownRef.current = null;
     const back = returnRef.current;
     returnRef.current = null;
+    // 창이 지워지며 포커스를 잃었을 때만(body). 다른 화면에서 '홈' 메뉴로 돌아와 숨겨 둔 홈이 되살아나며 닫힌 경우처럼
+    // 포커스가 이미 다른 곳(메뉴 링크)에 있으면 빼앗지 않는다(빼앗으면 페이지가 알약 쪽으로 스크롤된다)
+    const focused = document.activeElement;
+    if (focused && focused !== document.body) return;
     const all = (selector: string) => [...(rootRef.current?.querySelectorAll<HTMLElement>(selector) ?? [])];
     [back, ...all(`[data-team="${CSS.escape(team)}"]`), ...all("[data-more-teams]")].find(isShown)?.focus();
   }, [openTeam]);
@@ -340,7 +344,8 @@ function MoreTeams({ teams, onPick }: { teams: Team[]; onPick: (t: Team, from: H
       frame = requestAnimationFrame(() => {
         frame = 0;
         const next = placeUnder(buttonRef.current);
-        if (next) setPos(next);
+        // 버튼이 움직였을 때만 다시 그린다
+        if (next) setPos((prev) => (prev && prev.top === next.top && prev.left === next.left ? prev : next));
       });
     };
     document.addEventListener("pointerdown", onDown);
@@ -366,7 +371,8 @@ function MoreTeams({ teams, onPick }: { teams: Team[]; onPick: (t: Team, from: H
       onPointerEnter={cancelClose}
       onPointerLeave={hideSoon}
       style={{ top: pos.top, left: pos.left, width: LIST_WIDTH }}
-      // popover 기본 모양(가운데 놓기·여백·테두리)을 지우고 버튼 아래 고정 자리에 둔다
+      // popover 기본 모양(가운데 놓기·여백·테두리)을 지우고 버튼 아래 고정 자리에 둔다. z-40은 popover를 모르는 옛 브라우저용
+      // (맨 위 층은 z-index와 상관없이 맨 위다)
       className="fixed inset-auto z-40 m-0 rounded-xl border border-line bg-surface p-1.5 text-foreground shadow-[var(--shadow-card-hover)]"
     >
       <ul>
