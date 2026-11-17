@@ -2,7 +2,7 @@
 
 import Link, { useLinkStatus } from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, useTransition, type ReactNode } from "react";
 import { flushSync } from "react-dom";
 import type { NewsTopic } from "@/lib/api";
 import { haptic } from "@/lib/app";
@@ -44,6 +44,7 @@ export default function NewsSearch({
   // 휴대폰에서 돋보기로 입력칸을 연 상태(PC는 입력칸이 늘 보여 쓰지 않는다)와, 열 때의 검색어(취소하면 여기로 돌린다)
   const [open, setOpen] = useState(false);
   const openedWith = useRef<string | null>(null);
+  const topicsLabelId = useId();
 
   // 주소의 검색어가 밖에서 바뀌면(알약, 뒤로 가기, 선수 바꾸기) 입력칸도 맞춘다. 입력하는 중에는 건드리지 않는다
   const [shownQuery, setShownQuery] = useState(query);
@@ -215,37 +216,45 @@ export default function NewsSearch({
         </div>
       )}
       {hasRow && (
-        <ul
-          aria-label={player ? `${player} 기사에 자주 나온 말` : "요즘 기사에 자주 나온 말"}
-          // 휴대폰: 화면 양끝까지 밀어 볼 수 있게 main의 좌우 여백만큼 넓힌다(선수 알약 줄과 같다). PC: 입력칸 밑에 여러 줄로
-          className={`${inputOnPhone ? "hidden" : "flex"} no-scrollbar -mx-3 items-center gap-1.5 overflow-x-auto overflow-y-hidden px-3 py-[max(0.25rem,calc(22px-1.125rem))] sm:-mx-6 sm:px-6 lg:mx-0 lg:mt-2.5 lg:flex lg:flex-wrap lg:overflow-visible lg:px-0 lg:py-0`}
-        >
-          <li className="shrink-0 lg:hidden">
-            <button
-              type="button"
-              aria-label={player ? `${player} 기사 직접 찾기` : "기사 직접 찾기"}
-              onClick={openInput}
-              className="press tap-target grid size-9 cursor-pointer place-items-center rounded-full bg-surface text-muted shadow-[0_0_0_1px_var(--line)] hover:bg-surface-2"
-            >
-              <SearchIcon className="size-4" />
-            </button>
-          </li>
-          <li className="hidden shrink-0 pr-1 text-caption text-muted lg:block">자주 나온 말</li>
-          {typed && (
-            // 직접 친 말. PC는 입력칸에 이미 보여 알약은 휴대폰에만
+        // PC: 입력칸 밑에 이름표 '자주 나온 말'과 알약(여러 줄로). 이름표는 목록 밖에 두고 목록 이름으로 잇는다(예전에는
+        // 목록 항목이라 화면 낭독기가 알약 수를 하나 더 셌다). 이름표는 알약 첫 줄 가운데 높이에 맞춘다(알약 2.25rem, 글 1rem)
+        <div className="lg:mt-2.5 lg:flex lg:items-start lg:gap-1.5">
+          {/* 휴대폰은 이름표를 보이지 않는다(돋보기와 알약만, 사용자 11-15 시안 C). 목록 이름에는 어느 범위인지 붙인다 */}
+          <p id={topicsLabelId} className="hidden shrink-0 pr-1 pt-2.5 text-caption text-muted lg:block">
+            <span className="sr-only">{player ? `${player} 기사에 ` : "요즘 기사에 "}</span>
+            자주 나온 말
+          </p>
+          <ul
+            aria-labelledby={topicsLabelId}
+            // 휴대폰: 화면 양끝까지 밀어 볼 수 있게 main의 좌우 여백만큼 넓힌다(선수 알약 줄과 같다). PC: 이름표 옆에 여러 줄로
+            className={`${inputOnPhone ? "hidden" : "flex"} no-scrollbar -mx-3 items-center gap-1.5 overflow-x-auto overflow-y-hidden px-3 py-[max(0.25rem,calc(22px-1.125rem))] sm:-mx-6 sm:px-6 lg:mx-0 lg:flex lg:min-w-0 lg:flex-1 lg:flex-wrap lg:overflow-visible lg:px-0 lg:py-0`}
+          >
             <li className="shrink-0 lg:hidden">
-              <TopicChip word={typed} count={null} href={newsHref(player, null)} on />
+              <button
+                type="button"
+                aria-label={player ? `${player} 기사 직접 찾기` : "기사 직접 찾기"}
+                onClick={openInput}
+                className="press tap-target grid size-9 cursor-pointer place-items-center rounded-full bg-surface text-muted shadow-[0_0_0_1px_var(--line)] hover:bg-surface-2"
+              >
+                <SearchIcon className="size-4" />
+              </button>
             </li>
-          )}
-          {shownTopics.map((t) => {
-            const on = t.word === selected;
-            return (
-              <li key={t.word} className="shrink-0">
-                <TopicChip word={t.word} count={t.count} href={newsHref(player, on ? null : t.word)} on={on} />
+            {typed && (
+              // 직접 친 말. PC는 입력칸에 이미 보여 알약은 휴대폰에만
+              <li className="shrink-0 lg:hidden">
+                <TopicChip word={typed} count={null} href={newsHref(player, null)} on />
               </li>
-            );
-          })}
-        </ul>
+            )}
+            {shownTopics.map((t) => {
+              const on = t.word === selected;
+              return (
+                <li key={t.word} className="shrink-0">
+                  <TopicChip word={t.word} count={t.count} href={newsHref(player, on ? null : t.word)} on={on} />
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       )}
     </div>
   );
