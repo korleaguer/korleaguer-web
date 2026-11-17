@@ -9,7 +9,8 @@ import "./globals.css";
 
 export default function GlobalError({ retry }: { error: unknown; retry: () => void }) {
   return (
-    <html lang="ko" className="h-full antialiased">
+    // suppressHydrationWarning: layout과 같은 이유. 앱(웹뷰)이 React보다 먼저 <html>에 data-app 속성을 붙인다
+    <html lang="ko" className="h-full antialiased" suppressHydrationWarning>
       <body className="flex min-h-full flex-col font-sans">
         <title>문제가 생겼어요 · KOR Leaguer</title>
         <main className="mx-auto w-full max-w-[67.5rem] flex-1 px-3 pb-10 pt-4 sm:px-6 sm:pt-6">
