@@ -57,7 +57,9 @@ export default function MonthBars({ months, pitcher }: { months: SeasonMonth[]; 
     ...new Set(months.filter((m) => m.kind === "MINORS" && played(m, pitcher)).map((m) => m.levelKo ?? "마이너")),
   ];
   const anyFew = months.some((m) => played(m, pitcher) && m.few);
-  const note = `점선 = 리그 평균${pitcher ? " · 아래 작은 숫자는 평균자책점" : ""}${anyFew ? (pitcher ? " · 옅으면 등판 적은 달" : " · 옅으면 경기 적은 달") : ""}`;
+  // 기록 있는 달이 하나도 없으면(시즌 내내 부상·FA) 둘째 줄이 모두 빈칸이라 '아래 작은 숫자' 안내를 붙이지 않는다
+  const anyPlayed = months.some((m) => played(m, pitcher));
+  const note = `점선 = 리그 평균${pitcher && anyPlayed ? " · 아래 작은 숫자는 평균자책점" : ""}${anyFew ? (pitcher ? " · 옅으면 등판 적은 달" : " · 옅으면 경기 적은 달") : ""}`;
 
   return (
     <div className="mt-3">
