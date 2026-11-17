@@ -29,6 +29,8 @@ const SKIN_STYLE = {
   "--media-border-radius": "12px",
   "--media-font-family": "var(--font-sans)",
   "--media-object-fit": "contain",
+  // 조작 버튼 36px → 44px(Apple 44pt, 이슈 #249). 스킨 기본값은 --media-spacing(4px) × 9
+  "--media-control-size": "44px",
 } as CSSProperties;
 
 /**
