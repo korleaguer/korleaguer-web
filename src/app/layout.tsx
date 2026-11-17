@@ -5,6 +5,7 @@ import { SITE_NAME, SITE_URL, shareMeta } from "@/lib/share";
 import AppBridge from "@/components/AppBridge";
 import SiteFooter from "@/components/SiteFooter";
 import SiteHeader from "@/components/SiteHeader";
+import SkipLink from "@/components/SkipLink";
 import Toaster from "@/components/Toaster";
 import "./globals.css";
 
@@ -29,9 +30,16 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     // suppressHydrationWarning: 앱(웹뷰)이 React보다 먼저 <html>에 data-app 속성을 붙인다. 이 요소의 속성 차이는 그대로 둔다.
     <html lang="ko" className="h-full antialiased" suppressHydrationWarning>
       <body className="flex min-h-full flex-col font-sans">
+        {/* 맨 앞: 키보드로 처음 Tab을 누르면 보이는 '본문 바로가기' */}
+        <SkipLink />
         <AppBridge />
         <SiteHeader />
-        <main className="mx-auto w-full max-w-[67.5rem] flex-1 px-3 pb-10 pt-4 sm:px-6 sm:pt-6">
+        {/* tabIndex -1: 본문 바로가기로 포커스를 받을 수 있게. 본문 전체에 포커스 테두리가 그려지면 어색해서 끈다 */}
+        <main
+          id="main"
+          tabIndex={-1}
+          className="mx-auto w-full max-w-[67.5rem] flex-1 px-3 pb-10 pt-4 focus:outline-none sm:px-6 sm:pt-6"
+        >
           {children}
         </main>
         <SiteFooter />
