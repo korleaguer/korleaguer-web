@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import { Fragment, type CSSProperties } from "react";
 import type { PostingPast, PostingPlayer, PostingStatus, PostingSummary } from "@/lib/api";
 import { formatDate, withAndParticle } from "@/lib/format";
 import { uniqueByUrl } from "@/lib/news";
@@ -63,11 +63,16 @@ function deadlineUs(iso: string): string {
 const kstDay = (iso: string) => parts(iso, "Asia/Seoul").md;
 
 /**
- * 천 단위 쉼표 숫자. 쉼표 뒤에 단어 잇기(U+2060, 보이지 않음)를 넣어 숫자 중간에서 줄이 바뀌지 않게 한다.
- * 아이폰(WebKit)은 낱말 줄바꿈(keep-all)에서 쉼표 뒤를 줄바꿈 자리로 봐서, 큰 글씨에서 '5년 6,' / '000만 달러'로 갈랐다(이슈 #264)
+ * 띄어쓰기 자리에서만 줄을 바꾼다. 아이폰(WebKit)은 낱말 줄바꿈(keep-all)에서 숫자 쉼표 뒤도 줄바꿈 자리로 봐서,
+ * 큰 글씨에서 '5년 6,' / '000만 달러'로 갈랐다(단어 잇기 문자 U+2060도 듣지 않았다, 이슈 #264). 낱말마다 줄바꿈을 막는다
  */
-function grouped(n: number): string {
-  return n.toLocaleString("ko-KR").replace(/,/g, ",\u2060");
+function Words({ text }: { text: string }) {
+  return text.split(" ").map((word, i) => (
+    <Fragment key={i}>
+      {i > 0 && " "}
+      <span className="whitespace-nowrap">{word}</span>
+    </Fragment>
+  ));
 }
 
 /** 1억 1,300만 달러 · 800만 달러 */
@@ -75,7 +80,7 @@ export function formatUsd(usd: number): string {
   const man = Math.round(usd / 10_000);
   const eok = Math.floor(man / 10_000);
   const rest = man % 10_000;
-  const parts = [eok > 0 ? `${eok}억` : "", rest > 0 ? `${grouped(rest)}만` : ""].filter(Boolean);
+  const parts = [eok > 0 ? `${eok}억` : "", rest > 0 ? `${rest.toLocaleString("ko-KR")}만` : ""].filter(Boolean);
   return `${parts.join(" ")} 달러`;
 }
 
@@ -84,11 +89,11 @@ export function formatUsd(usd: number): string {
  * 합의일 환율로 계산한 '대략'이라 앞에 '약'을 붙여 쓴다.
  */
 export function formatKrw(won: number): string {
-  if (won < 100_000_000) return `${grouped(Math.round(won / 10_000))}만 원`;
+  if (won < 100_000_000) return `${Math.round(won / 10_000).toLocaleString("ko-KR")}만 원`;
   const eokTotal = Math.round(won / 100_000_000);
   const jo = Math.floor(eokTotal / 10_000);
   const eok = eokTotal % 10_000;
-  const parts = [jo > 0 ? `${jo}조` : "", eok > 0 ? `${grouped(eok)}억` : ""].filter(Boolean);
+  const parts = [jo > 0 ? `${jo}조` : "", eok > 0 ? `${eok.toLocaleString("ko-KR")}억` : ""].filter(Boolean);
   return `${parts.join(" ")} 원`;
 }
 
@@ -348,7 +353,8 @@ function PlayerHead({ player: p }: { player: PostingPlayer }) {
       {p.deal && p.deal.years != null && p.deal.guaranteedUsd != null && (
         <p className="mt-4 text-summary">
           {/* 받침 있는 구단(보스턴·시애틀)은 '과'(점검 11-13) */}
-          {p.deal.mlbTeamKo ? `${withAndParticle(p.deal.mlbTeamKo)} ` : ""}{p.deal.years}년 {formatUsd(p.deal.guaranteedUsd)}
+          {p.deal.mlbTeamKo ? `${withAndParticle(p.deal.mlbTeamKo)} ` : ""}
+          <Words text={`${p.deal.years}년 ${formatUsd(p.deal.guaranteedUsd)}`} />
           {p.deal.agreedOn && (
             <span className="block text-caption text-muted">합의 {formatDate(p.deal.agreedOn)}, 미국 날짜</span>
           )}
@@ -449,7 +455,7 @@ function RowResult({
       <div className="shrink-0 text-right">
         {pill}
         <p className="mt-1 text-label tabular-nums">
-          {p.deal.years}년 {formatUsd(p.deal.guaranteedUsd)}
+          <Words text={`${p.deal.years}년 ${formatUsd(p.deal.guaranteedUsd)}`} />
         </p>
         {place != null && (
           <p className="mt-0.5 text-micro text-success-fg tabular-nums">
@@ -566,13 +572,17 @@ function DealMoney({
   /** 두 값을 겹친 칸 안 정렬. 막대 끝에 붙일 때는 왼쪽(start) */
   align?: "start" | "end";
 }) {
-  if (!krw) return <>{`${years}년 ${usd}`}</>;
+  if (!krw) return <Words text={`${years}년 ${usd}`} />;
   return (
     <>
       <span className="sr-only">{`${years}년 ${usd}, 원화로 ${krw}`}</span>
       <span aria-hidden className={align === "start" ? "money-flip money-flip-start" : "money-flip"}>
-        <span>{`${years}년 ${usd}`}</span>
-        <span>{`${years}년 ${krw}`}</span>
+        <span>
+          <Words text={`${years}년 ${usd}`} />
+        </span>
+        <span>
+          <Words text={`${years}년 ${krw}`} />
+        </span>
       </span>
     </>
   );

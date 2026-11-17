@@ -7,6 +7,7 @@ import type { LinkedArticle, LinkedTeam } from "@/lib/api";
 import { formatDate, kstDayKey } from "@/lib/format";
 import TeamMark from "@/components/TeamMark";
 import NewsThumb from "@/components/news/NewsThumb";
+import DotDate from "@/components/news/DotDate";
 import { teamColor, teamLogoUrl } from "@/lib/teams";
 
 /** 아래로 이만큼 끌면 닫는다(px, 경기 상세 창과 같다) */
@@ -198,7 +199,7 @@ function ArticleRow({ article: a, playerPhotoUrl }: { article: LinkedArticle; pl
     <Link href={`/news/${a.id}`} className="press-soft group flex items-center gap-3 py-3">
       {/* 화면 낭독기는 글부터 읽고, 눈에는 출처 줄이 위에 보인다. 출처 줄이 14rem보다 좁으면(큰 글씨) 보통 글처럼 흘린다(NewsTitleList와 같다) */}
       <span className="@container flex min-w-0 flex-1 flex-col-reverse">
-        <span className="mt-0.5 line-clamp-2 text-summary group-hover:underline">
+        <span className="mt-0.5 line-clamp-2 text-summary group-hover:underline @max-[14rem]:line-clamp-4">
           <Highlighted text={text} word={a.reasonName} />
         </span>
         <span className="flex min-w-0 whitespace-nowrap text-caption text-muted tabular-nums @max-[14rem]:block @max-[14rem]:whitespace-normal">
@@ -215,7 +216,9 @@ function ArticleRow({ article: a, playerPhotoUrl }: { article: LinkedArticle; pl
               </span>
             </>
           )}{" "}
-          <span className="shrink-0 pl-[0.25em] @max-[14rem]:pl-0">{`· ${formatDate(a.publishedAt)}`}</span>
+          <span className="shrink-0 pl-[0.25em] @max-[14rem]:pl-0">
+            <DotDate text={formatDate(a.publishedAt)} />
+          </span>
         </span>
       </span>
       <NewsThumb newsId={a.id} url={a.imageUrl} fallback={playerPhotoUrl} />

@@ -4,6 +4,7 @@ import type { NewsHeadline } from "@/lib/api";
 import { formatDate, formatTime } from "@/lib/format";
 import ExternalLinkIcon from "@/components/ExternalLinkIcon";
 import NewsThumb from "@/components/news/NewsThumb";
+import DotDate from "@/components/news/DotDate";
 
 export interface NewsTitleItem extends NewsHeadline {
   /** 여러 선수의 기사를 모았을 때 누구 기사인지. 한 명이면 null */
@@ -94,7 +95,8 @@ function NewsTitleRow({
   const content = (
     // 화면 낭독기는 제목부터 읽고(글 순서), 눈에는 출처 줄이 위에 보인다(flex-col-reverse)
     <span className="@container flex min-w-0 flex-1 flex-col-reverse">
-      <span className="mt-0.5 line-clamp-2 text-summary group-hover:underline">
+      {/* 제목은 두 줄까지. 글자 칸이 14rem보다 좁으면(큰 글씨) 두 줄에 몇 낱말밖에 안 들어가 네 줄까지(이슈 #264) */}
+      <span className="mt-0.5 line-clamp-2 text-summary group-hover:underline @max-[14rem]:line-clamp-4">
         <Highlighted text={n.titleKo ?? n.title} word={highlight} />
       </span>
       {/* 출처 줄은 한 줄로 둔다. 좁으면 누구·언론사만 '…'으로 줄이고 '외 N곳'과 날짜는 남긴다.
@@ -128,7 +130,9 @@ function NewsTitleRow({
             </span>
           </>
         )}{" "}
-        <span className="shrink-0 pl-[0.25em] @max-[14rem]:pl-0">{`·\u00a0${timeOnly ? formatTime(n.publishedAt) : formatDate(n.publishedAt)}`}</span>
+        <span className="shrink-0 pl-[0.25em] @max-[14rem]:pl-0">
+          <DotDate text={timeOnly ? formatTime(n.publishedAt) : formatDate(n.publishedAt)} />
+        </span>
       </span>
     </span>
   );
