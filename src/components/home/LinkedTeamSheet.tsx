@@ -16,7 +16,8 @@ const CHART_MIN = 3;
 
 /**
  * 거론 구단을 누르면 뜨는 창(사용자 11-16 시안 D). 휴대폰은 아래에서 올라오는 창(아래로 끌면 닫힘), 640px 이상은 가운데 창.
- * 경기 상세 창(GameDetailSheet)과 같은 틀이다. 닫기·바깥 누르기·Esc로 닫는다.
+ * 경기 상세 창(GameDetailSheet)과 같은 틀이다. 닫기·바깥 누르기·Esc로 닫는다. 뒤로 가기로 닫기와 닫은 뒤 연 버튼으로
+ * 포커스 돌려주기는 여는 쪽(LinkedTeams)이 한다(이 부품은 닫힐 때 통째로 지워진다).
  * 안쪽: 기사가 CHART_MIN건 이상이면 최근 며칠 날짜 막대(언제 몰렸나), 그 아래 기사 줄. 줄은 운영 기사 목록과 같은 모양이고
  * 제목 자리에 '왜 거론됐나' 한 줄(AI 요약에서 그 구단 이름이 나온 문장, 없으면 제목)을 두 줄까지 보인다.
  * 글만 있으면 눈이 피로해서(사용자 11-16 "텍스트밖에 없어서 눈 아파") 줄마다 기사 사진을 붙인다.
@@ -114,7 +115,7 @@ export default function LinkedTeamSheet({
               type="button"
               aria-label="닫기"
               onClick={onClose}
-              className="press grid size-10 shrink-0 place-items-center rounded-full text-muted hover:bg-surface-2"
+              className="press grid size-11 shrink-0 place-items-center rounded-full text-muted hover:bg-surface-2"
             >
               <svg aria-hidden viewBox="0 0 16 16" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
                 <path d="M4 4l8 8M12 4l-8 8" />
