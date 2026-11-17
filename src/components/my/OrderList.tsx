@@ -118,8 +118,8 @@ export default function OrderList({ players }: { players: PlayerSummary[] }) {
       <p id="order-help" className="sr-only">
         줄마다 위로·아래로 버튼이나 키보드 위·아래 화살표로 순서를 옮길 수 있어요. 손잡이를 끌어도 돼요.
       </p>
-      {/* PC에서 ▲▼가 이름에서 멀어지지 않게 폭을 줄인다(근접성, 이슈 #257) */}
-      <ol ref={listRef} className="relative max-w-md">
+      {/* PC에서 ▲▼가 이름에서 멀어지지 않게 폭을 줄인다(근접성, 이슈 #257). 줄이 좁으면(@container) 그림용 번호 칸을 숨긴다 */}
+      <ol ref={listRef} className="@container relative max-w-md">
         {order.map((id, index) => {
           const player = byId.get(id);
           if (!player) return null;
@@ -134,7 +134,7 @@ export default function OrderList({ players }: { players: PlayerSummary[] }) {
           return (
             <li
               key={id}
-              className={`flex h-[max(3rem,48px)] items-center gap-2.5 rounded-xl px-1 ${dragging ? "relative z-10 bg-surface shadow-[var(--shadow-card-hover)]" : ""}`}
+              className={`flex h-[max(3rem,48px)] items-center gap-[10px] rounded-xl px-1 ${dragging ? "relative z-10 bg-surface shadow-[var(--shadow-card-hover)]" : ""}`}
               style={dragging ? { transform: `translateY(${offset}px)` } : undefined}
             >
               <button
@@ -158,7 +158,8 @@ export default function OrderList({ players }: { players: PlayerSummary[] }) {
                   <circle cx="10.5" cy="12.5" r="1.25" />
                 </svg>
               </button>
-              <span aria-hidden className="w-4 shrink-0 text-center text-caption font-bold tabular-nums text-muted">
+              {/* 간격은 px(큰 글씨에서 이름 칸을 지킨다). 줄 폭이 300px보다 좁으면(320px 화면 등) 번호 칸을 숨겨 이름을 남긴다 */}
+              <span aria-hidden className="w-4 shrink-0 text-center text-caption font-bold tabular-nums text-muted @max-[300px]:hidden">
                 {index + 1}
               </span>
               <PlayerAvatar size={28} nameKo={player.nameKo} photoUrl={player.photoUrl} teamAbbr={player.teamAbbr} />

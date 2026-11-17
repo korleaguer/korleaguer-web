@@ -192,8 +192,8 @@ export default function NewsSearch({
       {showTopicsUnderInput && (
         <div className="mt-2.5 px-1 lg:hidden">
           <p className="text-caption text-muted">{player ? `${player} 기사에 자주 나온 말` : "요즘 기사에 자주 나온 말"}</p>
-          {/* 여러 줄로 감기면 넓힌 누름 영역(44px)이 줄 사이에서 겹치지 않게 줄 사이 12px */}
-          <ul className="mt-1.5 flex flex-wrap gap-x-1.5 gap-y-3">
+          {/* 여러 줄로 감기면 넓힌 누름 영역(44px)이 줄 사이에서 겹치지 않게 줄 사이를 max(12px 상당, 44px − 알약 높이)로 */}
+          <ul className="mt-1.5 flex flex-wrap gap-x-1.5 gap-y-[max(0.75rem,calc(44px-2rem))]">
             {shownTopics.map((t) => (
               <li key={t.word}>
                 <button
@@ -215,7 +215,7 @@ export default function NewsSearch({
         <ul
           aria-label={player ? `${player} 기사에 자주 나온 말` : "요즘 기사에 자주 나온 말"}
           // 휴대폰: 화면 양끝까지 밀어 볼 수 있게 main의 좌우 여백만큼 넓힌다(선수 알약 줄과 같다). PC: 입력칸 밑에 여러 줄로
-          className={`${inputOnPhone ? "hidden" : "flex"} no-scrollbar -mx-3 items-center gap-1.5 overflow-x-auto overflow-y-hidden px-3 py-1 sm:-mx-6 sm:px-6 lg:mx-0 lg:mt-2.5 lg:flex lg:flex-wrap lg:overflow-visible lg:px-0 lg:py-0`}
+          className={`${inputOnPhone ? "hidden" : "flex"} no-scrollbar -mx-3 items-center gap-1.5 overflow-x-auto overflow-y-hidden px-3 py-[max(0.25rem,calc(22px-1.125rem))] sm:-mx-6 sm:px-6 lg:mx-0 lg:mt-2.5 lg:flex lg:flex-wrap lg:overflow-visible lg:px-0 lg:py-0`}
         >
           <li className="shrink-0 lg:hidden">
             <button
