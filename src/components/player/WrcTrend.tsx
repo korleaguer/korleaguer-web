@@ -90,13 +90,14 @@ export default function WrcTrend({ points }: { points: TrendPoint[] }) {
   const ticks = monthTicks(points);
 
   return (
-    <div className="card px-4 pb-3 pt-4">
-      <div className="mb-2 flex items-end justify-between gap-3">
-        <div className="min-w-0">
+    <div className="@container card px-4 pb-3 pt-4">
+      {/* 큰 글씨에서 말('리그 평균보다 크게 높아요')이 8rem도 못 받으면 wRC+ 숫자를 다음 줄 오른쪽으로 내린다(이슈 #264) */}
+      <div className="mb-2 flex flex-wrap items-end justify-between gap-x-3">
+        <div className="min-w-0 flex-1 basis-[8rem]">
           <p className="text-caption text-muted tabular-nums">{active === last ? "시즌 전체" : `${date}까지`}</p>
           <p className={`text-label ${value >= 105 ? "text-accent-ink" : "text-muted"}`}>{words(value)}</p>
         </div>
-        <p className="shrink-0 text-stat tabular-nums">
+        <p className="ml-auto shrink-0 text-stat tabular-nums">
           <span className="mr-1 text-caption text-muted">wRC+</span>
           {value}
         </p>
@@ -162,19 +163,22 @@ export default function WrcTrend({ points }: { points: TrendPoint[] }) {
           />
         </div>
       </div>
-      {/* 달 눈금: 그 달 첫 경기 자리 가운데에 둔다. 양 끝 글자는 카드 밖으로 나가지 않게 끝을 맞춘다 */}
+      {/* 달 눈금: 그 달 첫 경기 자리 가운데에 둔다. 양 끝 글자는 카드 밖으로 나가지 않게 글자 폭(em, 숫자 0.65 + '월' 1)만큼
+          자리를 조인다. 예전엔 4%·96%로 끊어 큰 글씨에서 '10월'이 카드 밖으로 나갔다(이슈 #264).
+          칸이 좁으면(큰 글씨) 하나 걸러 하나만 보여 글자끼리 겹치지 않게 한다. 세로 경계선은 모두 남는다 */}
       <div aria-hidden className="relative mt-1 h-4 text-micro text-muted">
-        {ticks.map((t) => (
-          <span
-            key={t.month}
-            className={`absolute top-0 whitespace-nowrap tabular-nums ${
-              t.pct < 4 ? "" : t.pct > 96 ? "-translate-x-full" : "-translate-x-1/2"
-            }`}
-            style={{ left: `${t.pct}%` }}
-          >
-            {t.month}월
-          </span>
-        ))}
+        {ticks.map((t) => {
+          const w = `${String(t.month).length * 0.65 + 1}em`;
+          return (
+            <span
+              key={t.month}
+              className="absolute top-0 whitespace-nowrap tabular-nums @max-[15rem]:even:hidden"
+              style={{ left: `clamp(0px, calc(${t.pct}% - ${w} / 2), calc(100% - ${w}))` }}
+            >
+              {t.month}월
+            </span>
+          );
+        })}
       </div>
       <p className="mt-2 text-micro text-muted">점선은 리그 평균(100). 시즌 처음부터 그날까지의 타격이고, 50타석부터 그려요.</p>
     </div>

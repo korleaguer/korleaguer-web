@@ -42,8 +42,10 @@ export default function MyHeader({ subtitle, players, selectedIds }: Props) {
 
   return (
     <div>
-      <div className="flex items-end justify-between gap-3 px-1">
-        <div className="min-w-0">
+      {/* 제목 칸 기본 폭 5rem: 큰 글씨에서 이만큼도 안 남으면 '선수 고르기' 버튼을 다음 줄로 내린다
+          (버튼 옆에서 '내 선수'가 한 글자씩 세 줄로 갈렸다, 이슈 #264) */}
+      <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-2 px-1">
+        <div className="min-w-0 flex-1 basis-[5rem]">
           <h1 className="text-display">내 선수</h1>
           <p className="mt-0.5 text-meta text-muted">{subtitle}</p>
         </div>

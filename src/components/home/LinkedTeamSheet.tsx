@@ -7,6 +7,7 @@ import type { LinkedArticle, LinkedTeam } from "@/lib/api";
 import { formatDate, kstDayKey } from "@/lib/format";
 import TeamMark from "@/components/TeamMark";
 import NewsThumb from "@/components/news/NewsThumb";
+import Words from "@/components/Words";
 import { teamColor, teamLogoUrl } from "@/lib/teams";
 
 /** 아래로 이만큼 끌면 닫는다(px, 경기 상세 창과 같다) */
@@ -115,7 +116,7 @@ export default function LinkedTeamSheet({
               type="button"
               aria-label="닫기"
               onClick={onClose}
-              className="press grid size-[max(2.75rem,44px)] shrink-0 place-items-center rounded-full text-muted hover:bg-surface-2"
+              className="press grid size-[44px] shrink-0 place-items-center rounded-full text-muted hover:bg-surface-2"
             >
               <svg aria-hidden viewBox="0 0 16 16" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
                 <path d="M4 4l8 8M12 4l-8 8" />
@@ -152,16 +153,24 @@ function DayBars({ articles, days }: { articles: LinkedArticle[]; days: number }
   return (
     <figure className="mt-1 border-b border-line pb-2">
       <figcaption className="sr-only">날짜별 기사 수: {summary}</figcaption>
-      <div aria-hidden className="grid items-end" style={{ gridTemplateColumns: `repeat(${days}, minmax(0, 1fr))` }}>
+      {/* 막대 위 'n건'·아래 '11일'은 칸 폭이 허락하는 만큼만 키운다(globals.css .day-bars, 이슈 #264) */}
+      <div
+        aria-hidden
+        className="day-bars grid items-end"
+        style={{ gridTemplateColumns: `repeat(${days}, minmax(0, 1fr))`, "--days": String(days) } as CSSProperties}
+      >
         {keys.map((k, i) => {
           const isToday = i === days - 1;
           const n = counts[i];
           return (
             <div key={k} className="flex flex-col items-center">
-              <span className="mb-1 text-caption font-bold tabular-nums">{n > 0 ? `${n}건` : ""}</span>
-              {/* 기사가 있는 날은 역대 계약 막대와 같은 잉크 그라데이션(오늘만 강조색), 없는 날은 바닥선만 */}
+              <span className="day-bars-label mb-1 font-bold tabular-nums">
+                {n > 0 ? `${n}건` : ""}
+              </span>
+              {/* 기사가 있는 날은 역대 계약 막대와 같은 잉크 그라데이션(오늘만 강조색), 없는 날은 바닥선만.
+                  막대 폭(1.75rem)은 글자 배율을 따라 커지므로 칸보다 넓어지면 칸 폭 - 4px로 줄인다(2배 375px에서 막대끼리 겹쳤다) */}
               <span
-                className={`w-7 rounded-t-md ${n === 0 ? "bg-line" : isToday ? "bg-accent" : ""}`}
+                className={`w-7 max-w-[calc(100%-4px)] rounded-t-md ${n === 0 ? "bg-line" : isToday ? "bg-accent" : ""}`}
                 style={
                   {
                     height: n > 0 ? `${12 + (n / max) * 40}px` : "3px",
@@ -173,7 +182,7 @@ function DayBars({ articles, days }: { articles: LinkedArticle[]; days: number }
                 }
               />
               <span
-                className={`mt-1.5 text-caption tabular-nums ${isToday ? `font-bold ${n > 0 ? "text-accent-ink" : "text-foreground"}` : "text-muted"}`}
+                className={`day-bars-label mt-1.5 tabular-nums ${isToday ? `font-bold ${n > 0 ? "text-accent-ink" : "text-foreground"}` : "text-muted"}`}
               >
                 {isToday ? "오늘" : `${Number(k.slice(8))}일`}
               </span>
@@ -190,19 +199,28 @@ function ArticleRow({ article: a, playerPhotoUrl }: { article: LinkedArticle; pl
   const text = a.reason ?? a.titleKo ?? a.title;
   return (
     <Link href={`/news/${a.id}`} className="press-soft group flex items-center gap-3 py-3">
-      {/* 화면 낭독기는 글부터 읽고, 눈에는 출처 줄이 위에 보인다 */}
-      <span className="flex min-w-0 flex-1 flex-col-reverse">
-        <span className="mt-0.5 line-clamp-2 text-summary group-hover:underline">
+      {/* 화면 낭독기는 글부터 읽고, 눈에는 출처 줄이 위에 보인다. 출처 줄이 11rem보다 좁으면(큰 글씨) 보통 글처럼 흘린다(NewsTitleList와 같다) */}
+      <span className="@container flex min-w-0 flex-1 flex-col-reverse">
+        <span className="mt-0.5 line-clamp-2 text-summary group-hover:underline @max-[11rem]:line-clamp-4">
           <Highlighted text={text} word={a.reasonName} />
         </span>
-        <span className="flex min-w-0 whitespace-nowrap text-caption text-muted tabular-nums">
-          <span className="min-w-0 truncate">{a.publisher}</span>
+        <span className="flex min-w-0 whitespace-nowrap text-caption text-muted tabular-nums @max-[11rem]:block @max-[11rem]:whitespace-normal">
+          <span className="min-w-0 truncate @max-[11rem]:whitespace-normal">{a.publisher}</span>
+          {/* 조각 사이 간격은 NewsTitleList와 같다(한 줄이면 왼쪽 여백, 흘리면 보통 공백이 간격·줄바꿈 자리) */}
           {a.alsoBy.length > 0 && (
-            <span className="shrink-0" title={`같은 기사: ${a.alsoBy.join(", ")}`}>
-              {` 외 ${a.alsoBy.length}곳`}
-            </span>
-          )}
-          <span className="shrink-0">{` · ${formatDate(a.publishedAt)}`}</span>
+            <>
+              {" "}
+              <span
+                className="shrink-0 whitespace-nowrap pl-[0.25em] @max-[11rem]:pl-0"
+                title={`같은 기사: ${a.alsoBy.join(", ")}`}
+              >
+                {`외 ${a.alsoBy.length}곳`}
+              </span>
+            </>
+          )}{" "}
+          <span className="shrink-0 pl-[0.25em] @max-[11rem]:pl-0">
+            <Words text={`·\u00a0${formatDate(a.publishedAt)}`} />
+          </span>
         </span>
       </span>
       <NewsThumb newsId={a.id} url={a.imageUrl} fallback={playerPhotoUrl} />

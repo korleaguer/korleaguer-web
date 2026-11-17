@@ -4,6 +4,7 @@ import ResultPill from "@/components/ResultPill";
 import Highlights from "@/components/Highlights";
 import ScoreText from "@/components/ScoreText";
 import TeamName from "@/components/TeamName";
+import Words from "@/components/Words";
 
 /**
  * 경기 한 줄(선수 페이지 경기 기록, 내 선수 카드의 '모두 보기'가 같이 쓴다).
@@ -26,7 +27,9 @@ export default function GameRow({
   const lineup = formatLineup(g);
 
   return (
-    <li className="flex gap-3 p-3.5">
+    // 오른쪽 칸이 8rem도 안 남으면(큰 글씨) 날짜를 위 줄로 올려 경기 내용이 줄 폭을 다 쓴다. 옆에 두면 2배에서
+    // '2타수 1안타 1볼넷'이 한 단어씩 세 줄로 갈렸다(이슈 #264)
+    <li className="flex flex-wrap gap-x-3 gap-y-1 p-3.5">
       {/* 눈에는 "9.27 / 일", 화면 낭독기에는 "9월 27일(일)". 10~12월("10.16", 17px 굵게 약 49px)도 한 줄에 들어가는 너비 */}
       <p className="w-13 shrink-0 text-center">
         <span aria-hidden className="block whitespace-nowrap text-heading tabular-nums">
@@ -37,7 +40,7 @@ export default function GameRow({
         </span>
         <span className="sr-only">{formatDate(g.startTimeKst)}</span>
       </p>
-      <div className="min-w-0 flex-1">
+      <div className="min-w-[min(8rem,100%)] flex-1">
         <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-meta text-muted">
           {levelKo && (
             <span className="rounded-md bg-surface-2 px-1.5 py-0.5 text-badge text-foreground/70">{levelKo}</span>
@@ -57,7 +60,7 @@ export default function GameRow({
         <p
           className={`mt-1 text-summary text-pretty ${g.played ? "" : "font-medium text-muted"}`}
         >
-          {formatSummary(g.summary)}
+          <Words text={formatSummary(g.summary)} />
         </p>
         <Highlights line={g} className="mt-1.5" />
       </div>

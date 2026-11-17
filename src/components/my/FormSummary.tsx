@@ -22,13 +22,17 @@ const BADGE_TONE: Record<BadgeTone, string> = {
   neutral: "text-foreground",
 };
 
-/** 무대 왼쪽 위 상태 배지: 흰 알약 + 신호색 점·글자. 메이저에서 평소대로면 그리지 않는다 */
+/**
+ * 무대 왼쪽 위 상태 배지: 흰 알약 + 신호색 점·글자. 메이저에서 평소대로면 그리지 않는다.
+ * 보통은 오른쪽 사진(112px + 여백) 자리를 비워 둔다. 무대가 18rem보다 좁으면(큰 글씨) 사진 왼쪽 끝에 조금 걸치더라도
+ * 글을 다 보인다(2배에서 'LG 트윈스 복…'처럼 잘렸다, 이슈 #264)
+ */
 export function StatusBadge({ status }: { status: CardStatus }) {
   const badge = statusBadge(status);
   if (!badge) return null;
   return (
     <span
-      className={`absolute left-3.5 top-3 z-10 inline-flex max-w-[calc(100%-8.5rem)] items-center gap-1.5 rounded-full bg-surface px-2.5 py-0.5 text-badge shadow-[var(--shadow-card)] ${BADGE_TONE[badge.tone]}`}
+      className={`absolute left-[14px] top-[12px] z-10 inline-flex max-w-[calc(100%-136px)] items-center @max-[18rem]:max-w-[calc(100%-28px)] gap-1.5 rounded-full bg-surface px-2.5 py-0.5 text-badge shadow-[var(--shadow-card)] ${BADGE_TONE[badge.tone]}`}
     >
       <span aria-hidden className={`size-[7px] shrink-0 rounded-full ${badge.tone === "neutral" ? "bg-muted" : "bg-current"}`} />
       <span className="truncate">{badge.text}</span>
@@ -136,26 +140,32 @@ export function Numbers({
   small: [string, string | number][];
 }) {
   return (
-    <div className="mt-3.5 grid grid-cols-[auto_minmax(0,1fr)] items-end gap-4">
-      <dl>
-        <dt className="text-caption text-muted">{label}</dt>
-        <dd className="mt-1 text-stat-form tabular-nums">
-          {/* 처음엔 최종 값으로 서 있고, 기간(7·14·30일)을 바꾸면 앞 값에서 굴러가며 바뀐다 */}
-          <RollingNumber value={value} />
-        </dd>
-        {note != null && <dd className="mt-1.5 text-caption text-muted">{note}</dd>}
-      </dl>
-      {/* 세 칸을 똑같이 나누지 않고 내용 너비대로 고르게 벌린다. 좁은 카드에서 "50⅔"이 "50"/"⅔"로 갈리지 않게 */}
-      <dl className="grid grid-cols-[repeat(3,auto)] justify-evenly rounded-xl bg-surface-2 py-2 text-center">
-        {small.map(([k, v]) => (
-          <div key={k} className="whitespace-nowrap">
-            <dt className="text-caption text-muted">{k}</dt>
-            <dd className="text-stat tabular-nums">
-              {v}
-            </dd>
-          </div>
-        ))}
-      </dl>
+    // 작은 숫자 셋이 큰 숫자 옆에 다 들어가지 않으면(큰 글씨) 아래 줄로 내린다(flex-wrap). 옆에 두면 1.5배부터 '탈삼진'·
+    // '홈런' 칸이 카드 밖으로 나갔다(이슈 #264). 문턱 없이 글자 폭으로 정해서, 보통 크기는 가장 좁은 카드(640px 창 두 칸,
+    // 16.1rem)에서도 운영처럼 옆에 둔다(11-17 측정: 가장 넓은 카드 '평균자책점 + 이닝 50⅔' 14.75rem).
+    // 작은 숫자 상자는 내용 폭보다 좁아지지 않고(min-width: auto) 남는 폭을 다 쓴다. 셋이 한 줄에 못 들어가면(아주 좁은 휴대폰 + 2배) 두 칸씩
+    <div className="@container mt-3.5">
+      <div className="flex flex-wrap items-end gap-x-4 gap-y-2.5">
+        <dl>
+          <dt className="text-caption text-muted">{label}</dt>
+          <dd className="mt-1 text-stat-form tabular-nums">
+            {/* 처음엔 최종 값으로 서 있고, 기간(7·14·30일)을 바꾸면 앞 값에서 굴러가며 바뀐다 */}
+            <RollingNumber value={value} />
+          </dd>
+          {note != null && <dd className="mt-1.5 text-caption text-muted">{note}</dd>}
+        </dl>
+        {/* 세 칸을 똑같이 나누지 않고 내용 너비대로 고르게 벌린다. 좁은 카드에서 "50⅔"이 "50"/"⅔"로 갈리지 않게 */}
+        <dl className="grid flex-1 grid-cols-[repeat(3,auto)] justify-evenly gap-y-1.5 rounded-xl bg-surface-2 py-2 text-center @max-[7rem]:grid-cols-[repeat(2,auto)]">
+          {small.map(([k, v]) => (
+            <div key={k} className="whitespace-nowrap">
+              <dt className="text-caption text-muted">{k}</dt>
+              <dd className="text-stat tabular-nums">
+                {v}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </div>
     </div>
   );
 }

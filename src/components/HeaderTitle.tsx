@@ -48,7 +48,8 @@ export default function HeaderTitle() {
     <span
       // 화면 낭독기는 본문의 h1을 읽으므로 같은 글을 두 번 읽지 않게 숨긴다
       aria-hidden
-      className="pointer-events-none absolute left-1/2 top-1/2 hidden max-w-[calc(100%-8rem)] -translate-x-1/2 -translate-y-1/2 truncate text-heading opacity-0 transition-opacity duration-200 motion-reduce:transition-none group-data-titled:opacity-100 in-app:block"
+      // 양쪽 버튼(44px, 여백 안쪽으로 12px 당김)만큼 비운다: 쪽마다 여백 1rem + 48px. 보통 크기에서는 예전(8rem)과 같다
+      className="pointer-events-none absolute left-1/2 top-1/2 hidden max-w-[calc(100%-2rem-96px)] -translate-x-1/2 -translate-y-1/2 truncate text-heading opacity-0 transition-opacity duration-200 motion-reduce:transition-none group-data-titled:opacity-100 in-app:block"
     >
       {title}
     </span>

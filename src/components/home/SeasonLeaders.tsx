@@ -36,11 +36,16 @@ export default function SeasonLeaders({ season, statsAvailable, ranking, hitters
   return (
     <Section id="leaders-title" title="시즌 1위" aside={`${season} 시즌`}>
       {statsAvailable ? (
-        <ul className="grid grid-cols-2 gap-2.5 md:grid-cols-4">
-          {LEADERS.map((leader) => (
-            <LeaderCard key={leader.title} leader={leader} ranking={ranking} hitters={hitters} />
-          ))}
-        </ul>
+        // 카드 줄이 13rem보다 좁으면(큰 글씨) 한 칸에 하나씩(두 칸이면 큰 숫자가 두 줄로 갈린다, 이슈 #264).
+        // 768px 이상의 네 칸도 줄이 30rem보다 좁으면(큰 글씨) 두 칸으로(가장 긴 숫자 OPS 1.000대 기준 약 28rem,
+        // 선수 페이지 큰 숫자 카드와 같은 문턱). 보통 크기 768px 이상은 줄이 45rem 이상이라 그대로다
+        <div className="@container">
+          <ul className="grid grid-cols-2 gap-2.5 md:grid-cols-4 @max-[30rem]:grid-cols-2 @max-[13rem]:grid-cols-1">
+            {LEADERS.map((leader) => (
+              <LeaderCard key={leader.title} leader={leader} ranking={ranking} hitters={hitters} />
+            ))}
+          </ul>
+        </div>
       ) : (
         <p className="card px-4 py-5 text-body text-muted">아직 시즌 기록을 받지 못했어요.</p>
       )}

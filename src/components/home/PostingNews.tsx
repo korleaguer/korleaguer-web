@@ -33,7 +33,8 @@ export default function PostingNews({
   const first = items.slice(0, shown);
   return (
     <div className={flush ? undefined : "mt-4 border-t border-line pt-3"}>
-      <div className="flex items-baseline justify-between gap-3">
+      {/* 큰 글씨에서 둘이 한 줄에 못 들어가면 안내를 다음 줄로(제목이 '관련/기사'로 갈리지 않게, 이슈 #264) */}
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3">
         <h3 className="text-label">관련 기사</h3>
         {items.some((n) => n.id != null) && (
           <span className="text-caption text-muted">누르면 사진과 AI 요약을 볼 수 있어요</span>
