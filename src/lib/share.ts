@@ -8,6 +8,9 @@ export const SITE_URL = process.env.SITE_URL ?? "https://pigeon.ddns.net";
 
 export const SITE_NAME = "KOR Leaguer";
 
+/** 사이트 설명. layout의 기본 description과 홈 공유 카드에 쓴다 */
+export const SITE_DESCRIPTION = "해외파 한국 선수들의 최근 경기 기록과 시즌 성적을 모아 봐요.";
+
 /** 사이트 기본 공유 그림(app/opengraph-image.tsx)의 설명 */
 export const SITE_IMAGE_ALT = `${SITE_NAME} — 해외파 한국 선수 기록 모아보기`;
 
@@ -45,16 +48,22 @@ export function newsShareImage(id: number): ShareImage {
  * 화면별 공유 미리보기 정보. 페이지에서 openGraph를 정하면 layout의 openGraph를 통째로 덮어써서(기본 그림까지 빠진다),
  * 사이트 이름·언어·종류와 그림을 매번 함께 넣는다. 그림을 주지 않으면 사이트 기본 그림(app/opengraph-image.tsx,
  * 주소는 /opengraph-image/<OG_VERSION>)이다. 선수·기사는 playerShareImage·newsShareImage를 준다.
+ * - title: 화면 제목만('선수'). 사이트 이름은 og:site_name으로 따로 붙어서, 넣으면 카드에 'KOR Leaguer'가 두 번 보인다
+ *   (앱 공유 버튼도 제목에서 ' · KOR Leaguer'를 떼고 보낸다, ShareButton)
+ * - path: 이 화면 주소(og:url, layout의 metadataBase로 절대 주소가 된다). 주소 뒤 ?값이 보이는 내용을 고르는 화면
+ *   (/news?player=, /records?stat=)은 주지 않는다. og:url을 따르는 서비스(페이스북 등)가 거른 링크를 거르지 않은 화면으로 연다
  */
 export function shareMeta(
   title: string,
   description?: string,
+  path?: string,
   image: ShareImage = { url: `/opengraph-image/${OG_VERSION}`, alt: SITE_IMAGE_ALT },
 ): Pick<Metadata, "openGraph"> {
   return {
     openGraph: {
       title,
       description,
+      url: path,
       siteName: SITE_NAME,
       locale: "ko_KR",
       type: "website",

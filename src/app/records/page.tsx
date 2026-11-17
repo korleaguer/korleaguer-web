@@ -12,12 +12,14 @@ import StateNotice from "@/components/StateNotice";
 import { BestRow, groupPassed, LeaderRow, NextRow, PassedRow } from "@/components/records/RecordRows";
 
 // <title>: "기록 · KOR Leaguer" (뒷부분은 layout의 template이 붙인다)
+const TITLE = "기록";
 const DESCRIPTION = "박찬호부터 이정후까지, 한국인 메이저리거 역대 기록과 지금 선수가 넘은 선배·넘을 선배.";
 
 export const metadata: Metadata = {
-  title: "기록",
+  title: TITLE,
   description: DESCRIPTION,
-  ...shareMeta("기록 · KOR Leaguer", DESCRIPTION),
+  // 공유 주소(og:url)는 두지 않는다. 고른 순위표(?stat=홈런 등)를 보낸 링크가 '/records'의 첫 순위표로 열린다
+  ...shareMeta(TITLE, DESCRIPTION),
 };
 
 type Props = PageProps<"/records">;

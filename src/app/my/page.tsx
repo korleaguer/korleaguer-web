@@ -14,12 +14,14 @@ import { shareMeta } from "@/lib/share";
 
 // <title>: "내 선수 · KOR Leaguer". 사람마다 다른 화면이라 검색에는 올리지 않는다.
 // 공유 미리보기도 홈 것이 아니라 이 화면 것으로(문구 점검 11-13: 홈 제목·설명이 그대로 나왔다)
+const TITLE = "내 선수";
 const DESCRIPTION = "내 선수의 최근 경기를 한곳에서 봐요.";
 export const metadata: Metadata = {
-  title: "내 선수",
+  title: TITLE,
   description: DESCRIPTION,
   robots: { index: false, follow: true },
-  ...shareMeta("내 선수 · KOR Leaguer", DESCRIPTION),
+  // 기간(?days=)은 보는 사람의 고르기라 공유 주소(og:url)에는 넣지 않는다. 내 선수는 받는 사람 기기의 선수로 보인다
+  ...shareMeta(TITLE, DESCRIPTION, "/my"),
 };
 
 const PERIODS = [7, 14, 30] as const;
