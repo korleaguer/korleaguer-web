@@ -113,6 +113,9 @@ function MonthColumn({ m, pitcher }: { m: SeasonMonth; pitcher: boolean }) {
           // 경기 적은 달은 옅게. 마이너 회색은 이미 옅어서(45%) 덜 빼야 막대가 남는다
           className={`relative w-full ${has ? "rounded-t-[5px] rounded-b-[2px]" : "rounded-full"} ${has && m.few ? (m.kind === "MLB" ? "opacity-35" : "opacity-60") : ""}`}
           style={{ height, background: color }}
+          // 고대비 모드(Windows)에서는 바탕색이 지워져 막대가 사라진다. 시스템 색으로 다시 칠할 표시(globals.css).
+          // 메이저는 글자색, 마이너·기록 없는 달의 바닥 줄은 흐린 색
+          data-bar={has && m.kind === "MLB" ? "" : "dim"}
         />
       </span>
       <span aria-hidden className="month-bars-small mt-1 text-muted">{`${m.month}월`}</span>

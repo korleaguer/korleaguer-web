@@ -102,7 +102,12 @@ export function SummaryLines({ entry }: { entry: MyPlayer }) {
         <p className="mt-2 flex items-center gap-2">
           <span aria-hidden className="inline-flex shrink-0 gap-[3px]">
             {play.recent.map((code, i) => (
-              <span key={i} className={`size-[9px] rounded-[2.5px] ${STRIP[code]}`} />
+              <span
+                key={i}
+                // 고대비 모드에서 바탕색이 지워지는 칸(선발·출전)만 시스템 색으로 다시 칠한다(globals.css)
+                data-bar={code === "STARTER" ? "" : code === "PLAYED" ? "dim" : undefined}
+                className={`size-[9px] rounded-[2.5px] ${STRIP[code]}`}
+              />
             ))}
           </span>
           <span className="flex min-w-0 flex-col">

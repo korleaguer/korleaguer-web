@@ -443,6 +443,8 @@ components:
 
 **The 4.5:1 Rule.** 글자는 밝은·어두운 모드 모두 바탕 대비 4.5:1 이상이다.
 
+**The Forced Colors Rule.** Windows 고대비 모드(forced colors)에서는 브라우저가 바탕색·그림자를 지우고 글자·테두리를 사용자 색으로 바꾼다. 바탕색으로 그린 막대 그래프(경기별 막대, 달별 막대, 출전 줄 칸, MLB 중 위치, 7일 막대, 잉크 막대)는 `data-bar`(잉크 막대는 `.ink-bar`)로 표시해 시스템 색으로 다시 칠한다: 보통 막대는 글자색(`CanvasText`), 흐린 막대(`data-bar="dim"`: 마이너·평균 아래·기록 없는 날 바닥 줄)는 `GrayText`, 고른 막대는 `Highlight`. 새 막대를 만들면 `data-bar`를 붙인다. 평소 화면에는 영향이 없다(globals.css `@media (forced-colors: active)`).
+
 ## Typography
 
 **Display Font:** Pretendard Variable (with -apple-system, Apple SD Gothic Neo, Noto Sans KR)

@@ -171,6 +171,8 @@ function DayBars({ articles, days }: { articles: LinkedArticle[]; days: number }
               {/* 기사가 있는 날은 역대 계약 막대와 같은 잉크 그라데이션(오늘만 강조색), 없는 날은 바닥선만.
                   막대 폭(1.75rem)은 글자 배율을 따라 커지므로 칸보다 넓어지면 칸 폭 - 4px로 줄인다(2배 375px에서 막대끼리 겹쳤다) */}
               <span
+                // 고대비 모드에서 시스템 색으로 다시 칠할 막대(globals.css). 기사 없는 날의 바닥 줄은 흐린 색
+                data-bar={n > 0 ? "" : "dim"}
                 className={`w-7 max-w-[calc(100%-4px)] rounded-t-md ${n === 0 ? "bg-line" : isToday ? "bg-accent" : ""}`}
                 style={
                   {

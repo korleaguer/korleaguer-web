@@ -124,12 +124,18 @@ function PositionRow({ row, who, labelCol }: { row: Row; who: string; labelCol: 
       style={{ gridTemplateColumns: `${labelCol} minmax(0, 1fr) 4.5rem` }}
     >
       <span className="text-summary">{label}</span>
-      <div aria-hidden className="relative h-2 rounded-full bg-surface-2">
-        <span className="absolute inset-y-[-3px] left-1/2 w-px bg-line" />
+      {/* data-bar·data-bar-track: 고대비 모드(Windows)에서는 바탕색이 지워져 막대가 사라져서 시스템 색으로 다시 칠한다(globals.css) */}
+      <div aria-hidden data-bar-track className="relative h-2 rounded-full bg-surface-2">
+        <span data-bar="dim" className="absolute inset-y-[-3px] left-1/2 w-px bg-line" />
         {pct != null && (
           <>
-            <span className={`absolute inset-y-0 left-0 rounded-full ${top ? "bg-accent" : "bg-muted/40"}`} style={{ width: `${pct}%` }} />
             <span
+              data-bar={top ? "" : "dim"}
+              className={`absolute inset-y-0 left-0 rounded-full ${top ? "bg-accent" : "bg-muted/40"}`}
+              style={{ width: `${pct}%` }}
+            />
+            <span
+              data-bar={top ? "" : "dim"}
               className={`absolute top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-surface ${top ? "bg-accent" : "bg-muted"}`}
               style={{ left: `${pct}%` }}
             />
