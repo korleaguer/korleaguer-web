@@ -11,6 +11,23 @@ import LoadingDots from "@/components/LoadingDots";
 
 /** 입력을 멈추고 이만큼 지나면 찾는다(글자마다 서버에 묻지 않게) */
 const TYPING_PAUSE_MS = 350;
+/** 한글 글자로 끝나면 이만큼 기다린다. 마지막 글자는 받침이 붙거나('계야' → '계약') 받침이 다음 글자로 넘어가며('툿' → '투수') 아직 바뀐다 */
+const HANGUL_PAUSE_MS = 700;
+
+/**
+ * 친 말로 찾기까지 기다릴 시간. 한글을 치는 도중의 중간 글자('ㄱ'·'김ㅎ'·'계야'·'툿')로 찾으면 '기사가 없어요'가 잠깐 보였다.
+ * - 낱자모(ㄱ·ㅏ, 천지인 ㆍ)로 끝나면 아직 글자를 만드는 중이라 찾지 않는다(null: 다음 입력이나 엔터를 기다린다)
+ * - 한글 글자로 끝나면 조금 더 기다린다. 받침 유무로 나누면 '계야'(받침 없음)처럼 다음 키에 받침이 붙을 글자로 찾았다
+ * - 나머지('FA', 띄어쓰기로 끝남)는 그대로
+ * 조합 중 표시(isComposing)는 쓰지 않는다: 아이폰 한글 자판은 조합 이벤트를 믿기 어렵고, PC 한글 입력기는 다 친 마지막
+ * 글자도 다음 키를 누를 때까지 조합 중이라 그것을 기다리면 멈춰도 찾지 않는다
+ */
+function typingPause(text: string): number | null {
+  const code = text.charCodeAt(text.length - 1);
+  if ((code >= 0x3131 && code <= 0x318e) || (code >= 0x1100 && code <= 0x11ff)) return null;
+  if (code >= 0xac00 && code <= 0xd7a3) return HANGUL_PAUSE_MS;
+  return TYPING_PAUSE_MS;
+}
 
 /**
  * 뉴스 탭의 '자주 나온 말' 줄과 검색(이슈 #214·#219). 제목(영어 기사는 한국어 제목)에 그 말이 있는 기사만 보인다(주소 ?q=,
@@ -20,7 +37,8 @@ const TYPING_PAUSE_MS = 350;
  *   줄 맨 앞 돋보기를 누르면 입력칸이 열린다. 취소는 열기 전 상태로 돌린다. 직접 친 말(알약에 없는 말)은 줄 맨 앞에 켜진 알약으로
  *   남아 무엇으로 걸렀는지 늘 보인다. 보일 알약이 없으면(말이 적은 선수) 입력칸만 보인다.
  * - PC: 입력칸은 늘 보이고 그 밑에 알약을 늘 보인다(자리가 넉넉하다).
- * - 입력하다 잠깐 멈추면 바로 찾고, 검색 키(엔터)를 누르면 곧바로 찾으면서 키보드를 내린다. 기록은 쌓지 않는다(replace).
+ * - 입력하다 잠깐 멈추면 바로 찾고(한글을 치는 도중에는 조금 더 기다린다, typingPause), 검색 키(엔터)를 누르면 곧바로
+ *   찾으면서 키보드를 내린다. 기록은 쌓지 않는다(replace).
  * - 알약의 말은 api가 지금 범위의 최근 기사에서 고르고, 숫자는 누르면 나오는 줄 수다(기사 전체, korleaguer-server#167).
  * - 거르기·검색 결과가 오면 화면 낭독기에 한 줄로 알린다(늘 있는 상태 줄, WCAG 4.1.3). 눈으로는 알약 숫자와 목록이 같은 말이라
  *   목록 위에 건수 줄을 따로 두지 않는다.
@@ -101,7 +119,9 @@ export default function NewsSearch({
   function onChange(next: string) {
     setValue(next);
     if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => go(next), TYPING_PAUSE_MS);
+    // 한글을 치는 도중에는 서둘러 찾지 않는다(typingPause). 엔터는 언제나 바로 찾는다(onSubmit)
+    const wait = typingPause(next);
+    timer.current = wait === null ? null : setTimeout(() => go(next), wait);
   }
 
   /** 돋보기: 입력칸을 열고 바로 입력(키보드). iOS는 누른 순간에 포커스해야 키보드가 올라와서 먼저 화면에 그린 뒤 포커스한다 */
