@@ -219,6 +219,7 @@ components:
     backgroundColor: "{colors.accent-soft}"
     textColor: "{colors.accent-ink}"
     typography: "{typography.button}"
+    fontWeight: 800
     rounded: "{rounded.full}"
     padding: "6px 12px"
   info-chip:
@@ -266,6 +267,7 @@ components:
     backgroundColor: "{colors.accent-soft}"
     textColor: "{colors.accent-ink}"
     typography: "{typography.label}"
+    fontWeight: 800
     rounded: "{rounded.full}"
     padding: "4px 12px"
   picker-button:
@@ -346,6 +348,7 @@ components:
     backgroundColor: "{colors.accent-soft}"
     textColor: "{colors.accent-ink}"
     typography: "{typography.label}"
+    fontWeight: 800
     rounded: "{rounded.full}"
     padding: "6px 6px"
   calendar-day:
