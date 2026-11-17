@@ -20,7 +20,8 @@ const CHART_MIN = 3;
  * 경기 상세 창(GameDetailSheet)과 같은 틀이다. 닫기·바깥 누르기·Esc로 닫는다. 뒤로 가기로 닫기와 닫은 뒤 연 버튼으로
  * 포커스 돌려주기는 여는 쪽(LinkedTeams)이 한다(이 부품은 닫힐 때 통째로 지워진다).
  * 안쪽: 기사가 CHART_MIN건 이상이면 최근 며칠 날짜 막대(언제 몰렸나), 그 아래 기사 줄. 줄은 운영 기사 목록과 같은 모양이고
- * 제목 자리에 '왜 거론됐나' 한 줄(AI 요약에서 그 구단 이름이 나온 문장, 없으면 제목)을 두 줄까지 보인다.
+ * 제목 자리에 '왜 거론됐나' 한 줄(AI 요약에서 그 구단 이름이 나온 문장, 없으면 제목)을 네 줄까지 보인다. 두 줄이면 375px에서
+ * 문장 대부분이 끝을 못 보이고 잘렸고, 끝까지 볼 곳도 없었다(사용자 결정 11-17 '추천대로', 이슈 #277).
  * 글만 있으면 눈이 피로해서(사용자 11-16 "텍스트밖에 없어서 눈 아파") 줄마다 기사 사진을 붙인다.
  */
 export default function LinkedTeamSheet({
@@ -178,12 +179,14 @@ function DayBars({ articles, days }: { articles: LinkedArticle[]; days: number }
                 {n > 0 ? `${n}건` : ""}
               </span>
               {/* 기사가 있는 날은 역대 계약 막대와 같은 잉크 그라데이션(오늘만 강조색), 없는 날은 바닥선만.
-                  막대 폭(1.75rem)은 글자 배율을 따라 커지므로 칸보다 넓어지면 칸 폭 - 4px로 줄인다(2배 375px에서 막대끼리 겹쳤다) */}
+                  막대 폭(1.75rem)은 글자 배율을 따라 커지므로 칸보다 넓어지면 칸 폭 - 4px로 줄인다(2배 375px에서 막대끼리 겹쳤다).
+                  높이는 0부터 건수에 비례한다(가장 많은 날 52px). 예전에는 12px에서 시작해 1건과 3건이 실제(3배)보다 비슷해 보였다
+                  (이슈 #277). 1건 막대는 작아질 수 있지만 위 'n건' 글자가 남는다 */}
               <span
                 className={`w-7 max-w-[calc(100%-4px)] rounded-t-md ${n === 0 ? "bg-line" : isToday ? "bg-accent" : ""}`}
                 style={
                   {
-                    height: n > 0 ? `${12 + (n / max) * 40}px` : "3px",
+                    height: n > 0 ? `${(n / max) * 52}px` : "3px",
                     background:
                       n > 0 && !isToday
                         ? "linear-gradient(0deg, color-mix(in oklab, var(--foreground), transparent 80%), var(--foreground))"
@@ -204,14 +207,15 @@ function DayBars({ articles, days }: { articles: LinkedArticle[]; days: number }
   );
 }
 
-/** 운영 기사 목록 줄(NewsTitleList)과 같은 모양: 출처 줄 위, 글 두 줄, 오른쪽 사진 */
+/** 운영 기사 목록 줄(NewsTitleList)과 같은 모양: 출처 줄 위, 글(네 줄까지), 오른쪽 사진 */
 function ArticleRow({ article: a, playerPhotoUrl }: { article: LinkedArticle; playerPhotoUrl: string | null }) {
   const text = a.reason ?? a.titleKo ?? a.title;
   return (
     <Link href={`/news/${a.id}`} className="press-soft group flex items-center gap-3 py-3">
-      {/* 화면 낭독기는 글부터 읽고, 눈에는 출처 줄이 위에 보인다. 출처 줄이 11rem보다 좁으면(큰 글씨) 보통 글처럼 흘린다(NewsTitleList와 같다) */}
+      {/* 화면 낭독기는 글부터 읽고, 눈에는 출처 줄이 위에 보인다. 출처 줄이 11rem보다 좁으면(큰 글씨) 보통 글처럼 흘린다(NewsTitleList와 같다).
+          글은 크기와 상관없이 네 줄까지(위 설명). 예전에는 큰 글씨에서만 네 줄이었다 */}
       <span className="@container flex min-w-0 flex-1 flex-col-reverse">
-        <span className="mt-0.5 line-clamp-2 text-summary group-hover:underline @max-[11rem]:line-clamp-4">
+        <span className="mt-0.5 line-clamp-4 text-summary group-hover:underline">
           <Highlighted text={text} word={a.reasonName} />
         </span>
         <span className="flex min-w-0 whitespace-nowrap text-caption text-muted tabular-nums @max-[11rem]:block @max-[11rem]:whitespace-normal">
