@@ -102,6 +102,12 @@ export default function GameBars({ slots, role, days, minors = false, name }: Pr
   const scrubbing = useRef(false);
   // 마지막으로 고른 칸. 손가락이 빨리 움직이면 다시 그리기 전에 같은 칸이 또 와서, state 대신 이것으로 틱이 한 번만 나게 한다
   const picked = useRef(selected);
+  /**
+   * 손가락으로 누른 자리와 그때 고른 칸. 손가락은 누르는 순간 고르지 않는다: 막대 위에 엄지를 대고 세로로 밀어 화면을 내리면
+   * 그 사이 선택이 바뀌고 진동이 울렸다(11-17 점검). 가로로 8px 넘게(세로보다 많이) 움직이면 그때부터 훑고,
+   * 움직이지 않고 떼면 누른 칸을 고른다. 마우스·펜은 예전처럼 누르는 순간 고른다
+   */
+  const touch = useRef<{ x: number; y: number; from: number; moved: boolean } | null>(null);
   function pick(i: number) {
     if (i === picked.current || !slots[i]?.game) return;
     picked.current = i;
@@ -109,11 +115,39 @@ export default function GameBars({ slots, role, days, minors = false, name }: Pr
     haptic("select");
     setSelected(i);
   }
-  function scrub(e: PointerEvent<HTMLDivElement>) {
+  /** 화면 x 좌표 자리의 칸을 고른다 */
+  function pickAt(clientX: number) {
     const el = groupRef.current;
-    if (!scrubbing.current || !el) return;
+    if (!el) return;
     const { left, width } = el.getBoundingClientRect();
-    pick(Math.min(slots.length - 1, Math.max(0, Math.floor(((e.clientX - left) / width) * slots.length))));
+    pick(Math.min(slots.length - 1, Math.max(0, Math.floor(((clientX - left) / width) * slots.length))));
+  }
+  function onPointerMove(e: PointerEvent<HTMLDivElement>) {
+    const t = touch.current;
+    if (t && !scrubbing.current) {
+      const dx = Math.abs(e.clientX - t.x);
+      const dy = Math.abs(e.clientY - t.y);
+      if (dx <= 8 || dx <= dy) {
+        // 아직 가로 훑기가 아니다(세로로 밀면 곧 브라우저가 스크롤로 가져가 pointercancel이 온다)
+        if (dx > 8 || dy > 8) t.moved = true;
+        return;
+      }
+      scrubbing.current = true;
+    }
+    if (scrubbing.current) pickAt(e.clientX);
+  }
+  function endPointer(cancelled: boolean) {
+    const t = touch.current;
+    if (t && !scrubbing.current && !t.moved && !cancelled) {
+      // 손가락을 대고 그대로 뗐다(톡): 누른 칸을 고른다
+      pickAt(t.x);
+    } else if (t && cancelled && picked.current !== t.from) {
+      // 브라우저가 스크롤·확대로 가져갔다: 훑다 바뀐 선택을 처음 경기로 되돌린다(진동 없이)
+      picked.current = t.from;
+      setSelected(t.from);
+    }
+    scrubbing.current = false;
+    touch.current = null;
   }
 
   return (
@@ -130,18 +164,23 @@ export default function GameBars({ slots, role, days, minors = false, name }: Pr
         ref={groupRef}
         role="group"
         aria-label={name ? `${name} ${title}` : title}
-        className="mt-2 grid touch-pan-y select-none"
+        // 세로로 밀면 화면이 스크롤되고, 두 손가락으로 벌리면 화면이 커진다(확대를 막지 않는다). 가로 훑기만 이 묶음이 맡는다
+        className="mt-2 grid touch-pan-y touch-pinch-zoom select-none"
         style={grid}
         onPointerDown={(e) => {
           if (e.button !== 0) return;
           // 마우스도 묶음 밖으로 잠깐 나갔다 와도 계속 훑게 손을 뗄 때까지 붙잡는다
           e.currentTarget.setPointerCapture(e.pointerId);
+          if (e.pointerType === "touch") {
+            touch.current = { x: e.clientX, y: e.clientY, from: picked.current, moved: false };
+            return;
+          }
           scrubbing.current = true;
-          scrub(e);
+          pickAt(e.clientX);
         }}
-        onPointerMove={scrub}
-        onPointerUp={() => (scrubbing.current = false)}
-        onPointerCancel={() => (scrubbing.current = false)}
+        onPointerMove={onPointerMove}
+        onPointerUp={() => endPointer(false)}
+        onPointerCancel={() => endPointer(true)}
       >
         {slots.map((slot, i) => {
           const day = showsDay(slot, i, slots.length, days);
