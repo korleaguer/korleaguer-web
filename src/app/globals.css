@@ -664,6 +664,16 @@
     background: linear-gradient(90deg, color-mix(in oklab, var(--foreground), transparent 92%), var(--foreground));
   }
 
+  /*
+   * 역대 계약 순위에서 1위가 훨씬 커서 1위 막대만 실제보다 짧게(꽉 채워) 그릴 때, 막대 끝 가까이에 '/' 모양 틈을 낸다
+   * (사용자 결정 11-17 '1위만 끊긴 막대', 이슈 #277). 틈은 비워서 아래 카드 바탕이 비치고, 끝에 짧은 둥근 조각이 남는다.
+   * 110deg 그라데이션의 경계선은 위로 갈수록 오른쪽으로 20도 기운다. 틈 폭 4px, 막대 끝에서 9~13px(그라데이션 축 기준)
+   */
+  .ink-bar-cut {
+    -webkit-mask-image: linear-gradient(110deg, #000 calc(100% - 13px), transparent calc(100% - 13px) calc(100% - 9px), #000 calc(100% - 9px));
+    mask-image: linear-gradient(110deg, #000 calc(100% - 13px), transparent calc(100% - 13px) calc(100% - 9px), #000 calc(100% - 9px));
+  }
+
   /* 금액을 비교하려고 목록에 마우스를 올리면 그 자리에서 멈춘다(자동으로 바뀌는 내용은 멈출 수 있어야 한다) */
   .money-flip-pause:hover .money-flip > span {
     animation-play-state: paused;

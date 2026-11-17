@@ -16,12 +16,31 @@ import Words from "@/components/Words";
 /** 지금 포스팅 제도의 협상 기간(일) */
 const WINDOW_DAYS = 30;
 /**
- * 역대 계약 순위 막대의 길이 규칙: 금액이 2배면 막대는 1.5배(사용자 결정 11-11).
- * 정비례면 1위(이정후 1억 1,300만 달러) 말고는 막대가 짧아 아래 선수끼리 차이가 안 보인다. 길이 = (금액 / 1위 금액)^지수
+ * 역대 계약 순위 막대에서 2위 막대의 가장 짧은 길이(1위 막대 = 1). 막대 길이는 금액에 정비례하는데, 1위(이정후 1억 1,300만
+ * 달러)가 훨씬 크면 2위부터 막대가 짧아 아래 선수끼리 차이가 안 보인다. 그래서 정비례로 2위가 이보다 짧아지면 1위 막대만 끝을
+ * 끊어 꽉 채우고(실제보다 짧게 그렸다는 표시), 나머지는 2위를 이 길이로 둔 정비례로 그린다(사용자 결정 11-17 '1위만 끊긴 막대',
+ * 이슈 #277). 결정 그림(노시환 6,000만 달러 가정)의 2위 막대가 1위의 약 82%였다.
+ * 예전 '금액 2배 = 막대 1.5배'(11-11)는 1/4 금액이 44% 막대가 되어 작은 계약이 2~4배 커 보였다.
  */
-const BAR_EXPONENT = Math.log2(1.5);
+const SECOND_SHARE = 0.82;
 /** 아무리 작은 계약도 막대가 점처럼 사라지지 않게 */
 const BAR_MIN_SHARE = 0.04;
+
+/**
+ * 막대 길이(0~1)와 끊어 그릴 막대. 꽉 찬 막대(1)에 해당하는 금액(unit)은 정비례면 1위 금액, 1위를 끊으면 2위 금액 / SECOND_SHARE다.
+ * 1위가 여럿(같은 금액)이면 2위가 1위와 같아 끊지 않는다
+ */
+function barScale(amounts: number[]): { share: (amount: number) => number; cut: (amount: number) => boolean } {
+  const [first = 0, second = 0] = [...amounts].sort((a, b) => b - a);
+  // 1위 금액이 0이면(보장액 0만 있는 경우) 나눗셈이 NaN이 되지 않게 모두 최소 길이
+  if (first <= 0) return { share: () => BAR_MIN_SHARE, cut: () => false };
+  const cutting = second > 0 && second / first < SECOND_SHARE;
+  const unit = cutting ? second / SECOND_SHARE : first;
+  return {
+    share: (amount) => Math.min(1, Math.max(BAR_MIN_SHARE, amount / unit)),
+    cut: (amount) => cutting && amount > unit,
+  };
+}
 
 /** 상태 알약의 뜻(DESIGN.md 신호색): 협상은 소속이 바뀌는 일이라 이적 보라, 계약은 초록, 결렬·결과 확인 중은 회색 */
 type StatusTone = "fa" | "success" | "neutral";
@@ -498,7 +517,7 @@ function RowResult({
  * 올해 계약한 선수가 있을 때만 그리므로 줄 앞 순위 숫자로 그 선수가 몇 위인지 바로 보이게 한다(올해 선수는 강조색).
  * 막대는 위 '지금' 진행 막대와 헷갈리지 않게 바탕 줄 없이, 왼쪽이 거의 투명하고 금액 쪽으로 진해지는 글자색 막대다
  * (`.ink-bar`). 파랑·신호색·팀 색을 쓰지 않는다(The One Blue Rule, 어두운 화면에서 갈색·남색 팀 색이 묻힘).
- * 길이는 금액이 2배면 1.5배(BAR_EXPONENT).
+ * 길이는 금액에 정비례하고, 1위가 훨씬 크면 1위만 끝을 끊어 그린다(barScale, `.ink-bar-cut`).
  */
 function SigningList({
   signings,
@@ -512,12 +531,11 @@ function SigningList({
   /** 위 선·여백 없이(접기 안에 넣을 때) */
   flush?: boolean;
 }) {
-  const top = Math.max(...signings.map((s) => s.amount));
+  const scale = barScale(signings.map((s) => s.amount));
   const list = (
       <ul className="money-flip-pause divide-y divide-line">
         {signings.map((s) => {
-          // 1위 금액이 0이면(보장액 0만 있는 경우) 나눗셈이 NaN이 되지 않게 모두 최소 길이
-          const share = top > 0 ? Math.max(BAR_MIN_SHARE, Math.pow(s.amount / top, BAR_EXPONENT)) : BAR_MIN_SHARE;
+          const share = scale.share(s.amount);
           return (
             <li key={s.key} className="flex items-center gap-3 py-2.5">
               {/* 두 자리(10위)도 한 줄에 들어가는 폭 */}
@@ -546,7 +564,12 @@ function SigningList({
                   </span>
                 </p>
                 <div className="mt-1.5 flex items-center gap-2">
-                  <i aria-hidden className="ink-bar" style={{ "--share": share.toFixed(4) } as CSSProperties} />
+                  {/* 끊긴 막대도 금액은 옆 글자와 화면 낭독기가 그대로 읽는다 */}
+                  <i
+                    aria-hidden
+                    className={scale.cut(s.amount) ? "ink-bar ink-bar-cut" : "ink-bar"}
+                    style={{ "--share": share.toFixed(4) } as CSSProperties}
+                  />
                   <span className="text-label tabular-nums">
                     <DealMoney years={s.years} usd={s.usd} krw={s.krw} align="start" />
                   </span>
