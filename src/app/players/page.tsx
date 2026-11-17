@@ -7,15 +7,16 @@ import LoadingBlock from "@/components/LoadingBlock";
 import PlayerCard from "@/components/players/PlayerCard";
 import StateNotice from "@/components/StateNotice";
 import PageSuspense from "@/components/PageSuspense";
-import { shareMeta } from "@/lib/share";
+import { shareMeta, SITE_NAME } from "@/lib/share";
 
 // <title>: "선수 · KOR Leaguer" (뒷부분은 layout의 template이 붙인다)
+const TITLE = "선수";
 const DESCRIPTION = "해외파 한국 선수 모아보기. 선수별 시즌 기록을 한눈에 봐요.";
 
 export const metadata: Metadata = {
-  title: "선수",
+  title: TITLE,
   description: DESCRIPTION,
-  ...shareMeta("선수 · KOR Leaguer", DESCRIPTION),
+  ...shareMeta(`${TITLE} · ${SITE_NAME}`, DESCRIPTION, "/players"),
 };
 
 // 선수 목록. 데이터는 요청마다 api에서 새로 받는다.
