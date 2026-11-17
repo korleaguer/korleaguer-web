@@ -9,8 +9,10 @@ export default function Error({ retry }: { error: unknown; retry: () => void }) 
   // retry는 서버에서 화면을 다시 받아 그린다. 그동안 버튼에 점 3개
   const [pending, startTransition] = useTransition();
   return (
+    // 화면(제목 h1 포함)을 통째로 대신하므로 안내 제목이 h1이다
     <StateNotice
       alert
+      level={1}
       emoji="😵"
       title="화면을 보여 주다가 문제가 생겼어요"
       detail="다시 불러오면 대부분 괜찮아져요."

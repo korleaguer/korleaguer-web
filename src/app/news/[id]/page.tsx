@@ -74,7 +74,8 @@ async function NewsContent({ params }: Pick<Props, "params">) {
   const result = await getNews(id);
   if (!result.ok) {
     if (result.failure === "notFound") return <NotFoundNotice message="찾는 기사가 없어요" />;
-    return <ApiErrorNotice failure={result.failure} />;
+    // 기사 제목(h1)을 그리지 못했으니 안내 제목이 이 화면의 h1이다
+    return <ApiErrorNotice failure={result.failure} level={1} />;
   }
 
   const news = result.data;

@@ -62,7 +62,8 @@ async function PlayerContent({ params }: Pick<Props, "params">) {
   const [result, myIds] = await Promise.all([getPlayer(id), readMyPlayers()]);
   if (!result.ok) {
     if (result.failure === "notFound") return <NotFoundNotice message="찾는 선수가 없어요" />;
-    return <ApiErrorNotice failure={result.failure} />;
+    // 선수 이름(h1)을 그리지 못했으니 안내 제목이 이 화면의 h1이다
+    return <ApiErrorNotice failure={result.failure} level={1} />;
   }
 
   const {
