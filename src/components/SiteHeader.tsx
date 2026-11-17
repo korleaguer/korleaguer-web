@@ -12,7 +12,7 @@ import SiteNav, { NavLinks } from "./SiteNav";
  */
 export default function SiteHeader() {
   return (
-    <header className="group bg-surface shadow-[0_1px_0_var(--line)] in-app:sticky in-app:top-0 in-app:z-40">
+    <header data-site-header className="group bg-surface shadow-[0_1px_0_var(--line)] in-app:sticky in-app:top-0 in-app:z-40">
       <div className="relative mx-auto flex h-14 max-w-[67.5rem] items-center gap-3 px-4 sm:px-6">
         {/* 앱(웹뷰) 안의 하위 화면에서만 보이는 '뒤로'. 현재 주소를 읽으므로 SiteNav처럼 Suspense 안에 둔다. */}
         <Suspense fallback={null}>

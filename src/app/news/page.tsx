@@ -9,7 +9,7 @@ import { shareMeta } from "@/lib/share";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import LoadingBlock from "@/components/LoadingBlock";
 import PageSuspense from "@/components/PageSuspense";
-import StateNotice from "@/components/StateNotice";
+import StateNotice, { stateActionClass } from "@/components/StateNotice";
 import NewsFeed from "@/components/news/NewsFeed";
 import NewsPlayerPicker from "@/components/news/NewsPlayerPicker";
 import NewsSearch from "@/components/news/NewsSearch";
@@ -102,7 +102,7 @@ async function NewsContent({ searchParams }: Pick<Props, "searchParams">) {
             title={tooLong ? "찾는 선수 기사가 없어요" : `${wanted} 선수 기사가 없어요`}
             detail="지금 모으는 선수의 기사만 보여요."
             action={
-              <Link href={newsHref(null)} replace className="press text-label text-accent-ink">
+              <Link href={newsHref(null)} replace className={stateActionClass}>
                 전체 기사 보기
               </Link>
             }
@@ -114,7 +114,7 @@ async function NewsContent({ searchParams }: Pick<Props, "searchParams">) {
             title={`‘${q}’ 기사가 없어요`}
             detail={player ? `${player} 기사에는 없어요. 전체에서 찾거나 다른 말로 찾아보세요.` : "다른 말로 찾아보세요."}
             action={
-              <Link href={player ? newsHref(null, q) : newsHref(null)} replace className="press text-label text-accent-ink">
+              <Link href={player ? newsHref(null, q) : newsHref(null)} replace className={stateActionClass}>
                 {player ? "전체 기사에서 찾기" : "검색 지우기"}
               </Link>
             }
