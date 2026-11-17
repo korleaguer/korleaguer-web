@@ -526,8 +526,10 @@ function SigningList({
           <span className="shrink-0 text-caption text-muted">보장액 순</span>
         </p>
       )}
-      {/* 원화가 있으면 번갈아 보이기를 멈추는 '달러·원화' 고르기를 목록 위에 둔다(이슈 #263) */}
-      {signings.some((s) => s.krw) ? <MoneyUnitScope>{list}</MoneyUnitScope> : list}
+      {/* 원화가 있으면 번갈아 보이기를 멈추는 '달러·원화' 고르기를 목록 위에 둔다(이슈 #263). 접기 안(flush)에서는 바로 위가
+          '펼치기/접기' 버튼이라, 버튼(높이 20px)의 44px 누름 영역이 그 버튼 아래쪽을 덮지 않게 12px 띄운다(리뷰 지적).
+          환율이 없는 계약은 원화를 골라도 달러로 남는다(번갈아 보이지도 않는다) */}
+      {signings.some((s) => s.krw) ? <MoneyUnitScope className={flush ? "pt-3" : ""}>{list}</MoneyUnitScope> : list}
       {foot && (
         <p className="mt-1.5 pb-1 text-micro text-muted">
           보장액 기준(옵션 제외), 원화는 계약 당시 환율로 어림. 출처: MLB Trade Rumors 등

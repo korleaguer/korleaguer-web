@@ -20,20 +20,23 @@ function subscribeReduce(onChange: () => void): () => void {
  * 기기 '동작 줄이기'가 켜져 있으면 번갈아 보이지 않고 달러로 멈춰 있다('원화'를 누르면 원화). 금액 칸(DealMoney)은 서버 부품이라
  * 감싼 div의 data-money를 보고 CSS(globals.css .money-flip)가 한쪽만 보인다.
  */
-export default function MoneyUnitScope({ children }: { children: ReactNode }) {
+export default function MoneyUnitScope({ children, className = "" }: { children: ReactNode; className?: string }) {
   const [unit, setUnit] = useState<Unit>("auto");
   // 서버에는 기기 설정이 없어 false로 그리고, 브라우저에서 실제 값으로 다시 그린다
   const reduce = useSyncExternalStore(subscribeReduce, () => window.matchMedia(REDUCE).matches, () => false);
   const shown: Unit = unit === "auto" && reduce ? "usd" : unit;
 
   const pick = (next: "usd" | "krw") => {
+    // 동작 줄이기면 번갈아 보기가 없어 둘 중 하나를 고르는 것뿐이다(라디오처럼). 이미 보이는 단위를 다시 누르면 아무 일도 없다.
+    // 전에는 눌린 '달러'를 다시 누르면 속 상태만 바뀌고 화면·눌림 표시는 그대로여서 누른 보람이 없었다(리뷰 지적)
+    if (reduce && shown === next) return;
     haptic("select");
     setUnit(shown === next ? "auto" : next);
   };
 
   return (
     <div data-money={shown}>
-      <div role="group" aria-label="계약 금액 단위" className="mb-1.5 flex items-center justify-end gap-1">
+      <div role="group" aria-label="계약 금액 단위" className={`mb-1.5 flex items-center justify-end gap-1 ${className}`}>
         <span className="mr-0.5 text-caption text-muted">{shown === "auto" ? "번갈아 보는 중 ·" : "금액"}</span>
         {(["usd", "krw"] as const).map((u) => {
           const on = shown === u;
