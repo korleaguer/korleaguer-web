@@ -106,7 +106,8 @@ function PeriodTabs({ days }: { days: Period }) {
       label="기간"
       scroll={false}
       className="w-fit gap-0.5 rounded-full bg-surface p-1 shadow-[var(--shadow-card)]"
-      itemClass="px-3 py-1 text-label"
+      // 칸 높이 32px: 같은 모양이라던 경기 달력 달 알약·바로 가기 탭과 맞춘다(28px로 4px 낮았다)
+      itemClass="px-3 py-1.5 text-label"
       idleClass="text-muted hover:text-foreground"
       items={PERIODS.map((d) => ({
         href: d === 7 ? "/my" : `/my?days=${d}`,

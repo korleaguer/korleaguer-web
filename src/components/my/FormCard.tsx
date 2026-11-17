@@ -53,7 +53,9 @@ export default async function FormCard({ entry, days, statsAvailable, isMine = t
         <BandPhoto nameKo={player.nameKo} photoUrl={player.photoUrl} teamAbbr={player.teamAbbr} />
       </div>
 
-      <div className="flex flex-1 flex-col px-4 pb-2 pt-3">
+      {/* 아래 여백: '경기 기록 모두 보기' 버튼으로 끝나면 버튼이 제 위아래 여백을 가져 8px, 숫자 칸·안내로 끝나면 좌우와 같은 16px
+          (8px이면 비시즌 카드 6장 모두 숫자 칸 아래가 좌우 여백의 절반이라 답답했다, 11-17 점검) */}
+      <div className={`flex flex-1 flex-col px-4 pt-3 ${showsGames ? "pb-2" : "pb-4"}`}>
         <div className="flex items-start gap-2">
           <div className="min-w-0 flex-1">
             <Name className="text-title">
