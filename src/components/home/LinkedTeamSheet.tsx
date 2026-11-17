@@ -1,7 +1,7 @@
 "use client"; // 창을 열고 닫고(모달), 아래로 끌어 닫아야 해서 클라이언트 컴포넌트다.
 
 import Link from "next/link";
-import { useEffect, useRef, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import type { LinkedArticle, LinkedTeam } from "@/lib/api";
 import { formatDate, kstDayKey } from "@/lib/format";
@@ -9,9 +9,8 @@ import TeamMark from "@/components/TeamMark";
 import NewsThumb from "@/components/news/NewsThumb";
 import Words from "@/components/Words";
 import { teamColor, teamLogoUrl } from "@/lib/teams";
+import { useSheetDrag } from "@/lib/useSheetDrag";
 
-/** 아래로 이만큼 끌면 닫는다(px, 경기 상세 창과 같다) */
-const SWIPE_CLOSE = 96;
 /** 날짜 막대는 기사가 이만큼 이상일 때만(1~2건은 막대가 정보를 더하지 않는다) */
 const CHART_MIN = 3;
 
@@ -53,28 +52,8 @@ export default function LinkedTeamSheet({
     };
   }, []);
 
-  // 아래로 끌어 닫기(휴대폰 손잡이·머리 줄)
-  const drag = useRef<{ y: number; dy: number } | null>(null);
-  const onDragStart = (e: ReactPointerEvent<HTMLDivElement>) => {
-    if (e.pointerType === "mouse" || (e.target as HTMLElement).closest("button")) return;
-    drag.current = { y: e.clientY, dy: 0 };
-    e.currentTarget.setPointerCapture(e.pointerId);
-  };
-  const onDragMove = (e: ReactPointerEvent<HTMLDivElement>) => {
-    const d = drag.current;
-    const panel = panelRef.current;
-    if (!d || !panel) return;
-    d.dy = Math.max(0, e.clientY - d.y);
-    panel.style.transform = `translateY(${d.dy}px)`;
-  };
-  const onDragEnd = () => {
-    const d = drag.current;
-    const panel = panelRef.current;
-    drag.current = null;
-    if (!d || !panel) return;
-    if (d.dy > SWIPE_CLOSE) onClose();
-    else panel.style.transform = "";
-  };
+  // 아래로 끌어 닫기(휴대폰 손잡이·머리 줄). 놓으면 미끄러져 닫히거나 제자리로 돌아온다(경기 상세 창과 같은 훅)
+  const { onDragStart, onDragMove, onDragEnd } = useSheetDrag(panelRef, onClose);
 
   const titleId = `linked-team-${team.abbreviation}`;
   return createPortal(

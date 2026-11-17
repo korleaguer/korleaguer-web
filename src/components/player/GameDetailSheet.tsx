@@ -1,12 +1,13 @@
 "use client"; // 창을 열고 닫고, 고른 경기 상세를 브라우저에서 받아 와야 해서 클라이언트 컴포넌트다.
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type RefObject } from "react";
+import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 import type { GameDetail, GameLine, GamePlay, Role } from "@/lib/api";
 import { lineOf, type CalendarDay, type LogGame } from "@/lib/gameLog";
 import { formatDate, formatLineup, formatSummary, formatTime } from "@/lib/format";
 import { haptic } from "@/lib/app";
 import { toast } from "@/lib/toast";
+import { useSheetDrag } from "@/lib/useSheetDrag";
 import Highlights from "@/components/Highlights";
 import LoadingDots from "@/components/LoadingDots";
 import ResultPill from "@/components/ResultPill";
@@ -57,9 +58,6 @@ async function fetchClip(playerId: number, gamePk: number, playId: string): Prom
   return data.mp4Url ?? null;
 }
 
-/** 아래로 이만큼 끌면 닫는다(px) */
-const SWIPE_CLOSE = 96;
-
 /** 그 경기의 MLB 번호 */
 export function gamePkOf(entry: LogGame): number {
   return entry.kind === "mlb" ? entry.game.gameId : entry.game.gamePk;
@@ -104,31 +102,8 @@ export default function GameDetailSheet({
     };
   }, []);
 
-  // 아래로 끌어 닫기(휴대폰 손잡이·머리 줄)
-  const drag = useRef<{ y: number; dy: number } | null>(null);
-  const onDragStart = (e: ReactPointerEvent<HTMLDivElement>) => {
-    if (e.pointerType === "mouse" || (e.target as HTMLElement).closest("button")) return;
-    drag.current = { y: e.clientY, dy: 0 };
-    e.currentTarget.setPointerCapture(e.pointerId);
-  };
-  const onDragMove = (e: ReactPointerEvent<HTMLDivElement>) => {
-    const d = drag.current;
-    const panel = panelRef.current;
-    if (!d || !panel) return;
-    d.dy = Math.max(0, e.clientY - d.y);
-    panel.style.transform = `translateY(${d.dy}px)`;
-  };
-  const onDragEnd = () => {
-    const d = drag.current;
-    const panel = panelRef.current;
-    drag.current = null;
-    if (!d || !panel) return;
-    if (d.dy > SWIPE_CLOSE) {
-      onClose();
-    } else {
-      panel.style.transform = "";
-    }
-  };
+  // 아래로 끌어 닫기(휴대폰 손잡이·머리 줄). 놓으면 미끄러져 닫히거나 제자리로 돌아온다(거론 구단 창과 같은 훅)
+  const { onDragStart, onDragMove, onDragEnd } = useSheetDrag(panelRef, onClose);
 
   const titleId = `game-sheet-title-${day.key}`;
   return (
