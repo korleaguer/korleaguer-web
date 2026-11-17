@@ -38,6 +38,20 @@ function barLabel(game: GameLine, role: Role): string {
   return `${head} ${b.hits}안타${b.homeRuns > 0 ? ` ${b.homeRuns}홈런` : ""}`;
 }
 
+/**
+ * 투수 막대 꼭대기(아웃 수). 기간 등판 중 절반 이상이 선발이면 18아웃(6이닝), 아니면 6아웃(2이닝)으로 고정한다.
+ * 기간 최댓값에 맞추면 3이닝 등판 한 번에 나머지 막대가 2/3로 줄고, 같은 1이닝이 카드마다 17%~50%로 달랐다(11-17 점검).
+ * 넘는 경기는 꽉 찬 막대로 둔다. 선발인지는 박스스코어 표시(lineup)로 보고, 그 표시가 없는 경기(마이너 경기는 늘 없다)는
+ * 3이닝(9아웃) 이상 던졌으면 선발로 센다. 표시만 보면 마이너 선발 투수의 막대가 모두 꽉 차 버린다
+ */
+function pitcherTop(slots: BarSlot[]): number {
+  const outings = slots.flatMap((slot) => (slot.game?.played ? [slot.game] : []));
+  const starts = outings.filter(
+    (game) => game.lineup === "STARTER" || (game.lineup == null && (game.pitching?.outs ?? 0) >= 9),
+  ).length;
+  return outings.length > 0 && starts * 2 >= outings.length ? 18 : 6;
+}
+
 /** 처음 고를 막대: 끝났거나 뛴 경기 중 가장 최근. 없으면 가장 최근 경기 */
 function defaultIndex(slots: BarSlot[]): number {
   let latest = -1;
@@ -64,8 +78,8 @@ export default function GameBars({ slots, role, days, minors = false }: Props) {
   const [selected, setSelected] = useState(() => defaultIndex(slots));
   const pitcher = role === "PITCHER";
   const values = slots.map((slot) => (slot.game?.played ? barValue(slot.game, role) : null));
-  // 막대 꼭대기 기준: 타자 4안타, 투수 2이닝(6아웃). 더 큰 값이 있으면 그 값
-  const top = Math.max(pitcher ? 6 : 4, ...values.map((v) => v ?? 0));
+  // 막대 꼭대기 기준: 타자 4안타(더 많이 친 경기가 있으면 그 값), 투수는 역할별 고정(pitcherTop)
+  const top = pitcher ? pitcherTop(slots) : Math.max(4, ...values.map((v) => v ?? 0));
   const gap = days >= 30 ? "gap-0.5" : days >= 14 ? "gap-1" : "gap-1.5";
   const grid = { gridTemplateColumns: `repeat(${slots.length}, minmax(0, 1fr))` } as CSSProperties;
   const gameCount = slots.filter((slot) => slot.game).length;
@@ -145,7 +159,8 @@ export default function GameBars({ slots, role, days, minors = false }: Props) {
           const value = values[i];
           const on = i === selected;
           const homeRun = !pitcher && (game.batting?.homeRuns ?? 0) > 0;
-          const height = value != null && value > 0 ? `${(value / top) * 100}%` : null;
+          // 투수 꼭대기는 고정이라 그보다 긴 등판은 꽉 찬 막대로 자른다
+          const height = value != null && value > 0 ? `${(Math.min(value, top) / top) * 100}%` : null;
           // 고른 막대는 색만으로 가르지 않고 본문색 2px 테두리 + 카드색 1px 틈을 두른다(경기 달력의 고른 칸과 같은 모양)
           const ring = on ? "ring-2 ring-foreground ring-offset-1 ring-offset-surface" : "";
           return (
