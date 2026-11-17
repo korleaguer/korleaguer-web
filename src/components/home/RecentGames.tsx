@@ -9,6 +9,7 @@ import Highlights from "@/components/Highlights";
 import ScoreText from "@/components/ScoreText";
 import Section from "@/components/Section";
 import TeamMark from "@/components/TeamMark";
+import Words from "@/components/Words";
 
 type Recent = HomeResponse["recent"];
 
@@ -132,7 +133,7 @@ function GameCard({ line, index }: { line: GameLine; index: number }) {
           <p
             className={`mt-0.5 text-summary text-pretty ${line.played ? "" : "font-medium text-muted"}`}
           >
-            {formatSummary(line.summary)}
+            <Words text={formatSummary(line.summary)} />
           </p>
           <Highlights line={line} className="mt-1.5" />
         </div>

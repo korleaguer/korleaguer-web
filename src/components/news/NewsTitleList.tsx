@@ -4,7 +4,7 @@ import type { NewsHeadline } from "@/lib/api";
 import { formatDate, formatTime } from "@/lib/format";
 import ExternalLinkIcon from "@/components/ExternalLinkIcon";
 import NewsThumb from "@/components/news/NewsThumb";
-import DotDate from "@/components/news/DotDate";
+import Words from "@/components/Words";
 
 export interface NewsTitleItem extends NewsHeadline {
   /** 여러 선수의 기사를 모았을 때 누구 기사인지. 한 명이면 null */
@@ -95,8 +95,10 @@ function NewsTitleRow({
   const content = (
     // 화면 낭독기는 제목부터 읽고(글 순서), 눈에는 출처 줄이 위에 보인다(flex-col-reverse)
     <span className="@container flex min-w-0 flex-1 flex-col-reverse">
-      {/* 제목은 두 줄까지. 글자 칸이 11rem보다 좁으면(큰 글씨) 두 줄에 몇 낱말밖에 안 들어가 네 줄까지(이슈 #264).
-          11rem: 보통 크기의 가장 좁은 칸(PC 홈 성적표 카드 안 약 12.75rem)에서는 걸리지 않고, 1.25배부터 걸린다 */}
+      {/* 제목은 두 줄까지. 글자 칸이 11rem보다 좁으면(큰 글씨, 아주 좁은 칸) 두 줄에 몇 낱말밖에 안 들어가 네 줄까지(이슈 #264).
+          보통 크기에서 걸리는 칸은 320px 휴대폰(약 10.25rem)과 640~675px 창의 두 칸 홈 카드(약 9.9rem)뿐이다. 운영에서 그 폭은
+          제목이 모두 두 줄에서 잘렸고(640px 홈 8건 중 8건, 320px 뉴스 20건 중 20건), 네 줄이면 2건·9건만 잘린다(11-17 측정).
+          360px 이상 휴대폰·768px·PC는 걸리지 않는다 */}
       <span className="mt-0.5 line-clamp-2 text-summary group-hover:underline @max-[11rem]:line-clamp-4">
         <Highlighted text={n.titleKo ?? n.title} word={highlight} />
       </span>
@@ -105,7 +107,7 @@ function NewsTitleRow({
           흘려 넘치는 곳에서 다음 줄로 내린다(이슈 #264) */}
       <span className="flex min-w-0 whitespace-nowrap text-caption text-muted tabular-nums @max-[11rem]:block @max-[11rem]:whitespace-normal">
         {n.isNew && (
-          <span className="shrink-0 font-bold text-accent-ink">
+          <span className="shrink-0 whitespace-nowrap font-bold text-accent-ink">
             새<span aria-hidden>{"\u00a0·\u00a0"}</span>
             <span className="sr-only"> 기사, </span>
           </span>
@@ -132,7 +134,8 @@ function NewsTitleRow({
           </>
         )}{" "}
         <span className="shrink-0 pl-[0.25em] @max-[11rem]:pl-0">
-          <DotDate text={timeOnly ? formatTime(n.publishedAt) : formatDate(n.publishedAt)} />
+          {/* '·'와 첫 낱말은 한 덩어리로(아이폰은 줄바꿈 없는 공백에서도 줄을 바꿔 '·'만 윗줄에 남았다) */}
+          <Words text={`·\u00a0${timeOnly ? formatTime(n.publishedAt) : formatDate(n.publishedAt)}`} />
         </span>
       </span>
     </span>

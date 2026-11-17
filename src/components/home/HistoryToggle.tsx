@@ -15,7 +15,8 @@ export default function HistoryToggle({
   buttonClassName = "",
 }: {
   title: string;
-  hint: string;
+  /** 둘째 줄. 금액처럼 아이폰에서 갈리면 안 되는 낱말은 Words로 감싸 넘긴다 */
+  hint: ReactNode;
   children: ReactNode;
   className?: string;
   buttonClassName?: string;

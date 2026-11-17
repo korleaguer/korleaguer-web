@@ -7,7 +7,7 @@ import type { LinkedArticle, LinkedTeam } from "@/lib/api";
 import { formatDate, kstDayKey } from "@/lib/format";
 import TeamMark from "@/components/TeamMark";
 import NewsThumb from "@/components/news/NewsThumb";
-import DotDate from "@/components/news/DotDate";
+import Words from "@/components/Words";
 import { teamColor, teamLogoUrl } from "@/lib/teams";
 
 /** 아래로 이만큼 끌면 닫는다(px, 경기 상세 창과 같다) */
@@ -217,7 +217,7 @@ function ArticleRow({ article: a, playerPhotoUrl }: { article: LinkedArticle; pl
             </>
           )}{" "}
           <span className="shrink-0 pl-[0.25em] @max-[11rem]:pl-0">
-            <DotDate text={formatDate(a.publishedAt)} />
+            <Words text={`·\u00a0${formatDate(a.publishedAt)}`} />
           </span>
         </span>
       </span>

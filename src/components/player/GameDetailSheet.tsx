@@ -14,6 +14,7 @@ import ResultPill from "@/components/ResultPill";
 import ScoreText from "@/components/ScoreText";
 import TeamName from "@/components/TeamName";
 import type { Clip } from "./ClipPlayer";
+import Words from "@/components/Words";
 
 // 영상 플레이어(Video.js 10, hls.js 포함 약 270KB)는 창이 열릴 때 받아 온다. 선수 페이지 첫 로딩에는 넣지 않는다
 const ClipPlayer = dynamic(() => import("./ClipPlayer"), {
@@ -253,7 +254,9 @@ function EntrySummary({ entry }: { entry: LogGame }) {
         <ScoreText line={g} className="text-summary font-bold text-foreground" />
         <ResultPill result={g.result} className="ml-auto" />
       </div>
-      <p className={`mt-1 text-summary text-pretty ${g.played ? "" : "font-medium text-muted"}`}>{formatSummary(g.summary)}</p>
+      <p className={`mt-1 text-summary text-pretty ${g.played ? "" : "font-medium text-muted"}`}>
+        <Words text={formatSummary(g.summary)} />
+      </p>
       <Highlights line={g} className="mt-1.5" />
     </div>
   );

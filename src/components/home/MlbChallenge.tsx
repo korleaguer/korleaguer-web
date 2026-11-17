@@ -1,4 +1,4 @@
-import { Fragment, type CSSProperties } from "react";
+import type { CSSProperties } from "react";
 import type { PostingPast, PostingPlayer, PostingStatus, PostingSummary } from "@/lib/api";
 import { formatDate, withAndParticle } from "@/lib/format";
 import { uniqueByUrl } from "@/lib/news";
@@ -11,6 +11,7 @@ import { PostingDot } from "@/components/home/PostingDot";
 import PostingNews from "@/components/home/PostingNews";
 import { cacheLife } from "next/cache";
 import MoneyUnitScope from "@/components/home/MoneyUnitScope";
+import Words from "@/components/Words";
 
 /** 지금 포스팅 제도의 협상 기간(일) */
 const WINDOW_DAYS = 30;
@@ -62,18 +63,6 @@ function deadlineUs(iso: string): string {
 /** "11월 2일"(한국 날짜) */
 const kstDay = (iso: string) => parts(iso, "Asia/Seoul").md;
 
-/**
- * 띄어쓰기 자리에서만 줄을 바꾼다. 아이폰(WebKit)은 낱말 줄바꿈(keep-all)에서 숫자 쉼표 뒤도 줄바꿈 자리로 봐서,
- * 큰 글씨에서 '5년 6,' / '000만 달러'로 갈랐다(단어 잇기 문자 U+2060도 듣지 않았다, 이슈 #264). 낱말마다 줄바꿈을 막는다
- */
-function Words({ text }: { text: string }) {
-  return text.split(" ").map((word, i) => (
-    <Fragment key={i}>
-      {i > 0 && " "}
-      <span className="whitespace-nowrap">{word}</span>
-    </Fragment>
-  ));
-}
 
 /** 1억 1,300만 달러 · 800만 달러 */
 export function formatUsd(usd: number): string {
@@ -264,7 +253,7 @@ export default async function MlbChallenge({ posting }: { posting: PostingSummar
             <div className={historyOnRight ? "lg:hidden" : undefined}>
               <HistoryToggle
                 title={`역대 포스팅 계약 ${signings.length}건`}
-                hint={`1위 ${signings[0].nameKo} ${signings[0].years}년 ${signings[0].usd} · 보장액 순`}
+                hint={<Words text={`1위 ${signings[0].nameKo} ${signings[0].years}년 ${signings[0].usd} · 보장액 순`} />}
               >
                 <SigningList signings={signings} head={false} flush />
               </HistoryToggle>

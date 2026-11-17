@@ -4,6 +4,7 @@ import ResultPill from "@/components/ResultPill";
 import Highlights from "@/components/Highlights";
 import ScoreText from "@/components/ScoreText";
 import TeamName from "@/components/TeamName";
+import Words from "@/components/Words";
 
 /**
  * 경기 한 줄(선수 페이지 경기 기록, 내 선수 카드의 '모두 보기'가 같이 쓴다).
@@ -59,7 +60,7 @@ export default function GameRow({
         <p
           className={`mt-1 text-summary text-pretty ${g.played ? "" : "font-medium text-muted"}`}
         >
-          {formatSummary(g.summary)}
+          <Words text={formatSummary(g.summary)} />
         </p>
         <Highlights line={g} className="mt-1.5" />
       </div>
