@@ -3,7 +3,7 @@
 import { ImageResponse } from "next/og";
 import { getPlayer } from "@/lib/api";
 import { OG_COLORS, OG_SIZE, OgBrand, mixHex, ogFonts, photoDataUrl } from "@/lib/og";
-import { mainSeasonStats } from "@/lib/seasonStats";
+import { playerShareLines } from "@/lib/share";
 import { teamColor } from "@/lib/teams";
 
 // 주소: /players/[id]/og/<판 번호>. 판 번호는 배포 커밋(lib/share.ts OG_VERSION)이고 그림에는 쓰지 않는다.
@@ -19,12 +19,9 @@ export async function GET(_request: Request, { params }: RouteContext<"/players/
   const { player, season } = result.data;
   const color = teamColor(player.teamAbbr);
   const photo = await photoDataUrl(player.photoUrl);
-  // 선수 목록 카드와 같은 기록: 올해 주로 뛴 단계 + 단계·경기 수 이름표(이슈 #184)
-  const main = mainSeasonStats(player, result.data);
+  // 팀·포지션 줄과 주 단계 기록. 페이지의 그림 대체 글(lib/share.ts playerShareImage)도 같은 함수로 만든다
+  const { subline, main } = playerShareLines(result.data);
   const stats = main?.stats ?? null;
-  // FA면 마지막 MLB 팀에 '전'(화면의 팀 알약과 같다, 문구 점검 11-13)
-  const team = player.returnedKo ? `${player.returnedKo} 복귀` : player.freeAgent && player.teamKo ? `전 ${player.teamKo}` : player.teamKo;
-  const subline = [team, player.positionKo, player.freeAgent && !player.returnedKo ? "FA" : null].filter(Boolean).join(" · ");
 
   return new ImageResponse(
     (

@@ -1,4 +1,7 @@
 import type { Metadata } from "next";
+import type { NewsPage, PlayerResponse } from "@/lib/api";
+import { formatDate } from "@/lib/format";
+import { mainSeasonStats } from "@/lib/seasonStats";
 
 /**
  * 공유 미리보기(og:)와 공유 링크에 쓰는 사이트 주소. 그림 주소(og:image)를 절대 주소로 만드는 데 쓴다.
@@ -34,14 +37,51 @@ export function ogImageMetadata(alt: string) {
 /** 공유 그림 하나: 주소(사이트 안 경로)와 설명 */
 export type ShareImage = { url: string; alt: string };
 
-/** 선수 페이지 공유 그림(app/players/[id]/og/[v]/route.tsx). 주소에 판 번호가 들어간다 */
-export function playerShareImage(id: number): ShareImage {
-  return { url: `/players/${id}/og/${OG_VERSION}`, alt: `${SITE_NAME} 선수 기록` };
+/** 선수 공유 그림과 그 대체 글이 읽는 선수 응답(GET /api/players/{id})의 부분 */
+type PlayerShareData = Pick<PlayerResponse, "season" | "player" | "hitting" | "pitching" | "minorHitting" | "minorPitching">;
+
+/**
+ * 선수 공유 그림(app/players/[id]/og/[v]/route.tsx)에 그리는 글: 이름 아래 팀·포지션 줄과 주 단계 기록 세 칸.
+ * 그림의 대체 글(playerShareImage)도 이 값으로 만들어 그림 속 글과 어긋나지 않게 한다.
+ */
+export function playerShareLines(data: PlayerShareData) {
+  const { player } = data;
+  // FA면 마지막 MLB 팀에 '전'(화면의 팀 알약과 같다, 문구 점검 11-13)
+  const team = player.returnedKo ? `${player.returnedKo} 복귀` : player.freeAgent && player.teamKo ? `전 ${player.teamKo}` : player.teamKo;
+  const subline = [team, player.positionKo, player.freeAgent && !player.returnedKo ? "FA" : null].filter(Boolean).join(" · ");
+  // 선수 목록 카드와 같은 기록: 올해 주로 뛴 단계 + 단계·경기 수 이름표(이슈 #184)
+  return { subline, main: mainSeasonStats(player, data) };
 }
 
-/** 기사 페이지 공유 그림(app/news/[id]/og/[v]/route.tsx). 주소에 판 번호가 들어간다 */
-export function newsShareImage(id: number): ShareImage {
-  return { url: `/news/${id}/og/${OG_VERSION}`, alt: `${SITE_NAME} 기사 요약` };
+/**
+ * 선수 페이지 공유 그림. 주소에 판 번호가 들어간다. 대체 글은 그림 속 글을 그 순서대로 읽는다:
+ * '김혜성 · LA 다저스 · 유격수 · 트리플A 85경기 · 타율 .262 · 홈런 3 · OPS .674'(선수마다 다르다)
+ */
+export function playerShareImage(data: PlayerShareData): ShareImage {
+  const { subline, main } = playerShareLines(data);
+  // 기록이 없으면 그림에도 기록 칸 대신 '2026 시즌 기록 보기'가 있다
+  const record = main ? [main.label, ...main.stats.map((s) => `${s.label} ${s.value}`)] : [`${data.season} 시즌 기록 보기`];
+  return {
+    url: `/players/${data.player.id}/og/${OG_VERSION}`,
+    alt: [data.player.nameKo, subline, ...record].filter(Boolean).join(" · "),
+  };
+}
+
+/** 기사 공유 그림과 그 대체 글이 읽는 기사 응답(GET /api/news/{id})의 부분 */
+type NewsShareData = Pick<NewsPage, "id" | "publisher" | "publishedAt" | "title" | "titleKo">;
+
+/**
+ * 기사 공유 그림(app/news/[id]/og/[v]/route.tsx)에 그리는 글: 언론사·날짜 줄과 제목(영어 기사는 옮긴 제목).
+ * 그림의 대체 글(newsShareImage)도 이 값으로 만든다.
+ */
+export function newsShareLines(news: NewsShareData) {
+  return { source: `${news.publisher} · ${formatDate(news.publishedAt)}`, title: news.titleKo ?? news.title };
+}
+
+/** 기사 페이지 공유 그림. 주소에 판 번호가 들어간다. 대체 글은 그림 속 글(언론사·날짜, 제목). 제목은 그림에서 세 줄로 잘려도 끝까지 */
+export function newsShareImage(news: NewsShareData): ShareImage {
+  const { source, title } = newsShareLines(news);
+  return { url: `/news/${news.id}/og/${OG_VERSION}`, alt: `${source} · ${title}` };
 }
 
 /**

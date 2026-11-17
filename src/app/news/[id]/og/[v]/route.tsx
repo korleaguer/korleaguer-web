@@ -1,8 +1,8 @@
 // 기사 페이지를 공유하면 붙는 미리보기 그림: 언론사·날짜와 제목. 기사 사진은 언론사 것이라 그림에 넣지 않는다.
 import { ImageResponse } from "next/og";
 import { getNews } from "@/lib/api";
-import { formatDate } from "@/lib/format";
 import { OG_COLORS, OG_SIZE, OgBrand, ogFonts } from "@/lib/og";
+import { newsShareLines } from "@/lib/share";
 
 // 주소: /news/[id]/og/<판 번호>. 판 번호는 배포 커밋(lib/share.ts OG_VERSION)이고 그림에는 쓰지 않는다.
 // 카카오톡이 미리보기 그림을 주소 기준으로 저장해 두어서, 배포마다 주소가 바뀌게 판 번호를 넣는다(이슈 #157).
@@ -15,8 +15,9 @@ export async function GET(_request: Request, { params }: RouteContext<"/news/[id
   const { id } = await params;
   const result = /^[1-9]\d{0,14}$/.test(id) ? await getNews(Number(id)) : null;
   const fonts = await ogFonts();
-  const news = result?.ok ? result.data : null;
-  const fullTitle = news ? (news.titleKo ?? news.title) : "관련 기사";
+  // 언론사·날짜 줄과 제목. 페이지의 그림 대체 글(lib/share.ts newsShareImage)도 같은 함수로 만든다
+  const lines = result?.ok ? newsShareLines(result.data) : null;
+  const fullTitle = lines?.title ?? "관련 기사";
   const title = fullTitle.length > MAX_TITLE ? `${fullTitle.slice(0, MAX_TITLE - 1).trimEnd()}…` : fullTitle;
 
   return new ImageResponse(
@@ -24,10 +25,10 @@ export async function GET(_request: Request, { params }: RouteContext<"/news/[id
       <div style={{ display: "flex", width: "100%", height: "100%", background: OG_COLORS.background, fontFamily: "Pretendard" }}>
         <div style={{ display: "flex", width: 20, background: OG_COLORS.accent }} />
         <div style={{ display: "flex", flexDirection: "column", flex: 1, padding: "72px 80px 56px" }}>
-          {news && (
+          {lines && (
             <div style={{ fontSize: 32, fontWeight: 700, color: OG_COLORS.muted }}>
               {/* 글자 조각이 여러 개면 그림 도구가 display:flex를 요구해서(없으면 그림 실패 → 502) 한 문자열로 넣는다 */}
-              {`${news.publisher} · ${formatDate(news.publishedAt)}`}
+              {lines.source}
             </div>
           )}
           {/* 한국어는 낱말 중간에서 줄을 바꾸지 않는다(웹의 keep-all). 그림 도구는 keep-all을 몰라서 낱말마다 상자로 감싼다 */}
