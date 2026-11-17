@@ -80,10 +80,13 @@ export default function GameBars({ slots, role, days, minors = false }: Props) {
   const values = slots.map((slot) => (slot.game?.played ? barValue(slot.game, role) : null));
   // 막대 꼭대기 기준: 타자 4안타(더 많이 친 경기가 있으면 그 값), 투수는 역할별 고정(pitcherTop)
   const top = pitcher ? pitcherTop(slots) : Math.max(4, ...values.map((v) => v ?? 0));
-  const gap = days >= 30 ? "gap-0.5" : days >= 14 ? "gap-1" : "gap-1.5";
-  const grid = { gridTemplateColumns: `repeat(${slots.length}, minmax(0, 1fr))` } as CSSProperties;
+  // 칸 사이(rem): 7일 6px · 14일 4px · 30일 2px. 달 바뀜 세로선과 '10월' 자리도 이 값으로 잰다
+  const gapRem = days >= 30 ? 0.125 : days >= 14 ? 0.25 : 0.375;
+  const grid = { gridTemplateColumns: `repeat(${slots.length}, minmax(0, 1fr))`, gap: `${gapRem}rem` } as CSSProperties;
   const gameCount = slots.filter((slot) => slot.game).length;
   const current = slots[selected]?.game ?? null;
+  // 기간 안에서 달이 바뀐 첫 칸(9월 말 ~ 10월 초 등). 한 달 안이면 없다
+  const monthMarks = slots.flatMap((slot, i) => (slot.monthStart ? [{ i, month: slot.month }] : []));
 
   // 손가락(마우스)으로 막대 위를 가로로 훑으면 지나는 경기마다 고른다(토스 그래프처럼). 세로로 밀면 화면이 스크롤된다(touch-pan-y)
   const groupRef = useRef<HTMLDivElement>(null);
@@ -115,7 +118,7 @@ export default function GameBars({ slots, role, days, minors = false }: Props) {
         ref={groupRef}
         role="group"
         aria-label={pitcher ? "경기별 이닝" : "경기별 안타"}
-        className={`mt-2 grid touch-pan-y select-none ${gap}`}
+        className="mt-2 grid touch-pan-y select-none"
         style={grid}
         onPointerDown={(e) => {
           if (e.button !== 0) return;
@@ -146,10 +149,21 @@ export default function GameBars({ slots, role, days, minors = false }: Props) {
             </span>
           );
 
+          // 달이 바뀐 첫 칸: 왼쪽(칸 사이 가운데)에 옅은 세로선. 아래 '10월'과 함께 달 경계를 보인다(타격 흐름 달 눈금과 같은 모양)
+          const monthLine = slot.monthStart && (
+            <span
+              aria-hidden
+              className="absolute inset-y-0 w-px bg-line"
+              style={{ left: `calc(${-gapRem / 2}rem - 0.5px)` }}
+            />
+          );
+
           if (!slot.game) {
             return (
               <span key={`${slot.date}-${slot.part}`} className="flex min-w-0 flex-col gap-1">
-                <span aria-hidden className="block h-[4.5rem] border-b border-line" />
+                <span aria-hidden className="relative block h-[4.5rem] border-b border-line">
+                  {monthLine}
+                </span>
                 {dayText}
               </span>
             );
@@ -177,6 +191,7 @@ export default function GameBars({ slots, role, days, minors = false }: Props) {
               className="group flex min-w-0 cursor-pointer flex-col gap-1 rounded-md"
             >
               <span className="relative flex h-[4.5rem] w-full items-end justify-center border-b border-line">
+                {monthLine}
                 {!game.played ? (
                   // 결장(투수는 등판 없음)·경기 전: 점선 막대. 흐린 글자색 그대로(60%로 흐리면 흰 카드 대비 2.6:1이었다)
                   <span className={`block h-3.5 w-[72%] max-w-7 rounded-t-md border-[1.5px] border-dashed ${on ? "border-foreground" : "border-muted"}`} />
@@ -203,6 +218,26 @@ export default function GameBars({ slots, role, days, minors = false }: Props) {
           );
         })}
       </div>
+
+      {monthMarks.length > 0 && (
+        // 달이 바뀐 첫 칸 아래에 '10월'. 30일이면 칸(약 8px)보다 글자가 넓어 날짜 줄과 따로 한 줄을 둔다.
+        // 그 칸 가운데에 두되, 양 끝 글자는 카드 밖으로 나가지 않게 글자 폭(em, 숫자 0.65 + '월' 1)만큼 조인다(타격 흐름 달 눈금과 같은 방식)
+        <div aria-hidden className="relative h-4 text-micro text-muted">
+          {monthMarks.map(({ i, month }) => {
+            const w = `${String(month).length * 0.65 + 1}em`;
+            const center = `(100% - ${(slots.length - 1) * gapRem}rem) * ${(i + 0.5) / slots.length} + ${i * gapRem}rem`;
+            return (
+              <span
+                key={i}
+                className="absolute top-0 whitespace-nowrap tabular-nums"
+                style={{ left: `clamp(0px, calc(${center} - ${w} / 2), calc(100% - ${w}))` }}
+              >
+                {month}월
+              </span>
+            );
+          })}
+        </div>
+      )}
 
       <p className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-micro text-muted">
         {!pitcher && (
