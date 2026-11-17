@@ -630,6 +630,20 @@
     animation-play-state: paused;
   }
 
+  /*
+   * 금액 단위를 고르면(MoneyUnitScope의 data-money) 번갈아 보이기를 멈추고 그 금액만 보인다(WCAG 2.2.2, 이슈 #263).
+   * '동작 줄이기'면 MoneyUnitScope가 처음부터 달러를 고른다
+   */
+  [data-money="usd"] .money-flip > span,
+  [data-money="krw"] .money-flip > span {
+    animation: none;
+  }
+
+  [data-money="usd"] .money-flip > span + span,
+  [data-money="krw"] .money-flip > span:first-child {
+    visibility: hidden;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .money-flip > span {
       animation-name: money-fade;
