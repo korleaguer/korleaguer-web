@@ -270,20 +270,25 @@
   --text-meta--letter-spacing: 0;
   --text-meta--font-weight: 400;
 
+  /*
+   * 아래 셋(알약·보조 글·각주)은 11px 아래로 줄지 않는다. 앱에서 기기 글자를 작게(0.85배) 두면 rem 글자가 함께 줄어
+   * 각주가 9.35px까지 작아졌다(Apple HIG 최소 11pt, 전수조사·사용자 11-17 '추천대로'). 보통 크기(1배) 이상은 그대로다
+   */
+
   /* 모든 알약(승패·상태·자랑·판정). py-0.5와 함께 높이 22px */
-  --text-badge: 0.75rem;
+  --text-badge: max(11px, 0.75rem);
   --text-badge--line-height: 1.125rem;
   --text-badge--letter-spacing: 0;
   --text-badge--font-weight: 700;
 
   /* 기준 시각, 보조 한 줄, 숫자 칸 이름표, 표 머리(600), 바닥글 */
-  --text-caption: 0.75rem;
+  --text-caption: max(11px, 0.75rem);
   --text-caption--line-height: 1rem;
   --text-caption--letter-spacing: 0;
   --text-caption--font-weight: 400;
 
   /* 점수 아래 메타, 그래프 눈금, 각주, 영문 이름 줄 */
-  --text-micro: 0.6875rem;
+  --text-micro: max(11px, 0.6875rem);
   --text-micro--line-height: 1rem;
   --text-micro--letter-spacing: 0;
   --text-micro--font-weight: 400;
