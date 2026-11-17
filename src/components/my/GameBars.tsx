@@ -91,6 +91,9 @@ export default function GameBars({ slots, role, days, minors = false, name }: Pr
   const grid = { gridTemplateColumns: `repeat(${slots.length}, minmax(0, 1fr))`, gap: `${gapRem}rem` } as CSSProperties;
   const gameCount = slots.filter((slot) => slot.game).length;
   const current = slots[selected]?.game ?? null;
+  // 고른 경기 앞뒤 경기 칸(경기 없는 날은 건너뛴다). 없으면 -1
+  const prevGame = slots.findLastIndex((slot, i) => i < selected && slot.game != null);
+  const nextGame = slots.findIndex((slot, i) => i > selected && slot.game != null);
   // 기간 안에서 달이 바뀐 첫 칸(9월 말 ~ 10월 초 등). 한 달 안이면 없다
   const monthMarks = slots.flatMap((slot, i) => (slot.monthStart ? [{ i, month: slot.month }] : []));
 
@@ -270,32 +273,80 @@ export default function GameBars({ slots, role, days, minors = false, name }: Pr
         <span>{minors ? "빈칸은 뛰지 않은 날" : "빈칸은 경기 없는 날"}</span>
       </p>
 
-      {/* 고른 경기 한 줄. 막대를 바꾸면 화면 낭독기가 새 줄을 읽는다 */}
-      <div aria-live="polite" className="mt-3 rounded-xl bg-surface-2 px-3 py-2.5">
-        {current ? (
-          <>
-            {/* 카드가 좁고 상대 팀 이름이 길면(시카고 화이트삭스, 마이너 팀 영어 이름) 점수·결과를 다음 줄로 넘긴다 */}
-            <p className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-meta text-muted">
-              <span className="whitespace-nowrap tabular-nums">{`${formatShortDate(current.startTimeKst)}(${formatWeekday(current.startTimeKst)})`}</span>
-              <span>{`vs ${current.opponentKo}`}</span>
-              {formatLineup(current) && <span>{`· ${formatLineup(current)}`}</span>}
-              {/* 점수와 승패는 한 묶음으로 넘어가고, 남은 너비를 채워 승패를 오른쪽 끝에 둔다 */}
-              <span className="flex grow items-center gap-1.5">
-                <ScoreText line={current} className="text-summary font-bold text-foreground" />
-                <ResultPill result={current.result} className="ml-auto" />
-              </span>
-            </p>
-            <p
-              className={`mt-0.5 text-summary text-pretty ${current.played ? "" : "font-medium text-muted"}`}
-            >
-              <Words text={formatSummary(current.summary)} />
-            </p>
-            <Highlights line={current} className="mt-1.5" />
-          </>
-        ) : (
-          <p className="text-body text-muted">이 기간에는 경기가 없어요.</p>
+      <div className="mt-3 flow-root rounded-xl bg-surface-2 px-3 py-2.5">
+        {/* 이전·다음 경기 버튼(44px). 막대 한 칸이 14일 약 18px·30일 약 8px라 손가락이 2~5칸을 덮어서, 한 경기씩 정확히 옮기는 길을 둔다.
+            바뀌는 글(aria-live) 밖에 두고, 오른쪽에 띄워(float) 머리 줄만 좁힌다(기록 한 줄은 칸 폭을 다 쓴다).
+            위아래 음수 여백(0.68rem - 22px)으로 버튼 가운데를 머리 줄 가운데에 맞추고 머리 줄 높이만큼만 차지한다(큰 글씨에서도) */}
+        {current && gameCount > 1 && (
+          <span className="float-right -mr-3 my-[calc(0.68rem_-_22px)] ml-1 flex">
+            <StepButton dir="prev" label={`${name ? `${name} ` : ""}이전 경기`} target={prevGame} onStep={pick} />
+            <StepButton dir="next" label={`${name ? `${name} ` : ""}다음 경기`} target={nextGame} onStep={pick} />
+          </span>
         )}
+        {/* 고른 경기 한 줄. 막대나 버튼으로 바꾸면 화면 낭독기가 새 줄을 읽는다 */}
+        <div aria-live="polite">
+          {current ? (
+            <>
+              {/* 카드가 좁고 상대 팀 이름이 길면(시카고 화이트삭스, 마이너 팀 영어 이름) 점수·결과를 다음 줄로 넘긴다 */}
+              <p className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-meta text-muted">
+                <span className="whitespace-nowrap tabular-nums">{`${formatShortDate(current.startTimeKst)}(${formatWeekday(current.startTimeKst)})`}</span>
+                <span>{`vs ${current.opponentKo}`}</span>
+                {formatLineup(current) && <span>{`· ${formatLineup(current)}`}</span>}
+                {/* 점수와 승패는 한 묶음으로 넘어가고, 남은 너비를 채워 승패를 오른쪽 끝에 둔다 */}
+                <span className="flex grow items-center gap-1.5">
+                  <ScoreText line={current} className="text-summary font-bold text-foreground" />
+                  <ResultPill result={current.result} className="ml-auto" />
+                </span>
+              </p>
+              <p
+                className={`mt-0.5 text-summary text-pretty ${current.played ? "" : "font-medium text-muted"}`}
+              >
+                <Words text={formatSummary(current.summary)} />
+              </p>
+              <Highlights line={current} className="mt-1.5" />
+            </>
+          ) : (
+            <p className="text-body text-muted">이 기간에는 경기가 없어요.</p>
+          )}
+        </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * 고른 경기 앞뒤로 옮기는 버튼(경기 상세 창의 앞뒤 버튼과 같은 모양). 크기는 글자 배율과 상관없이 44px(px)다.
+ * 끝(target -1)이면 끄되 disabled 대신 aria-disabled로 둔다: 누른 버튼이 disabled가 되면 포커스가 사라진다(내 선수 순서 버튼과 같다).
+ * 꺼진 버튼은 아이콘만 흐리게 해서 포커스 테두리는 또렷하게 남긴다
+ */
+function StepButton({
+  dir,
+  label,
+  target,
+  onStep,
+}: {
+  dir: "prev" | "next";
+  label: string;
+  target: number;
+  onStep: (index: number) => void;
+}) {
+  const off = target < 0;
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      aria-disabled={off || undefined}
+      onClick={() => {
+        if (!off) onStep(target);
+      }}
+      // 회색 칸 위라 마우스를 올리면 한 단계 다른 회색(line) 원
+      className={`grid size-[44px] shrink-0 place-items-center rounded-full text-muted ${
+        off ? "cursor-default [&>svg]:opacity-30" : "press cursor-pointer hover:bg-line hover:text-foreground"
+      }`}
+    >
+      <svg aria-hidden viewBox="0 0 16 16" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+        <path d={dir === "prev" ? "M10 3 5 8l5 5" : "m6 3 5 5-5 5"} />
+      </svg>
+    </button>
   );
 }
