@@ -111,8 +111,11 @@ function buildRow(entry: MyPlayer, report: SeasonReport | null, isMine: boolean)
   const news = latest(report?.news ?? []);
   const flow = flowOf(report, stats);
   const moves = (report?.winterMoves ?? []).filter((m) => !(status && SAID_BY_STATUS[status.kind]?.includes(m.label)));
+  // MLB 안 위치: 칸이 아예 없으면(옛 api) 그리지 않는다. 서버는 위치를 못 읽으면 모두 null로 주므로(korleaguer-server#179)
+  // 메이저에서 뛴 선수인데 null이면 '메이저 기록이 없어'라고 지어내지 않고 줄을 뺀다
+  const majorGames = entry.seasonTotals?.mlb?.games ?? 0;
   const position =
-    report?.saber === undefined ? null : (
+    report?.saber === undefined || (report.saber === null && majorGames > 0) ? null : (
       <LeaguePositionCompact saber={report.saber} pitcher={pitcher} minorNumbers={report.level === "MINORS"} />
     );
 
