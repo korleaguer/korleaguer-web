@@ -28,7 +28,8 @@ function parseId(id: string): number | null {
 
 /** 주소의 ?game=(경기 상세 창을 여는 경기 번호)이 1~10자리 숫자가 아니면 null. 숫자 검사는 GameCalendar와 같다 */
 function parseGame(game: string | string[] | undefined): string | null {
-  return typeof game === "string" && /^\d{1,10}$/.test(game) ? game : null;
+  // 경기 창(GameCalendar)이 숫자로 읽는 것과 같은 값으로(?game=007 → 7)
+  return typeof game === "string" && /^\d{1,10}$/.test(game) ? String(Number(game)) : null;
 }
 
 // <title>: "이정후 2026 기록 · KOR Leaguer" (뒷부분은 layout의 template이 붙인다)

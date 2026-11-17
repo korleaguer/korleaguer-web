@@ -95,7 +95,9 @@ export function newsShareLines(news: NewsShareData) {
 export function newsShareImage(news: NewsShareData): ShareImage {
   const { source, title, summary } = newsShareLines(news);
   return {
-    url: `/news/${news.id}/og/${OG_VERSION}`,
+    // 'AI 요약으로 읽기'는 요약이 생기면 그려지므로 그 여부를 주소에 넣는다. 판 번호만 두면 요약이 생기기 전에
+    // 공유된 기사는 다음 배포까지 같은 주소라 수집기(카카오 등)가 안내 없는 옛 그림을 계속 쓴다(대체 글만 바뀌어 어긋남)
+    url: `/news/${news.id}/og/${OG_VERSION}${summary ? "" : "-n"}`,
     alt: [source, title, summary ? NEWS_SUMMARY_CUE : null].filter(Boolean).join(" · "),
   };
 }
@@ -104,8 +106,9 @@ export function newsShareImage(news: NewsShareData): ShareImage {
  * 화면별 공유 미리보기 정보. 페이지에서 openGraph를 정하면 layout의 openGraph를 통째로 덮어써서(기본 그림까지 빠진다),
  * 사이트 이름·언어·종류와 그림을 매번 함께 넣는다. 그림을 주지 않으면 사이트 기본 그림(app/opengraph-image.tsx,
  * 주소는 /opengraph-image/<OG_VERSION>)이다. 선수·기사는 playerShareImage·newsShareImage를 준다.
- * - title: 화면 제목만('선수'). 사이트 이름은 og:site_name으로 따로 붙어서, 넣으면 카드에 'KOR Leaguer'가 두 번 보인다
- *   (앱 공유 버튼도 제목에서 ' · KOR Leaguer'를 떼고 보낸다, ShareButton)
+ * - title: 공유 카드 제목. 목록 화면은 '뉴스 · KOR Leaguer'처럼 사이트 이름을 붙인다. 카카오톡 카드는 og:site_name을
+ *   보이지 않아(제목·설명·그림·주소) 화면 이름만 두면 '뉴스' 한 낱말 카드가 된다. 선수·기사 화면은 제목 자체로 무엇인지
+ *   알 수 있어 붙이지 않는다(앱 공유 버튼은 제목에서 ' · KOR Leaguer'를 떼고 보낸다, ShareButton)
  * - path: 이 화면 주소(og:url, layout의 metadataBase로 절대 주소가 된다). 주소 뒤 ?값이 보이는 내용을 고르면 그 값까지
  *   넣거나(선수 화면의 경기 상세 창 /players/{id}?game=) 주지 않는다(/news?player=, /records?stat=). 빠뜨리면 og:url을
  *   따르는 서비스(페이스북 등)가 거른 링크를 거르지 않은 화면으로 연다. 카카오도 공유한 주소와 og:url을 같게 하거나 빼라고 안내한다

@@ -17,7 +17,8 @@ const nextConfig: NextConfig = {
   // 공유 미리보기 수집기에는 메타(og:…)를 head에 넣은 완성 HTML을 준다. Next는 보통 메타를 본문 뒤로 흘려 보내서
   // (선수 화면은 약 16만 자 뒤) head만 읽는 수집기는 빈 카드를 만들 수 있다. 기본 목록에 카카오톡(kakaotalk-scrap)·
   // 다음(Daum/·Daumoa)·텔레그램 수집기를 더한다. 카카오톡·다음 앱 안 브라우저(KAKAOTALK, DaumApps)는 걸리지 않는다
-  htmlLimitedBots: new RegExp(`${HTML_LIMITED_BOT_UA_RE.source}|kakaotalk-scrap|Daumoa|Daum/|TelegramBot`, "i"),
+  // Next는 이 정규식의 source만 남기고 쓸 때 대소문자 무시를 다시 붙인다(플래그는 넘어가지 않는다)
+  htmlLimitedBots: new RegExp(`${HTML_LIMITED_BOT_UA_RE.source}|kakaotalk-scrap|Daumoa|Daum/|TelegramBot`),
   cacheComponents: true,
   partialPrefetching: true,
   experimental: {

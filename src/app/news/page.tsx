@@ -5,7 +5,7 @@ import { getNewsList, type NewsListPlayer } from "@/lib/api";
 import { readMyPlayers } from "@/lib/myPlayers";
 import { NEWS_QUERY_MAX, newsHref } from "@/lib/news";
 import { hasNewSince, NEWS_SEEN_COOKIE, parseSeen, toSeconds } from "@/lib/newsSeen";
-import { shareMeta } from "@/lib/share";
+import { shareMeta, SITE_NAME } from "@/lib/share";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import LoadingBlock from "@/components/LoadingBlock";
 import PageSuspense from "@/components/PageSuspense";
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   // 공유 주소(og:url)는 두지 않는다. 선수로 거른 링크(?player=이정후)를 많이 보내서, '/news'로 정하면 전체 목록으로 열린다
-  ...shareMeta(TITLE, DESCRIPTION),
+  ...shareMeta(`${TITLE} · ${SITE_NAME}`, DESCRIPTION),
 };
 
 type Props = PageProps<"/news">;

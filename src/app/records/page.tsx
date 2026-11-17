@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getHome, getRecords, type RecordNext, type RecordsResponse } from "@/lib/api";
-import { shareMeta } from "@/lib/share";
+import { shareMeta, SITE_NAME } from "@/lib/share";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import DataBanners from "@/components/DataBanners";
 import LoadingBlock from "@/components/LoadingBlock";
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   // 공유 주소(og:url)는 두지 않는다. 고른 순위표(?stat=홈런 등)를 보낸 링크가 '/records'의 첫 순위표로 열린다
-  ...shareMeta(TITLE, DESCRIPTION),
+  ...shareMeta(`${TITLE} · ${SITE_NAME}`, DESCRIPTION),
 };
 
 type Props = PageProps<"/records">;
