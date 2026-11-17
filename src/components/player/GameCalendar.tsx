@@ -129,7 +129,10 @@ export default function GameCalendar({
     if (sheetKey === null) {
       window.history.pushState({ [SHEET_STATE]: true }, "", gameUrl(key));
     } else {
-      window.history.replaceState(window.history.state, "", gameUrl(key));
+      // Next 내부 상태(__NA)가 든 history.state를 그대로 넘기면 Next가 바뀐 주소를 모른 채 남아서, 앱이 화면으로 돌아올 때
+      // 부르는 router.refresh()가 주소를 처음 연 ?game=으로 되돌렸다. 우리 표시만 담은 새 객체를 넘기면 Next가 자기 상태를
+      // 덧붙이고 주소도 맞춘다(이슈 #256)
+      window.history.replaceState({ [SHEET_STATE]: window.history.state?.[SHEET_STATE] }, "", gameUrl(key));
     }
     showDay(key);
   };
@@ -139,23 +142,28 @@ export default function GameCalendar({
       // 쌓은 기록을 지우면 popstate가 창을 닫는다
       window.history.back();
     } else {
-      window.history.replaceState(window.history.state, "", gameUrl(null));
+      window.history.replaceState({}, "", gameUrl(null));
       setSheetKey(null);
     }
   };
 
-  // 뒤로·앞으로 가기: 주소의 ?game=에 맞춰 창을 열고 닫는다. 처음 들어온 주소에 ?game=이 있으면 그 경기 창을 연다
+  // 뒤로·앞으로 가기: 주소의 ?game=에 맞춰 창을 열고 닫는다. 처음 들어온 주소에 ?game=이 있으면 그 경기 창을 연다.
+  // '쌓은 기록인가'는 뒤로·앞으로 가기로 이 기록에 왔을 때만 표시대로 다시 정한다. 이 효과는 앱 refresh로 경기 데이터가
+  // 새로 와도(dayOfGame이 바뀜) 다시 도는데, 그때 refresh가 지운 표시를 보고 내리면 닫을 때 빈 기록이 남는다.
+  // 대신 지워진 표시를 다시 붙인다(기사 등에 갔다가 돌아와도 맞게, 이슈 #256)
   useEffect(() => {
-    const sync = () => {
+    const sync = (fromPop: boolean) => {
       const raw = new URLSearchParams(window.location.search).get("game");
       const gamePk = raw && /^\d{1,10}$/.test(raw) ? Number(raw) : null;
       const day = gamePk ? dayOfGame(gamePk) : undefined;
-      ownsEntryRef.current = Boolean(window.history.state?.[SHEET_STATE]);
+      const marked = Boolean(window.history.state?.[SHEET_STATE]);
+      if (fromPop || marked) ownsEntryRef.current = marked;
+      else if (ownsEntryRef.current && day) window.history.replaceState({ ...window.history.state, [SHEET_STATE]: true }, "");
       if (day) showDay(day.key);
       else setSheetKey(null);
     };
-    sync();
-    const onPop = () => sync();
+    sync(false);
+    const onPop = () => sync(true);
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
   }, [dayOfGame, showDay]);

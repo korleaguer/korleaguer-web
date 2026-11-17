@@ -106,6 +106,15 @@ export default function LinkedTeams({
     };
   }, [sheetKey]);
 
+  // 앱이 화면으로 돌아올 때 부르는 router.refresh()는 지금 기록에서 우리 표시를 지운다. 창이 열린 채 우리가 쌓은 기록이면
+  // 표시를 다시 붙인다(기사로 갔다가 뒤로 와도 창이 다시 열리게, 이슈 #256). refresh 뒤에는 새 counts로 다시 그려져 이 효과가 돈다
+  useEffect(() => {
+    if (!openTeam || !ownsEntryRef.current) return;
+    const state = window.history.state;
+    if (teamInHistory(state, sheetKey) === openTeam) return;
+    window.history.replaceState({ ...state, [SHEET_STATE]: `${sheetKey}:${openTeam}` }, "");
+  });
+
   // 창이 닫히면 연 버튼으로 포커스를 돌려준다(WAI-ARIA APG Dialog). 창은 부품째 지워지며 닫혀서 브라우저가 돌려주지 못한다.
   // 연 버튼이 없으면(돌아와서 다시 열린 창) 그 구단 알약, 그것도 없으면(목록 안 구단) '외 n개 구단'으로
   useEffect(() => {
@@ -203,8 +212,9 @@ export default function LinkedTeams({
           )}
         </ul>
       )}
-      {/* 알약 32px에 누르는 영역 44px: 위아래로 6px씩 넓어지니 줄 사이(gap-y-3)와 위아래 이웃(mb-2·mt-2)을 그만큼 띄운다 */}
-      <ul className={`flex flex-wrap items-center gap-x-1.5 gap-y-3 ${pcBars ? "lg:hidden" : ""}`}>
+      {/* 알약 32px(2rem)에 누르는 영역 44px: 줄 사이를 알약 높이와 합쳐 44px 이상으로 띄워 넓힌 영역끼리 겹치지 않는다.
+          앱에서 글자를 작게 하면 알약이 줄어드니 줄 사이를 max(12px 상당, 44px − 알약 높이)로 */}
+      <ul className={`flex flex-wrap items-center gap-x-1.5 gap-y-[max(0.75rem,calc(44px-2rem))] ${pcBars ? "lg:hidden" : ""}`}>
         {shown.map((t) => {
           const body = (
             <>
@@ -266,9 +276,11 @@ function Chevron({ small = false }: { small?: boolean }) {
 const HOVER_CLOSE_MS = 150;
 /** 목록 폭(px, w-64) */
 const LIST_WIDTH = 256;
-/** 목록 한 줄 높이(min-h-11)와 위아래 여백·테두리(p-1.5 + border) */
-const LIST_ROW = 44;
-const LIST_PAD = 14;
+/** 목록 한 줄 높이(min-h: max(2.75rem, 44px))와 위아래 여백·테두리(p-1.5 + border). 앱 글자 배율을 따라 rem이 바뀐다 */
+function listHeight(rows: number): number {
+  const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+  return rows * Math.max(2.75 * rem, 44) + 0.75 * rem + 2;
+}
 /** iOS 앱 아래 탭 막대(웹 위에 떠 있다, 84px)와 홈 표시줄 */
 const IOS_TAB_BAR = 84 + 34;
 
@@ -296,7 +308,7 @@ function placeList(button: HTMLElement | null, rows: number): { top: number; lef
   if (!rect) return null;
   const left = rect.left + LIST_WIDTH > window.innerWidth - 16 ? Math.max(16, rect.right - LIST_WIDTH) : rect.left;
   const band = openBand();
-  const height = rows * LIST_ROW + LIST_PAD;
+  const height = listHeight(rows);
   const below = band.bottom - 8 - (rect.bottom + 4);
   const above = rect.top - 4 - (band.top + 8);
   const top = below < height && above > below ? Math.max(band.top + 8, rect.top - 4 - height) : rect.bottom + 4;
@@ -391,7 +403,8 @@ function MoreTeams({ teams, onPick }: { teams: Team[]; onPick: (t: Team, from: H
           const focused = document.activeElement;
           const inside = boxRef.current?.contains(focused) || listRef.current?.contains(focused);
           setPos(null);
-          if (inside) buttonRef.current?.focus();
+          // 스크롤하던 페이지가 버튼 쪽으로 되돌아가지 않게
+          if (inside) buttonRef.current?.focus({ preventScroll: true });
           return;
         }
         // 버튼이 움직였을 때만 다시 그린다
@@ -450,13 +463,13 @@ function MoreTeams({ teams, onPick }: { teams: Team[]; onPick: (t: Team, from: H
                     // 목록은 닫히니 창을 닫으면 '외 n개 구단'으로 돌아온다
                     onPick(t, buttonRef.current);
                   }}
-                  className="flex min-h-11 w-full cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-left text-label hover:bg-surface-2"
+                  className="flex min-h-[max(2.75rem,44px)] w-full cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-left text-label hover:bg-surface-2"
                 >
                   {row}
                   <Chevron />
                 </button>
               ) : (
-                <span className="flex min-h-11 items-center gap-2 px-2 py-1.5 text-label">{row}</span>
+                <span className="flex min-h-[max(2.75rem,44px)] items-center gap-2 px-2 py-1.5 text-label">{row}</span>
               )}
             </li>
           );
