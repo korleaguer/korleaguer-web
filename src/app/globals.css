@@ -23,6 +23,13 @@
   --accent-ink: #1d4ed8;
   --accent-soft: #e8efff; /* 현재 메뉴 알약 */
 
+  /*
+   * 내 선수 경기별 막대(이슈 #273). 안 고른 막대는 한 단계 옅은 단색(흰 카드 대비 3.31:1), 고른 막대는 파랑 + 본문색 테두리.
+   * 예전에는 파랑을 35%(다크 55%)로 흐려 흰 카드 대비 1.67:1이었고, 다크에서는 고른 막대와 거의 같았다(WCAG 1.4.11)
+   */
+  --game-bar: #5c8af0;
+  --game-bar-on: var(--accent);
+
   /* 패·무 알약 */
   --neutral-pill: #e5e7eb;
   --neutral-pill-fg: #374151;
@@ -80,6 +87,10 @@
     --accent-ink: #8db1ff;
     --accent-soft: #1d2a47;
 
+    /* 어두운 카드에서는 파랑 그대로가 안 고른 막대(3.27:1), 고른 막대는 밝은 파랑 */
+    --game-bar: var(--accent);
+    --game-bar-on: var(--accent-ink);
+
     --neutral-pill: #2e3440;
     --neutral-pill-fg: #d3d8e0;
 
@@ -135,6 +146,8 @@
   --color-accent-fg: var(--accent-fg);
   --color-accent-ink: var(--accent-ink);
   --color-accent-soft: var(--accent-soft);
+  --color-game-bar: var(--game-bar);
+  --color-game-bar-on: var(--game-bar-on);
   --color-neutral-pill: var(--neutral-pill);
   --color-neutral-pill-fg: var(--neutral-pill-fg);
   --color-notice-bg: var(--notice-bg);

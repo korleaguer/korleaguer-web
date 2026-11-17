@@ -146,6 +146,8 @@ export default function GameBars({ slots, role, days, minors = false }: Props) {
           const on = i === selected;
           const homeRun = !pitcher && (game.batting?.homeRuns ?? 0) > 0;
           const height = value != null && value > 0 ? `${(value / top) * 100}%` : null;
+          // 고른 막대는 색만으로 가르지 않고 본문색 2px 테두리 + 카드색 1px 틈을 두른다(경기 달력의 고른 칸과 같은 모양)
+          const ring = on ? "ring-2 ring-foreground ring-offset-1 ring-offset-surface" : "";
           return (
             <button
               key={`${slot.date}-${slot.part}`}
@@ -161,16 +163,17 @@ export default function GameBars({ slots, role, days, minors = false }: Props) {
             >
               <span className="relative flex h-[4.5rem] w-full items-end justify-center border-b border-line">
                 {!game.played ? (
-                  // 결장(투수는 등판 없음)·경기 전: 점선 막대
-                  <span className={`block h-3.5 w-[72%] max-w-7 rounded-t-md border-[1.5px] border-dashed ${on ? "border-foreground" : "border-muted/60"}`} />
+                  // 결장(투수는 등판 없음)·경기 전: 점선 막대. 흐린 글자색 그대로(60%로 흐리면 흰 카드 대비 2.6:1이었다)
+                  <span className={`block h-3.5 w-[72%] max-w-7 rounded-t-md border-[1.5px] border-dashed ${on ? "border-foreground" : "border-muted"}`} />
                 ) : height ? (
+                  // 흐리게(투명도) 두지 않고 단색: 안 고른 막대도 카드 대비 3:1을 넘는다. 마우스를 올리면 고른 색 쪽으로 반쯤
                   <span
-                    className={`bar-rise block w-[72%] max-w-7 rounded-t-md rounded-b-sm bg-accent transition-opacity duration-150 ${on ? "opacity-100" : "opacity-35 group-hover:opacity-60 dark:opacity-55 dark:group-hover:opacity-75"}`}
+                    className={`bar-rise block w-[72%] max-w-7 rounded-t-md rounded-b-sm transition-colors duration-150 ${on ? `bg-game-bar-on ${ring}` : "bg-game-bar group-hover:bg-[color-mix(in_oklab,var(--game-bar),var(--game-bar-on))]"}`}
                     style={{ height, "--i": i } as CSSProperties}
                   />
                 ) : (
-                  // 뛰었지만 안타 0(또는 아웃 0·숫자 모름): 바닥에 얇은 막대
-                  <span className={`block h-1 w-[72%] max-w-7 rounded-sm ${on ? "bg-foreground/60" : "bg-muted/35"}`} />
+                  // 뛰었지만 안타 0(또는 아웃 0·숫자 모름): 바닥에 얇은 막대. 흐린 글자색 그대로 둬서 바닥선(경기 없는 날)과 갈린다
+                  <span className={`block h-1 w-[72%] max-w-7 rounded-sm ${on ? `bg-foreground ${ring}` : "bg-muted"}`} />
                 )}
                 {homeRun && height && (
                   <span
@@ -193,6 +196,11 @@ export default function GameBars({ slots, role, days, minors = false }: Props) {
             홈런
           </span>
         )}
+        {/* 바닥의 얇은 막대는 뛰었지만 0이라는 뜻(빈칸·결장과 헷갈렸다) */}
+        <span className="inline-flex items-center gap-1">
+          <span aria-hidden className="h-1 w-2.5 rounded-sm bg-muted" />
+          {pitcher ? "0이닝" : "무안타"}
+        </span>
         {!minors && (
           <span className="inline-flex items-center gap-1">
             <span aria-hidden className="h-2 w-2.5 rounded-[2px] border-[1.5px] border-dashed border-muted" />
