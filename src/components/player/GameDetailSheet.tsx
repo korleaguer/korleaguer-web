@@ -7,7 +7,6 @@ import { lineOf, type CalendarDay, type LogGame } from "@/lib/gameLog";
 import { formatDate, formatLineup, formatSummary, formatTime } from "@/lib/format";
 import { haptic } from "@/lib/app";
 import { toast } from "@/lib/toast";
-import { loadClip, loadGameDetail } from "@/app/players/[id]/actions";
 import Highlights from "@/components/Highlights";
 import LoadingDots from "@/components/LoadingDots";
 import ResultPill from "@/components/ResultPill";
@@ -39,6 +38,24 @@ function remember(key: string, detail: GameDetail) {
 }
 
 type Load = { state: "loading" } | { state: "ok"; detail: GameDetail } | { state: "error" };
+
+/**
+ * 경기 상세를 GET 주소(src/app/players/[id]/games/[gamePk]/route.ts)로 받는다. 예전 서버 함수(Server Action)는 차례로 하나씩
+ * 보내져서 ‹ ›로 빠르게 넘기면 줄을 섰다(11-17 전수조사). GET은 넘길 때 앞 요청을 취소하고(signal), 끝난 경기(final)는
+ * 브라우저가 10분 둔다. 못 받으면 null
+ */
+async function fetchDetail(playerId: number, gamePk: number, final: boolean, signal: AbortSignal): Promise<GameDetail | null> {
+  const res = await fetch(`/players/${playerId}/games/${gamePk}${final ? "?final=1" : ""}`, { signal });
+  return res.ok ? ((await res.json()) as GameDetail) : null;
+}
+
+/** 타석 ▶: 그 공 영상 주소(GET, 바뀌지 않아 브라우저가 하루 둔다). 없으면 null */
+async function fetchClip(playerId: number, gamePk: number, playId: string): Promise<string | null> {
+  const res = await fetch(`/players/${playerId}/games/${gamePk}/clips/${playId}`);
+  if (!res.ok) return null;
+  const data = (await res.json()) as { mp4Url?: string | null };
+  return data.mp4Url ?? null;
+}
 
 /** 아래로 이만큼 끌면 닫는다(px) */
 const SWIPE_CLOSE = 96;
@@ -289,21 +306,23 @@ function EntryDetail({
 
   useEffect(() => {
     if (notPlayedYet || (load.state === "ok" && attempt === 0)) return;
-    let alive = true;
-    loadGameDetail(playerId, gamePk)
-      .then((result) => {
-        if (!alive) return;
-        if (result.ok && result.detail.available) {
-          if (line.gameStatus === "final") remember(cacheKey, result.detail);
-          setLoad({ state: "ok", detail: result.detail });
+    // 다른 날짜·경기로 넘기면(이 부품이 지워지며) 받던 요청을 취소한다. 빠르게 넘겨도 마지막 경기만 기다린다
+    const controller = new AbortController();
+    const final = line.gameStatus === "final";
+    fetchDetail(playerId, gamePk, final, controller.signal)
+      .then((detail) => {
+        if (controller.signal.aborted) return;
+        if (detail?.available) {
+          if (final) remember(cacheKey, detail);
+          setLoad({ state: "ok", detail });
         } else {
           setLoad({ state: "error" });
         }
       })
-      .catch(() => alive && setLoad({ state: "error" }));
-    return () => {
-      alive = false;
-    };
+      .catch(() => {
+        if (!controller.signal.aborted) setLoad({ state: "error" });
+      });
+    return () => controller.abort();
     // load는 일부러 빼고, 처음과 '다시 시도'(attempt)에만 받는다
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playerId, gamePk, attempt, notPlayedYet, cacheKey, line.gameStatus]);
@@ -396,13 +415,13 @@ function DetailContent({
       if (!play.playId || loadingPlay) return;
       haptic("select");
       setLoadingPlay(play.playId);
-      const result = await loadClip(playerId, gamePk, play.playId).catch(() => ({ ok: false as const }));
+      const mp4Url = await fetchClip(playerId, gamePk, play.playId).catch(() => null);
       setLoadingPlay(null);
-      if (!result.ok) {
+      if (!mp4Url) {
         toast("이 장면 영상은 아직 없어요.");
         return;
       }
-      setClip({ key: `p-${play.playId}`, hlsUrl: null, mp4Url: result.mp4Url, posterUrl: null, autoPlay: true, label: playTitle(play), sub: "그 타석 마지막 공" });
+      setClip({ key: `p-${play.playId}`, hlsUrl: null, mp4Url, posterUrl: null, autoPlay: true, label: playTitle(play), sub: "그 타석 마지막 공" });
       // 영상이 창 맨 위에 있어 그리로 올린다
       scrollRef.current?.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
     },
