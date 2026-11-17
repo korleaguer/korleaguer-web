@@ -22,11 +22,15 @@ const TYPING_PAUSE_MS = 350;
  * - PC: 입력칸은 늘 보이고 그 밑에 알약을 늘 보인다(자리가 넉넉하다).
  * - 입력하다 잠깐 멈추면 바로 찾고, 검색 키(엔터)를 누르면 곧바로 찾으면서 키보드를 내린다. 기록은 쌓지 않는다(replace).
  * - 알약의 말은 api가 지금 범위의 최근 기사에서 고르고, 숫자는 누르면 나오는 줄 수다(기사 전체, korleaguer-server#167).
+ * - 거르기·검색 결과가 오면 화면 낭독기에 한 줄로 알린다(늘 있는 상태 줄, WCAG 4.1.3). 눈으로는 알약 숫자와 목록이 같은 말이라
+ *   목록 위에 건수 줄을 따로 두지 않는다.
  */
 export default function NewsSearch({
   player,
   query,
   topics,
+  queryCount,
+  status,
 }: {
   /** 거른 선수(전체면 null). 그 선수 기사 안에서 찾는다 */
   player: string | null;
@@ -34,6 +38,10 @@ export default function NewsSearch({
   query: string | null;
   /** 지금 범위의 자주 나온 말(첫 쪽이면 검색어가 있어도 온다, korleaguer-server#165) */
   topics: NewsTopic[];
+  /** 지금 검색어로 나오는 줄 수(직접 친 말 알약의 숫자). 모르면 null */
+  queryCount: number | null;
+  /** 화면 낭독기에 알릴 지금 결과 한 줄('제목에 ‘FA’ 들어간 기사 18건', '이정후 기사') */
+  status: string;
 }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -56,6 +64,16 @@ export default function NewsSearch({
   const [saved, setSaved] = useState({ player, topics });
   if (saved.player !== player || (topics.length > 0 && saved.topics !== topics)) setSaved({ player, topics });
   const shownTopics = saved.player === player ? saved.topics : topics;
+
+  // 화면 낭독기 상태 줄에 둘 글. 처음 그릴 때는 비워 화면을 열자마자 읽지 않고, 결과가 와서 문구가 바뀔 때만 채운다.
+  // 치는 동안에는 결과가 오기 전이라 바뀌지 않아 글자마다 읽지 않는다. 새로 그려지는 결과 없음 안내에 role을 다는 대신
+  // 늘 있는 줄의 글만 바꾼다(새로 생긴 알림 영역은 낭독기가 놓칠 수 있다)
+  const [heardStatus, setHeardStatus] = useState(status);
+  const [spoken, setSpoken] = useState("");
+  if (status !== heardStatus) {
+    setHeardStatus(status);
+    setSpoken(status);
+  }
 
   // 마지막으로 찾으라고 한 검색어. 주소(query)는 결과가 와야 바뀌어서, 그 사이에 지우거나 고친 것을 견줄 때 이 값을 본다
   // (주소만 보면 'a'를 치고 결과 전에 지울 때 '이미 빈 칸'으로 보고 찾지 않아, 입력칸은 비었는데 목록은 'a'로 남았다)
@@ -240,9 +258,10 @@ export default function NewsSearch({
               </button>
             </li>
             {typed && (
-              // 직접 친 말. PC는 입력칸에 이미 보여 알약은 휴대폰에만
+              // 직접 친 말. PC는 입력칸에 이미 보여 알약은 휴대폰에만. 숫자는 다른 알약과 같은 셈이고, 모르거나 0이면 두지 않는다
+              // (0건은 바로 밑 결과 없음 안내가 같은 말을 한다)
               <li className="shrink-0 lg:hidden">
-                <TopicChip word={typed} count={null} href={newsHref(player, null)} on />
+                <TopicChip word={typed} count={queryCount || null} href={newsHref(player, null)} on />
               </li>
             )}
             {shownTopics.map((t) => {
@@ -256,6 +275,9 @@ export default function NewsSearch({
           </ul>
         </div>
       )}
+      <p role="status" className="sr-only">
+        {spoken}
+      </p>
     </div>
   );
 }
