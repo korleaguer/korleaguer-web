@@ -213,8 +213,9 @@ function MoveButton({
       onClick={() => {
         if (!atEnd) onMove();
       }}
-      className={`press grid size-11 shrink-0 place-items-center rounded-lg text-muted ${
-        atEnd ? "cursor-default opacity-30" : "cursor-pointer hover:bg-surface-2 hover:text-foreground"
+      // 꺼진 끝 버튼은 눌림 효과(press)도 없앤다(누를 수 있어 보이지 않게)
+      className={`grid size-11 shrink-0 place-items-center rounded-lg text-muted ${
+        atEnd ? "cursor-default opacity-30" : "press cursor-pointer hover:bg-surface-2 hover:text-foreground"
       }`}
     >
       <svg aria-hidden viewBox="0 0 16 16" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
