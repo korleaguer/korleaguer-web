@@ -203,10 +203,11 @@ export default function NewsSearch({
                   // 누르는 순간 입력칸이 포커스를 잃어 알약이 사라지기 전에 고르게 한다
                   onPointerDown={(e) => e.preventDefault()}
                   onClick={() => pick(t.word)}
+                  aria-label={topicLabel(t.word, t.count, false)}
                   className="press tap-target inline-flex cursor-pointer items-center gap-1 rounded-full bg-surface px-3 py-1.5 text-button text-foreground shadow-[0_0_0_1px_var(--line)] hover:bg-surface-2"
                 >
                   {t.word}
-                  <span className="text-caption text-muted tabular-nums">{t.count}</span>
+                  <span className="text-caption text-muted tabular-nums">{t.count}건</span>
                 </button>
               </li>
             ))}
@@ -250,6 +251,15 @@ export default function NewsSearch({
   );
 }
 
+/**
+ * 자주 나온 말 알약의 화면 낭독기 이름. 보이는 글자('FA 18건')로 시작해야 음성 명령으로 부를 수 있다(WCAG 2.5.3).
+ * 그 뒤에 누르면 할 일을 붙인다
+ */
+function topicLabel(word: string, count: number | null, on: boolean): string {
+  const shown = count === null ? word : `${word} ${count}건`;
+  return `${shown}, ${on ? "검색 끄기" : "이 말이 나온 기사만 보기"}`;
+}
+
 /** 자주 나온 말 알약 하나. 누르면 그 말로 거르고(켜짐), 켜진 것을 누르면 끈다. 주소만 바꾸고 기록은 쌓지 않는다 */
 function TopicChip({ word, count, href, on }: { word: string; count: number | null; href: string; on: boolean }) {
   return (
@@ -258,7 +268,7 @@ function TopicChip({ word, count, href, on }: { word: string; count: number | nu
       replace
       scroll={false}
       aria-current={on ? "true" : undefined}
-      aria-label={on ? `‘${word}’ 검색 끄기` : `‘${word}’ 기사만 보기${count === null ? "" : `, ${count}건`}`}
+      aria-label={topicLabel(word, count, on)}
       onClick={() => haptic("select")}
       className={`press tap-target flex h-9 items-center whitespace-nowrap rounded-full px-3 text-label ${
         on
@@ -269,7 +279,8 @@ function TopicChip({ word, count, href, on }: { word: string; count: number | nu
       <TopicPending>
         <span className="flex items-center gap-1">
           {word}
-          {count !== null && <span className={`text-caption tabular-nums ${on ? "text-accent-ink" : "text-muted"}`}>{count}</span>}
+          {/* 숫자만 있으면 무엇을 센 것인지 몰라 사이트의 다른 'N건'처럼 단위를 붙인다 */}
+          {count !== null && <span className={`text-caption tabular-nums ${on ? "text-accent-ink" : "text-muted"}`}>{count}건</span>}
           {on && <ClearIcon className="-mr-0.5 size-3.5" />}
         </span>
       </TopicPending>
