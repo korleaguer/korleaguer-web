@@ -4,13 +4,13 @@
 // 일반 브라우저에서는 in-app 변형이 꺼져 있어 보이지 않는다(globals.css의 @custom-variant in-app).
 import { usePathname, useRouter } from "next/navigation";
 import { useSyncExternalStore } from "react";
-import { appHas, postToApp } from "@/lib/app";
+import { appHas, postToApp, type AppFeature } from "@/lib/app";
 
 /**
  * 앱 아래 탭의 첫 화면. 여기서는 뒤로 버튼을 두지 않는다. 앱(korleaguer-app src/app)의 탭과 같다.
- * 기록(/records)은 '내 선수' 자리에 새로 들어간 탭이고(이슈 #244), 옛 앱의 '내 선수' 탭(/my)도 남긴다.
+ * 기록(/records)은 '내 선수' 자리에 새로 들어간 탭이다(이슈 #244). 내 선수(/my)와 뉴스(/news)는 앱에 따라 다르다(아래).
  */
-const TAB_ROOTS = new Set(["/", "/players", "/records", "/my"]);
+const TAB_ROOTS = new Set(["/", "/players", "/records"]);
 
 /** 앱 기능은 바뀌지 않으므로 구독할 것이 없다 */
 function subscribeNothing(): () => void {
@@ -18,11 +18,13 @@ function subscribeNothing(): () => void {
 }
 
 /**
- * 뉴스 탭이 있는 앱("news-tab")인가. 서버에는 앱 정보가 없어 false로 그리고, 브라우저에서 화면을 이어받은 뒤 실제 값으로
- * 다시 그린다(렌더 중에 window를 바로 읽으면 서버 HTML과 첫 화면이 달라 React가 화면을 통째로 다시 그린다)
+ * 앱에 이 기능이 있나("news-tab": 뉴스 탭, "records-tab": '내 선수' 자리에 기록 탭). 서버에는 앱 정보가 없어 지금 앱(둘 다 있음)으로
+ * 보고 그리고, 브라우저에서 화면을 이어받은 뒤 실제 값으로 다시 그린다(렌더 중에 window를 바로 읽으면 서버 HTML과 첫 화면이 달라
+ * React가 화면을 통째로 다시 그린다). 서버를 '없음'으로 두면 지금 앱에서 /my를 열 때마다 버튼이 뒤늦게 끼어들어 로고가 옆으로
+ * 튀었다(리뷰 지적, 이슈 #262). 이제는 옛 빌드에서만 고쳐 그린다
  */
-function useNewsTab(): boolean {
-  return useSyncExternalStore(subscribeNothing, () => appHas("news-tab"), () => false);
+function useAppFeature(feature: AppFeature): boolean {
+  return useSyncExternalStore(subscribeNothing, () => appHas(feature), () => true);
 }
 
 /** 돌아갈 기록이 없을 때 갈 곳: 선수 페이지는 선수 목록, 기사 한 건은 뉴스, 나머지는 홈 */
@@ -45,9 +47,12 @@ function closeAppScreen(): boolean {
 export default function AppBackButton() {
   const pathname = usePathname();
   const router = useRouter();
-  // 뉴스(/news)는 뉴스 탭이 있는 앱에서만 탭 첫 화면이고, 옛 앱에서는 쌓인 하위 화면이다
-  const newsTab = useNewsTab();
-  if (TAB_ROOTS.has(pathname) || (pathname === "/news" && newsTab)) return null;
+  // 뉴스(/news)는 뉴스 탭이 있는 앱에서만 탭 첫 화면이고, 옛 앱에서는 쌓인 하위 화면이다.
+  // 내 선수(/my)는 반대로 옛 앱('내 선수' 탭)에서만 탭 첫 화면이다. 기록 탭이 있는 앱에서는 알림 '보기'·홈 입구로 쌓아 여는
+  // 하위 화면이라 뒤로 버튼을 둔다(전수조사 P1, 이슈 #262)
+  const newsTab = useAppFeature("news-tab");
+  const recordsTab = useAppFeature("records-tab");
+  if (TAB_ROOTS.has(pathname) || (pathname === "/news" && newsTab) || (pathname === "/my" && !recordsTab)) return null;
 
   return (
     <button
