@@ -483,7 +483,7 @@ components:
 
 **The Keep-All Rule.** 한국어는 낱말 중간에서 줄을 바꾸지 않는다(`word-break: keep-all`). 너무 긴 낱말만 쪼갠다.
 
-**The Role Token Rule.** 글자 크기는 역할 토큰(`text-display`·`text-heading`·`text-body`·`text-caption` …)으로만 쓴다. 단계 밖 크기(`text-[13px]`, `sm:text-[1.375rem]`, JSX `style`의 `fontSize`)와 Tailwind 기본 크기 이름(`text-xs`~`text-9xl`, `@theme`에서 껐다)은 lint(`no-restricted-syntax`)가 막는다. 새 크기가 필요하면 먼저 역할을 정해 `globals.css` `@theme`와 이 표에 함께 넣는다. 한 화면에서 비슷한 크기가 여럿 섞여 위계가 흐려지는 것을 막는다(15단계 → 9단계, 이슈 #204).
+**The Role Token Rule.** 글자 크기는 역할 토큰(`text-display`·`text-heading`·`text-body`·`text-caption` …)으로만 쓴다. 단계 밖 크기(`text-[13px]`, `sm:text-[1.375rem]`, JSX `style`의 `fontSize`)와 Tailwind 기본 크기 이름(`text-xs`~`text-9xl`, `@theme`에서 껐다)은 lint(`no-restricted-syntax`)가 막는다. 새 크기가 필요하면 먼저 역할을 정해 `globals.css` `@theme`와 이 표에 함께 넣는다. 한 화면에서 비슷한 크기가 여럿 섞여 위계가 흐려지는 것을 막는다(15단계 → 9단계, 이슈 #204). 예외는 하나다: 칸 수가 화면 폭에 묶인 그림(경기 달력 `.cal-*`, 달별 막대 `.month-bars-*`, 7일 막대 `.day-bars-*`)은 큰 글씨에서 이름표가 칸 밖으로 넘치지 않게 `globals.css`의 클래스로 `min(역할 크기, 칸 폭 / 글자 폭 어림)`만큼 줄인다. 역할 크기보다 커지지 않고 보통 크기에서는 역할 크기 그대로다. 이 계산은 JSX `style`에 쓰지 않고 그 클래스에만 둔다(이슈 #264).
 
 ## Layout
 

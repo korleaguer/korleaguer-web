@@ -275,8 +275,14 @@ function Chevron({ small = false }: { small?: boolean }) {
 
 /** 마우스를 떼고 이만큼 지나면 닫는다(글자에서 목록으로 옮겨 가는 사이에 닫히지 않게) */
 const HOVER_CLOSE_MS = 150;
-/** 목록 폭(px, w-64) */
-const LIST_WIDTH = 256;
+/**
+ * 목록 폭: 보통 크기 256px(16rem). 큰 글씨면 글자를 따라 넓히되 화면 폭 - 32px까지.
+ * px로 고정해 두면 앱 2배에서 구단 이름이 'LA …'·'세인…'으로 잘렸다(이슈 #264)
+ */
+function listWidth(): number {
+  const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+  return Math.min(16 * rem, window.innerWidth - 32);
+}
 /** 목록 한 줄 높이(min-h: max(2.75rem, 44px))와 위아래 여백·테두리(p-1.5 + border). 앱 글자 배율을 따라 rem이 바뀐다 */
 function listHeight(rows: number): number {
   const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
@@ -304,16 +310,20 @@ function openBand(): { top: number; bottom: number } {
  * 화면 오른쪽을 넘으면 버튼 오른쪽 끝에 맞춘다(휴대폰에서 알약 줄 끝에 있을 때).
  * shown: 버튼이 머리글 밑이나 화면 밖으로 나가 안 보이면 false(그때는 목록을 닫는다)
  */
-function placeList(button: HTMLElement | null, rows: number): { top: number; left: number; shown: boolean } | null {
+function placeList(
+  button: HTMLElement | null,
+  rows: number,
+): { top: number; left: number; width: number; shown: boolean } | null {
   const rect = button?.getBoundingClientRect();
   if (!rect) return null;
-  const left = rect.left + LIST_WIDTH > window.innerWidth - 16 ? Math.max(16, rect.right - LIST_WIDTH) : rect.left;
+  const width = listWidth();
+  const left = rect.left + width > window.innerWidth - 16 ? Math.max(16, rect.right - width) : rect.left;
   const band = openBand();
   const height = listHeight(rows);
   const below = band.bottom - 8 - (rect.bottom + 4);
   const above = rect.top - 4 - (band.top + 8);
   const top = below < height && above > below ? Math.max(band.top + 8, rect.top - 4 - height) : rect.bottom + 4;
-  return { top, left, shown: rect.bottom > band.top && rect.top < band.bottom };
+  return { top, left, width, shown: rect.bottom > band.top && rect.top < band.bottom };
 }
 
 /**
@@ -325,7 +335,7 @@ function placeList(button: HTMLElement | null, rows: number): { top: number; lef
  * (WAI-ARIA APG Disclosure), 성적표 카드(overflow-hidden)에 잘리거나 다음 카드에 가리지 않는다.
  */
 function MoreTeams({ teams, onPick }: { teams: Team[]; onPick: (t: Team, from: HTMLElement | null) => void }) {
-  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null);
   const open = pos != null;
   const boxRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -347,7 +357,7 @@ function MoreTeams({ teams, onPick }: { teams: Team[]; onPick: (t: Team, from: H
     if (!next) return;
     byHover.current = hover;
     focusFirst.current = !hover;
-    setPos({ top: next.top, left: next.left });
+    setPos({ top: next.top, left: next.left, width: next.width });
   };
   const hide = () => {
     cancelClose();
@@ -408,8 +418,12 @@ function MoreTeams({ teams, onPick }: { teams: Team[]; onPick: (t: Team, from: H
           if (inside) buttonRef.current?.focus({ preventScroll: true });
           return;
         }
-        // 버튼이 움직였을 때만 다시 그린다
-        setPos((prev) => (prev && prev.top === next.top && prev.left === next.left ? prev : { top: next.top, left: next.left }));
+        // 버튼이 움직였거나 폭이 바뀌었을 때만 다시 그린다
+        setPos((prev) =>
+          prev && prev.top === next.top && prev.left === next.left && prev.width === next.width
+            ? prev
+            : { top: next.top, left: next.left, width: next.width },
+        );
       });
     };
     document.addEventListener("pointerdown", onDown);
@@ -438,7 +452,7 @@ function MoreTeams({ teams, onPick }: { teams: Team[]; onPick: (t: Team, from: H
       onPointerLeave={hideSoon}
       // 목록 빈 곳을 눌러도 뒤 카드(card-link)가 눌린 듯 줄지 않게
       data-no-press
-      style={{ top: pos.top, left: pos.left, width: LIST_WIDTH }}
+      style={{ top: pos.top, left: pos.left, width: pos.width }}
       // popover 기본 모양(가운데 놓기·여백·테두리)을 지우고 버튼 아래 고정 자리에 둔다. z-40은 popover를 모르는 옛 브라우저용
       // (맨 위 층은 z-index와 상관없이 맨 위다)
       className="fixed inset-auto z-40 m-0 rounded-xl border border-line bg-surface p-1.5 text-foreground shadow-[var(--shadow-card-hover)]"

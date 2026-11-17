@@ -150,24 +150,27 @@ function DayBars({ articles, days }: { articles: LinkedArticle[]; days: number }
     .map((k, i) => (counts[i] > 0 ? `${Number(k.slice(8))}일 ${counts[i]}건` : null))
     .filter(Boolean)
     .join(", ");
-  // 막대 위 'n건'·아래 '11일'은 칸 폭(창 폭 / 날 수)이 허락하는 만큼만 키운다('11일' 약 2.2em). 글자만 키우면 큰 글씨(2배)에서
-  // 이름표끼리 붙어 '11일12일13일'로 읽혔다(이슈 #264). 보통 크기에서는 그대로다
-  const labelSize = { fontSize: `min(var(--text-caption), calc(100cqi / ${days} / 2.4))` };
   return (
     <figure className="mt-1 border-b border-line pb-2">
       <figcaption className="sr-only">날짜별 기사 수: {summary}</figcaption>
-      <div aria-hidden className="@container grid items-end" style={{ gridTemplateColumns: `repeat(${days}, minmax(0, 1fr))` }}>
+      {/* 막대 위 'n건'·아래 '11일'은 칸 폭이 허락하는 만큼만 키운다(globals.css .day-bars, 이슈 #264) */}
+      <div
+        aria-hidden
+        className="day-bars grid items-end"
+        style={{ gridTemplateColumns: `repeat(${days}, minmax(0, 1fr))`, "--days": String(days) } as CSSProperties}
+      >
         {keys.map((k, i) => {
           const isToday = i === days - 1;
           const n = counts[i];
           return (
             <div key={k} className="flex flex-col items-center">
-              <span className="mb-1 text-caption font-bold tabular-nums" style={labelSize}>
+              <span className="day-bars-label mb-1 font-bold tabular-nums">
                 {n > 0 ? `${n}건` : ""}
               </span>
-              {/* 기사가 있는 날은 역대 계약 막대와 같은 잉크 그라데이션(오늘만 강조색), 없는 날은 바닥선만 */}
+              {/* 기사가 있는 날은 역대 계약 막대와 같은 잉크 그라데이션(오늘만 강조색), 없는 날은 바닥선만.
+                  막대 폭(1.75rem)은 글자 배율을 따라 커지므로 칸보다 넓어지면 칸 폭 - 4px로 줄인다(2배 375px에서 막대끼리 겹쳤다) */}
               <span
-                className={`w-7 rounded-t-md ${n === 0 ? "bg-line" : isToday ? "bg-accent" : ""}`}
+                className={`w-7 max-w-[calc(100%-4px)] rounded-t-md ${n === 0 ? "bg-line" : isToday ? "bg-accent" : ""}`}
                 style={
                   {
                     height: n > 0 ? `${12 + (n / max) * 40}px` : "3px",
@@ -179,8 +182,7 @@ function DayBars({ articles, days }: { articles: LinkedArticle[]; days: number }
                 }
               />
               <span
-                className={`mt-1.5 text-caption tabular-nums ${isToday ? `font-bold ${n > 0 ? "text-accent-ink" : "text-foreground"}` : "text-muted"}`}
-                style={labelSize}
+                className={`day-bars-label mt-1.5 tabular-nums ${isToday ? `font-bold ${n > 0 ? "text-accent-ink" : "text-foreground"}` : "text-muted"}`}
               >
                 {isToday ? "오늘" : `${Number(k.slice(8))}일`}
               </span>

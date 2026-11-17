@@ -118,9 +118,11 @@ function StatBlock({ big, main, rest }: { big: Stat[]; main: Stat[]; rest: RestS
   return (
     <>
       {/* 큰 숫자 카드 줄이 13rem보다 좁으면(큰 글씨) 한 칸에 하나씩, 이름표 왼쪽·숫자 오른쪽으로. 두 칸이면 2배에서
-          '.276'이 '.'/'276'으로, '평균자책점'이 두 줄로 갈렸다(이슈 #264) */}
+          '.276'이 '.'/'276'으로, '평균자책점'이 두 줄로 갈렸다(이슈 #264). 768px 이상의 네 칸도 줄이 30rem보다 좁으면
+          두 칸으로(네 칸에 필요한 폭: 11-17 측정 25.4rem, OPS가 1.000을 넘으면 약 29rem). 보통 크기 768px 이상은 줄이 38rem
+          이상이라 그대로다 */}
       <div className="@container">
-        <dl className="grid grid-cols-2 gap-2.5 md:grid-cols-4 @max-[13rem]:grid-cols-1 @max-[13rem]:gap-2 @max-[13rem]:*:flex @max-[13rem]:*:items-baseline @max-[13rem]:*:justify-between @max-[13rem]:*:gap-3">
+        <dl className="grid grid-cols-2 gap-2.5 md:grid-cols-4 @max-[30rem]:grid-cols-2 @max-[13rem]:grid-cols-1 @max-[13rem]:gap-2 @max-[13rem]:*:flex @max-[13rem]:*:items-baseline @max-[13rem]:*:justify-between @max-[13rem]:*:gap-3">
           {big.map(([label, value]) => (
             <div key={label} className="card min-w-0 px-4 py-3.5">
               <dt className="text-caption text-muted">{label}</dt>
