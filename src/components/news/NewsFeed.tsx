@@ -1,6 +1,6 @@
 "use client"; // '기사 더 보기'로 받은 기사를 이어 붙여야 해서 클라이언트 컴포넌트다.
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import type { NewsListItem } from "@/lib/api";
 import { loadMoreNews } from "@/app/news/actions";
 import { formatDate, kstDayKey } from "@/lib/format";
@@ -49,9 +49,23 @@ export default function NewsFeed({
   const [next, setNext] = useState(firstNext);
   const [failed, setFailed] = useState(false);
   const [pending, startTransition] = useTransition();
+  const listRef = useRef<HTMLDivElement>(null);
+  const moreRef = useRef<HTMLButtonElement>(null);
+  // 마지막 쪽을 받으면 '기사 더 보기'가 사라져 그 버튼에 있던 포커스가 갈 곳을 잃는다(키보드·화면 낭독기가 문서 처음으로
+  // 돌아갔다). 그때 새로 붙은 첫 기사로 옮기려고, 받기 전 줄 수를 적어 둔다(다음 그림 뒤에 옮긴다)
+  const focusRowAt = useRef<number | null>(null);
+  useEffect(() => {
+    const at = focusRowAt.current;
+    if (at === null) return;
+    focusRowAt.current = null;
+    // 줄마다 기사 링크가 하나다. 새로 붙은 줄이 없으면(마지막 쪽이 비었으면) 마지막 줄로
+    const links = listRef.current?.querySelectorAll<HTMLElement>("li > a") ?? [];
+    (links[at] ?? links[links.length - 1])?.focus({ preventScroll: true });
+  }, [rows]);
 
   function load() {
     if (!next || pending) return;
+    const shownCount = rows.length;
     startTransition(async () => {
       const result = await loadMoreNews(player, next, query);
       if (!result.ok) {
@@ -59,6 +73,7 @@ export default function NewsFeed({
         return;
       }
       setFailed(false);
+      if (result.next === null && document.activeElement === moreRef.current) focusRowAt.current = shownCount;
       setRows((shown) => merge(shown, result.items));
       setNext(result.next);
     });
@@ -74,7 +89,7 @@ export default function NewsFeed({
   }));
 
   return (
-    <div className="space-y-4">
+    <div ref={listRef} className="space-y-4">
       {byDay(items).map((day) => (
         <section key={day.key} aria-labelledby={`news-day-${day.key}`}>
           {/* 오늘·어제는 보는 때에 따라 달라서 서버와 브라우저가 자정 근처에 다르게 그릴 수 있다 */}
@@ -93,6 +108,7 @@ export default function NewsFeed({
       )}
       {next && (
         <button
+          ref={moreRef}
           type="button"
           onClick={load}
           aria-busy={pending}

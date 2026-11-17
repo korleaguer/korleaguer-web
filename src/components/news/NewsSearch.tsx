@@ -63,6 +63,8 @@ export default function NewsSearch({
 }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
+  // 휴대폰 줄 맨 앞 돋보기. 입력칸을 닫으면 포커스를 여기로 돌린다(closeInput)
+  const openButtonRef = useRef<HTMLButtonElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [value, setValue] = useState(query ?? "");
   const [focused, setFocused] = useState(false);
@@ -132,21 +134,38 @@ export default function NewsSearch({
     inputRef.current?.focus();
   }
 
+  /**
+   * 돋보기로 연 입력칸을 닫고(update로 입력칸 글도 함께 바꾼다) 포커스를 둘 곳을 정한다(APG 펼침 버튼: 닫으면 연 버튼으로).
+   * 휴대폰 배치는 입력칸이 사라지니 먼저 화면에 그린 뒤 돋보기로 옮긴다(그대로 두면 포커스가 사라진 칸에 남아 화면 낭독기와
+   * 키보드가 문서 처음으로 돌아갔다). 입력칸이 그대로 보이면(PC 배치·알약 없는 휴대폰) 손가락 기기만 키보드를 내리고,
+   * 마우스·키보드 기기는 입력칸에 둔다. 손가락 기기에서는 옮긴 돋보기에 포커스 테두리를 그리지 말라고 알린다(아는 브라우저만,
+   * 손으로 누른 뒤 파란 테두리가 남아 고른 것처럼 보이지 않게). 화면은 움직이지 않는다(아이폰이 돋보기 쪽으로 튀지 않게)
+   */
+  function closeInput(update: () => void) {
+    flushSync(() => {
+      update();
+      setOpen(false);
+    });
+    const finger = window.matchMedia("(pointer: coarse)").matches;
+    const button = openButtonRef.current;
+    if (button && button.getClientRects().length > 0) {
+      button.focus({ preventScroll: true, focusVisible: !finger } as FocusOptions);
+    } else if (finger) {
+      inputRef.current?.blur();
+    }
+  }
+
   /** 취소: 입력칸을 닫고 열기 전 검색어로 돌린다(그 사이 친 말은 버린다) */
   function cancel() {
     const back = openedWith.current;
-    setOpen(false);
-    setValue(back ?? "");
     go(back);
-    inputRef.current?.blur();
+    closeInput(() => setValue(back ?? ""));
   }
 
   function pick(word: string) {
     haptic("select");
-    setValue(word);
     go(word);
-    setOpen(false);
-    inputRef.current?.blur();
+    closeInput(() => setValue(word));
   }
 
   // 지금 검색어가 알약의 말이면 그 알약을 켠다(대소문자 상관없이). 아니면 직접 친 말이라 줄 맨 앞에 켜진 알약으로 보인다
@@ -162,97 +181,102 @@ export default function NewsSearch({
 
   return (
     <div>
-      <div className={inputOnPhone ? "flex items-center gap-1" : "hidden lg:flex"}>
-        <form
-          role="search"
-          onSubmit={(e) => {
-            e.preventDefault();
-            go(value);
-            setOpen(false);
-            inputRef.current?.blur();
-          }}
-          className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-xl bg-surface px-3 shadow-[0_0_0_1px_var(--line)] focus-within:shadow-[0_0_0_2px_var(--accent)]"
-        >
-          <SearchIcon className="size-4 shrink-0 text-muted" />
-          <input
-            ref={inputRef}
-            type="search"
-            enterKeyHint="search"
-            aria-label={player ? `${player} 기사 제목 검색` : "기사 제목 검색"}
-            placeholder={placeholder}
-            maxLength={NEWS_QUERY_MAX}
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            onFocus={() => setFocused(true)}
-            onBlur={() => {
-              setFocused(false);
-              // 돋보기로 연 입력칸에서 다른 곳을 누르면, 친 말이 이미 찾은 말과 같을 때(새로 찾을 것이 없을 때) 도로 줄로.
-              // 지운 경우(빈 칸)도 닫혀 빈 입력칸이 남지 않고, 찾은 말은 줄 맨 앞 알약으로 보인다
-              if (open && value.trim() === (requested.current ?? "")) setOpen(false);
+      <div
+        // 입력 줄(입력칸·지우기·취소)과 그 밑 자주 나온 말을 한 덩어리로 본다. 그 안에서 Tab으로 옮겨 갈 때는 입력칸을 닫지 않는다
+        // (입력칸만 보던 때는 '지우기'·'취소'로 Tab을 누르는 순간 입력칸이 닫혀 버튼까지 사라졌다)
+        onFocus={() => setFocused(true)}
+        onBlur={(e) => {
+          if (e.currentTarget.contains(e.relatedTarget)) return;
+          setFocused(false);
+          // 돋보기로 연 입력칸에서 다른 곳을 누르면, 친 말이 이미 찾은 말과 같을 때(새로 찾을 것이 없을 때) 도로 줄로.
+          // 지운 경우(빈 칸)도 닫혀 빈 입력칸이 남지 않고, 찾은 말은 줄 맨 앞 알약으로 보인다
+          if (open && value.trim() === (requested.current ?? "")) setOpen(false);
+        }}
+      >
+        <div className={inputOnPhone ? "flex items-center gap-1" : "hidden lg:flex"}>
+          <form
+            role="search"
+            onSubmit={(e) => {
+              e.preventDefault();
+              go(value);
+              closeInput(() => {});
             }}
-            // 손가락 기기에서는 globals.css가 글자를 16px 아래로 두지 않는다(아이폰이 작은 입력칸을 누르면 화면을 키운다, 이슈 #264)
-            className="min-w-0 flex-1 self-stretch bg-transparent text-body outline-none placeholder:text-muted [&::-webkit-search-cancel-button]:hidden"
-          />
-          {/* 찾는 동안 점 3개(결과가 오면 사라진다) */}
-          {pending && (
-            <span aria-hidden className="loading-dots shrink-0 text-muted">
-              <span />
-              <span />
-              <span />
-            </span>
-          )}
-          {value !== "" && (
+            className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-xl bg-surface px-3 shadow-[0_0_0_1px_var(--line)] focus-within:shadow-[0_0_0_2px_var(--accent)]"
+          >
+            <SearchIcon className="size-4 shrink-0 text-muted" />
+            <input
+              ref={inputRef}
+              type="search"
+              enterKeyHint="search"
+              aria-label={player ? `${player} 기사 제목 검색` : "기사 제목 검색"}
+              placeholder={placeholder}
+              maxLength={NEWS_QUERY_MAX}
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              // 손가락 기기에서는 globals.css가 글자를 16px 아래로 두지 않는다(아이폰이 작은 입력칸을 누르면 화면을 키운다, 이슈 #264)
+              className="min-w-0 flex-1 self-stretch bg-transparent text-body outline-none placeholder:text-muted [&::-webkit-search-cancel-button]:hidden"
+            />
+            {/* 찾는 동안 점 3개(결과가 오면 사라진다) */}
+            {pending && (
+              <span aria-hidden className="loading-dots shrink-0 text-muted">
+                <span />
+                <span />
+                <span />
+              </span>
+            )}
+            {value !== "" && (
+              <button
+                type="button"
+                aria-label="검색어 지우기"
+                // 누르는 동안 입력칸이 포커스를 잃지 않게(지운 뒤 바로 다시 입력하거나 알약을 고를 수 있게)
+                onPointerDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  setValue("");
+                  go("");
+                  inputRef.current?.focus();
+                }}
+                className="press tap-target -mr-1.5 grid size-8 shrink-0 cursor-pointer place-items-center rounded-full text-muted hover:bg-surface-2"
+              >
+                <ClearIcon className="size-4" />
+              </button>
+            )}
+          </form>
+          {open && (
             <button
               type="button"
-              aria-label="검색어 지우기"
-              // 누르는 동안 입력칸이 포커스를 잃지 않게(지운 뒤 바로 다시 입력하거나 알약을 고를 수 있게)
+              // 누르는 순간 입력칸이 포커스를 잃어 버튼이 사라지기 전에 누르게 한다(닫기는 cancel이 한다)
               onPointerDown={(e) => e.preventDefault()}
-              onClick={() => {
-                setValue("");
-                go("");
-                inputRef.current?.focus();
-              }}
-              className="press tap-target -mr-1.5 grid size-8 shrink-0 cursor-pointer place-items-center rounded-full text-muted hover:bg-surface-2"
+              onClick={cancel}
+              className="press tap-target shrink-0 cursor-pointer px-2 text-button text-accent-ink lg:hidden"
             >
-              <ClearIcon className="size-4" />
+              취소
             </button>
           )}
-        </form>
-        {open && (
-          <button
-            type="button"
-            // 누르는 순간 입력칸이 포커스를 잃어 버튼이 사라지기 전에 누르게 한다(닫기는 cancel이 한다)
-            onPointerDown={(e) => e.preventDefault()}
-            onClick={cancel}
-            className="press tap-target shrink-0 cursor-pointer px-2 text-button text-accent-ink lg:hidden"
-          >
-            취소
-          </button>
+        </div>
+        {showTopicsUnderInput && (
+          <div className="mt-2.5 px-1 lg:hidden">
+            <p className="text-caption text-muted">{player ? `${player} 기사에 자주 나온 말` : "요즘 기사에 자주 나온 말"}</p>
+            {/* 여러 줄로 감기면 넓힌 누름 영역(44px)이 줄 사이에서 겹치지 않게 줄 사이를 max(12px 상당, 44px − 알약 높이)로 */}
+            <ul className="mt-1.5 flex flex-wrap gap-x-1.5 gap-y-[max(0.75rem,calc(44px-2rem))]">
+              {shownTopics.map((t) => (
+                <li key={t.word}>
+                  <button
+                    type="button"
+                    // 누르는 순간 입력칸이 포커스를 잃어 알약이 사라지기 전에 고르게 한다
+                    onPointerDown={(e) => e.preventDefault()}
+                    onClick={() => pick(t.word)}
+                    aria-label={topicLabel(t.word, t.count, false)}
+                    className="press tap-target inline-flex cursor-pointer items-center gap-1 rounded-full bg-surface px-3 py-1.5 text-button text-foreground shadow-[0_0_0_1px_var(--line)] hover:bg-surface-2"
+                  >
+                    {t.word}
+                    <span className="text-caption text-muted tabular-nums">{t.count}건</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
       </div>
-      {showTopicsUnderInput && (
-        <div className="mt-2.5 px-1 lg:hidden">
-          <p className="text-caption text-muted">{player ? `${player} 기사에 자주 나온 말` : "요즘 기사에 자주 나온 말"}</p>
-          {/* 여러 줄로 감기면 넓힌 누름 영역(44px)이 줄 사이에서 겹치지 않게 줄 사이를 max(12px 상당, 44px − 알약 높이)로 */}
-          <ul className="mt-1.5 flex flex-wrap gap-x-1.5 gap-y-[max(0.75rem,calc(44px-2rem))]">
-            {shownTopics.map((t) => (
-              <li key={t.word}>
-                <button
-                  type="button"
-                  // 누르는 순간 입력칸이 포커스를 잃어 알약이 사라지기 전에 고르게 한다
-                  onPointerDown={(e) => e.preventDefault()}
-                  onClick={() => pick(t.word)}
-                  aria-label={topicLabel(t.word, t.count, false)}
-                  className="press tap-target inline-flex cursor-pointer items-center gap-1 rounded-full bg-surface px-3 py-1.5 text-button text-foreground shadow-[0_0_0_1px_var(--line)] hover:bg-surface-2"
-                >
-                  {t.word}
-                  <span className="text-caption text-muted tabular-nums">{t.count}건</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
       {hasRow && (
         // PC: 입력칸 밑에 이름표 '자주 나온 말'과 알약(여러 줄로). 이름표는 목록 밖에 두고 목록 이름으로 잇는다(예전에는
         // 목록 항목이라 화면 낭독기가 알약 수를 하나 더 셌다). 이름표는 알약 첫 줄 가운데 높이에 맞춘다(알약 2.25rem, 글 1rem)
@@ -269,6 +293,7 @@ export default function NewsSearch({
           >
             <li className="shrink-0 lg:hidden">
               <button
+                ref={openButtonRef}
                 type="button"
                 aria-label={player ? `${player} 기사 직접 찾기` : "기사 직접 찾기"}
                 onClick={openInput}
