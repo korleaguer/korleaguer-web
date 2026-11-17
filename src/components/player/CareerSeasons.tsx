@@ -23,7 +23,10 @@ export default function CareerSeasons({ seasons: all }: { seasons: CareerSeason[
   const head = hitter ? ["경기", "타율", "홈런", "OPS", "wRC+", "WAR"] : ["등판", "이닝", "평균자책점", "탈삼진", "ERA-", "WAR"];
   return (
     <Section id="seasons-title" title="시즌별 기록" aside="MLB 정규시즌">
-      <div className="card overflow-x-auto">
+      {/* 좁은 폰·앱 큰 글씨에서는 표가 카드보다 넓어 이 상자 안에서 가로로 민다. 사파리는 스크롤 상자에 저절로 포커스를 주지 않아
+          키보드로 밀 수 있게 Tab이 머물게 한다(WCAG 2.1.1). 바깥 section이 이미 '시즌별 기록' 영역이라 같은 이름의 영역(region)을
+          또 만들지 않고 이름 붙은 묶음(group)으로 둔다 */}
+      <div tabIndex={0} role="group" aria-labelledby="seasons-title" className="card overflow-x-auto">
         <table className="w-full min-w-[20rem] text-meta tabular-nums">
           <thead className="text-caption text-muted">
             <tr className="border-b border-line">
