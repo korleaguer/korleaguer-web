@@ -75,6 +75,7 @@ function Row({ row, defaultOpen }: { row: ReportRow; defaultOpen: boolean }) {
       <h3>
         {/* 사진 44px | 글자 | 작은 막대 84px. 줄 폭이 16rem보다 좁으면(375px 휴대폰은 앱 큰 글씨 1.25배부터) 막대를 글자 아래로 내린다.
             한 줄에 두면 사진·막대가 px로 자리를 잡아 글자 칸이 한두 글자 폭으로 찌그러졌다. 보통 크기는 320px 휴대폰도 16rem을 넘는다.
+            그때는 글자 덩어리가 여러 줄로 길어져서, 가운데 맞춤이면 사진이 이름에서 떨어져 내려가므로 위(이름 줄)에 붙인다.
             -mx-2 px-2: 마우스를 올렸을 때 옅은 바탕이 글자에 붙지 않게 바탕만 카드 여백 쪽으로 넓힌다(내용 자리는 그대로) */}
         <button
           id={buttonId}
@@ -85,7 +86,7 @@ function Row({ row, defaultOpen }: { row: ReportRow; defaultOpen: boolean }) {
             setOpen(!open);
             setPressed(true);
           }}
-          className={`press-soft -mx-2 grid w-[calc(100%+1rem)] cursor-pointer grid-cols-[44px_minmax(0,1fr)_84px] items-center gap-x-3 rounded-xl px-2 pt-3 text-left hover:bg-surface-2 @max-[16rem]:grid-cols-[44px_minmax(0,1fr)] ${second ? "pb-1" : open ? "pb-3" : "pb-3 lg:pb-1"}`}
+          className={`press-soft -mx-2 grid w-[calc(100%+1rem)] cursor-pointer grid-cols-[44px_minmax(0,1fr)_84px] items-center gap-x-3 rounded-xl px-2 pt-3 text-left hover:bg-surface-2 @max-[16rem]:grid-cols-[44px_minmax(0,1fr)] @max-[16rem]:items-start ${second ? "pb-1" : open ? "pb-3" : "pb-3 lg:pb-1"}`}
         >
           {row.photo}
           <span className="min-w-0">{row.head}</span>

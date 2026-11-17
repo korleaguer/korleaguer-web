@@ -36,6 +36,14 @@ const SAID_BY_STATUS: Partial<Record<CardStatusKind, readonly string[]>> = {
 /** 거론 구단 둘째 줄에 이름을 쓰는 구단 수(나머지는 '외 n곳'). 휴대폰 한 줄에 들어가는 만큼 */
 const LINKED_IN_LINE = 2;
 
+/**
+ * 둘째 줄 글자 칸(거론 구단·이번 겨울 기사): 보통은 한 줄 말줄임에 위아래 4px(누르는 높이 24px).
+ * 줄 폭이 16rem보다 좁으면(큰 글씨) 자르지 않고 세 줄까지 흘린다. 이때 줄 수를 자르는 칸 안에 위아래 여백이 있으면
+ * 그 여백 안으로 넷째 줄 윗부분이 비쳐 보여서(앱 2배에서 확인) 여백을 칸 바깥(margin)으로 옮긴다
+ */
+const SECOND_LINE =
+  "truncate py-1 text-caption @max-[16rem]:my-1 @max-[16rem]:line-clamp-3 @max-[16rem]:whitespace-normal @max-[16rem]:py-0";
+
 /** 목록 줄 숫자 하나: '143경기'(games), 'wRC+ 102'(plus), '타율 .276'(rate). 숫자만 굵게 쓰려고 이름표와 값을 나눠 둔다 */
 interface Stat {
   kind: "games" | "plus" | "rate";
@@ -153,8 +161,7 @@ function buildRow(entry: MyPlayer, report: SeasonReport | null, isMine: boolean)
 
   const linkedTeams = linked ? linked.teams.filter((t) => t.linked > 0) : [];
   const second = linked ? (
-    // 줄 폭이 16rem보다 좁으면(큰 글씨) 자르지 않고 세 줄까지 흘린다
-    <p className="truncate py-1 text-caption tabular-nums @max-[16rem]:line-clamp-3 @max-[16rem]:whitespace-normal">
+    <p className={`${SECOND_LINE} tabular-nums`}>
       <span className="font-semibold text-muted">거론 구단</span>{" "}
       {linkedTeams.slice(0, LINKED_IN_LINE).map((t, i) => (
         <Fragment key={t.abbreviation}>
@@ -276,8 +283,7 @@ function NewsLine({ news }: { news: NewsHeadline }) {
       <span className="group-hover:underline">{news.titleKo ?? news.title}</span>
     </>
   );
-  const className =
-    "group block truncate py-1 text-caption text-foreground @max-[16rem]:line-clamp-3 @max-[16rem]:whitespace-normal";
+  const className = `group block ${SECOND_LINE} text-foreground`;
   if (news.id == null) {
     return (
       <a href={news.url} target="_blank" rel="noopener noreferrer" className={className}>
