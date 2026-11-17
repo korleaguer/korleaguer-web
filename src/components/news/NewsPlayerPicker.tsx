@@ -59,7 +59,7 @@ export default function NewsPlayerPicker({
       <ul
         ref={listRef}
         // 휴대폰: 화면 양끝까지 밀어 볼 수 있게 main의 좌우 여백만큼 넓힌다. 스크롤 막대는 숨긴다
-        className="no-scrollbar -mx-3 flex gap-2 overflow-x-auto px-3 pb-1 sm:-mx-6 sm:px-6 lg:mx-0 lg:flex-col lg:gap-0.5 lg:overflow-visible lg:px-0 lg:pb-0"
+        className="no-scrollbar -mx-3 flex gap-2 overflow-x-auto overflow-y-hidden px-3 py-1 sm:-mx-6 sm:px-6 lg:mx-0 lg:flex-col lg:gap-0.5 lg:overflow-visible lg:px-0 lg:py-0"
       >
         <li className="shrink-0">
           <Chip href={newsHref(null, query)} current={selected === null}>

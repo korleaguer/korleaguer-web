@@ -131,7 +131,7 @@ export default function JumpNav({ targets }: { targets: JumpTarget[] }) {
     >
       {/* 알약 32px에 누르는 영역 44px(.tap-target, 이슈 #251). 가로로 밀리는 줄은 넘친 부분을 잘라서, 넓힌 영역이 들어가게 줄 위아래에
           6px 여백을 두고 그만큼 탭 줄 여백(py-2 → py-0.5)을 줄여 높이는 그대로다 */}
-      <ul ref={listRef} className="flex gap-1.5 overflow-x-auto py-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <ul ref={listRef} className="flex gap-1.5 overflow-x-auto overflow-y-hidden py-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {targets.map((t, i) => {
           const on = i === active;
           return (
