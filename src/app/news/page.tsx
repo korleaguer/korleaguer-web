@@ -92,7 +92,7 @@ async function NewsContent({ searchParams }: Pick<Props, "searchParams">) {
         : `${searched} ${queryCount === null ? `${items.length}건 이상` : `${queryCount}건`}`;
 
   return (
-    // 휴대폰: 선수 알약 → 그 선수 기사에 자주 나온 말 알약(검색은 그 줄의 돋보기) → 목록.
+    // 휴대폰: 선수 알약 → 그 선수 기사에 자주 나온 말 알약(검색은 그 줄 맨 앞 '검색' 버튼) → 목록.
     // PC: 왼쪽 칸에 선수 목록(내려도 따라온다), 오른쪽 칸에 검색창·자주 나온 말과 목록(줄이 너무 길지 않게 폭을 묶는다)
     <div className="space-y-3 lg:grid lg:grid-cols-[12rem_minmax(0,48rem)] lg:grid-rows-[auto_1fr] lg:items-start lg:gap-x-6 lg:gap-y-3 lg:space-y-0">
       <div className="lg:sticky lg:top-6 lg:col-start-1 lg:row-span-2 lg:row-start-1">

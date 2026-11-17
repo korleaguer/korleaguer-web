@@ -1,4 +1,4 @@
-"use client"; // 입력하는 대로 주소를 바꾸고, 돋보기로 입력칸을 열고 닫아야 해서 클라이언트 컴포넌트다.
+"use client"; // 입력하는 대로 주소를 바꾸고, '검색' 버튼으로 입력칸을 열고 닫아야 해서 클라이언트 컴포넌트다.
 
 import Link, { useLinkStatus } from "next/link";
 import { useRouter } from "next/navigation";
@@ -39,7 +39,7 @@ function isFingerDevice(): boolean {
  * 고른 선수 안에서). 요약은 찾지 않는다: 목록에 제목만 보여 요약에만 있는 기사는 왜 나왔는지 알 수 없었다(이슈 #217).
  * - 휴대폰: 검색창 대신 자주 나온 말 알약 줄(가로로 밀어 본다). 이 탭은 새 소식을 훑으러 오고 글자를 쳐서 찾는 일은 드물어,
  *   키보드 없이 눌러 보게 했다(사용자 11-15 시안 C). 누르면 그 말로 거르고 파랗게 켜지며, 켜진 알약을 다시 누르면 끈다.
- *   줄 맨 앞 돋보기를 누르면 입력칸이 열린다. 취소는 열기 전 상태로 돌린다. 직접 친 말(알약에 없는 말)은 줄 맨 앞에 켜진 알약으로
+ *   줄 맨 앞 '검색' 버튼(돋보기 + 글자, 사용자 결정 11-17)을 누르면 입력칸이 열린다. 취소는 열기 전 상태로 돌린다. 직접 친 말(알약에 없는 말)은 줄 맨 앞에 켜진 알약으로
  *   남아 무엇으로 걸렀는지 늘 보인다. 보일 알약이 없으면(말이 적은 선수) 입력칸만 보인다.
  * - PC: 입력칸은 늘 보이고 그 밑에 알약을 늘 보인다(자리가 넉넉하다).
  * - 입력하다 잠깐 멈추면 바로 찾고(한글을 치는 도중에는 조금 더 기다린다, typingPause), 검색 키(엔터)를 누르면 곧바로
@@ -69,13 +69,13 @@ export default function NewsSearch({
 }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
-  // 휴대폰 줄 맨 앞 돋보기. 입력칸을 닫으면 포커스를 여기로 돌린다(closeInput)
+  // 휴대폰 줄 맨 앞 '검색' 버튼. 입력칸을 닫으면 포커스를 여기로 돌린다(closeInput)
   const openButtonRef = useRef<HTMLButtonElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [value, setValue] = useState(query ?? "");
   const [focused, setFocused] = useState(false);
   const [pending, startTransition] = useTransition();
-  // 휴대폰에서 돋보기로 입력칸을 연 상태(PC는 입력칸이 늘 보여 쓰지 않는다)와, 열 때의 검색어(취소하면 여기로 돌린다)
+  // 휴대폰에서 '검색' 버튼으로 입력칸을 연 상태(PC는 입력칸이 늘 보여 쓰지 않는다)와, 열 때의 검색어(취소하면 여기로 돌린다)
   const [open, setOpen] = useState(false);
   const openedWith = useRef<string | null>(null);
   const topicsLabelId = useId();
@@ -133,7 +133,7 @@ export default function NewsSearch({
     timer.current = wait === null ? null : setTimeout(() => go(next), wait);
   }
 
-  /** 돋보기: 입력칸을 열고 바로 입력(키보드). iOS는 누른 순간에 포커스해야 키보드가 올라와서 먼저 화면에 그린 뒤 포커스한다 */
+  /** '검색' 버튼: 입력칸을 열고 바로 입력(키보드). iOS는 누른 순간에 포커스해야 키보드가 올라와서 먼저 화면에 그린 뒤 포커스한다 */
   function openInput() {
     haptic("select");
     openedWith.current = query;
@@ -142,11 +142,11 @@ export default function NewsSearch({
   }
 
   /**
-   * 돋보기로 연 입력칸을 닫고(update로 입력칸 글도 함께 바꾼다) 포커스를 둘 곳을 정한다(APG 펼침 버튼: 닫으면 연 버튼으로).
-   * 휴대폰 배치는 입력칸이 사라지니 먼저 화면에 그린 뒤 돋보기로 옮긴다(그대로 두면 포커스가 사라진 칸에 남아 화면 낭독기와
+   * '검색' 버튼으로 연 입력칸을 닫고(update로 입력칸 글도 함께 바꾼다) 포커스를 둘 곳을 정한다(APG 펼침 버튼: 닫으면 연 버튼으로).
+   * 휴대폰 배치는 입력칸이 사라지니 먼저 화면에 그린 뒤 '검색' 버튼으로 옮긴다(그대로 두면 포커스가 사라진 칸에 남아 화면 낭독기와
    * 키보드가 문서 처음으로 돌아갔다). 입력칸이 그대로 보이면(PC 배치·알약 없는 휴대폰) 손가락 기기만 키보드를 내리고,
-   * 마우스·키보드 기기는 입력칸에 둔다. 화면은 움직이지 않는다(아이폰이 돋보기 쪽으로 튀지 않게).
-   * 옮긴 돋보기의 포커스 테두리는 키보드로 닫았을 때만 그린다(byKeyboard, 아는 브라우저만). 손으로 누른 뒤 파란 테두리가
+   * 마우스·키보드 기기는 입력칸에 둔다. 화면은 움직이지 않는다(아이폰이 버튼 쪽으로 튀지 않게).
+   * 옮긴 버튼의 포커스 테두리는 키보드로 닫았을 때만 그린다(byKeyboard, 아는 브라우저만). 손으로 누른 뒤 파란 테두리가
    * 남으면 고른 것처럼 보인다. 기기 종류(손가락 기기)로 나누면 키보드를 단 태블릿에서 Tab·엔터로 닫아도 테두리가 사라졌다
    */
   function closeInput(update: () => void, byKeyboard: boolean) {
@@ -196,7 +196,7 @@ export default function NewsSearch({
         onBlur={(e) => {
           if (e.currentTarget.contains(e.relatedTarget)) return;
           setFocused(false);
-          // 돋보기로 연 입력칸에서 다른 곳을 누르면, 친 말이 이미 찾은 말과 같을 때(새로 찾을 것이 없을 때) 도로 줄로.
+          // '검색' 버튼으로 연 입력칸에서 다른 곳을 누르면, 친 말이 이미 찾은 말과 같을 때(새로 찾을 것이 없을 때) 도로 줄로.
           // 지운 경우(빈 칸)도 닫혀 빈 입력칸이 남지 않고, 찾은 말은 줄 맨 앞 알약으로 보인다
           if (open && value.trim() === (requested.current ?? "")) setOpen(false);
         }}
@@ -210,7 +210,7 @@ export default function NewsSearch({
               // 손가락 기기의 엔터는 화면 자판의 '검색' 키라 손으로 누른 것으로 본다(키보드 테두리를 그리지 않는다)
               closeInput(() => {}, !isFingerDevice());
             }}
-            // 테두리는 입력칸 전용 색(바탕 대비 3:1 이상). 알약·돋보기의 옅은 line 선과 달리 '글을 치는 칸'으로 보여야 한다
+            // 테두리는 입력칸 전용 색(바탕 대비 3:1 이상). 알약·'검색' 버튼의 옅은 line 선과 달리 '글을 치는 칸'으로 보여야 한다
             className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-xl bg-surface px-3 shadow-[0_0_0_1px_var(--field-line)] focus-within:shadow-[0_0_0_2px_var(--accent)]"
           >
             <SearchIcon className="size-4 shrink-0 text-muted" />
@@ -292,7 +292,7 @@ export default function NewsSearch({
         // PC: 입력칸 밑에 이름표 '자주 나온 말'과 알약(여러 줄로). 이름표는 목록 밖에 두고 목록 이름으로 잇는다(예전에는
         // 목록 항목이라 화면 낭독기가 알약 수를 하나 더 셌다). 이름표는 알약 첫 줄 가운데 높이에 맞춘다(알약 2.25rem, 글 1rem)
         <div className="lg:mt-2.5 lg:flex lg:items-start lg:gap-1.5">
-          {/* 휴대폰은 이름표를 보이지 않는다(돋보기와 알약만, 사용자 11-15 시안 C). 목록 이름에는 어느 범위인지 붙인다 */}
+          {/* 휴대폰은 이름표를 보이지 않는다('검색' 버튼과 알약만, 사용자 11-15 시안 C). 목록 이름에는 어느 범위인지 붙인다 */}
           <p id={topicsLabelId} className="hidden shrink-0 pr-1 pt-2.5 text-caption text-muted lg:block">
             <span className="sr-only">{player ? `${player} 기사에 ` : "요즘 기사에 "}</span>
             자주 나온 말
@@ -306,11 +306,15 @@ export default function NewsSearch({
               <button
                 ref={openButtonRef}
                 type="button"
-                aria-label={player ? `${player} 기사 직접 찾기` : "기사 직접 찾기"}
+                // 돋보기만 있으면 검색인 줄 알아보기 어려워 '검색' 글자를 붙인다(아이콘 + 글자, 사용자 결정 11-17).
+                // 높이는 옆 알약과 같은 36px라 줄 높이가 그대로다. 글자는 돋보기와 같은 흐린 색이라 자주 나온 말(본문 글자)보다
+                // 앞에 나서지 않는다. 이름은 보이는 글자로 시작한다(음성 명령으로 부를 수 있게, WCAG 2.5.3)
+                aria-label={`검색, ${player ? `${player} ` : ""}기사 제목에서 찾기`}
                 onClick={openInput}
-                className="press tap-target grid size-9 cursor-pointer place-items-center rounded-full bg-surface text-muted shadow-[0_0_0_1px_var(--line)] hover:bg-surface-2"
+                className="press tap-target flex h-9 cursor-pointer items-center gap-1 whitespace-nowrap rounded-full bg-surface pl-2.5 pr-3 text-label text-muted shadow-[0_0_0_1px_var(--line)] hover:bg-surface-2"
               >
-                <SearchIcon className="size-4" />
+                <SearchIcon className="size-4 shrink-0" />
+                검색
               </button>
             </li>
             {typed && (
