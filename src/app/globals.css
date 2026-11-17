@@ -313,6 +313,12 @@
 @custom-variant in-ios-app (&:where([data-app="ios"] *));
 
 /*
+ * 안드로이드 앱 안에서만. 기기마다 익숙한 그림이 다른 곳(공유 버튼: 아이폰은 위 화살표가 나오는 상자, 안드로이드는 점 셋을 잇는 선)에 쓴다.
+ * 서버가 그린 HTML과 상관없이 CSS로 갈려서 화면을 이어받을 때 그림이 바뀌며 깜빡이지 않는다.
+ */
+@custom-variant in-android-app (&:where([data-app="android"] *));
+
+/*
  * 아래 규칙은 @layer base / components 안에 둔다.
  * 레이어 밖에 두면 Tailwind 클래스(focus-visible:outline-none 등)보다 항상 이겨 버린다.
  */
