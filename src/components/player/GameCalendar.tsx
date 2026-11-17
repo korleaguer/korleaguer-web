@@ -1,6 +1,6 @@
 "use client"; // 달·날짜를 누르면 달력과 아래 경기 줄을 바꿔야 해서 클라이언트 컴포넌트다.
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { GameLine, MinorGameLine, Role, RosterMove } from "@/lib/api";
 import { buildGameCalendar, lineOf, monthCells, monthSummary, type CalendarDay, type DayTone } from "@/lib/gameLog";
 import { haptic } from "@/lib/app";
@@ -25,7 +25,7 @@ const TONE: Record<Exclude<DayTone, "rest">, string> = {
   pending: "border border-line text-muted",
 };
 
-/** 채운 칸(흰 글자). 날짜를 조금 흐리게 하고, 넓은 칸의 팀 로고는 흰 바탕에 올린다 */
+/** 채운 칸(흰 글자). 넓은 칸의 팀 로고는 흰 바탕에 올린다 */
 function filled(tone: DayTone): boolean {
   return tone === "hr" || tone === "multi";
 }
@@ -88,6 +88,11 @@ export default function GameCalendar({
 
   // ---- 상세 창 ----
   const [sheetKey, setSheetKey] = useState<string | null>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  /** 창을 연 버튼(날짜 칸이나 '경기 상세 · 영상 보기'). 닫으면 여기로 포커스를 돌려준다 */
+  const openerRef = useRef<HTMLElement | null>(null);
+  /** 창이 처음 연 날짜와 마지막으로 보인 날짜(앞뒤 경기로 바뀌었나) */
+  const spanRef = useRef<{ first: string; last: string } | null>(null);
   /** 창에서 앞뒤로 넘길 날짜들(누를 수 있는 날, 오래된 날부터) */
   const order = useMemo(
     () => [...calendar.days.values()].filter((d) => d.selectable).map((d) => d.key).sort(),
@@ -149,6 +154,26 @@ export default function GameCalendar({
     return () => window.removeEventListener("popstate", onPop);
   }, [dayOfGame, showDay]);
 
+  // 창이 닫히면 연 버튼으로 포커스를 돌려준다(WAI-ARIA APG Dialog, 이슈 #249). 창은 부품째 지워지며 닫혀서 브라우저가
+  // 돌려주지 못한다. 앞뒤 경기로 날짜가 바뀌었으면 마지막으로 본 날짜 칸으로. 주소(?game=)로 바로 열린 창은 연 버튼이 없어 두지 않는다
+  useEffect(() => {
+    if (sheetKey) {
+      spanRef.current = spanRef.current ? { ...spanRef.current, last: sheetKey } : { first: sheetKey, last: sheetKey };
+      return;
+    }
+    const span = spanRef.current;
+    const opener = openerRef.current;
+    spanRef.current = null;
+    openerRef.current = null;
+    if (!span || !opener) return;
+    // 달력 밖 다른 곳에 이미 포커스가 있으면(창을 닫고 바로 다른 것을 누른 경우) 빼앗지 않는다. 포커스가 body이거나
+    // 달력 안(브라우저가 창을 닫으며 처음 연 칸으로 먼저 돌려준 경우)이면 우리가 정한 칸·버튼으로 옮긴다
+    const focused = document.activeElement;
+    if (focused && focused !== document.body && !rootRef.current?.contains(focused)) return;
+    const cell = rootRef.current?.querySelector<HTMLElement>(`[data-day="${span.last}"]`);
+    (span.first === span.last && opener.isConnected ? opener : cell)?.focus();
+  }, [sheetKey]);
+
   if (!month) return null;
 
   const pitcher = role === "PITCHER";
@@ -164,9 +189,10 @@ export default function GameCalendar({
     setMonthKey(key);
     setDayKey(calendar.months.find((m) => m.key === key)?.defaultDay ?? null);
   };
-  const pickDay = (key: string) => {
+  const pickDay = (key: string, from: HTMLElement) => {
     haptic("select");
     setDayKey(key);
+    if (sheetKey === null) openerRef.current = from;
     openSheet(key);
   };
   const sheetDay = sheetKey ? (calendar.days.get(sheetKey) ?? null) : null;
@@ -174,7 +200,7 @@ export default function GameCalendar({
   const goTo = (key: string | undefined) => (key ? () => openSheet(key) : null);
 
   return (
-    <div className="card overflow-hidden">
+    <div ref={rootRef} className="card overflow-hidden">
       {/* 달 칸: 기간 알약과 같은 모양(고른 달은 연파랑). 경기 없는 달은 흐리게 두고 누를 수 없다 */}
       <div
         role="group"
@@ -192,7 +218,7 @@ export default function GameCalendar({
               disabled={empty}
               aria-label={empty ? `${m.month}월 경기 없음` : `${m.month}월`}
               onClick={() => pickMonth(m.key)}
-              className={`min-w-10 flex-1 shrink-0 rounded-full px-1.5 py-1.5 text-label tabular-nums transition-colors ${
+              className={`tap-target min-w-10 flex-1 shrink-0 rounded-full px-1.5 py-1.5 text-label tabular-nums transition-colors ${
                 on
                   ? "bg-accent-soft text-accent-ink"
                   : empty
@@ -278,8 +304,9 @@ export default function GameCalendar({
       {selected && (
         <button
           type="button"
-          onClick={() => {
+          onClick={(e) => {
             haptic("select");
+            if (sheetKey === null) openerRef.current = e.currentTarget;
             openSheet(selected.key);
           }}
           className="press-soft flex w-full items-center justify-center gap-1 border-t border-line py-2.5 text-label text-accent-ink"
@@ -306,21 +333,24 @@ export default function GameCalendar({
 }
 
 /** 날짜 칸 하나. 휴대폰은 날짜와 짧은 말, 넓은 화면은 상대 로고·한 줄·팀 결과까지 */
-function DayCell({ day, on, onPick }: { day: CalendarDay; on: boolean; onPick: (key: string) => void }) {
+function DayCell({ day, on, onPick }: { day: CalendarDay; on: boolean; onPick: (key: string, from: HTMLElement) => void }) {
   const tone = day.tone as Exclude<DayTone, "rest">;
   const main = day.main;
   const line = lineOf(main);
   const level = main.kind === "minor" ? main.game.level : null;
   const logoUrl = main.kind === "mlb" ? teamLogoUrl(line.opponentAbbr) : teamLogoUrlById(main.game.opponentId);
   const color = main.kind === "mlb" ? teamColor(line.opponentAbbr) : teamColorById(main.game.opponentId);
-  const dim = filled(tone) ? "opacity-80" : "text-muted";
+  // 날짜·단계·결과는 덜 강조한다. 채운 칸은 흰 글자 그대로(80%로 흐리면 대비가 3.9:1로 기준 4.5:1에 못 미친다, 이슈 #249).
+  // 강조는 굵기로 나눈다(날짜 400, 가운데 말 700)
+  const dim = filled(tone) ? "" : "text-muted";
 
   return (
     <button
       type="button"
       aria-pressed={on}
       aria-label={day.speech}
-      onClick={() => onPick(day.key)}
+      data-day={day.key}
+      onClick={(e) => onPick(day.key, e.currentTarget)}
       className={`flex h-13 min-w-0 cursor-pointer flex-col justify-between rounded-lg p-1 text-left sm:h-19 sm:p-2 ${TONE[tone]} ${
         on ? "ring-2 ring-foreground ring-offset-1 ring-offset-surface" : ""
       }`}

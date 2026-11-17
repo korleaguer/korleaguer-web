@@ -70,6 +70,20 @@ export default function GameDetailSheet({
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const prevRef = useRef<HTMLButtonElement>(null);
+  const nextRef = useRef<HTMLButtonElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  /** 마지막으로 누른 앞뒤 버튼. 끝 경기에 닿아 그 버튼이 꺼지면 포커스가 사라지니 반대쪽(없으면 닫기)으로 옮긴다(이슈 #249) */
+  const pressedRef = useRef<"prev" | "next" | null>(null);
+  useEffect(() => {
+    const pressed = pressedRef.current;
+    pressedRef.current = null;
+    if (!pressed) return;
+    const same = pressed === "prev" ? prevRef.current : nextRef.current;
+    if (!same?.disabled) return;
+    const other = pressed === "prev" ? nextRef.current : prevRef.current;
+    (other && !other.disabled ? other : closeRef.current)?.focus();
+  }, [day.key]);
 
   // 열린 동안 뒤 페이지가 스크롤되지 않게 하고, 모달로 연다(포커스가 창 안에 머문다)
   useEffect(() => {
@@ -141,16 +155,39 @@ export default function GameDetailSheet({
         >
           <div aria-hidden className="mx-auto mt-2 h-1.5 w-10 rounded-full bg-line sm:hidden" />
           <div className="flex items-center gap-1 px-2 py-2 sm:py-3">
-            <NavButton label="이전 경기" onClick={onPrev} dir="prev" />
+            <NavButton
+              ref={prevRef}
+              label="이전 경기"
+              dir="prev"
+              onClick={
+                onPrev &&
+                (() => {
+                  pressedRef.current = "prev";
+                  onPrev();
+                })
+              }
+            />
             <h2 id={titleId} className="min-w-0 flex-1 text-center text-heading tabular-nums">
               {formatDate(day.key)}
             </h2>
-            <NavButton label="다음 경기" onClick={onNext} dir="next" />
+            <NavButton
+              ref={nextRef}
+              label="다음 경기"
+              dir="next"
+              onClick={
+                onNext &&
+                (() => {
+                  pressedRef.current = "next";
+                  onNext();
+                })
+              }
+            />
             <button
+              ref={closeRef}
               type="button"
               aria-label="닫기"
               onClick={onClose}
-              className="press grid size-10 shrink-0 place-items-center rounded-full text-muted hover:bg-surface-2"
+              className="press grid size-11 shrink-0 place-items-center rounded-full text-muted hover:bg-surface-2"
             >
               <svg aria-hidden viewBox="0 0 16 16" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
                 <path d="M4 4l8 8M12 4l-8 8" />
@@ -165,9 +202,20 @@ export default function GameDetailSheet({
   );
 }
 
-function NavButton({ label, onClick, dir }: { label: string; onClick: (() => void) | null; dir: "prev" | "next" }) {
+function NavButton({
+  ref,
+  label,
+  onClick,
+  dir,
+}: {
+  ref: RefObject<HTMLButtonElement | null>;
+  label: string;
+  onClick: (() => void) | null;
+  dir: "prev" | "next";
+}) {
   return (
     <button
+      ref={ref}
       type="button"
       aria-label={label}
       disabled={!onClick}
@@ -175,7 +223,7 @@ function NavButton({ label, onClick, dir }: { label: string; onClick: (() => voi
         haptic("select");
         onClick?.();
       }}
-      className="press grid size-10 shrink-0 place-items-center rounded-full text-muted hover:bg-surface-2 disabled:opacity-30"
+      className="press grid size-11 shrink-0 place-items-center rounded-full text-muted hover:bg-surface-2 disabled:opacity-30"
     >
       <svg aria-hidden viewBox="0 0 16 16" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
         <path d={dir === "prev" ? "M10 3 5 8l5 5" : "m6 3 5 5-5 5"} />
@@ -208,7 +256,7 @@ function SheetBody({ playerId, role, day }: { playerId: number; role: Role; day:
               type="button"
               aria-pressed={i === index}
               onClick={() => setIndex(i)}
-              className={`rounded-full px-3 py-1.5 text-label ${i === index ? "bg-accent-soft text-accent-ink" : "text-muted hover:bg-surface-2"}`}
+              className={`tap-target rounded-full px-3 py-1.5 text-label ${i === index ? "bg-accent-soft text-accent-ink" : "text-muted hover:bg-surface-2"}`}
             >
               {label}
             </button>
@@ -544,7 +592,7 @@ function PlayRow({
           type="button"
           aria-label={`${playTitle(play)} 영상 보기`}
           onClick={onPlay}
-          className={`press grid size-9 shrink-0 place-items-center rounded-full ${playing ? "bg-accent text-accent-fg" : "bg-surface-2 text-foreground"}`}
+          className={`press tap-target grid size-9 shrink-0 place-items-center rounded-full ${playing ? "bg-accent text-accent-fg" : "bg-surface-2 text-foreground"}`}
         >
           <LoadingDots loading={loading}>
             <svg aria-hidden viewBox="0 0 16 16" className="size-3.5" fill="currentColor">
