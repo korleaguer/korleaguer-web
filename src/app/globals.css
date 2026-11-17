@@ -331,11 +331,15 @@
     overflow-wrap: break-word;
   }
 
-  /* 브라우저 기본 모양(선택 영역, 커서, 포커스, 스크롤바, 밑줄)도 같은 색으로 맞춘다. */
+  /*
+   * 브라우저 기본 모양(선택 영역, 커서, 포커스, 스크롤바, 밑줄)도 같은 색으로 맞춘다.
+   * 스크롤 막대 손잡이는 흐린 글자색 80%: 바탕 대비 라이트 3.57:1, 다크 5.13:1(WCAG 1.4.11 3:1).
+   * 예전 45%는 1.9:1(다크 2.4:1)이라 PC에서 손잡이가 잘 보이지 않았다(전수조사)
+   */
   html {
     accent-color: var(--accent);
     caret-color: var(--accent);
-    scrollbar-color: color-mix(in oklab, var(--muted) 45%, transparent) var(--background);
+    scrollbar-color: color-mix(in oklab, var(--muted) 80%, transparent) var(--background);
   }
 
   /*
