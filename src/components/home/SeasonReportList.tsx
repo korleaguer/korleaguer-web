@@ -65,25 +65,31 @@ export default function SeasonReportList({
   const rows = entries.map((entry) =>
     buildRow(entry, byId.get(entry.player.id) ?? null, myIds.includes(entry.player.id)),
   );
+  const bars = barsGuide(entries, byId);
   return (
     <div className="card px-4 pb-1">
-      <p className="pb-0.5 pt-2.5 text-caption text-muted">{guide(entries, byId)}</p>
+      {/* 한 줄에 못 들어가면(360px 휴대폰 등) 고른 그림처럼 두 덩어리 사이에서만 줄을 바꾼다. '·'는 앞 덩어리에 붙여
+          줄 머리에 오지 않게(375px는 한 줄에 들어간다) */}
+      <p className="pb-0.5 pt-2.5 text-caption text-muted">
+        {bars && `${bars}\u00a0· `}
+        <span className="whitespace-nowrap">줄을 누르면 펼쳐져요</span>
+      </p>
       <SeasonReportRows rows={rows} />
     </div>
   );
 }
 
 /**
- * 목록 맨 위 흐린 안내: '막대 = 4~9월 달마다 wRC+(투수는 ERA+) · 줄을 누르면 펼쳐져요'.
- * 막대 이름은 목록에 있는 선수만큼만(타자만 있으면 wRC+, 투수만 있으면 ERA+). 달별 기록이 없으면(옛 api) 펼치기 안내만
+ * 목록 맨 위 흐린 안내의 앞 덩어리: '막대 = 4~9월 달마다 wRC+(투수는 ERA+)'(뒤에 '줄을 누르면 펼쳐져요').
+ * 막대 이름은 목록에 있는 선수만큼만(타자만 있으면 wRC+, 투수만 있으면 ERA+). 달별 기록이 없으면(옛 api) null(펼치기 안내만)
  */
-function guide(entries: MyPlayer[], byId: Map<number, SeasonReport>): string {
+function barsGuide(entries: MyPlayer[], byId: Map<number, SeasonReport>): string | null {
   const withMonths = entries.filter((e) => (byId.get(e.player.id)?.months?.length ?? 0) > 0);
-  if (withMonths.length === 0) return "줄을 누르면 펼쳐져요";
+  if (withMonths.length === 0) return null;
   const months = withMonths.flatMap((e) => byId.get(e.player.id)?.months?.map((m) => m.month) ?? []);
   const pitchers = withMonths.filter((e) => e.player.role === "PITCHER").length;
   const stat = pitchers === 0 ? "wRC+" : pitchers === withMonths.length ? "ERA+" : "wRC+(투수는 ERA+)";
-  return `막대 = ${Math.min(...months)}~${Math.max(...months)}월 달마다 ${stat} · 줄을 누르면 펼쳐져요`;
+  return `막대 = ${Math.min(...months)}~${Math.max(...months)}월 달마다 ${stat}`;
 }
 
 function buildRow(entry: MyPlayer, report: SeasonReport | null, isMine: boolean): ReportRow {
@@ -104,8 +110,9 @@ function buildRow(entry: MyPlayer, report: SeasonReport | null, isMine: boolean)
 
   const head = (
     <>
-      {/* 이름·판정·상태는 한 줄에, 모자라면 덩어리째 다음 줄로 */}
-      <span className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+      {/* 이름·판정·상태는 한 줄에, 모자라면 덩어리째 다음 줄로. 사이 6px: 375px 휴대폰에서 '김혜성 트리플A에서 보낸 시즌'이
+          고른 그림처럼 한 줄에 든다(8px이면 글자 칸 167px을 0.4px 넘어 판정이 다음 줄로 갔다) */}
+      <span className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
         <span className="whitespace-nowrap text-heading">
           {player.nameKo}
           {isMine && (
@@ -124,7 +131,9 @@ function buildRow(entry: MyPlayer, report: SeasonReport | null, isMine: boolean)
         {status && <StatusText status={status} />}
       </span>
       {stats.length > 0 && (
-        <span className="mt-0.5 block text-meta text-muted tabular-nums">
+        // 고른 그림처럼 12px(Caption)에 숫자만 굵게. 13px이면 375px 휴대폰에서 '85경기 · wRC+ 75 · 타율 .262'가
+        // 글자 칸(167px)을 넘어 두 줄이 됐다
+        <span className="mt-0.5 block text-caption text-muted tabular-nums">
           {stats.map((s, i) => (
             <Fragment key={s.kind}>
               {/* '·'는 앞 숫자에 붙여 줄이 바뀌어도 줄 머리에 '·'가 오지 않게 */}
@@ -132,7 +141,7 @@ function buildRow(entry: MyPlayer, report: SeasonReport | null, isMine: boolean)
               <span className="whitespace-nowrap">
                 {s.level && `${s.level} `}
                 {s.kind !== "games" && `${s.label} `}
-                <span className="font-semibold text-foreground">{s.value}</span>
+                <span className="font-bold text-foreground">{s.value}</span>
                 {s.kind === "games" && s.label}
               </span>
             </Fragment>
