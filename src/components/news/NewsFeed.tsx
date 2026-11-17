@@ -58,9 +58,15 @@ export default function NewsFeed({
     const at = focusRowAt.current;
     if (at === null) return;
     focusRowAt.current = null;
-    // 줄마다 기사 링크가 하나다. 새로 붙은 줄이 없으면(마지막 쪽이 비었으면) 마지막 줄로
+    // 줄마다 기사 링크가 하나다(링크가 줄 전체다). 새로 붙은 줄이 없으면(마지막 쪽이 비었으면) 마지막 줄로
     const links = listRef.current?.querySelectorAll<HTMLElement>("li > a") ?? [];
-    (links[at] ?? links[links.length - 1])?.focus({ preventScroll: true });
+    const row = links[at] ?? links[links.length - 1];
+    if (!row) return;
+    // 화면은 그 줄이 다 보일 만큼만 옮긴다(이미 다 보이면 그대로). 버튼이 화면 아래 끝에 있었으면 새 첫 기사가 화면 밑으로
+    // 잘려 포커스가 어디로 갔는지 보이지 않았다. 스크롤을 포커스에 맡기면 브라우저에 따라 그 줄을 화면 가운데까지 끌어올려
+    // 읽던 자리가 크게 튄다. 부드럽게 굴리지 않고 바로 옮긴다(ShowMore와 같다). 움직이는 장면이 없어 동작 줄이기 설정과 상관없다
+    row.focus({ preventScroll: true });
+    row.scrollIntoView({ block: "nearest" });
   }, [rows]);
 
   function load() {
