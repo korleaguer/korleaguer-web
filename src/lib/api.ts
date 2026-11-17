@@ -1500,9 +1500,32 @@ const getMyPlayersCached = cache(async (ids: string, days: number) => {
   return myPlayersFromApi(ids, days);
 });
 
-// cache는 인자를 값이 아니라 참조로 비교하므로, 배열을 문자열로 바꿔 넘긴다.
-export function getMyPlayers(ids: readonly number[], days: number) {
-  return getMyPlayersCached(ids.join(","), days);
+/** /api/my가 한 번에 받는 선수 수(korleaguer-server MyPlayersService.MAX_IDS, 넘으면 400) */
+const MY_IDS_PER_REQUEST = 20;
+
+/**
+ * GET /api/my. api가 한 번에 20명까지만 받아서, 넘으면 20명씩 나눠 함께 부르고 선수를 준 순서대로 이어 붙인다(전수조사 L426).
+ * 예전에는 홈 층이 명단을 20명에서 잘라 21번째부터 말없이 빠지고, 비시즌 성적표는 400으로 통째 오류였다.
+ * 하나라도 실패하면 실패로 돌려준다(몇 명만 빠진 화면은 빠진 줄 알 수 없다). 20명 이하면 예전과 같은 요청 한 번이라
+ * 캐시 열쇠도 같다('내 선수'는 쿠키가 20명까지라 늘 한 번). cache는 인자를 값이 아니라 참조로 비교하므로, 배열을 문자열로 바꿔 넘긴다.
+ */
+export async function getMyPlayers(ids: readonly number[], days: number): Promise<ApiResult<MyPlayersResponse>> {
+  // 묶음끼리는 api가 겹친 번호를 걸러 주지 못하니 먼저 거른다(명단·쿠키는 겹치지 않아 보통은 그대로다)
+  const unique = [...new Set(ids)];
+  if (unique.length <= MY_IDS_PER_REQUEST) return getMyPlayersCached(unique.join(","), days);
+  const chunks: number[][] = [];
+  for (let i = 0; i < unique.length; i += MY_IDS_PER_REQUEST) chunks.push(unique.slice(i, i + MY_IDS_PER_REQUEST));
+  const results = await Promise.all(chunks.map((chunk) => getMyPlayersCached(chunk.join(","), days)));
+  const pages: MyPlayersResponse[] = [];
+  for (const result of results) {
+    if (!result.ok) return result;
+    pages.push(result.data);
+  }
+  // 기간·기준 시각은 첫 묶음 것(같은 때 부른 같은 기간이다). 기간을 당긴 선수가 있는지는 어느 묶음이든 하나라도
+  return {
+    ok: true,
+    data: { ...pages[0], isFallback: pages.some((p) => p.isFallback), players: pages.flatMap((p) => p.players) },
+  };
 }
 
 /** GET /api/records: 한국인 메이저리거 역대 기록(기록 탭). 옛 api면 notFound */

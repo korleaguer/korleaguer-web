@@ -229,7 +229,8 @@ interface Props {
 
 export default async function SeasonFloors({ recent, asOf }: Props) {
   const [playersResult, mine] = await Promise.all([getPlayers(), readMyPlayers()]);
-  const ids = playersResult.ok ? playersResult.data.map((p) => p.id).slice(0, 20) : [];
+  // 명단 전원. api가 한 번에 20명까지라 getMyPlayers가 나눠 부른다(전수조사 L426, 예전에는 20명에서 잘라 21번째부터 말없이 빠졌다)
+  const ids = playersResult.ok ? playersResult.data.map((p) => p.id) : [];
   const myResult = ids.length > 0 ? await getMyPlayers(ids, 7) : null;
   if (!myResult || !myResult.ok || myResult.data.players.length === 0) {
     return <RecentGames recent={recent} asOf={asOf} />;
