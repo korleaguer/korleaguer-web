@@ -14,6 +14,7 @@ import { createPortal } from "react-dom";
 import type { LinkedTeams as LinkedTeamCounts } from "@/lib/api";
 import { haptic } from "@/lib/app";
 import { withTopicParticle } from "@/lib/format";
+import Chevron from "@/components/Chevron";
 import TeamMark from "@/components/TeamMark";
 import LinkedTeamSheet from "@/components/home/LinkedTeamSheet";
 import { teamColor, teamLogoUrl } from "@/lib/teams";
@@ -262,14 +263,6 @@ export default function LinkedTeams({
         <LinkedTeamSheet team={sheetTeam} days={counts.days} playerPhotoUrl={playerPhotoUrl} onClose={close} />
       )}
     </div>
-  );
-}
-
-function Chevron({ small = false }: { small?: boolean }) {
-  return (
-    <svg aria-hidden viewBox="0 0 16 16" className={`shrink-0 text-muted ${small ? "size-2.5" : "size-3"}`} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M6 3.5 10.5 8 6 12.5" />
-    </svg>
   );
 }
 
