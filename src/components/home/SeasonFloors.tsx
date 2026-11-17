@@ -12,6 +12,7 @@ import Section from "@/components/Section";
 import TeamMark from "@/components/TeamMark";
 import RecentGames from "./RecentGames";
 import MyPlayersLink from "@/components/home/MyPlayersLink";
+import StarIcon from "@/components/my/StarIcon";
 import Words from "@/components/Words";
 
 /**
@@ -203,7 +204,7 @@ export default async function SeasonFloors({ recent, asOf }: Props) {
 
   return (
     <Section id="floors-title" title="지금 어디서 뛰나" aside={asOf}>
-      {/* '내 선수'(/my)로 가는 입구(이슈 #262). 내 선수는 층마다 파란 고리로 먼저 놓인다 */}
+      {/* '내 선수'(/my)로 가는 입구(이슈 #262). 내 선수는 층마다 먼저 놓이고 사진 파란 고리와 이름 끝 ★로 보인다 */}
       <div className="-mt-1 mb-2 flex justify-end px-1">
         <MyPlayersLink count={myCount} />
       </div>
@@ -255,11 +256,16 @@ function FloorRow({ entry, starred }: { entry: MyPlayer; starred: boolean }) {
           />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="flex items-center gap-1.5">
+          {/* 큰 글씨로 이름 줄이 넘치면 로고·팀을 다음 줄로 내린다. 팀은 남은 폭만 차지해서(flex-1) 보통 크기에서는
+              지금처럼 한 줄에서 '…'로 줄어든다 */}
+          <span className="flex flex-wrap items-center gap-x-1.5">
             <span className="text-heading">{entry.player.nameKo}</span>
+            {/* 내 선수: 사진의 파란 고리에 더해 이름 끝에 작은 ★(별 버튼·뉴스 선수 고르기와 같은 기호, 사용자 11-17
+                '추천대로', 전수조사 L305). 고리만으로는 무슨 뜻인지 알 수 없었다. ★는 그림이라 낭독은 '(내 선수)' 한 번 */}
+            {starred && <StarIcon filled className="-ml-0.5 size-3.5 shrink-0 text-accent-ink" />}
             {starred && <span className="sr-only">(내 선수)</span>}
             <TeamMark logoUrl={teamLogoUrl(entry.player.teamAbbr)} color={teamColor(entry.player.teamAbbr)} size="sm" />
-            {team && <span className="truncate text-caption text-muted">{team}</span>}
+            {team && <span className="min-w-0 flex-1 truncate text-caption text-muted">{team}</span>}
           </span>
           <span className={`mt-0.5 block text-body text-pretty ${game && !game.played ? "text-muted" : ""}`}>
             <Words text={text} />
