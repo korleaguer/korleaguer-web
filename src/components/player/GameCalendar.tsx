@@ -66,6 +66,37 @@ function detailButtonText(day: CalendarDay): string {
   return "경기 정보 보기";
 }
 
+/**
+ * 달력 화살표 키로 옮겨 갈 날. keys는 그달 누를 수 있는 날(오래된 날부터), current는 지금 포커스 칸.
+ * ←→ 경기 있는 앞뒤 날, ↑↓ 그 방향에서 일주일 앞뒤에 가장 가까운 날, Home·End 그달 처음·끝 날(경기 없는 날은 건너뛴다).
+ * 옮길 데가 없으면 null, 달력이 쓰는 키가 아니면 undefined
+ */
+function arrowTarget(keys: string[], current: string, key: string): string | null | undefined {
+  const i = keys.indexOf(current);
+  const day = (k: string) => Number(k.slice(8, 10));
+  const nearest = (candidates: string[], target: number) =>
+    candidates.reduce<string | null>(
+      (best, k) => (best == null || Math.abs(day(k) - target) < Math.abs(day(best) - target) ? k : best),
+      null,
+    );
+  switch (key) {
+    case "ArrowLeft":
+      return keys[i - 1] ?? null;
+    case "ArrowRight":
+      return keys[i + 1] ?? null;
+    case "ArrowUp":
+      return nearest(keys.slice(0, Math.max(0, i)), day(current) - 7);
+    case "ArrowDown":
+      return nearest(keys.slice(i + 1), day(current) + 7);
+    case "Home":
+      return keys[0] ?? null;
+    case "End":
+      return keys.at(-1) ?? null;
+    default:
+      return undefined;
+  }
+}
+
 /** 이동 기록 날짜(미국 날짜) "2026-09-21" → "9.21" */
 function moveDay(date: string): string {
   return `${Number(date.slice(5, 7))}.${Number(date.slice(8, 10))}`;
@@ -96,6 +127,12 @@ export default function GameCalendar({
   const [monthKey, setMonthKey] = useState(calendar.defaultMonth);
   const month = calendar.months.find((m) => m.key === monthKey) ?? calendar.months.at(-1) ?? null;
   const [dayKey, setDayKey] = useState(month?.defaultDay ?? null);
+  /**
+   * 키보드로 옮겨 간 날짜 칸(roving tabindex, WAI-ARIA APG Grid). 칸마다 Tab이 서면 한 달에 20~30번 눌러야 달력을 지나갔다
+   * (11-17 전수조사). 그래서 달력은 Tab 한 번으로 들어와 화살표로 칸 사이를 옮기고, 다음 Tab은 달력 밖으로 나간다.
+   * 화살표는 포커스만 옮기고 창은 Enter·Space(누르기)로만 연다(옮기다 창이 열리지 않게). 처음과 그달에 없으면 고른 날이다
+   */
+  const [focusKey, setFocusKey] = useState<string | null>(null);
 
   // ---- 상세 창 ----
   const [sheetKey, setSheetKey] = useState<string | null>(null);
@@ -207,12 +244,21 @@ export default function GameCalendar({
   const selected = shownDay ? (calendar.days.get(shownDay) ?? null) : null;
   const cells = monthCells(month.year, month.month);
   const monthMoves = dedupeRehab(moves.filter((m) => m.date.startsWith(month.key)));
+  // 그달 누를 수 있는 날(오래된 날부터)과 Tab으로 들어올 칸(옮겨 간 칸, 그달에 없으면 고른 날)
+  const dayKeys = cells.flatMap((d) => {
+    const key = d == null ? "" : `${month.key}-${String(d).padStart(2, "0")}`;
+    return d != null && calendar.days.get(key)?.selectable ? [key] : [];
+  });
+  const tabDay =
+    focusKey && dayKeys.includes(focusKey) ? focusKey : shownDay && dayKeys.includes(shownDay) ? shownDay : (dayKeys[0] ?? null);
 
   const pickMonth = (key: string) => {
     if (key === month.key) return;
     haptic("select");
     setMonthKey(key);
     setDayKey(calendar.months.find((m) => m.key === key)?.defaultDay ?? null);
+    // 달을 바꾸면 Tab으로 들어올 칸은 그달 고른 날이다(앞서 그달에서 옮겨 다닌 칸이 남아 있지 않게)
+    setFocusKey(null);
   };
   const pickDay = (key: string, from: HTMLElement) => {
     haptic("select");
@@ -280,6 +326,21 @@ export default function GameCalendar({
       <div
         role="group"
         aria-label={`${month.year}년 ${month.month}월 경기 달력`}
+        // 화살표로 칸 사이를 옮긴다(위 focusKey). 클릭·창을 닫은 뒤 돌아온 포커스도 그 칸을 Tab 자리로 삼는다
+        onKeyDown={(e) => {
+          const current = (e.target as HTMLElement).dataset.day;
+          if (!current) return;
+          const next = arrowTarget(dayKeys, current, e.key);
+          if (next === undefined) return;
+          e.preventDefault();
+          if (!next || next === current) return;
+          setFocusKey(next);
+          rootRef.current?.querySelector<HTMLElement>(`[data-day="${next}"]`)?.focus();
+        }}
+        onFocus={(e) => {
+          const key = (e.target as HTMLElement).dataset.day;
+          if (key) setFocusKey(key);
+        }}
         className="cal-grid grid grid-cols-7 gap-[4px] px-[10px] pb-3 sm:gap-[6px] sm:px-[12px]"
       >
         {cells.map((d, i) => {
@@ -294,7 +355,7 @@ export default function GameCalendar({
               </span>
             );
           }
-          return <DayCell key={key} day={day} on={key === shownDay} onPick={pickDay} />;
+          return <DayCell key={key} day={day} on={key === shownDay} tabbable={key === tabDay} onPick={pickDay} />;
         })}
       </div>
 
@@ -368,7 +429,18 @@ export default function GameCalendar({
 }
 
 /** 날짜 칸 하나. 휴대폰은 날짜와 짧은 말, 넓은 화면은 상대 로고·한 줄·팀 결과까지 */
-function DayCell({ day, on, onPick }: { day: CalendarDay; on: boolean; onPick: (key: string, from: HTMLElement) => void }) {
+function DayCell({
+  day,
+  on,
+  tabbable,
+  onPick,
+}: {
+  day: CalendarDay;
+  on: boolean;
+  /** Tab으로 들어올 칸(달력에 하나). 나머지는 화살표로만 간다 */
+  tabbable: boolean;
+  onPick: (key: string, from: HTMLElement) => void;
+}) {
   const tone = day.tone as Exclude<DayTone, "rest">;
   const main = day.main;
   const line = lineOf(main);
@@ -386,6 +458,7 @@ function DayCell({ day, on, onPick }: { day: CalendarDay; on: boolean; onPick: (
       aria-current={on ? "true" : undefined}
       aria-haspopup="dialog"
       aria-label={day.speech}
+      tabIndex={tabbable ? 0 : -1}
       data-day={day.key}
       onClick={(e) => onPick(day.key, e.currentTarget)}
       className={`flex min-w-0 cursor-pointer flex-col justify-between rounded-lg p-[4px] text-left sm:p-[8px] ${TONE[tone]} ${

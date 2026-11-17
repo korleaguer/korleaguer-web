@@ -1,6 +1,6 @@
 "use client"; // 막대를 누르면 아래 한 줄을 그 경기로 바꿔야 해서 클라이언트 컴포넌트다.
 
-import { useRef, useState, type CSSProperties, type PointerEvent } from "react";
+import { useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent } from "react";
 import type { GameLine, Role } from "@/lib/api";
 import { haptic } from "@/lib/app";
 import { formatDate, formatLineup, formatShortDate, formatSummary, formatWeekday } from "@/lib/format";
@@ -89,6 +89,19 @@ export default function GameBars({ slots, role, days, minors = false }: Props) {
     const { left, width } = el.getBoundingClientRect();
     pick(Math.min(slots.length - 1, Math.max(0, Math.floor(((e.clientX - left) / width) * slots.length))));
   }
+  // 키보드: ←↑ 앞 경기, →↓ 다음 경기(끝에서는 반대쪽 끝으로), Home·End 처음·끝. 경기 없는 칸은 건너뛰고, 옮기면 바로 고른다
+  function onBarKey(e: KeyboardEvent<HTMLDivElement>) {
+    const order = slots.flatMap((slot, i) => (slot.game ? [i] : []));
+    // 키를 꾹 눌러 다시 그리기 전에 또 오면 state(selected)는 한 칸 늦어서, 마지막으로 고른 칸(picked)에서 센다
+    const at = order.indexOf(picked.current);
+    const step = e.key === "ArrowLeft" || e.key === "ArrowUp" ? -1 : e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : 0;
+    const next =
+      step !== 0 ? order.at((at + step) % order.length) : e.key === "Home" ? order[0] : e.key === "End" ? order.at(-1) : undefined;
+    if (next == null) return;
+    e.preventDefault();
+    pick(next);
+    groupRef.current?.querySelector<HTMLElement>(`[data-slot="${next}"]`)?.focus();
+  }
 
   return (
     <div className="mt-4">
@@ -99,8 +112,11 @@ export default function GameBars({ slots, role, days, minors = false }: Props) {
 
       <div
         ref={groupRef}
-        role="group"
+        // 하나만 고르는 막대라 라디오 묶음이다. Tab 한 번으로 고른 막대에 들어와 화살표로 바로 고른다(WAI-ARIA APG Radio Group).
+        // 막대마다 Tab이 서면 30일 카드 하나에 Tab이 수십 번 걸렸다(11-17 전수조사)
+        role="radiogroup"
         aria-label={pitcher ? "경기별 이닝" : "경기별 안타"}
+        onKeyDown={onBarKey}
         className={`mt-2 grid touch-pan-y select-none ${gap}`}
         style={grid}
         onPointerDown={(e) => {
@@ -150,7 +166,10 @@ export default function GameBars({ slots, role, days, minors = false }: Props) {
             <button
               key={`${slot.date}-${slot.part}`}
               type="button"
-              aria-pressed={on}
+              role="radio"
+              aria-checked={on}
+              tabIndex={on ? 0 : -1}
+              data-slot={i}
               aria-label={barLabel(game, role)}
               // 키보드(Enter·Space)로 누를 때만(detail 0). 손가락·마우스는 위 훑기가 고르고,
               // 눌렀다 옆 칸으로 밀고 뗐을 때 처음 칸의 click이 선택을 되돌리지 않게 한다
