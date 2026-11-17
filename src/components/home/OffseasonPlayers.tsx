@@ -4,6 +4,7 @@ import { formatDate } from "@/lib/format";
 import { readMyPlayers } from "@/lib/myPlayers";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import Section from "@/components/Section";
+import Words from "@/components/Words";
 import FormCard from "@/components/my/FormCard";
 import SeasonReportCard from "@/components/home/SeasonReportCard";
 import MyPlayersLink from "@/components/home/MyPlayersLink";
@@ -49,7 +50,14 @@ function pills(offseason: OffSeason, entries: MyPlayer[]): string[] {
  * 선수 전원의 시즌 카드('내 선수' 카드의 시즌 합계 모양: 팀 색 무대·상태 배지·시즌 성적)를 보인다.
  * 별 버튼은 실제로 '내 선수'로 골랐는지를 따른다.
  */
-export default async function OffseasonPlayers({ offseason }: { offseason: OffSeason }) {
+export default async function OffseasonPlayers({
+  offseason,
+  asOf,
+}: {
+  offseason: OffSeason;
+  /** 제목 옆 데이터 기준 시각("기준 11월 17일(화) 09:00"). 이 묶음이 홈 맨 위일 때만(MLB 도전 카드가 없을 때) 받는다(이슈 #277) */
+  asOf?: string;
+}) {
   const [myResult, myIds, playersResult] = await Promise.all([
     offseason.playerIds.length > 0 ? getMyPlayers(offseason.playerIds, DAYS) : Promise.resolve(null),
     readMyPlayers(),
@@ -68,12 +76,16 @@ export default async function OffseasonPlayers({ offseason }: { offseason: OffSe
       ? [...my.players].sort((a, b) => (report.get(a.player.id)?.i ?? 99) - (report.get(b.player.id)?.i ?? 99))
       : order(my.players, myIds)
     : [];
+  // 제목 옆: 순서 이름, 받았으면 그 뒤에 기준 시각. 큰 글씨에서는 띄어쓰기에서만 줄을 바꾸고
+  // '·'는 '기준'에 붙여 줄 끝에 홀로 남지 않게 한다(선수 목록 머리 줄과 같은 꼴)
+  const orderName = report.size > 0 ? "잘한 순" : null;
+  const aside = asOf ? <Words text={orderName ? `${orderName} ·\u00a0${asOf}` : asOf} /> : orderName;
 
   return (
     <Section
       id="offseason-title"
       title={report.size > 0 ? `${offseason.season} 시즌 성적표` : `${offseason.season} 시즌 끝`}
-      aside={report.size > 0 ? "잘한 순" : undefined}
+      aside={aside}
     >
       <ul className="-mt-0.5 mb-3 flex flex-wrap items-center gap-1.5 px-1">
         {pills(offseason, entries).map((part) => (

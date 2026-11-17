@@ -28,7 +28,8 @@ async function HomeContent() {
   if (!result.ok) return <ApiErrorNotice failure={result.failure} />;
 
   const home = result.data;
-  // 데이터 기준 시각은 화면 맨 위 묶음 제목 옆에 둔다(시즌 중 층, 비시즌 MLB 도전 카드, 이슈 #277)
+  // 데이터 기준 시각은 화면 맨 위 묶음 제목 옆에 한 번만 둔다(시즌 중 층, 비시즌 MLB 도전 카드, 이슈 #277).
+  // 포스팅 선수가 없으면 MLB 도전 카드가 그려지지 않아(포스팅 없음·0명) 성적표가 맨 위다
   const asOf = formatAsOf(home.generatedAt);
   return (
     <div className="space-y-7">
@@ -38,7 +39,7 @@ async function HomeContent() {
         <>
           {/* 포스팅 시즌: 이번 겨울 MLB에 도전하는 KBO 선수와 선배들의 계약 시기 */}
           {home.posting && <MlbChallenge posting={home.posting} asOf={asOf} />}
-          <OffseasonPlayers offseason={home.offseason} />
+          <OffseasonPlayers offseason={home.offseason} asOf={home.posting?.players.length ? undefined : asOf} />
         </>
       ) : (
         <>

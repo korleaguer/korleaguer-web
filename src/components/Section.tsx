@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Words from "@/components/Words";
 
 interface Props {
   title: string;
@@ -13,12 +14,19 @@ interface Props {
 export default function Section({ title, aside, id, children }: Props) {
   return (
     <section aria-labelledby={id} className="min-w-0">
-      {/* 자리가 모자라면(큰 글씨 등) 오른쪽 작은 글씨가 다음 줄로 내려간다. 제목이 낱말마다 쪼개지지 않게 */}
+      {/* 자리가 모자라면(큰 글씨 등) 오른쪽 작은 글씨가 다음 줄로 내려간다. 제목이 낱말마다 쪼개지지 않게.
+          내려가서도 줄보다 길면(앱 큰 글씨 2배의 '잘한 순 · 기준 …'은 375px 화면에서 약 349px, 줄은 311px) 줄 폭 안에서
+          띄어쓰기마다 줄을 바꾼다. 전에는 줄지 않아 화면 밖으로 넘쳤다. 줄을 나눌 때는 줄기 전 폭을 보므로 제목과 한 줄에
+          들어가던 배치는 그대로다 */}
       <div className="mb-2.5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 px-1">
         <h2 id={id} className="text-title">
           {title}
         </h2>
-        {aside && <div className="shrink-0 text-caption text-muted tabular-nums">{aside}</div>}
+        {aside && (
+          <div className="max-w-full shrink-0 text-caption text-muted tabular-nums">
+            {typeof aside === "string" ? <Words text={aside} /> : aside}
+          </div>
+        )}
       </div>
       {children}
     </section>
