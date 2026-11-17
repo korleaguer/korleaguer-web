@@ -123,16 +123,19 @@ function PositionRow({ row, who, labelCol }: { row: Row; who: string; labelCol: 
       style={{ gridTemplateColumns: `${labelCol} minmax(0, 1fr) 4.5rem` }}
     >
       <span className="text-summary">{label}</span>
-      <div aria-hidden className="relative h-2 rounded-full bg-surface-2">
-        <span className="absolute inset-y-[-3px] left-1/2 w-px bg-line" />
+      {/* 바탕은 옅은 안쪽 테두리로 0~100 양 끝을 보인다(흰 카드 위 surface-2만으로는 막대 끝이 거의 안 보였다) */}
+      <div aria-hidden className="relative h-2 rounded-full bg-surface-2 ring-1 ring-muted/30 ring-inset">
         {pct != null && (
-          <>
-            <span className={`absolute inset-y-0 left-0 rounded-full ${top ? "bg-accent" : "bg-muted/40"}`} style={{ width: `${pct}%` }} />
-            <span
-              className={`absolute top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-surface ${top ? "bg-accent" : "bg-muted"}`}
-              style={{ left: `${pct}%` }}
-            />
-          </>
+          <span className={`absolute inset-y-0 left-0 rounded-full ${top ? "bg-accent" : "bg-muted/40"}`} style={{ width: `${pct}%` }} />
+        )}
+        {/* 가운데 선(MLB 중간): 각주가 읽으라고 하는 기준선이라 바탕 대비 3:1이 되게 muted 70%로, 파랑 채움 위에서도 보이게
+            채움 위에 카드색 1px 테두리를 둘러 그린다. 점보다는 아래라 점이 가운데 근처면 점이 선을 덮는다 */}
+        <span className="absolute inset-y-[-3px] left-1/2 -ml-px w-0.5 bg-muted/70 ring-1 ring-surface" />
+        {pct != null && (
+          <span
+            className={`absolute top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-surface ${top ? "bg-accent" : "bg-muted"}`}
+            style={{ left: `${pct}%` }}
+          />
         )}
       </div>
       <span className={`whitespace-nowrap text-right text-summary font-extrabold tabular-nums ${top ? "text-accent-ink" : "text-muted"}`}>
