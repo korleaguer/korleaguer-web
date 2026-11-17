@@ -1,5 +1,5 @@
 import type { PlayerSummary } from "@/lib/api";
-import { formatAge } from "@/lib/format";
+import { formatAge, teamPrefix } from "@/lib/format";
 import LevelChip from "./LevelChip";
 import TeamName from "./TeamName";
 
@@ -20,11 +20,7 @@ export default function InfoChips({ player, className = "" }: { player: PlayerSu
       {player.teamKo && (
         <li className={CHIP}>
           {/* FA·국내 복귀 선수의 팀 칸은 마지막 MLB 팀이라 '전'을 붙인다('FA' 옆 '애틀랜타'는 아직 소속처럼 읽혔다, 점검 11-13) */}
-          <TeamName
-            teamKo={player.teamKo}
-            teamAbbr={player.teamAbbr}
-            prefix={player.freeAgent || player.returnedKo ? "전" : undefined}
-          />
+          <TeamName teamKo={player.teamKo} teamAbbr={player.teamAbbr} prefix={teamPrefix(player)} />
         </li>
       )}
       {player.positionKo && <li className={CHIP}>{player.positionKo}</li>}

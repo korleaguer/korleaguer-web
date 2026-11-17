@@ -1,5 +1,5 @@
 import type { PlayerDetail } from "@/lib/api";
-import { formatBirthDate, formatBody, formatSummary } from "@/lib/format";
+import { formatBirthDate, formatBody, formatSummary, teamLabel } from "@/lib/format";
 import { kboTeamColor, teamColor } from "@/lib/teams";
 import ExternalLinkIcon from "@/components/ExternalLinkIcon";
 import InfoChips from "@/components/InfoChips";
@@ -28,7 +28,8 @@ export default function PlayerHeader({ player, isMine }: { player: PlayerDetail;
     })),
     {
       key: "now",
-      label: player.teamKo ?? "지금",
+      // FA·국내 복귀면 마지막 MLB 팀 사진이라 '전 미네소타'(정보 칩과 같은 규칙). 그냥 '미네소타'면 지금 소속처럼 읽혔다
+      label: teamLabel(player) ?? "지금",
       years: null,
       photoUrl: player.photoUrl,
       color: teamColor(player.teamAbbr),
