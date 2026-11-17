@@ -181,7 +181,7 @@ async function RecordsContent({ searchParams }: Pick<Props, "searchParams">) {
       <StatPills label="한 시즌 기록 고르기" param="best" items={best} current={bestKey} other={other("best")} />
       <ul className="card divide-y divide-line overflow-hidden">
         {bestList.rows.map((r) => (
-          <BestRow key={`${r.nameKo}-${r.season}`} row={r} />
+          <BestRow key={`${r.nameKo}-${r.season}`} row={r} unit={bestList.unit} />
         ))}
       </ul>
     </Section>

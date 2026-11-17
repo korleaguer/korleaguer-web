@@ -92,6 +92,8 @@ export function NextRow({ next }: { next: RecordNext }) {
             <span className="ml-auto shrink-0 text-stat text-accent-ink tabular-nums">
               {count(next.toPass)}
               {next.unit}
+              {/* 화면에서는 묶음 머리의 '남은 수'가 이 칸 이름이다. 낭독기는 '통산 336안타 32안타'로 이어 읽어 헷갈려서 '남음'을 붙인다 */}
+              <span className="sr-only"> 남음</span>
             </span>
           </span>
           <span className="mt-0.5 block text-meta text-muted">
@@ -148,8 +150,11 @@ export function PassedRow({ group }: { group: PassedGroup }) {
   );
 }
 
-/** 한 시즌 최다 한 줄 */
-export function BestRow({ row }: { row: RecordBest["rows"][number] }) {
+/**
+ * 한 시즌 최다 한 줄. 화면에서는 위 알약(고른 기록)과 칸 자리로 단위·시즌인 줄 알지만, 낭독기는 '이정후 2025 149'로만 읽어서
+ * '시즌'과 단위를 낭독기에만 붙인다('2025시즌 149안타', 통산 순위 줄과 같은 방식)
+ */
+export function BestRow({ row, unit }: { row: RecordBest["rows"][number]; unit: string }) {
   return (
     <li className={row.active ? "bg-accent-soft/40" : undefined}>
       <RowShell playerId={row.playerId}>
@@ -161,8 +166,14 @@ export function BestRow({ row }: { row: RecordBest["rows"][number] }) {
         <span className="min-w-0 flex-1 basis-[3.5rem] text-heading">{row.nameKo}</span>
         {/* 시즌과 값은 붙여 둔다: 이름 칸이 모자라면 둘이 함께 다음 줄 오른쪽으로 내려간다 */}
         <span className="ml-auto flex shrink-0 items-baseline gap-3">
-          <span className="text-caption text-muted tabular-nums">{row.season}</span>
-          <span className="w-14 text-right text-stat tabular-nums">{count(row.value)}</span>
+          <span className="text-caption text-muted tabular-nums">
+            {row.season}
+            <span className="sr-only">시즌</span>
+          </span>
+          <span className="w-14 text-right text-stat tabular-nums">
+            {count(row.value)}
+            <span className="sr-only">{unit}</span>
+          </span>
         </span>
       </RowShell>
     </li>
