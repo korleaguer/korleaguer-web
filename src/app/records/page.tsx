@@ -11,13 +11,18 @@ import ShowMore from "@/components/ShowMore";
 import StateNotice from "@/components/StateNotice";
 import { BestRow, groupPassed, LeaderRow, NextRow, PassedRow } from "@/components/records/RecordRows";
 
-// <title>: "기록 · KOR Leaguer" (뒷부분은 layout의 template이 붙인다)
+/**
+ * 화면 제목. 메뉴·아래 탭 이름은 짧게 '기록' 그대로 두고, 화면 제목에서 무슨 기록인지 밝힌다. 사이트 곳곳의 '기록'은
+ * 선수 성적(선수별 기록·경기 기록)을 뜻해서 메뉴 이름만으로는 역대 순위 화면인 줄 몰랐다(11-17 UI/UX 전수조사, 사용자 결정 '추천대로')
+ */
+const TITLE = "한국인 메이저리거 역대 기록";
+// <title>: "한국인 메이저리거 역대 기록 · KOR Leaguer" (뒷부분은 layout의 template이 붙인다)
 const DESCRIPTION = "박찬호부터 이정후까지, 한국인 메이저리거 역대 기록과 지금 선수가 넘은 선배·넘을 선배.";
 
 export const metadata: Metadata = {
-  title: "기록",
+  title: TITLE,
   description: DESCRIPTION,
-  ...shareMeta("기록 · KOR Leaguer", DESCRIPTION),
+  ...shareMeta(`${TITLE} · KOR Leaguer`, DESCRIPTION),
 };
 
 type Props = PageProps<"/records">;
@@ -39,7 +44,7 @@ const NEXT_PLAYERS = 4;
 export default function RecordsPage({ searchParams }: Props) {
   return (
     <div className="space-y-4">
-      <h1 className="px-1 text-display">기록</h1>
+      <h1 className="px-1 text-display">{TITLE}</h1>
       <PageSuspense fallback={<LoadingBlock rows={8} />}>
         <RecordsContent searchParams={searchParams} />
       </PageSuspense>
@@ -185,7 +190,8 @@ async function RecordsContent({ searchParams }: Pick<Props, "searchParams">) {
   return (
     <div className="space-y-4">
       <DataBanners dataMode={records.dataMode} statsAvailable />
-      <p className="px-1 text-meta text-muted">{`박찬호부터 지금 선수까지 한국인 메이저리거 ${people}명`}</p>
+      {/* 화면 제목이 '한국인 메이저리거 역대 기록'이라 같은 말을 되풀이하지 않는다 */}
+      <p className="px-1 text-meta text-muted">{`박찬호부터 지금 선수까지 ${people}명`}</p>
       {/* PC: 왼쪽 칸에 지금 선수 이야기(넘은·넘을 선배), 오른쪽 칸에 역대 순위 */}
       <div className="space-y-7 lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-6 lg:space-y-0">
         <div className="space-y-7">{left}</div>
