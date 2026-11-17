@@ -37,4 +37,4 @@ export default function StateNotice({
  * 버튼은 파랗게 칠하지 않는다(DESIGN.md The One Blue Rule, 이슈 #200). 기사 '원문 보기'와 같은 surface-2 바탕이다
  */
 export const stateActionClass =
-  "press inline-flex h-11 items-center rounded-full bg-surface-2 px-5 text-button transition hover:bg-line";
+  "press inline-flex h-[max(2.75rem,44px)] items-center rounded-full bg-surface-2 px-5 text-button transition hover:bg-line";

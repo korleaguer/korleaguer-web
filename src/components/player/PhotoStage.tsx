@@ -121,6 +121,8 @@ export default function PhotoStage({
           <div role="group" aria-label="소속팀별 사진" className="mt-3 flex flex-wrap items-center gap-1.5">
             {/* 휴대폰에서는 이름표를 윗줄에 둔다. 한 줄에 두면 알약이 갈려 지금 팀 알약만 혼자 다음 줄로 떨어졌다(이슈 #200) */}
             <span className="mr-0.5 w-full text-caption text-muted sm:w-auto">소속팀 사진</span>
+            {/* 알약끼리만 묶어 여러 줄로 감길 때 줄 사이를 넓힌다(넓힌 누름 영역 44px가 겹치지 않게, 이슈 #257). 이름표와의 간격은 그대로 */}
+            <span className="flex flex-wrap items-center gap-x-1.5 gap-y-[max(0.75rem,calc(44px-2rem))]">
             {shots.map((s, i) => {
               const active = i === index;
               return (
@@ -139,6 +141,7 @@ export default function PhotoStage({
                 </button>
               );
             })}
+            </span>
           </div>
         )}
         <p className="sr-only" aria-live="polite">

@@ -118,7 +118,8 @@ export default function OrderList({ players }: { players: PlayerSummary[] }) {
       <p id="order-help" className="sr-only">
         줄마다 위로·아래로 버튼이나 키보드 위·아래 화살표로 순서를 옮길 수 있어요. 손잡이를 끌어도 돼요.
       </p>
-      <ol ref={listRef} className="relative">
+      {/* PC에서 ▲▼가 이름에서 멀어지지 않게 폭을 줄인다(근접성, 이슈 #257). 줄이 좁으면(@container) 그림용 번호 칸을 숨긴다 */}
+      <ol ref={listRef} className="@container relative max-w-md">
         {order.map((id, index) => {
           const player = byId.get(id);
           if (!player) return null;
@@ -133,12 +134,12 @@ export default function OrderList({ players }: { players: PlayerSummary[] }) {
           return (
             <li
               key={id}
-              className={`flex h-12 items-center gap-2.5 rounded-xl px-1 ${dragging ? "relative z-10 bg-surface shadow-[var(--shadow-card-hover)]" : ""}`}
+              className={`flex h-[max(3rem,48px)] items-center gap-[10px] rounded-xl px-1 ${dragging ? "relative z-10 bg-surface shadow-[var(--shadow-card-hover)]" : ""}`}
               style={dragging ? { transform: `translateY(${offset}px)` } : undefined}
             >
               <button
                 type="button"
-                aria-label={`${player.nameKo} 순서 옮기기`}
+                aria-label={`${player.nameKo} 끌어서 옮기기`}
                 aria-describedby="order-help"
                 data-move={`${id}-handle`}
                 onPointerDown={(e) => onPointerDown(e, id)}
@@ -146,7 +147,7 @@ export default function OrderList({ players }: { players: PlayerSummary[] }) {
                 onPointerUp={onPointerEnd}
                 onPointerCancel={onPointerEnd}
                 onKeyDown={(e) => onKeyDown(e, id)}
-                className={`tap-target grid size-9 shrink-0 touch-none place-items-center rounded-lg text-muted hover:bg-surface-2 hover:text-foreground ${dragging ? "cursor-grabbing" : "cursor-grab"}`}
+                className={`tap-target grid size-[36px] shrink-0 touch-none place-items-center rounded-lg text-muted hover:bg-surface-2 hover:text-foreground ${dragging ? "cursor-grabbing" : "cursor-grab"}`}
               >
                 <svg aria-hidden viewBox="0 0 16 16" className="size-4 fill-current">
                   <circle cx="5.5" cy="3.5" r="1.25" />
@@ -157,25 +158,29 @@ export default function OrderList({ players }: { players: PlayerSummary[] }) {
                   <circle cx="10.5" cy="12.5" r="1.25" />
                 </svg>
               </button>
-              <span aria-hidden className="w-4 shrink-0 text-center text-caption font-bold tabular-nums text-muted">
+              {/* 간격은 px(큰 글씨에서 이름 칸을 지킨다). 줄 폭이 300px보다 좁으면(320px 화면 등) 번호 칸을 숨겨 이름을 남긴다 */}
+              <span aria-hidden className="w-4 shrink-0 text-center text-caption font-bold tabular-nums text-muted @max-[300px]:hidden">
                 {index + 1}
               </span>
               <PlayerAvatar size={28} nameKo={player.nameKo} photoUrl={player.photoUrl} teamAbbr={player.teamAbbr} />
               <span className="min-w-0 flex-1 truncate text-summary">{player.nameKo}</span>
-              <MoveButton
-                dir="up"
-                name={player.nameKo}
-                id={id}
-                atEnd={index === 0}
-                onMove={() => moveBy(id, -1, "up")}
-              />
-              <MoveButton
-                dir="down"
-                name={player.nameKo}
-                id={id}
-                atEnd={index === order.length - 1}
-                onMove={() => moveBy(id, 1, "down")}
-              />
+              {/* ▲▼는 한 묶음(사이 간격 없음): 큰 글씨에서도 이름 칸이 남게(이슈 #257) */}
+              <span className="flex shrink-0">
+                <MoveButton
+                  dir="up"
+                  name={player.nameKo}
+                  id={id}
+                  atEnd={index === 0}
+                  onMove={() => moveBy(id, -1, "up")}
+                />
+                <MoveButton
+                  dir="down"
+                  name={player.nameKo}
+                  id={id}
+                  atEnd={index === order.length - 1}
+                  onMove={() => moveBy(id, 1, "down")}
+                />
+              </span>
             </li>
           );
         })}
@@ -188,8 +193,10 @@ export default function OrderList({ players }: { players: PlayerSummary[] }) {
 }
 
 /**
- * 한 칸 위·아래로 버튼(누름 44px). 맨 위의 '위로'·맨 아래의 '아래로'는 끄되 disabled 대신 aria-disabled로 둔다:
- * 옮겨서 끝에 닿은 순간 버튼이 disabled가 되면 그 버튼에 있던 포커스가 사라진다
+ * 한 칸 위·아래로 버튼(44px). 맨 위의 '위로'·맨 아래의 '아래로'는 끄되 disabled 대신 aria-disabled로 둔다:
+ * 옮겨서 끝에 닿은 순간 버튼이 disabled가 되면 그 버튼에 있던 포커스가 사라진다.
+ * 크기는 px로 고정한다(앱에서 글자를 키우면 rem 버튼 두 개가 이름 칸을 다 먹었다, 이슈 #257).
+ * 꺼진 버튼은 아이콘만 흐리게 한다(버튼 전체를 흐리면 포커스 테두리까지 흐려진다)
  */
 function MoveButton({
   dir,
@@ -214,8 +221,8 @@ function MoveButton({
         if (!atEnd) onMove();
       }}
       // 꺼진 끝 버튼은 눌림 효과(press)도 없앤다(누를 수 있어 보이지 않게)
-      className={`grid size-11 shrink-0 place-items-center rounded-lg text-muted ${
-        atEnd ? "cursor-default opacity-30" : "press cursor-pointer hover:bg-surface-2 hover:text-foreground"
+      className={`grid size-[44px] shrink-0 place-items-center rounded-lg text-muted ${
+        atEnd ? "cursor-default [&>svg]:opacity-30" : "press cursor-pointer hover:bg-surface-2 hover:text-foreground"
       }`}
     >
       <svg aria-hidden viewBox="0 0 16 16" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
