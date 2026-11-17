@@ -46,9 +46,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const result = id == null ? null : await getNews(id);
   if (!result?.ok) {
     const missing = result == null || result.failure === "notFound";
+    // api가 잠깐 멈추면 화면은 '정보를 불러오지 못했어요' 안내다. 제목도 그 사실을 말한다('관련 기사'는 아무 기사처럼 읽혔다)
     return missing
       ? { title: "기사를 찾을 수 없어요", robots: { index: false, follow: false } }
-      : { title: "관련 기사", robots: NO_INDEX };
+      : { title: "기사를 불러오지 못했어요", robots: NO_INDEX };
   }
 
   const news = result.data;

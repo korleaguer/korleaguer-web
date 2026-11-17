@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { NewsPage, PlayerResponse } from "@/lib/api";
 import { formatDate } from "@/lib/format";
+import { splitSentences } from "@/lib/news";
 import { mainSeasonStats } from "@/lib/seasonStats";
 
 /**
@@ -68,20 +69,35 @@ export function playerShareImage(data: PlayerShareData): ShareImage {
 }
 
 /** 기사 공유 그림과 그 대체 글이 읽는 기사 응답(GET /api/news/{id})의 부분 */
-type NewsShareData = Pick<NewsPage, "id" | "publisher" | "publishedAt" | "title" | "titleKo">;
+type NewsShareData = Pick<NewsPage, "id" | "publisher" | "publishedAt" | "title" | "titleKo" | "summary">;
+
+/** 기사 공유 그림 아래쪽 안내. 요약이 있는 기사에만 그린다 */
+export const NEWS_SUMMARY_CUE = "AI 요약으로 읽기";
 
 /**
- * 기사 공유 그림(app/news/[id]/og/[v]/route.tsx)에 그리는 글: 언론사·날짜 줄과 제목(영어 기사는 옮긴 제목).
+ * 기사 공유 그림(app/news/[id]/og/[v]/route.tsx)에 그리는 글: 언론사·날짜 줄, 제목(영어 기사는 옮긴 제목),
+ * 'AI 요약으로 읽기'를 그릴지. 요약이 아직 없으면 기사 페이지는 기사 앞부분을 보여서 AI 요약을 약속하지 않는다.
  * 그림의 대체 글(newsShareImage)도 이 값으로 만든다.
  */
 export function newsShareLines(news: NewsShareData) {
-  return { source: `${news.publisher} · ${formatDate(news.publishedAt)}`, title: news.titleKo ?? news.title };
+  return {
+    source: `${news.publisher} · ${formatDate(news.publishedAt)}`,
+    title: news.titleKo ?? news.title,
+    // 기사 페이지가 'AI 요약'이라고 적는 조건과 같다(news/[id]/page.tsx Article)
+    summary: splitSentences(news.summary).length > 0,
+  };
 }
 
-/** 기사 페이지 공유 그림. 주소에 판 번호가 들어간다. 대체 글은 그림 속 글(언론사·날짜, 제목). 제목은 그림에서 세 줄로 잘려도 끝까지 */
+/**
+ * 기사 페이지 공유 그림. 주소에 판 번호가 들어간다. 대체 글은 그림 속 글(언론사·날짜, 제목, 요약이 있으면 'AI 요약으로 읽기').
+ * 제목은 그림에서 세 줄로 잘려도 끝까지 적는다
+ */
 export function newsShareImage(news: NewsShareData): ShareImage {
-  const { source, title } = newsShareLines(news);
-  return { url: `/news/${news.id}/og/${OG_VERSION}`, alt: `${source} · ${title}` };
+  const { source, title, summary } = newsShareLines(news);
+  return {
+    url: `/news/${news.id}/og/${OG_VERSION}`,
+    alt: [source, title, summary ? NEWS_SUMMARY_CUE : null].filter(Boolean).join(" · "),
+  };
 }
 
 /**

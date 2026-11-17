@@ -2,7 +2,7 @@
 // 선수 페이지 머리 카드(PlayerHeader)를 그림으로 옮긴 모양이다.
 import { ImageResponse } from "next/og";
 import { getPlayer } from "@/lib/api";
-import { OG_COLORS, OG_SIZE, OgBrand, mixHex, ogFonts, photoDataUrl } from "@/lib/og";
+import { OG_COLORS, OG_SIZE, OgBrand, mixHex, ogFallbackImage, ogFonts, photoDataUrl } from "@/lib/og";
 import { playerShareLines } from "@/lib/share";
 import { teamColor } from "@/lib/teams";
 
@@ -14,7 +14,8 @@ export async function GET(_request: Request, { params }: RouteContext<"/players/
   const { id } = await params;
   const result = /^[1-9]\d{0,9}$/.test(id) ? await getPlayer(Number(id)) : null;
   const fonts = await ogFonts();
-  if (!result?.ok) return fallback(fonts);
+  // 없는 선수·잠깐 못 불러온 경우: 로고만 있는 그림(수집기가 저장해 두지 않게 보낸다)
+  if (!result?.ok) return ogFallbackImage(fonts);
 
   const { player, season } = result.data;
   const color = teamColor(player.teamAbbr);
@@ -78,18 +79,6 @@ export async function GET(_request: Request, { params }: RouteContext<"/players/
             </div>
           </div>
         </div>
-      </div>
-    ),
-    { ...OG_SIZE, fonts },
-  );
-}
-
-/** 없는 선수·잠깐 못 불러온 경우: 로고만 있는 기본 그림 */
-function fallback(fonts: Awaited<ReturnType<typeof ogFonts>>) {
-  return new ImageResponse(
-    (
-      <div style={{ display: "flex", width: "100%", height: "100%", alignItems: "center", justifyContent: "center", background: OG_COLORS.page, fontFamily: "Pretendard" }}>
-        <OgBrand scale={2} />
       </div>
     ),
     { ...OG_SIZE, fonts },
