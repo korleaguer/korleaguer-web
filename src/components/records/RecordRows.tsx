@@ -20,9 +20,13 @@ export function monthDay(date: string): string {
   return `${Number(m)}월 ${Number(d)}일`;
 }
 
-/** 명단 선수면 선수 화면으로, 아니면 그냥 줄 */
-function RowShell({ playerId, children }: { playerId: number | null; children: ReactNode }) {
-  const className = "flex min-h-14 items-center gap-3 px-4 py-2.5";
+/**
+ * 명단 선수면 선수 화면으로, 아니면 그냥 줄.
+ * 큰 글씨(앱 2배)에서는 한 줄에 다 들어가지 않는다. 그때 이름 칸이 한두 글자 폭으로 찌그러지지 않게 줄을 접어
+ * 오른쪽 값·날짜를 다음 줄로 내린다(flex-wrap, 이슈 #264). 언제 접을지는 줄마다 칸의 기본 폭(basis)으로 정한다
+ */
+function RowShell({ playerId, className: extra = "", children }: { playerId: number | null; className?: string; children: ReactNode }) {
+  const className = `flex min-h-14 flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5 ${extra}`;
   return playerId != null ? (
     <Link href={`/players/${playerId}`} className={`press-soft ${className}`}>
       {children}
@@ -47,7 +51,8 @@ export function LeaderRow({ leader, unit }: { leader: RecordLeader; unit: string
           {leader.rank}
         </span>
         <PlayerAvatar nameKo={leader.nameKo} photoUrl={leader.photoUrl} teamAbbr={null} size={28} />
-        <span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-0.5">
+        {/* 이름 칸 기본 폭 3.5rem(세 글자 이름): 이만큼도 안 남으면 값이 다음 줄 오른쪽으로 내려간다 */}
+        <span className="flex min-w-0 flex-1 basis-[3.5rem] flex-wrap items-center gap-x-2 gap-y-0.5">
           <span className="text-heading">{leader.nameKo}</span>
           {leader.active ? (
             <ActiveTag />
@@ -55,7 +60,7 @@ export function LeaderRow({ leader, unit }: { leader: RecordLeader; unit: string
             <span className="text-caption text-muted tabular-nums">{years(leader.firstSeason, leader.lastSeason)}</span>
           )}
         </span>
-        <span className="shrink-0 text-stat tabular-nums">
+        <span className="ml-auto shrink-0 text-stat tabular-nums">
           {count(leader.value)}
           <span className="sr-only">{unit}</span>
         </span>
@@ -72,15 +77,15 @@ export function NextRow({ next }: { next: RecordNext }) {
       <RowShell playerId={next.playerId}>
         <PlayerAvatar nameKo={next.nameKo} photoUrl={next.photoUrl} teamAbbr={null} size={44} />
         <span className="min-w-0 flex-1">
-          <span className="flex items-baseline justify-between gap-3">
-            <span className="min-w-0">
+          <span className="flex flex-wrap items-baseline justify-between gap-x-3">
+            <span className="min-w-0 flex-1 basis-[6rem]">
               <span className="text-heading">{next.nameKo}</span>{" "}
               <span className="text-meta text-muted tabular-nums">
                 통산 {count(next.value)}
                 {next.unit}
               </span>
             </span>
-            <span className="shrink-0 text-stat text-accent-ink tabular-nums">
+            <span className="ml-auto shrink-0 text-stat text-accent-ink tabular-nums">
               {count(next.toPass)}
               {next.unit}
             </span>
@@ -125,16 +130,18 @@ export function PassedRow({ group }: { group: PassedGroup }) {
   const { first, items } = group;
   // 넘은 순서대로(작은 값부터) 읽히게
   const names = [...items].sort((a, b) => a.passedValue - b.passedValue);
+  // 줄 폭이 18rem보다 좁으면(큰 글씨) 넘은 선배 이름들을 둘째 줄로 내려 줄 폭을 다 쓴다. 한 줄에 두면 이름들 칸이
+  // 한두 글자 폭이 돼 열 줄 넘게 세로로 늘어졌다(1.5배에서 17줄, 이슈 #264). 보통 크기 휴대폰(19rem 이상)은 그대로다
   return (
-    <li>
+    <li className="@container">
       <RowShell playerId={first.playerId}>
         <PlayerAvatar nameKo={first.nameKo} photoUrl={first.photoUrl} teamAbbr={null} size={28} />
-        <span className="w-12 shrink-0 text-heading">{first.nameKo}</span>
+        <span className="w-12 shrink-0 text-heading @max-[18rem]:w-auto">{first.nameKo}</span>
         <span className="shrink-0 rounded-full bg-surface-2 px-2 text-label text-neutral-pill-fg">{first.label}</span>
-        <span className="min-w-0 flex-1 text-meta tabular-nums">
+        <span className="min-w-0 flex-1 text-meta tabular-nums @max-[18rem]:order-last @max-[18rem]:basis-full @max-[18rem]:pl-[calc(28px+0.75rem)]">
           {names.map((p) => `${p.passedNameKo} ${count(p.passedValue)}`).join(" · ")}
         </span>
-        <span className="shrink-0 text-caption text-muted tabular-nums">{when(items)}</span>
+        <span className="shrink-0 text-caption text-muted tabular-nums @max-[18rem]:ml-auto">{when(items)}</span>
       </RowShell>
     </li>
   );
@@ -150,9 +157,12 @@ export function BestRow({ row }: { row: RecordBest["rows"][number] }) {
         >
           {row.rank}
         </span>
-        <span className="min-w-0 flex-1 text-heading">{row.nameKo}</span>
-        <span className="shrink-0 text-caption text-muted tabular-nums">{row.season}</span>
-        <span className="w-14 shrink-0 text-right text-stat tabular-nums">{count(row.value)}</span>
+        <span className="min-w-0 flex-1 basis-[3.5rem] text-heading">{row.nameKo}</span>
+        {/* 시즌과 값은 붙여 둔다: 이름 칸이 모자라면 둘이 함께 다음 줄 오른쪽으로 내려간다 */}
+        <span className="ml-auto flex shrink-0 items-baseline gap-3">
+          <span className="text-caption text-muted tabular-nums">{row.season}</span>
+          <span className="w-14 text-right text-stat tabular-nums">{count(row.value)}</span>
+        </span>
       </RowShell>
     </li>
   );

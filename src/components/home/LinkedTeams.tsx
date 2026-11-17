@@ -163,7 +163,8 @@ export default function LinkedTeams({
   const sheetTeam = linked.find((t) => t.abbreviation === openTeam && canOpen(t));
   return (
     <div ref={rootRef} className={className}>
-      <p className="mb-2 flex items-baseline justify-between gap-2 text-label">
+      {/* 큰 글씨에서 둘이 한 줄에 못 들어가면 '최근 n일 기사 수'를 다음 줄로(제목이 세 줄로 찌그러지지 않게, 이슈 #264) */}
+      <p className="mb-2 flex flex-wrap items-baseline justify-between gap-x-2 text-label">
         <span>행선지로 거론된 구단</span>
         <span className="shrink-0 text-caption text-muted tabular-nums">최근 {counts.days}일 기사 수</span>
       </p>

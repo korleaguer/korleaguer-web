@@ -69,12 +69,14 @@ export default function SeasonReportCard({
           <BandPhoto nameKo={player.nameKo} photoUrl={player.photoUrl} teamAbbr={player.teamAbbr} />
         </div>
       )}
-      <div className={`flex flex-1 flex-col px-4 pb-4 ${good ? "pt-3" : "pt-3.5"}`}>
-        <div className="flex items-start gap-3">
+      <div className={`@container flex flex-1 flex-col px-4 pb-4 ${good ? "pt-3" : "pt-3.5"}`}>
+        {/* 카드 안쪽이 12rem보다 좁으면(큰 글씨) 이름·소속을 사진 아래 줄로 내려 폭을 다 쓴다. 사진(56px)과 별 사이에 두면
+            360px 휴대폰 2배에서 이름이 칸 밖으로 나가고 소속이 네 줄로 갈렸다(이슈 #264). 사진 없는 '좋은 시즌' 카드는 그대로 */}
+        <div className={`flex items-start gap-3 ${good ? "" : "@max-[12rem]:flex-wrap"}`}>
           {!good && (
             <PlayerAvatar size={56} nameKo={player.nameKo} photoUrl={player.photoUrl} teamAbbr={player.teamAbbr} />
           )}
-          <div className="min-w-0 flex-1 self-center">
+          <div className={`min-w-0 flex-1 self-center ${good ? "" : "@max-[12rem]:order-last @max-[12rem]:basis-full"}`}>
             <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
               <h3 className="text-title">
                 <Link
@@ -93,7 +95,7 @@ export default function SeasonReportCard({
             nameKo={player.nameKo}
             initialOn={isMine}
             variant="icon"
-            className="relative z-10 -mr-2 -mt-1"
+            className="relative z-10 -mr-2 -mt-1 ml-auto"
           />
         </div>
 
@@ -189,10 +191,12 @@ function Numbers({ entry, report }: { entry: MyPlayer; report: SeasonReport }) {
   const showWar = (report.tier === "GOOD" || report.tier === "SOLID") && report.war != null && main === totals.mlb;
   const items = pitcher ? pitcherItems(main) : hitterItems(main, showWar ? report.war : null);
   return (
-    <div className="mt-2.5 rounded-xl bg-surface-2 px-3 pb-2.5 pt-2">
+    <div className="@container mt-2.5 rounded-xl bg-surface-2 px-3 pb-2.5 pt-2">
       {/* 큰 숫자가 마이너 기록이면 어느 단계인지 먼저 적는다. 이름표가 그냥 '타율'이면 메이저 기록으로 읽힌다(점검 11-13) */}
       {main !== totals.mlb && <p className="mb-1 text-label text-muted">{`${levelKo(main.level)} 기록`}</p>}
-      <dl className="grid grid-cols-4 gap-1">
+      {/* 칸이 16rem보다 좁으면(큰 글씨) 넷을 두 줄 두 칸으로. 한 줄 네 칸이면 '.276'이 세 줄로 갈렸다(앱 2배, 이슈 #264).
+          모든 카드가 같은 폭이라 함께 바뀐다(카드 통일) */}
+      <dl className="grid grid-cols-4 gap-1 @max-[16rem]:grid-cols-2 @max-[16rem]:gap-y-1.5">
         {items.map(([k, v]) => (
           <div key={k}>
             <dt className="text-caption text-muted">{k}</dt>

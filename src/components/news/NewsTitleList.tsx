@@ -93,19 +93,21 @@ function NewsTitleRow({
 }) {
   const content = (
     // 화면 낭독기는 제목부터 읽고(글 순서), 눈에는 출처 줄이 위에 보인다(flex-col-reverse)
-    <span className="flex min-w-0 flex-1 flex-col-reverse">
+    <span className="@container flex min-w-0 flex-1 flex-col-reverse">
       <span className="mt-0.5 line-clamp-2 text-summary group-hover:underline">
         <Highlighted text={n.titleKo ?? n.title} word={highlight} />
       </span>
-      {/* 출처 줄은 한 줄로 둔다. 좁으면 누구·언론사만 '…'으로 줄이고 '외 N곳'과 날짜는 남긴다 */}
-      <span className="flex min-w-0 whitespace-nowrap text-caption text-muted tabular-nums">
+      {/* 출처 줄은 한 줄로 둔다. 좁으면 누구·언론사만 '…'으로 줄이고 '외 N곳'과 날짜는 남긴다.
+          글자 칸이 14rem보다 좁으면(큰 글씨, 아주 좁은 휴대폰) 날짜도 한 줄에 못 들어가 줄 밖으로 나갔다. 그때만 보통 글처럼
+          흘려 넘치는 곳에서 다음 줄로 내린다(이슈 #264) */}
+      <span className="flex min-w-0 whitespace-nowrap text-caption text-muted tabular-nums @max-[14rem]:block @max-[14rem]:whitespace-normal">
         {n.isNew && (
           <span className="shrink-0 font-bold text-accent-ink">
             새<span aria-hidden>{"\u00a0·\u00a0"}</span>
             <span className="sr-only"> 기사, </span>
           </span>
         )}
-        <span className="min-w-0 truncate">
+        <span className="min-w-0 truncate @max-[14rem]:whitespace-normal">
           {n.who ? `${n.who} · ` : ""}
           {n.publisher}
         </span>

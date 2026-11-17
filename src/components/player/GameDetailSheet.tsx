@@ -141,6 +141,8 @@ export default function GameDetailSheet({
           onPointerCancel={onDragEnd}
         >
           <div aria-hidden className="mx-auto mt-2 h-1.5 w-10 rounded-full bg-line sm:hidden" />
+          {/* 아이콘 버튼 셋은 글자 배율과 상관없이 44px(누름 영역 기준). 2.75rem으로 두면 큰 글씨(2배)에서 셋이 88px씩 차지해
+              날짜가 한 글자씩 네 줄로 갈렸다(이슈 #264). 아이콘 그림(1rem)은 글자와 함께 커진다 */}
           <div className="flex items-center gap-1 px-2 py-2 sm:py-3">
             <NavButton label="이전 경기" onClick={onPrev} dir="prev" />
             <h2 id={titleId} className="min-w-0 flex-1 text-center text-heading tabular-nums">
@@ -151,7 +153,7 @@ export default function GameDetailSheet({
               type="button"
               aria-label="닫기"
               onClick={onClose}
-              className="press grid size-[max(2.75rem,44px)] shrink-0 place-items-center rounded-full text-muted hover:bg-surface-2"
+              className="press grid size-[44px] shrink-0 place-items-center rounded-full text-muted hover:bg-surface-2"
             >
               <svg aria-hidden viewBox="0 0 16 16" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
                 <path d="M4 4l8 8M12 4l-8 8" />
@@ -183,7 +185,7 @@ function NavButton({ label, onClick, dir }: { label: string; onClick: (() => voi
         haptic("select");
         onClick();
       }}
-      className={`grid size-[max(2.75rem,44px)] shrink-0 place-items-center rounded-full text-muted ${
+      className={`grid size-[44px] shrink-0 place-items-center rounded-full text-muted ${
         off ? "cursor-default [&>svg]:opacity-30" : "press hover:bg-surface-2"
       }`}
     >

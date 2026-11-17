@@ -330,10 +330,12 @@
   html[data-app] {
     /*
      * 큰 글씨: 앱이 기기 글자 크기 배율(아이폰 '더 큰 텍스트')을 --app-font-scale로 넣는다(기본 1).
-     * 글자·여백이 rem이라 화면이 그 배율로 함께 커진다. 1.5배를 넘으면 375px 폭 화면에서 머리글이 넘쳐 0.85~1.5배로 묶는다
-     * (앱도 같은 한도로 보낸다). 웹뷰가 스스로 글자를 키우지 않게 text-size-adjust는 고정.
+     * 글자·여백이 rem이라 화면이 그 배율로 함께 커진다. 0.85~2배를 따른다(WCAG 1.4.4 200%, 사용자 11-17 '추천대로', 이슈 #264.
+     * 전에는 머리글이 넘쳐 1.5배에서 잘랐다). 웹뷰가 스스로 글자를 키우지 않게 text-size-adjust는 고정.
      */
-    font-size: calc(100% * clamp(0.85, var(--app-font-scale, 1), 1.5));
+    font-size: calc(100% * clamp(0.85, var(--app-font-scale, 1), 2));
+    /* 두 손가락 확대는 되고(앱이 확대 막기를 뺐다), 두 번 탭 확대는 막는다(버튼을 빨리 두 번 누르면 화면이 커지지 않게) */
+    touch-action: manipulation;
     /* 앱 안 머리글은 위에 붙어 있어서(SiteHeader), 자리를 찾아 스크롤할 때 그 밑으로 숨지 않게 머리글 높이만큼 띄운다 */
     scroll-padding-top: 3.5rem;
     -webkit-text-size-adjust: 100%;
@@ -686,6 +688,42 @@
       linear-gradient(to left, var(--edge-bg) 40%, transparent) right / 2.5rem 100% no-repeat local,
       radial-gradient(farthest-side at 100% 50%, color-mix(in oklab, var(--foreground) 16%, transparent), transparent)
         right / 0.875rem 100% no-repeat scroll;
+  }
+
+  /*
+   * 경기 달력 날짜 칸(이슈 #264). 7칸은 카드 폭에 묶여 있어 글자만 키우면 칸 밖으로 넘친다(1.5배부터 '무안타'·'28 3A'가 넘쳤다).
+   * 칸 사이·안 여백은 px로 두고(GameCalendar), 칸 글자는 칸 안쪽 폭이 허락하는 만큼만 키운다. 보통 크기에서는 그대로이고,
+   * 칸 높이도 글자를 따라간다. 큰 글씨에서도 고른 날의 경기 줄(달력 아래)과 상세 창은 그대로 커지고, 손가락 확대도 된다.
+   * 나누는 수는 글자 폭(em): 위 줄 '28 3A' 약 2.56em, 가운데 '무안타' 굵게 약 2.6em(1.5배에서 잰 값)에 조금 여유를 둔 값.
+   * 375px 휴대폰 보통 크기에서 칸 안쪽 폭이 약 32px라 2.7이면 글자가 지금 크기(12px) 그대로다.
+   */
+  .cal-grid {
+    container-type: inline-size;
+  }
+
+  .cal-grid > * {
+    /* 칸 하나의 안쪽 폭: (줄 폭 - 칸 사이 4px × 6) / 7 - 칸 안 여백 4px × 2 */
+    --cal-in: calc((100cqi - 24px) / 7 - 8px);
+    --cal-top: min(var(--text-micro), calc((var(--cal-in) - 2px) / 2.7));
+    --cal-label: min(var(--text-caption), calc(var(--cal-in) / 2.7));
+    height: calc(var(--cal-label) * 13 / 3);
+  }
+
+  @media (width >= 40rem) {
+    /* 넓은 화면: 칸 사이 6px, 칸 안 여백 8px, 칸 높이는 보통 크기 76px */
+    .cal-grid > * {
+      --cal-in: calc((100cqi - 36px) / 7 - 16px);
+      height: calc(var(--cal-label) * 19 / 3);
+    }
+  }
+
+  .cal-top {
+    font-size: var(--cal-top);
+  }
+
+  .cal-label {
+    font-size: var(--cal-label);
+    line-height: calc(4 / 3);
   }
 }
 

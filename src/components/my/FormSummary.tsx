@@ -136,26 +136,30 @@ export function Numbers({
   small: [string, string | number][];
 }) {
   return (
-    <div className="mt-3.5 grid grid-cols-[auto_minmax(0,1fr)] items-end gap-4">
-      <dl>
-        <dt className="text-caption text-muted">{label}</dt>
-        <dd className="mt-1 text-stat-form tabular-nums">
-          {/* 처음엔 최종 값으로 서 있고, 기간(7·14·30일)을 바꾸면 앞 값에서 굴러가며 바뀐다 */}
-          <RollingNumber value={value} />
-        </dd>
-        {note != null && <dd className="mt-1.5 text-caption text-muted">{note}</dd>}
-      </dl>
-      {/* 세 칸을 똑같이 나누지 않고 내용 너비대로 고르게 벌린다. 좁은 카드에서 "50⅔"이 "50"/"⅔"로 갈리지 않게 */}
-      <dl className="grid grid-cols-[repeat(3,auto)] justify-evenly rounded-xl bg-surface-2 py-2 text-center">
-        {small.map(([k, v]) => (
-          <div key={k} className="whitespace-nowrap">
-            <dt className="text-caption text-muted">{k}</dt>
-            <dd className="text-stat tabular-nums">
-              {v}
-            </dd>
-          </div>
-        ))}
-      </dl>
+    // 칸이 18rem보다 좁으면(큰 글씨) 작은 숫자 셋을 큰 숫자 아래로 내린다. 옆에 두면 1.5배부터 '탈삼진'·'홈런' 칸이
+    // 카드 밖으로 나갔다(이슈 #264). 그래도 셋이 한 줄에 못 들어가면(아주 좁은 휴대폰 + 2배) 두 칸씩
+    <div className="@container mt-3.5">
+      <div className="grid grid-cols-[auto_minmax(0,1fr)] items-end gap-4 @max-[18rem]:grid-cols-1 @max-[18rem]:gap-2.5">
+        <dl>
+          <dt className="text-caption text-muted">{label}</dt>
+          <dd className="mt-1 text-stat-form tabular-nums">
+            {/* 처음엔 최종 값으로 서 있고, 기간(7·14·30일)을 바꾸면 앞 값에서 굴러가며 바뀐다 */}
+            <RollingNumber value={value} />
+          </dd>
+          {note != null && <dd className="mt-1.5 text-caption text-muted">{note}</dd>}
+        </dl>
+        {/* 세 칸을 똑같이 나누지 않고 내용 너비대로 고르게 벌린다. 좁은 카드에서 "50⅔"이 "50"/"⅔"로 갈리지 않게 */}
+        <dl className="grid grid-cols-[repeat(3,auto)] justify-evenly gap-y-1.5 rounded-xl bg-surface-2 py-2 text-center @max-[7rem]:grid-cols-[repeat(2,auto)]">
+          {small.map(([k, v]) => (
+            <div key={k} className="whitespace-nowrap">
+              <dt className="text-caption text-muted">{k}</dt>
+              <dd className="text-stat tabular-nums">
+                {v}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </div>
     </div>
   );
 }
