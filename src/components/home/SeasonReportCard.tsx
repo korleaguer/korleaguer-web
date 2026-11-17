@@ -194,10 +194,12 @@ function Numbers({ entry, report }: { entry: MyPlayer; report: SeasonReport }) {
     <div className="@container mt-2.5 rounded-xl bg-surface-2 px-3 pb-2.5 pt-2">
       {/* 큰 숫자가 마이너 기록이면 어느 단계인지 먼저 적는다. 이름표가 그냥 '타율'이면 메이저 기록으로 읽힌다(점검 11-13) */}
       {main !== totals.mlb && <p className="mb-1 text-label text-muted">{`${levelKo(main.level)} 기록`}</p>}
-      {/* 칸이 16rem보다 좁으면(큰 글씨) 넷을 두 줄 두 칸으로. 한 줄 네 칸이면 '.276'이 세 줄로 갈렸다(앱 2배, 이슈 #264).
+      {/* 칸이 14.5rem보다 좁으면(큰 글씨) 넷을 두 줄 두 칸으로. 한 줄 네 칸이면 '.276'이 세 줄로 갈렸다(앱 2배, 이슈 #264).
+          14.5rem: 네 칸은 같은 폭이라 가장 넓은 칸 × 4가 필요하다. 11-17 측정에서 가장 넓은 카드가 '평균자책점'(1배 52px)
+          × 4 + 간격 = 13.75rem이었고, 보통 크기의 가장 좁은 칸(640px 창 두 칸, 14.6rem)에서는 걸리지 않는다.
           그보다 더 좁으면(2배) 두 칸에도 '평균자책점'이 '평균자책/점'으로 갈려서, 한 줄에 이름표·숫자를 양 끝으로 둔 목록으로.
           모든 카드가 같은 폭이라 함께 바뀐다(카드 통일) */}
-      <dl className="grid grid-cols-4 gap-1 @max-[16rem]:grid-cols-2 @max-[16rem]:gap-y-1.5 @max-[7.75rem]:grid-cols-1 @max-[7.75rem]:gap-y-0.5 @max-[7.75rem]:*:flex @max-[7.75rem]:*:items-baseline @max-[7.75rem]:*:flex-wrap @max-[7.75rem]:*:justify-between @max-[7.75rem]:*:gap-x-2">
+      <dl className="grid grid-cols-4 gap-1 @max-[14.5rem]:grid-cols-2 @max-[14.5rem]:gap-y-1.5 @max-[7.75rem]:grid-cols-1 @max-[7.75rem]:gap-y-0.5 @max-[7.75rem]:*:flex @max-[7.75rem]:*:items-baseline @max-[7.75rem]:*:flex-wrap @max-[7.75rem]:*:justify-between @max-[7.75rem]:*:gap-x-2">
         {items.map(([k, v]) => (
           <div key={k}>
             <dt className="text-caption text-muted">{k}</dt>
