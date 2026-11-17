@@ -243,7 +243,10 @@ export default function GameCalendar({
                     : "text-muted hover:bg-surface-2 hover:text-foreground"
               }`}
             >
-              {m.month}월
+              {/* 고른 달은 글자도 굵게(이슈 #260) */}
+              <span className={`bold-reserve ${on ? "font-extrabold" : ""}`} data-text={`${m.month}월`}>
+                {m.month}월
+              </span>
             </button>
           );
         })}

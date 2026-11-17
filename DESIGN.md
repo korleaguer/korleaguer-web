@@ -219,6 +219,7 @@ components:
     backgroundColor: "{colors.accent-soft}"
     textColor: "{colors.accent-ink}"
     typography: "{typography.button}"
+    fontWeight: 800
     rounded: "{rounded.full}"
     padding: "6px 12px"
   info-chip:
@@ -266,6 +267,7 @@ components:
     backgroundColor: "{colors.accent-soft}"
     textColor: "{colors.accent-ink}"
     typography: "{typography.label}"
+    fontWeight: 800
     rounded: "{rounded.full}"
     padding: "4px 12px"
   picker-button:
@@ -346,6 +348,7 @@ components:
     backgroundColor: "{colors.accent-soft}"
     textColor: "{colors.accent-ink}"
     typography: "{typography.label}"
+    fontWeight: 800
     rounded: "{rounded.full}"
     padding: "6px 6px"
   calendar-day:
@@ -407,7 +410,7 @@ components:
 ### Primary
 - **스코어보드 파랑** (`accent`): 채운 파랑. 머리글 로고 상자('만루', 바탕은 이 파랑을 가운데에 둔 그러데이션), '승' 알약, '내 선수' 카드의 경기별 막대와 출전 줄 칸(선발은 채운 칸, 교체는 파랑 테두리 칸), 선수 페이지 경기 달력의 2안타 이상(투수는 1이닝 이상 무실점) 칸, 메이저 알약의 작은 점에만 칠한다. 포커스 테두리, 선택 영역(22% 섞음), 체크박스·커서 색도 이 파랑이다. 다크 모드에서도 같은 값을 쓴다.
 - **진한 파랑 글자** (`accent-ink`): 1위 숫자, 현재 메뉴 글자, 링크('경기 기록 모두 보기' 포함). '내 선수' 카드에서는 시즌보다 나빠진 차이(▼/▲와 숫자), 고른 막대의 날짜, 켜진 별, 안 좋은 한 줄 소식('10경기 연속 무안타', 회색 바탕 알약), '콜업 N일째' 상태 배지에도 쓴다. 한국 중계·증권 화면처럼 '좋아짐 = 따뜻한 색, 나빠짐 = 파랑'으로 읽힌다. 메이저 콜업 등 메이저로 옮긴 이동 알약도 연파랑 바탕 + 진한 파랑 글자다. 다크 모드에서는 밝은 파랑(`accent-ink-dark`)으로 바뀐다.
-- **연파랑 알약** (`accent-soft`): 현재 메뉴·현재 기간 알약, 켜진 '내 선수' 알약 바탕, 별 버튼에 마우스를 올렸을 때(켜진 상태)의 원, 경기 달력의 고른 달 알약과 1안타(투수는 1이닝 못 채운 무실점) 칸.
+- **연파랑 알약** (`accent-soft`): 현재 메뉴·현재 기간 알약, 켜진 '내 선수' 알약 바탕, 별 버튼에 마우스를 올렸을 때(켜진 상태)의 원, 경기 달력의 고른 달 알약과 1안타(투수는 1이닝 못 채운 무실점) 칸. 고른 칸(현재 메뉴·기간·바로 가기 탭·달·같은 날 경기 탭·소속팀 사진·뉴스 선수 알약)은 글자도 굵게(800) 해서 색만으로 구분하지 않는다(WCAG 1.4.1, 2026-11-17 사용자 결정). 굵어져도 칸 폭이 흔들리지 않게 `.bold-reserve`로 굵은 글자 폭을 늘 잡아 둔다.
 
 ### Secondary
 - **안내 호박색** (`notice-bg`, `notice-fg`, `notice-mark`): '샘플 데이터'와 '선수 기록을 아직 받지 못했어요' 안내 띠에만 쓴다. 바탕은 옅은 호박, 글자는 진한 갈색, 앞의 작은 알약은 진한 호박.

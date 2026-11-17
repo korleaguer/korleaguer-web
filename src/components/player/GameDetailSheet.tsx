@@ -220,7 +220,9 @@ function SheetBody({ playerId, role, day }: { playerId: number; role: Role; day:
               onClick={() => setIndex(i)}
               className={`tap-target rounded-full px-3 py-1.5 text-label ${i === index ? "bg-accent-soft text-accent-ink" : "text-muted hover:bg-surface-2"}`}
             >
-              {label}
+              <span className={`bold-reserve ${i === index ? "font-extrabold" : ""}`} data-text={label}>
+                {label}
+              </span>
             </button>
           ))}
         </div>

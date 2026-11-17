@@ -98,7 +98,7 @@ export default function PillNav({ items, label, className = "", itemClass, idleC
             }}
             className={`press tap-target relative rounded-full ${itemClass} ${on ? "text-accent-ink" : idleClass} ${on && !rect ? "bg-accent-soft" : ""}`}
           >
-            <PendingLabel>{item.label}</PendingLabel>
+            <PendingLabel on={on}>{item.label}</PendingLabel>
           </Link>
         );
       })}
@@ -106,12 +106,19 @@ export default function PillNav({ items, label, className = "", itemClass, idleC
   );
 }
 
-/** 이 칸의 다음 화면을 받는 동안 점 3개(Link 안에서만 쓸 수 있다) */
-function PendingLabel({ children }: { children: string }) {
+/**
+ * 이 칸의 다음 화면을 받는 동안 점 3개(Link 안에서만 쓸 수 있다).
+ * 고른 칸은 글자도 굵게 해서 색만으로 구분하지 않는다(이슈 #260, 칸 폭은 .bold-reserve가 잡아 둔다)
+ */
+function PendingLabel({ children, on }: { children: string; on: boolean }) {
   const { pending } = useLinkStatus();
   return (
     <>
-      <LoadingDots loading={pending}>{children}</LoadingDots>
+      <LoadingDots loading={pending}>
+        <span className={`bold-reserve ${on ? "font-extrabold" : ""}`} data-text={children}>
+          {children}
+        </span>
+      </LoadingDots>
       {/* 점은 그림이라 화면 낭독기에는 글로 알린다 */}
       {pending && <span className="sr-only"> 불러오는 중</span>}
     </>

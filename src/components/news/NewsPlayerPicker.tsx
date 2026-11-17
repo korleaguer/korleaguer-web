@@ -63,7 +63,9 @@ export default function NewsPlayerPicker({
       >
         <li className="shrink-0">
           <Chip href={newsHref(null, query)} current={selected === null}>
-            <span className="px-1.5 lg:px-0">전체</span>
+            <span className={`bold-reserve px-1.5 lg:px-0 ${selected === null ? "font-extrabold" : ""}`} data-text="전체">
+              전체
+            </span>
           </Chip>
         </li>
         {ordered.map((p) => {
@@ -86,7 +88,10 @@ export default function NewsPlayerPicker({
                     />
                   )}
                 </span>
-                <span>{p.nameKo}</span>
+                {/* 고른 선수는 이름도 굵게(색만으로 구분하지 않게, 이슈 #260) */}
+                <span className={`bold-reserve ${current ? "font-extrabold" : ""}`} data-text={p.nameKo}>
+                  {p.nameKo}
+                </span>
                 {/* 내 선수 별: 선수 화면 '내 선수에 넣기'와 같은 별(채운 모양, 진한 파랑). 사진과 이름은 붙여 두고
                     별은 이름 끝에 둔다(사용자 11-15 시안 A: 사이에 끼면 사진과 이름이 떨어져 보였다) */}
                 {star && <StarIcon filled className="-ml-0.5 size-3.5 shrink-0 text-accent-ink" />}
