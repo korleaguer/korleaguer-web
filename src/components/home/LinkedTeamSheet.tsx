@@ -197,26 +197,26 @@ function ArticleRow({ article: a, playerPhotoUrl }: { article: LinkedArticle; pl
   const text = a.reason ?? a.titleKo ?? a.title;
   return (
     <Link href={`/news/${a.id}`} className="press-soft group flex items-center gap-3 py-3">
-      {/* 화면 낭독기는 글부터 읽고, 눈에는 출처 줄이 위에 보인다. 출처 줄이 14rem보다 좁으면(큰 글씨) 보통 글처럼 흘린다(NewsTitleList와 같다) */}
+      {/* 화면 낭독기는 글부터 읽고, 눈에는 출처 줄이 위에 보인다. 출처 줄이 11rem보다 좁으면(큰 글씨) 보통 글처럼 흘린다(NewsTitleList와 같다) */}
       <span className="@container flex min-w-0 flex-1 flex-col-reverse">
-        <span className="mt-0.5 line-clamp-2 text-summary group-hover:underline @max-[14rem]:line-clamp-4">
+        <span className="mt-0.5 line-clamp-2 text-summary group-hover:underline @max-[11rem]:line-clamp-4">
           <Highlighted text={text} word={a.reasonName} />
         </span>
-        <span className="flex min-w-0 whitespace-nowrap text-caption text-muted tabular-nums @max-[14rem]:block @max-[14rem]:whitespace-normal">
-          <span className="min-w-0 truncate @max-[14rem]:whitespace-normal">{a.publisher}</span>
+        <span className="flex min-w-0 whitespace-nowrap text-caption text-muted tabular-nums @max-[11rem]:block @max-[11rem]:whitespace-normal">
+          <span className="min-w-0 truncate @max-[11rem]:whitespace-normal">{a.publisher}</span>
           {/* 조각 사이 간격은 NewsTitleList와 같다(한 줄이면 왼쪽 여백, 흘리면 보통 공백이 간격·줄바꿈 자리) */}
           {a.alsoBy.length > 0 && (
             <>
               {" "}
               <span
-                className="shrink-0 whitespace-nowrap pl-[0.25em] @max-[14rem]:pl-0"
+                className="shrink-0 whitespace-nowrap pl-[0.25em] @max-[11rem]:pl-0"
                 title={`같은 기사: ${a.alsoBy.join(", ")}`}
               >
                 {`외 ${a.alsoBy.length}곳`}
               </span>
             </>
           )}{" "}
-          <span className="shrink-0 pl-[0.25em] @max-[14rem]:pl-0">
+          <span className="shrink-0 pl-[0.25em] @max-[11rem]:pl-0">
             <DotDate text={formatDate(a.publishedAt)} />
           </span>
         </span>
