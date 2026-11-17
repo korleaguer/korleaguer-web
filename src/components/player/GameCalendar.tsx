@@ -286,9 +286,14 @@ export default function GameCalendar({
         })}
       </div>
 
-      {/* 그달 이동(콜업·강등·부상자 명단 등). 알약 색은 이동 기록 칸과 같다 */}
+      {/* 그달 이동(콜업·강등·부상자 명단 등). 알약 색은 이동 기록 칸과 같다.
+          이동 기록은 시각 없이 미국 날짜만 와서 위 달력 칸(한국 날짜)과 하루 다를 수 있다. 줄 앞에 한 번 '미국 날짜'라고 적는다
+          (화면 낭독기는 목록 이름으로 듣는다, 전수조사) */}
       {monthMoves.length > 0 && (
-        <ul aria-label={`${month.month}월 이동`} className="flex flex-wrap gap-x-3 gap-y-1.5 px-3.5 pb-3.5 sm:px-4">
+        <ul aria-label={`${month.month}월 이동(미국 날짜)`} className="flex flex-wrap gap-x-3 gap-y-1.5 px-3.5 pb-3.5 sm:px-4">
+          <li aria-hidden className="inline-flex items-center text-caption text-muted">
+            미국 날짜
+          </li>
           {monthMoves.map((m, i) => (
             <li key={`${m.date}-${m.typeCode}-${i}`} className="inline-flex items-center gap-1.5">
               <span className="text-caption text-muted tabular-nums">{moveDay(m.date)}</span>

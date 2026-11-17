@@ -37,6 +37,18 @@ export function formatDate(value: string | null | undefined): string {
   return `${part(parts, "month")}월 ${part(parts, "day")}일(${part(parts, "weekday")})`;
 }
 
+/**
+ * 미국 날짜(MLB 일정·이동 기록처럼 시각 없이 날짜만 오는 값): "3월 25일(목, 미국)".
+ * 사이트의 다른 날짜는 한국 날짜라서, 하루 다를 수 있는 미국 날짜에는 '미국'을 붙인다(전수조사, 사용자 11-17 '추천대로').
+ * 시각이 없어 한국 날짜로 바꿀 근거가 없다(경기처럼 시작 시각이 있으면 한국 날짜로 바꿔 쓴다)
+ */
+export function formatUsDate(value: string | null | undefined): string {
+  const date = toDate(value);
+  if (!date) return "-";
+  const parts = dateFormat.formatToParts(date);
+  return `${part(parts, "month")}월 ${part(parts, "day")}일(${part(parts, "weekday")}, 미국)`;
+}
+
 /** 기간: "9월 21일(월) ~ 27일(일)". 달이 다르면 "8월 31일(월) ~ 9월 6일(일)" */
 export function formatDateRange(from: string, to: string): string {
   const start = formatDate(from);
