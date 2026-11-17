@@ -11,7 +11,7 @@ import { type BadgeTone, levelKo, statusBadge } from "@/components/my/formLabels
 import LinkedTeams from "@/components/home/LinkedTeams";
 import MonthBars, { MonthSpark } from "@/components/home/MonthBars";
 import SeasonReportRows, { type ReportRow } from "@/components/home/SeasonReportRows";
-import { LeaguePositionCompact } from "@/components/player/LeaguePosition";
+import LeaguePositionCompact from "@/components/player/LeaguePositionCompact";
 
 /** 잘한 시즌 판정. 판정 글자를 주황으로(좋은 활약 색, The Hot Is Earned Rule) */
 const HOT_TIERS: ReadonlySet<SeasonTier> = new Set(["GOOD", "SHORT_GOOD"]);
