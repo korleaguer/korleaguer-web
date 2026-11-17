@@ -13,6 +13,12 @@ const nextConfig: NextConfig = {
   compress: false,
   cacheComponents: true,
   partialPrefetching: true,
+  experimental: {
+    // next build·dev가 설치된 Next에 보안 권고가 있으면 알려 주는 범위("latest"면 새 버전마다 알린다).
+    // 지금 기본값과 같지만 `next upgrade --agent=security`가 적어 두라고 해서 명시한다(#280).
+    // 터미널이 없는 CI·Docker 빌드에서는 알림 때문에 멈추지 않는다.
+    agentUpgrade: "security",
+  },
   turbopack: {
     rules: {
       "*.css": {
