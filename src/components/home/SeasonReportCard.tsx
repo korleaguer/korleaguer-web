@@ -7,7 +7,7 @@ import PlayerAvatar from "@/components/PlayerAvatar";
 import AllNewsLink from "@/components/news/AllNewsLink";
 import NewsTitleList from "@/components/news/NewsTitleList";
 import BandPhoto from "@/components/my/BandPhoto";
-import { StatusBadge } from "@/components/my/FormSummary";
+import { StatusBadge, StatusSrText } from "@/components/my/FormSummary";
 import MyPlayerToggle from "@/components/my/MyPlayerToggle";
 import LinkedTeams from "@/components/home/LinkedTeams";
 import MonthBars from "@/components/home/MonthBars";
@@ -85,6 +85,8 @@ export default function SeasonReportCard({
                 >
                   {player.nameKo}
                 </Link>
+                {/* 좋은 시즌 카드는 상태를 무대 위 배지(화면 낭독기에서 감춤)로 보여서, 이름 뒤에서 읽게 한다 */}
+                {good && status && <StatusSrText status={status} />}
               </h3>
               {!good && status && <StatusPill status={status} />}
             </div>

@@ -32,6 +32,9 @@ export function StatusBadge({ status }: { status: CardStatus }) {
   if (!badge) return null;
   return (
     <span
+      // 화면 낭독기는 이 배지를 건너뛰고 이름 제목 안에서 읽는다(StatusSrText). 무대가 이름보다 앞이라 이름보다 먼저 읽혔고,
+      // 제목으로 건너뛰면 부상·콜업을 놓쳤다(이슈 #273)
+      aria-hidden
       className={`absolute left-[14px] top-[12px] z-10 inline-flex max-w-[calc(100%-136px)] items-center @max-[18rem]:max-w-[calc(100%-28px)] gap-1.5 rounded-full bg-surface px-2.5 py-0.5 text-badge shadow-[var(--shadow-card)] ${BADGE_TONE[badge.tone]}`}
     >
       <span aria-hidden className={`size-[7px] shrink-0 rounded-full ${badge.tone === "neutral" ? "bg-muted" : "bg-current"}`} />
@@ -175,4 +178,13 @@ export function Numbers({
       </div>
     </div>
   );
+}
+
+/**
+ * 무대 위 상태 배지(StatusBadge, 화면 낭독기에서는 감춤)의 글을 이름 제목 안, 이름 뒤에서 읽게 한다: '이정후, 부상자 명단 12일째'.
+ * 제목으로 건너뛰어도 상태를 같이 듣는다. 보이는 화면은 그대로다
+ */
+export function StatusSrText({ status }: { status: CardStatus }) {
+  const badge = statusBadge(status);
+  return badge ? <span className="sr-only">{`, ${badge.text}`}</span> : null;
 }

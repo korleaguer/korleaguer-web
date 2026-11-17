@@ -6,7 +6,7 @@ import { teamColor } from "@/lib/teams";
 import { GameRow } from "@/components/player/GameLog";
 import ShowMore from "@/components/ShowMore";
 import BandPhoto from "./BandPhoto";
-import { Notice, Numbers, SeasonNumbers, StatusBadge, SummaryLines } from "./FormSummary";
+import { Notice, Numbers, SeasonNumbers, StatusBadge, StatusSrText, SummaryLines } from "./FormSummary";
 import GameBars from "./GameBars";
 import MyPlayerToggle from "./MyPlayerToggle";
 import { barSlots } from "./columns";
@@ -63,6 +63,8 @@ export default async function FormCard({ entry, days, statsAvailable, isMine = t
               >
                 {player.nameKo}
               </Link>
+              {/* 무대의 상태 배지는 이름보다 앞에 그려져 화면 낭독기에서 감추고, 여기(이름 뒤)에서 읽는다 */}
+              {entry.status && <StatusSrText status={entry.status} />}
             </Name>
             {meta && <p className="text-meta text-muted">{meta}</p>}
             {/* 기간을 당긴 카드(마지막으로 뛴·다치기 전): 어느 기간인지 적는다 */}
