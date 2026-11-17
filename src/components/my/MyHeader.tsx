@@ -132,10 +132,14 @@ function PickerRow({ player, initialOn }: { player: PlayerSummary; initialOn: bo
       >
         <PlayerAvatar size={28} nameKo={player.nameKo} photoUrl={player.photoUrl} teamAbbr={player.teamAbbr} />
         <span className="min-w-0 flex-1">
-          <span className="block text-summary">{player.nameKo}</span>
+          {/* 별은 이름 바로 뒤(뉴스 선수 고르기와 같은 '사진 이름 ★', 사용자 11-15). 줄 끝에 두면 PC 세 칸에서
+              옆 칸 선수 이름에 더 가까워 어느 선수 별인지 헷갈렸다(11-17 점검) */}
+          <span className="flex items-center gap-1 text-summary">
+            {player.nameKo}
+            <StarIcon filled={on} className={`size-4 shrink-0 ${on ? "text-accent-ink" : "text-muted"}`} />
+          </span>
           {meta && <span className="block truncate text-meta text-muted">{meta}</span>}
         </span>
-        <StarIcon filled={on} className={`size-5 shrink-0 ${on ? "text-accent-ink" : "text-muted"}`} />
         <span className="sr-only">내 선수</span>
       </button>
     </li>
