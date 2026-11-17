@@ -121,7 +121,8 @@ export default function WrcTrend({ points }: { points: TrendPoint[] }) {
         aria-valuemin={0}
         aria-valuemax={last}
         aria-valuenow={active}
-        aria-valuetext={`${date}까지 wRC+ ${value}`}
+        // 마지막 점만 MLB 공식 값이고 중간은 어림값이다(아래 설명 줄과 같은 뜻)
+        aria-valuetext={`${date}까지 wRC+ ${value}${active === last ? "" : "(어림)"}`}
         onPointerDown={(e) => {
           e.currentTarget.setPointerCapture(e.pointerId);
           fromPointer(e);
@@ -219,8 +220,14 @@ export default function WrcTrend({ points }: { points: TrendPoint[] }) {
           );
         })}
       </div>
-      {/* '100'은 점선 끝 눈금에 있어 되풀이하지 않고 점선의 뜻만 쓴다 */}
-      <p className="mt-2 text-micro text-muted">점선은 리그 평균. 시즌 처음부터 그날까지의 타격이고, 50타석부터 그려요.</p>
+      {/* '100'은 점선 끝 눈금에 있어 되풀이하지 않고 점선의 뜻만 쓴다. 중간 값은 표준 가중치로 어림해 마지막 점(MLB 공식)에 맞춰
+          옮긴 값이라 공식 값처럼 읽히지 않게 밝힌다(lib/wrcTrend). 훑을 수 있다는 표시가 없어 손가락 기기·마우스 기기에 맞는 말을
+          하나만 보인다(375px 세 줄). 낭독기는 slider 역할과 값 글로 다루므로 이 안내는 읽지 않는다 */}
+      <p className="mt-2 text-micro text-muted">
+        점선은 리그 평균. 시즌 처음부터 그날까지의 타격이고, 50타석부터 그려요. 중간 값은 어림이고 마지막 값만 MLB 공식이에요.
+        <span aria-hidden className="hidden pointer-coarse:inline"> 그래프를 옆으로 훑으면 그날까지 값이 보여요.</span>
+        <span aria-hidden className="hidden pointer-fine:inline"> 그래프에 마우스를 올리면 그날까지 값이 보여요.</span>
+      </p>
     </div>
   );
 }
