@@ -12,6 +12,11 @@ interface Props {
   /** 놓이는 자리에 맞춘 버튼 여백·선 */
   buttonClassName?: string;
   /**
+   * 화면 낭독기에만 버튼 이름 앞에 붙여 읽을 말(예: 선수 이름 → '이정후 경기 기록 모두 보기'). 보이는 글자는 그대로다.
+   * 내 선수 카드마다 같은 '경기 기록 모두 보기'가 여럿이라 버튼 목록에서 어느 선수 것인지 갈리지 않았다
+   */
+  srContext?: string;
+  /**
    * true면 내용을 처음 펼칠 때 그린다(그 전에는 서버 HTML에도 없다). 긴 목록을 서버에서 다 그려 보내지 않으려고 쓴다.
    * 한 번 펼친 뒤로는 접어도 그려 둔다. 내용은 브라우저에서 만들어야 하므로 클라이언트 컴포넌트 안에서 넘긴다.
    */
@@ -23,7 +28,7 @@ interface Props {
  * 브라우저 기본 접이식(details)은 펼쳐도 글자가 그대로이고 버튼이 목록 가운데에 남아 접는 법이 보이지 않았다(이슈 #37).
  * 긴 목록을 접으면 버튼이 화면 위로 밀려날 수 있어, 그때는 버튼이 보이는 곳까지만 스크롤한다.
  */
-export default function ShowMore({ moreLabel, lessLabel = "접기", children, buttonClassName = "", lazy = false }: Props) {
+export default function ShowMore({ moreLabel, lessLabel = "접기", children, buttonClassName = "", srContext, lazy = false }: Props) {
   const [open, setOpen] = useState(false);
   // lazy일 때 한 번이라도 펼쳤나(펼친 뒤로는 내용을 계속 그려 둔다)
   const [rendered, setRendered] = useState(!lazy);
@@ -52,6 +57,8 @@ export default function ShowMore({ moreLabel, lessLabel = "접기", children, bu
         aria-expanded={open}
         aria-controls={contentId}
         onClick={toggle}
+        // 보이는 글자를 그대로 이름 끝에 둔다(음성 제어로 '경기 기록 모두 보기'라고 말해도 눌린다, WCAG 2.5.3)
+        aria-label={srContext ? `${srContext} ${open ? lessLabel : moreLabel}` : undefined}
         className={`press-soft flex min-h-11 w-full cursor-pointer items-center justify-center gap-1 text-label text-accent-ink ${buttonClassName}`}
       >
         {open ? lessLabel : moreLabel}

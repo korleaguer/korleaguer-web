@@ -17,6 +17,11 @@ interface Props {
   days: number;
   /** 마이너 기록이면 true. 마이너는 팀 일정을 몰라 결장 막대가 없으므로 범례에서 뺀다 */
   minors?: boolean;
+  /**
+   * 선수 이름. 화면 낭독기에만 제목·막대 묶음 이름 앞에 붙인다('이정후 경기별 안타').
+   * 내 선수 카드마다 같은 '경기별 안타'가 여럿이라 제목·묶음 목록에서 어느 선수 것인지 갈리지 않았다
+   */
+  name?: string;
 }
 
 /** 막대 높이에 쓰는 값: 타자는 안타 수, 투수는 잡은 아웃 수. 모르면 null */
@@ -74,9 +79,10 @@ function showsDay(slot: BarSlot, index: number, count: number, days: number): bo
  * 경기별 막대 + 고른 경기 한 줄. 왼쪽이 오래된 날이다.
  * 결장은 점선 막대, 경기가 없는 날은 빈칸, 홈런 친 경기는 막대 위에 주황 점(좋은 활약 색).
  */
-export default function GameBars({ slots, role, days, minors = false }: Props) {
+export default function GameBars({ slots, role, days, minors = false, name }: Props) {
   const [selected, setSelected] = useState(() => defaultIndex(slots));
   const pitcher = role === "PITCHER";
+  const title = pitcher ? "경기별 이닝" : "경기별 안타";
   const values = slots.map((slot) => (slot.game?.played ? barValue(slot.game, role) : null));
   // 막대 꼭대기 기준: 타자 4안타(더 많이 친 경기가 있으면 그 값), 투수는 역할별 고정(pitcherTop)
   const top = pitcher ? pitcherTop(slots) : Math.max(4, ...values.map((v) => v ?? 0));
@@ -110,14 +116,17 @@ export default function GameBars({ slots, role, days, minors = false }: Props) {
   return (
     <div className="mt-4">
       <div className="flex items-baseline justify-between gap-2 text-muted">
-        <h3 className="text-label">{pitcher ? "경기별 이닝" : "경기별 안타"}</h3>
+        <h3 className="text-label">
+          {name && <span className="sr-only">{`${name} `}</span>}
+          {title}
+        </h3>
         {gameCount > 1 && <span className="text-caption">막대를 누르면 그 경기를 보여 줘요</span>}
       </div>
 
       <div
         ref={groupRef}
         role="group"
-        aria-label={pitcher ? "경기별 이닝" : "경기별 안타"}
+        aria-label={name ? `${name} ${title}` : title}
         className="mt-2 grid touch-pan-y select-none"
         style={grid}
         onPointerDown={(e) => {

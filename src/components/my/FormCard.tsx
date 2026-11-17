@@ -107,6 +107,7 @@ export default async function FormCard({ entry, days, statsAvailable, isMine = t
                 role={player.role}
                 days={days}
                 minors={minors}
+                name={player.nameKo}
               />
             </div>
           </>
@@ -118,7 +119,7 @@ export default async function FormCard({ entry, days, statsAvailable, isMine = t
         {showsGames && (
           // 펼친 경기 목록도 읽는 곳이라 링크 위에 둔다
           <div data-no-press className="relative z-10 mt-auto pt-3">
-            <ShowMore moreLabel="경기 기록 모두 보기" buttonClassName="rounded-lg py-2">
+            <ShowMore moreLabel="경기 기록 모두 보기" buttonClassName="rounded-lg py-2" srContext={player.nameKo}>
               <ul className="-mx-4 border-y border-line divide-y divide-line">
                 {games.map((game) => (
                   <GameRow key={game.gameId} game={game} />
