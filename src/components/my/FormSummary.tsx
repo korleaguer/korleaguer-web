@@ -81,7 +81,9 @@ export function SummaryLines({ entry }: { entry: MyPlayer }) {
       )}
       {pitcher && <p className="mt-2 text-meta text-muted tabular-nums">{pitcher}</p>}
       {status && <p className="mt-1 text-meta text-muted">{status}</p>}
-      {entry.fact && <FactPill fact={entry.fact} />}
+      {/* 시즌 합계 카드(비시즌·FA)에는 한 줄 소식을 두지 않는다: 운영 6명 모두 '시즌 최장 N경기 연속 안타' 같은 주황 소식이라
+          부진한 시즌도 '좋은 일' 색이었고, 모두 같은 말이면 아무것도 가르지 못한다(11-17 점검, 홈 자랑 알약을 뺀 것과 같은 판단) */}
+      {entry.fact && entry.basis !== "SEASON" && <FactPill fact={entry.fact} />}
     </>
   );
 }
