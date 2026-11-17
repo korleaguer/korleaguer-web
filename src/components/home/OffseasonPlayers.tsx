@@ -5,7 +5,7 @@ import { readMyPlayers } from "@/lib/myPlayers";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import Section from "@/components/Section";
 import FormCard from "@/components/my/FormCard";
-import SeasonReportCard from "@/components/home/SeasonReportCard";
+import SeasonReportList from "@/components/home/SeasonReportList";
 import MyPlayersLink from "@/components/home/MyPlayersLink";
 
 /** 비시즌 카드는 시즌 합계라 기간이 뜻이 없다. /api/my가 요구하는 기간만 채운다 */
@@ -57,9 +57,9 @@ function summaryParts(offseason: OffSeason, entries: MyPlayer[]): string[] {
 }
 
 /**
- * 비시즌 홈의 첫 묶음(홈 응답에 offseason이 있을 때). 지난 경기 한 줄과 '시즌 1위' 카드 대신
- * 선수 전원의 시즌 카드('내 선수' 카드의 시즌 합계 모양: 팀 색 무대·상태 배지·시즌 성적)를 보인다.
- * 별 버튼은 실제로 '내 선수'로 골랐는지를 따른다.
+ * 비시즌 홈의 첫 묶음(홈 응답에 offseason이 있을 때). 지난 경기 한 줄과 '시즌 1위' 카드 대신 선수 전원의 시즌을 보인다.
+ * 서버가 성적표를 주면 흰 카드 한 장 안 한 줄 목록(누르면 펼치기, 이슈 #276), 옛 api면 '내 선수' 카드의 시즌 합계 모양 카드.
+ * 별은 실제로 '내 선수'로 골랐는지를 따른다.
  */
 export default async function OffseasonPlayers({ offseason }: { offseason: OffSeason }) {
   const [myResult, myIds, playersResult] = await Promise.all([
@@ -74,9 +74,9 @@ export default async function OffseasonPlayers({ offseason }: { offseason: OffSe
     : myIds.length;
   const my = myResult?.ok ? myResult.data : null;
   // 서버가 성적표를 주면(사용자 11-12 결정 '시즌 성적표') 내 선수 다음 그 순서로, 아니면(옛 api) 예전 순서와 카드로
-  const report = new Map((offseason.report ?? []).map((r, i) => [r.playerId, { r, i }]));
   const reportIndex = new Map((offseason.report ?? []).map((r, i) => [r.playerId, i]));
-  const entries = my ? (report.size > 0 ? reportOrder(my.players, reportIndex, myIds) : order(my.players, myIds)) : [];
+  const hasReport = reportIndex.size > 0;
+  const entries = my ? (hasReport ? reportOrder(my.players, reportIndex, myIds) : order(my.players, myIds)) : [];
   // 순서 이름은 실제 기준대로(예전 '잘한 순'은 판정 → 메이저 경기 수 순서와 달랐다, 전수조사 wip-13).
   // 내 선수가 목록에 있을 때만 '내 선수 먼저'를 붙인다
   const anyMine = entries.some((e) => myIds.includes(e.player.id));
@@ -85,8 +85,8 @@ export default async function OffseasonPlayers({ offseason }: { offseason: OffSe
   return (
     <Section
       id="offseason-title"
-      title={report.size > 0 ? `${offseason.season} 시즌 성적표` : `${offseason.season} 시즌 끝`}
-      aside={report.size > 0 ? orderName : undefined}
+      title={hasReport ? `${offseason.season} 시즌 성적표` : `${offseason.season} 시즌 끝`}
+      aside={hasReport ? orderName : undefined}
     >
       {/* 큰 글씨에서 둘이 한 줄에 못 들어가면 '내 선수 n명'이 다음 줄 오른쪽으로 내려간다 */}
       <div className="-mt-0.5 mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-1">
@@ -101,16 +101,13 @@ export default async function OffseasonPlayers({ offseason }: { offseason: OffSe
         // /api/my는 404를 주지 않는다. 404면 api가 이 기능보다 오래된 것이다.
         <ApiErrorNotice failure={myResult.failure === "notFound" ? "badResponse" : myResult.failure} />
       ) : !my || entries.length === 0 ? (
-        <p className="card px-4 py-6 text-body text-muted">선수 기록이 모이면 선수별 시즌 카드가 여기에 나와요.</p>
+        <p className="card px-4 py-6 text-body text-muted">선수 기록이 모이면 선수별 시즌 성적이 여기에 나와요.</p>
+      ) : hasReport ? (
+        <SeasonReportList entries={entries} reports={offseason.report ?? []} myIds={myIds} />
       ) : (
+        // 옛 api(성적표 없음): 시즌 합계 카드. 같은 줄 카드는 높이를 맞춘다(시즌 합계 카드는 펼치는 목록이 없다)
         <ul className="grid items-stretch gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {/* 같은 줄 카드는 높이를 맞춘다(시즌 합계 카드는 펼치는 목록이 없다). 숫자 묶음은 카드 아래에 붙는다.
-              성적표 카드는 기사 수가 선수마다 달라 맞추면 기사 없는 카드 아래가 비므로 제 높이로 둔다(이슈 #191) */}
-          {entries.map((entry) => {
-            const r = report.get(entry.player.id)?.r;
-            return r ? (
-              <SeasonReportCard key={entry.player.id} entry={entry} report={r} isMine={myIds.includes(entry.player.id)} />
-            ) : (
+          {entries.map((entry) => (
             <FormCard
               key={entry.player.id}
               entry={entry}
@@ -119,8 +116,7 @@ export default async function OffseasonPlayers({ offseason }: { offseason: OffSe
               isMine={myIds.includes(entry.player.id)}
               nameAs="h3"
             />
-            );
-          })}
+          ))}
         </ul>
       )}
     </Section>
