@@ -152,7 +152,8 @@ export function Numbers({
   return (
     // 작은 숫자 셋이 큰 숫자 옆에 다 들어가지 않으면(큰 글씨) 아래 줄로 내린다(flex-wrap). 옆에 두면 1.5배부터 '탈삼진'·
     // '홈런' 칸이 카드 밖으로 나갔다(이슈 #264). 문턱 없이 글자 폭으로 정해서, 보통 크기는 가장 좁은 카드(640px 창 두 칸,
-    // 16.1rem)에서도 운영처럼 옆에 둔다(11-17 측정: 가장 넓은 카드 '평균자책점 + 이닝 50⅔' 14.75rem).
+    // 16.1rem)에서도 운영처럼 옆에 둔다(11-18 측정, 작은 숫자 17px: '평균자책점 + 이닝 50⅔' 14.43rem, 가장 긴 이름표
+    // '트리플A 최근 30일 평균자책점 + 50⅔' 15.78rem. 20px일 때는 14.82rem·16.17rem이라 마지막 경우가 아래 줄로 내려갔다).
     // 작은 숫자 상자는 내용 폭보다 좁아지지 않고(min-width: auto) 남는 폭을 다 쓴다. 셋이 한 줄에 못 들어가면(아주 좁은 휴대폰 + 2배) 두 칸씩
     <div className="@container mt-3.5">
       <div className="flex flex-wrap items-end gap-x-4 gap-y-2.5">
@@ -164,12 +165,14 @@ export function Numbers({
           </dd>
           {note != null && <dd className="mt-1.5 text-caption text-muted">{note}</dd>}
         </dl>
-        {/* 세 칸을 똑같이 나누지 않고 내용 너비대로 고르게 벌린다. 좁은 카드에서 "50⅔"이 "50"/"⅔"로 갈리지 않게 */}
+        {/* 세 칸을 똑같이 나누지 않고 내용 너비대로 고르게 벌린다. 좁은 카드에서 "50⅔"이 "50"/"⅔"로 갈리지 않게.
+            작은 숫자는 이름(20px)보다 한 단계 작은 17px(heading)이다: 이름과 같은 20px·800이면 위계가 없었다(11-17 점검).
+            큰 숫자 44px · 이름 20px · 작은 숫자 17px의 세 단계 */}
         <dl className="grid flex-1 grid-cols-[repeat(3,auto)] justify-evenly gap-y-1.5 rounded-xl bg-surface-2 py-2 text-center @max-[7rem]:grid-cols-[repeat(2,auto)]">
           {small.map(([k, v]) => (
             <div key={k} className="whitespace-nowrap">
               <dt className="text-caption text-muted">{k}</dt>
-              <dd className="text-stat tabular-nums">
+              <dd className="text-heading tabular-nums">
                 {v}
               </dd>
             </div>
