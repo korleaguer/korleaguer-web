@@ -197,11 +197,12 @@ function Numbers({ entry, report }: { entry: MyPlayer; report: SeasonReport }) {
       {/* 칸이 16rem보다 좁으면(큰 글씨) 넷을 두 줄 두 칸으로. 한 줄 네 칸이면 '.276'이 세 줄로 갈렸다(앱 2배, 이슈 #264).
           그보다 더 좁으면(2배) 두 칸에도 '평균자책점'이 '평균자책/점'으로 갈려서, 한 줄에 이름표·숫자를 양 끝으로 둔 목록으로.
           모든 카드가 같은 폭이라 함께 바뀐다(카드 통일) */}
-      <dl className="grid grid-cols-4 gap-1 @max-[16rem]:grid-cols-2 @max-[16rem]:gap-y-1.5 @max-[7.75rem]:grid-cols-1 @max-[7.75rem]:gap-y-0.5 @max-[7.75rem]:*:flex @max-[7.75rem]:*:items-baseline @max-[7.75rem]:*:justify-between @max-[7.75rem]:*:gap-2">
+      <dl className="grid grid-cols-4 gap-1 @max-[16rem]:grid-cols-2 @max-[16rem]:gap-y-1.5 @max-[7.75rem]:grid-cols-1 @max-[7.75rem]:gap-y-0.5 @max-[7.75rem]:*:flex @max-[7.75rem]:*:items-baseline @max-[7.75rem]:*:flex-wrap @max-[7.75rem]:*:justify-between @max-[7.75rem]:*:gap-x-2">
         {items.map(([k, v]) => (
           <div key={k}>
             <dt className="text-caption text-muted">{k}</dt>
-            <dd className="text-stat tabular-nums">{v}</dd>
+            {/* ml-auto: 목록 모양(2배)에서 이름표와 한 줄에 못 들어가면 숫자가 아랫줄 오른쪽으로(칸 모양에서는 효과 없음) */}
+            <dd className="ml-auto text-stat tabular-nums">{v}</dd>
           </div>
         ))}
       </dl>
