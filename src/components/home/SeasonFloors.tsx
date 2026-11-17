@@ -240,25 +240,29 @@ export default async function SeasonFloors({ recent, asOf }: Props) {
         <MyPlayersLink count={myCount} />
       </div>
       {derby && <DerbyCard pair={derby} />}
-      {/* PC: 층을 두 칸에 나눠 놓는다(한 줄이 화면 끝까지 늘어나지 않게). 층을 잇는 세로선은 휴대폰에서만 */}
-      <div className="space-y-3 lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-6 lg:gap-y-4 lg:space-y-0">
+      {/* 층 순서가 곧 순위라 PC에서도 층은 위에서 아래로 한 줄씩 두고 세로선으로 잇는다. 층 안 선수만 PC에서 두 칸으로
+          나눠 한 줄이 화면 끝까지 늘어나지 않게 한다(사용자 11-17 '추천대로', 전수조사 L307). 예전처럼 층을 두 칸에 흘리면
+          2위 층(트리플A)이 1위(메이저) 옆, 3위 층이 다음 줄 왼쪽에 놓였다 */}
+      <div className="space-y-3">
         {floors.map((floor, index) => (
           // 층은 이름 붙은 영역(section)으로 두지 않는다: 층 수만큼 랜드마크가 늘어 '지금 어디서 뛰나' 하나만 남긴다(전수조사 L304).
           // 층 이름과 사람 수는 제목 하나에 넣어, 제목으로 훑으면 '메이저 3명'으로 읽힌다
           <div key={floor.key} className="relative pl-6">
             {/* 층을 잇는 세로선과 층 점 */}
             {index < floors.length - 1 && (
-              <span aria-hidden className="absolute top-2.5 bottom-[-0.75rem] left-[0.4375rem] w-0.5 bg-line lg:hidden" />
+              <span aria-hidden className="absolute top-2.5 bottom-[-0.75rem] left-[0.4375rem] w-0.5 bg-line" />
             )}
             <span
               aria-hidden
               className={`absolute top-1 left-0 size-4 rounded-full border-4 border-background ${DOT[floor.tone]}`}
             />
-            <h3 className="mb-1.5 flex items-baseline justify-between px-0.5 text-label">
+            {/* PC는 층이 화면 폭 전체라 'n명'을 오른쪽 끝 대신 제목 바로 옆에 둔다(제목과 1,000px 가까이 떨어지지 않게) */}
+            <h3 className="mb-1.5 flex items-baseline justify-between px-0.5 text-label lg:justify-start lg:gap-x-2">
               <span className={TITLE[floor.tone]}>{floor.title}</span>{" "}
               <span className="text-caption text-muted tabular-nums">{floor.players.length}명</span>
             </h3>
-            <ul className="card divide-y divide-line overflow-hidden">
+            {/* PC 두 칸: 휴대폰의 줄 사이 선(divide-y)을 끄고, 줄마다 둘째 줄부터 위 선·왼쪽 칸에 세로 선을 긋는다(FloorRow) */}
+            <ul className="card divide-y divide-line overflow-hidden lg:grid lg:grid-cols-2 lg:divide-y-0">
               {floor.players.map((entry) => (
                 <FloorRow key={entry.player.id} entry={entry} starred={mine.includes(entry.player.id)} today={today} />
               ))}
@@ -279,11 +283,12 @@ function FloorRow({ entry, starred, today }: { entry: MyPlayer; starred: boolean
   return (
     // 큰 글씨로 줄이 18rem보다 좁아지면 오른쪽 칸(결과 알약·상태 날수)을 기록 아래 줄로 내린다. 이름·기록 칸이
     // 한두 글자 폭으로 찌그러져 이름이 오른쪽 칸 위로 넘치지 않게(rem 조건이라 글자 배율을 따라간다, #269와 같은 방식).
-    // 보통 크기는 360px 휴대폰에서도 19.5rem이라 그대로다
-    <li className="@container">
+    // 보통 크기는 360px 휴대폰에서도 19.5rem이라 그대로다.
+    // PC 두 칸(lg): 셋째 칸부터 위 선, 오른쪽 이웃이 있는 왼쪽 칸에 세로 선. 같은 줄 두 칸은 높이가 같아지고 링크가 칸을 채운다
+    <li className="@container lg:border-line lg:nth-[n+3]:border-t lg:odd:not-last:border-r">
       <Link
         href={`/players/${entry.player.id}`}
-        className="press-soft flex min-h-16 items-center gap-3 px-3.5 py-2.5 @max-[18rem]:flex-wrap @max-[18rem]:gap-y-1.5"
+        className="press-soft flex min-h-16 items-center gap-3 px-3.5 py-2.5 @max-[18rem]:flex-wrap @max-[18rem]:gap-y-1.5 lg:h-full"
       >
         <span className={`shrink-0 rounded-full ${starred ? "ring-2 ring-accent ring-offset-2 ring-offset-surface" : ""}`}>
           <PlayerAvatar
@@ -305,7 +310,11 @@ function FloorRow({ entry, starred, today }: { entry: MyPlayer; starred: boolean
             <TeamMark logoUrl={teamLogoUrl(entry.player.teamAbbr)} color={teamColor(entry.player.teamAbbr)} size="sm" />
             {team && <span className="min-w-0 flex-1 truncate text-caption text-muted">{team}</span>}
           </span>
-          <span className={`mt-0.5 block text-body text-pretty ${game && !game.played ? "text-muted" : ""}`}>
+          {/* 경기 한 줄 기록은 카드에서 가장 굵은 본문(Summary 600, 안 뛰었으면 500 + 흐림, DESIGN.md·전수조사 L307).
+              '부상자 명단'·'마지막 경기 …' 같은 상태 줄은 기록이 아니라 보통 본문 글자로 둔다 */}
+          <span
+            className={`mt-0.5 block text-pretty ${game ? `text-summary ${game.played ? "" : "font-medium text-muted"}` : "text-body"}`}
+          >
             {/* 오늘 경기가 아니면 앞에 흐린 날짜('어제 ·'·'7월 15일 ·'). 날짜와 점은 한 덩어리로 줄을 바꾼다 */}
             {day && (
               <span className="text-muted">
@@ -313,7 +322,8 @@ function FloorRow({ entry, starred, today }: { entry: MyPlayer; starred: boolean
               </span>
             )}
             <Words text={text} />
-            {game && game.played && game.result && (
+            {/* 마이너·재활 경기는 점수를 몰라(결과 알약만 있다) 점까지 뺀다. 예전에는 '4타수 2안타 · '처럼 점만 남았다 */}
+            {game && game.played && game.result && game.teamScore != null && game.opponentScore != null && (
               <span className="text-muted">
                 {" · "}
                 <ScoreText line={game} />
