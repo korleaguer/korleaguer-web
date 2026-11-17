@@ -351,6 +351,22 @@
     user-select: text;
   }
 
+  /*
+   * 선수 페이지 바로 가기 탭(JumpNav)이 위에 붙는 화면(1024px 미만): Tab으로 옮긴 포커스가 붙은 탭 줄 밑에 숨지 않게
+   * 탭 줄 높이(1배 48px)만큼 띄운다(11-17 전수조사, WCAG 2.4.11). 앱은 머리글(3.5rem) 아래에 탭 줄이 붙어 둘을 더한다.
+   * 탭 줄 높이는 대부분 rem(알약 2rem)이라 큰 글씨에서 함께 커진다. 앱 작은 글씨(0.85배)에서도 모자라지 않게 조금 넉넉히 둔다.
+   * PC(1024px 이상)는 탭 줄이 없다
+   */
+  @media (width < 64rem) {
+    html:has([data-jump-nav]) {
+      scroll-padding-top: 3.5rem;
+    }
+
+    html[data-app]:has([data-jump-nav]) {
+      scroll-padding-top: 7.25rem;
+    }
+  }
+
   ::selection {
     background: color-mix(in oklab, var(--accent) 22%, transparent);
     color: var(--foreground);
