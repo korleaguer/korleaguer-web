@@ -25,8 +25,8 @@ export function monthDay(date: string): string {
  * 큰 글씨(앱 2배)에서는 한 줄에 다 들어가지 않는다. 그때 이름 칸이 한두 글자 폭으로 찌그러지지 않게 줄을 접어
  * 오른쪽 값·날짜를 다음 줄로 내린다(flex-wrap, 이슈 #264). 언제 접을지는 줄마다 칸의 기본 폭(basis)으로 정한다
  */
-function RowShell({ playerId, className: extra = "", children }: { playerId: number | null; className?: string; children: ReactNode }) {
-  const className = `flex min-h-14 flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5 ${extra}`;
+function RowShell({ playerId, children }: { playerId: number | null; children: ReactNode }) {
+  const className = "flex min-h-14 flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5";
   return playerId != null ? (
     <Link href={`/players/${playerId}`} className={`press-soft ${className}`}>
       {children}
