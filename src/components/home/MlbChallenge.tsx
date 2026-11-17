@@ -323,19 +323,24 @@ function PlayerHead({ player: p }: { player: PostingPlayer }) {
       </div>
 
       {isOpen(p) && p.daysLeft != null && (
-        <div className="mt-4 flex items-end justify-between gap-3">
-          <div>
-            <p className="text-caption text-muted">협상 마감까지</p>
-            <p className="text-stat-form tabular-nums">
-              {/* 'D-19'는 화면 낭독기가 'D 하이픈 19'로 읽을 수 있어 '19일 남음'을 따로 읽힌다 */}
-              <span aria-hidden>{p.daysLeft === 0 ? "오늘" : `D-${p.daysLeft}`}</span>
-              <span className="sr-only">{p.daysLeft === 0 ? "오늘 마감" : `${p.daysLeft}일 남음`}</span>
+        // 남은 날('D-15')은 줄이지 않는다. 마감 시각과 반씩 줄어들어 360px 휴대폰(보통 크기)에서도 'D-'/'15'로 갈렸다.
+        // 줄이 15.5rem보다 좁으면(큰 글씨) 마감 시각을 아래 줄로 내리고 왼쪽에 맞춘다(이슈 #264).
+        // 15.5rem: 'D-15' 칸 6.5rem + 간격 + 마감 날짜 한 줄 7.5rem(11-17 측정). 보통 크기는 320px 휴대폰(16.5rem)도 나란히 둔다
+        <div className="@container mt-4">
+          <div className="flex items-end justify-between gap-3 @max-[15.5rem]:flex-col @max-[15.5rem]:items-start">
+            <div className="shrink-0">
+              <p className="text-caption text-muted">협상 마감까지</p>
+              <p className="text-stat-form tabular-nums">
+                {/* 'D-19'는 화면 낭독기가 'D 하이픈 19'로 읽을 수 있어 '19일 남음'을 따로 읽힌다 */}
+                <span aria-hidden>{p.daysLeft === 0 ? "오늘" : `D-${p.daysLeft}`}</span>
+                <span className="sr-only">{p.daysLeft === 0 ? "오늘 마감" : `${p.daysLeft}일 남음`}</span>
+              </p>
+            </div>
+            <p className="text-right text-label tabular-nums @max-[15.5rem]:text-left">
+              {deadlineKst(p.deadlineAt)}
+              <span className="block text-caption text-muted">한국 시간 · 미국 동부 {deadlineUs(p.deadlineAt)}</span>
             </p>
           </div>
-          <p className="text-right text-label tabular-nums">
-            {deadlineKst(p.deadlineAt)}
-            <span className="block text-caption text-muted">한국 시간 · 미국 동부 {deadlineUs(p.deadlineAt)}</span>
-          </p>
         </div>
       )}
 
