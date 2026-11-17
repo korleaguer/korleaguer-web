@@ -20,7 +20,7 @@ export default function BandPhoto({ nameKo, photoUrl, teamAbbr }: Props) {
 
   if (!photoUrl || failed) {
     return (
-      <span className="absolute bottom-3 right-4">
+      <span className="absolute bottom-[12px] right-[16px]">
         <PlayerAvatar size={56} ring nameKo={nameKo} photoUrl={null} teamAbbr={teamAbbr} />
       </span>
     );
@@ -38,7 +38,8 @@ export default function BandPhoto({ nameKo, photoUrl, teamAbbr }: Props) {
       referrerPolicy="no-referrer"
       onError={onError}
       // 띠(92px)보다 크게 두고 아래 16px을 띠 밖으로 내린다. 모자 위로는 여백이 조금 남는다.
-      className="absolute -bottom-4 right-2 size-28 object-contain object-bottom drop-shadow-[0_3px_6px_rgb(0_0_0/0.28)]"
+      // 사진·띠는 px로 둔다: 큰 글씨(앱 2배)에서 rem이면 사진이 224px로 커져 띠를 덮고 상태 배지 자리를 빼앗았다(이슈 #264)
+      className="absolute -bottom-[16px] right-[8px] size-[112px] object-contain object-bottom drop-shadow-[0_3px_6px_rgb(0_0_0/0.28)]"
     />
   );
 }

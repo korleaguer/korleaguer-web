@@ -15,7 +15,8 @@ export default function HistoryToggle({
   buttonClassName = "",
 }: {
   title: string;
-  hint: string;
+  /** 둘째 줄. 금액처럼 아이폰에서 갈리면 안 되는 낱말은 Words로 감싸 넘긴다 */
+  hint: ReactNode;
   children: ReactNode;
   className?: string;
   buttonClassName?: string;
@@ -29,11 +30,13 @@ export default function HistoryToggle({
         aria-expanded={open}
         aria-controls={id}
         onClick={() => setOpen(!open)}
-        className={`press-soft flex w-full cursor-pointer items-center gap-3 py-3 text-left ${buttonClassName}`}
+        className={`@container press-soft flex w-full cursor-pointer items-center gap-3 py-3 text-left ${buttonClassName}`}
       >
         <span className="min-w-0 flex-1">
           <span className="block text-label">{title}</span>
-          <span className="mt-0.5 block truncate text-caption text-muted tabular-nums">{hint}</span>
+          {/* 둘째 줄은 보통 한 줄로 두고 넘치면 '…'. 줄이 17rem보다 좁으면(큰 글씨) 자르지 않고 다음 줄로 흘린다.
+              2배에서 '1위 이정후 6…'만 남아 무엇이 들어 있는지 알 수 없었다(이슈 #264) */}
+          <span className="mt-0.5 block truncate text-caption text-muted tabular-nums @max-[17rem]:whitespace-normal">{hint}</span>
         </span>
         <span className="shrink-0 text-label text-accent-ink">{open ? "접기" : "펼치기"}</span>
         <svg

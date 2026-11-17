@@ -55,12 +55,14 @@ function MoveRow({ move }: { move: RosterMove }) {
   const tone = moveTone(move);
   const route = [move.fromTeam, move.toTeam].filter(Boolean).join(" → ");
 
+  // 오른쪽 칸이 10rem(가장 긴 알약 '마이너 이관(아웃라이트)' 한 줄)도 안 남으면(큰 글씨) 날짜 아래 줄로 내려 줄 폭을 다 쓴다.
+  // 날짜 옆에 붙여 두면 알약·경로가 한두 글자 폭으로 찌그러지고 알약이 화면 밖으로 나갔다(앱 2배, 이슈 #264)
   return (
-    <li className="flex items-start gap-3 px-4 py-3">
+    <li className="flex flex-wrap items-start gap-x-3 gap-y-1 px-4 py-3">
       <time dateTime={move.date} className="w-[5.25rem] shrink-0 pt-0.5 text-meta tabular-nums text-muted">
         {dotDate(move.date)}
       </time>
-      <div className="min-w-0 flex-1">
+      <div className="min-w-[min(10rem,100%)] flex-1">
         <span className={`inline-flex rounded-full px-2.5 py-0.5 text-badge ${tone}`}>
           {move.labelKo}
         </span>

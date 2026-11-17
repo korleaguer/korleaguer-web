@@ -12,6 +12,7 @@ import Section from "@/components/Section";
 import TeamMark from "@/components/TeamMark";
 import RecentGames from "./RecentGames";
 import MyPlayersLink from "@/components/home/MyPlayersLink";
+import Words from "@/components/Words";
 
 /**
  * 시즌 중 홈 맨 위: 선수들이 지금 어디서 뛰나를 층으로 묶는다(이슈 #245, 11-16·17 개편 결정).
@@ -245,7 +246,7 @@ function FloorRow({ entry, starred }: { entry: MyPlayer; starred: boolean }) {
             {team && <span className="truncate text-caption text-muted">{team}</span>}
           </span>
           <span className={`mt-0.5 block text-body text-pretty ${game && !game.played ? "text-muted" : ""}`}>
-            {text}
+            <Words text={text} />
             {game && game.played && game.result && (
               <span className="text-muted">
                 {" · "}
@@ -283,7 +284,9 @@ function DerbyCard({ pair: [a, b] }: { pair: [GameLine, GameLine] }) {
           >
             <PlayerAvatar nameKo={line.nameKo} photoUrl={line.photoUrl} teamAbbr={line.teamAbbr} size={44} />
             <span className="text-heading">{line.nameKo}</span>
-            <span className="text-caption text-muted">{formatSummary(line.summary)}</span>
+            <span className="text-caption text-muted">
+              <Words text={formatSummary(line.summary)} />
+            </span>
           </Link>
         ))}
         <div className="order-2 text-center">

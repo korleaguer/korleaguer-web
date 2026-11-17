@@ -4,6 +4,7 @@ import type { NewsHeadline } from "@/lib/api";
 import { formatDate, formatTime } from "@/lib/format";
 import ExternalLinkIcon from "@/components/ExternalLinkIcon";
 import NewsThumb from "@/components/news/NewsThumb";
+import Words from "@/components/Words";
 
 export interface NewsTitleItem extends NewsHeadline {
   /** 여러 선수의 기사를 모았을 때 누구 기사인지. 한 명이면 null */
@@ -93,31 +94,49 @@ function NewsTitleRow({
 }) {
   const content = (
     // 화면 낭독기는 제목부터 읽고(글 순서), 눈에는 출처 줄이 위에 보인다(flex-col-reverse)
-    <span className="flex min-w-0 flex-1 flex-col-reverse">
-      <span className="mt-0.5 line-clamp-2 text-summary group-hover:underline">
+    <span className="@container flex min-w-0 flex-1 flex-col-reverse">
+      {/* 제목은 두 줄까지. 글자 칸이 11rem보다 좁으면(큰 글씨, 아주 좁은 칸) 두 줄에 몇 낱말밖에 안 들어가 네 줄까지(이슈 #264).
+          보통 크기에서 걸리는 칸은 320px 휴대폰(약 10.25rem)과 640~675px 창의 두 칸 홈 카드(약 9.9rem)뿐이다. 운영에서 그 폭은
+          제목이 모두 두 줄에서 잘렸고(640px 홈 8건 중 8건, 320px 뉴스 20건 중 20건), 네 줄이면 2건·9건만 잘린다(11-17 측정).
+          360px 이상 휴대폰·768px·PC는 걸리지 않는다 */}
+      <span className="mt-0.5 line-clamp-2 text-summary group-hover:underline @max-[11rem]:line-clamp-4">
         <Highlighted text={n.titleKo ?? n.title} word={highlight} />
       </span>
-      {/* 출처 줄은 한 줄로 둔다. 좁으면 누구·언론사만 '…'으로 줄이고 '외 N곳'과 날짜는 남긴다 */}
-      <span className="flex min-w-0 whitespace-nowrap text-caption text-muted tabular-nums">
+      {/* 출처 줄은 한 줄로 둔다. 좁으면 누구·언론사만 '…'으로 줄이고 '외 N곳'과 날짜는 남긴다.
+          글자 칸이 11rem보다 좁으면(큰 글씨, 아주 좁은 휴대폰) 날짜도 한 줄에 못 들어가 줄 밖으로 나갔다. 그때만 보통 글처럼
+          흘려 넘치는 곳에서 다음 줄로 내린다(이슈 #264) */}
+      <span className="flex min-w-0 whitespace-nowrap text-caption text-muted tabular-nums @max-[11rem]:block @max-[11rem]:whitespace-normal">
         {n.isNew && (
-          <span className="shrink-0 font-bold text-accent-ink">
+          <span className="shrink-0 whitespace-nowrap font-bold text-accent-ink">
             새<span aria-hidden>{"\u00a0·\u00a0"}</span>
             <span className="sr-only"> 기사, </span>
           </span>
         )}
-        <span className="min-w-0 truncate">
+        <span className="min-w-0 truncate @max-[11rem]:whitespace-normal">
           {n.who ? `${n.who} · ` : ""}
           {n.publisher}
         </span>
         {/* 언론사만 다른 같은 기사는 서버가 한 줄로 묶었다. 같은 글을 실은 다른 언론사 수만 보인다
             (이름은 PC에서 마우스를 올리면 보이고, 마우스를 못 쓰는 화면 낭독기에는 읽어 준다) */}
+        {/* 조각 사이 간격: 한 줄(flex)일 때는 왼쪽 여백(공백만 있는 글은 flex에서 사라진다), 흘릴 때(block)는 그 자리의 보통
+            공백이 간격이자 줄바꿈 자리다. '외 N곳'과 '·날짜'는 각각 한 덩어리로 다음 줄에 넘어가고, 긴 날짜만 '11월'/'17일(화)'
+            사이에서 갈린다(전에는 '·'만 윗줄에 남거나 날짜가 언론사 이름에 붙어 '17'이 갈렸다) */}
         {n.alsoBy.length > 0 && (
-          <span className="shrink-0" title={`같은 기사: ${n.alsoBy.join(", ")}`}>
-            {`\u00a0외 ${n.alsoBy.length}곳`}
-            <span className="sr-only">{`(같은 기사: ${n.alsoBy.join(", ")})`}</span>
-          </span>
-        )}
-        <span className="shrink-0">{`\u00a0· ${timeOnly ? formatTime(n.publishedAt) : formatDate(n.publishedAt)}`}</span>
+          <>
+            {" "}
+            <span
+              className="shrink-0 whitespace-nowrap pl-[0.25em] @max-[11rem]:pl-0"
+              title={`같은 기사: ${n.alsoBy.join(", ")}`}
+            >
+              {`외 ${n.alsoBy.length}곳`}
+              <span className="sr-only">{`(같은 기사: ${n.alsoBy.join(", ")})`}</span>
+            </span>
+          </>
+        )}{" "}
+        <span className="shrink-0 pl-[0.25em] @max-[11rem]:pl-0">
+          {/* '·'와 첫 낱말은 한 덩어리로(아이폰은 줄바꿈 없는 공백에서도 줄을 바꿔 '·'만 윗줄에 남았다) */}
+          <Words text={`·\u00a0${timeOnly ? formatTime(n.publishedAt) : formatDate(n.publishedAt)}`} />
+        </span>
       </span>
     </span>
   );

@@ -45,7 +45,7 @@ export default function ShareButton() {
       aria-label="공유"
       onClick={share}
       // 누르는 자리는 44px(iOS 최소 크기). 아이콘이 머리글 오른쪽 여백 선에 오도록 오른쪽으로 당긴다(AppBackButton과 대칭)
-      className="press -mr-3 ml-auto hidden size-11 shrink-0 place-items-center rounded-full text-foreground active:bg-surface-2 in-app:grid"
+      className="press -mr-[12px] ml-auto hidden size-[44px] shrink-0 place-items-center rounded-full text-foreground active:bg-surface-2 in-app:grid"
     >
       <svg
         aria-hidden

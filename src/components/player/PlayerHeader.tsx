@@ -6,6 +6,7 @@ import InfoChips from "@/components/InfoChips";
 import PlayerSubline from "@/components/PlayerSubline";
 import MyPlayerToggle from "@/components/my/MyPlayerToggle";
 import PhotoStage, { type Shot } from "@/components/player/PhotoStage";
+import Words from "@/components/Words";
 
 /**
  * 선수 페이지 머리 카드. 위쪽 팀 색 띠에 흰 테두리 원형 사진이 걸치고, 아래에 이름 · 영문 이름 · 기본 정보 알약.
@@ -82,7 +83,7 @@ function PlayerFacts({ player, className }: { player: PlayerDetail; className: s
           {/* 짧은 항목은 쪼개지 않는다. 긴 한국 시절 문장만 좁은 화면·큰 글씨에서 줄을 바꾼다 */}
           <span className={f.key === "career" ? "" : "whitespace-nowrap tabular-nums"}>
             {f.label && <span className="sr-only">{`${f.label} `}</span>}
-            {f.text}
+            <Words text={f.text} />
           </span>
         </span>
       ))}

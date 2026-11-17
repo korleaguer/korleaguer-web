@@ -258,7 +258,7 @@ export default function GameCalendar({
         <p className="text-caption text-muted tabular-nums">{monthSummary(month.entries, role)}</p>
       </div>
 
-      <div aria-hidden className="grid grid-cols-7 gap-1 px-2.5 pb-1 sm:gap-1.5 sm:px-3">
+      <div aria-hidden className="grid grid-cols-7 gap-[4px] px-[10px] pb-1 sm:gap-[6px] sm:px-[12px]">
         {WEEKDAYS.map((w) => (
           <span key={w} className="text-center text-micro text-muted">
             {w}
@@ -268,7 +268,7 @@ export default function GameCalendar({
       <div
         role="group"
         aria-label={`${month.year}년 ${month.month}월 경기 달력`}
-        className="grid grid-cols-7 gap-1 px-2.5 pb-3 sm:gap-1.5 sm:px-3"
+        className="cal-grid grid grid-cols-7 gap-[4px] px-[10px] pb-3 sm:gap-[6px] sm:px-[12px]"
       >
         {cells.map((d, i) => {
           if (d == null) return <span key={`blank-${i}`} aria-hidden />;
@@ -277,7 +277,7 @@ export default function GameCalendar({
           if (!day || !day.selectable) {
             // 경기 없는 날(투수는 등판 없는 날도): 날짜만
             return (
-              <span key={key} aria-hidden className="h-13 p-1 text-micro text-muted tabular-nums sm:h-19 sm:p-2">
+              <span key={key} aria-hidden className="cal-top p-[4px] text-muted tabular-nums sm:p-[8px]">
                 {d}
               </span>
             );
@@ -374,12 +374,12 @@ function DayCell({ day, on, onPick }: { day: CalendarDay; on: boolean; onPick: (
       aria-label={day.speech}
       data-day={day.key}
       onClick={(e) => onPick(day.key, e.currentTarget)}
-      className={`flex h-13 min-w-0 cursor-pointer flex-col justify-between rounded-lg p-1 text-left sm:h-19 sm:p-2 ${TONE[tone]} ${
+      className={`flex min-w-0 cursor-pointer flex-col justify-between rounded-lg p-[4px] text-left sm:p-[8px] ${TONE[tone]} ${
         on ? "ring-2 ring-foreground ring-offset-1 ring-offset-surface" : ""
       }`}
     >
       {/* 위 줄: 날짜 | (휴대폰) 더블헤더 ×2 또는 마이너 단계, (넓은 화면) 단계와 상대 로고 */}
-      <span aria-hidden className="flex items-center justify-between gap-0.5 text-micro leading-none tabular-nums">
+      <span aria-hidden className="cal-top flex items-center justify-between gap-[2px] leading-none tabular-nums">
         <span className={dim}>{day.day}</span>
         <span className={`font-bold whitespace-nowrap sm:hidden ${dim}`}>
           {day.count > 1 ? `×${day.count}` : level && (SHORT_LEVEL[level] ?? level)}
@@ -392,13 +392,13 @@ function DayCell({ day, on, onPick }: { day: CalendarDay; on: boolean; onPick: (
         </span>
       </span>
       {/* 휴대폰: 짧은 말 하나 */}
-      <span aria-hidden className="self-center whitespace-nowrap text-caption font-bold tracking-tight sm:hidden">
+      <span aria-hidden className="cal-label self-center whitespace-nowrap font-bold tracking-tight sm:hidden">
         {day.label}
       </span>
       {/* 넓은 화면: 한 줄 + 팀 결과 */}
       <span aria-hidden className="hidden min-w-0 sm:block">
-        <span className="block truncate text-caption font-bold tracking-tight">{day.detail}</span>
-        <span className={`block truncate text-micro tabular-nums ${dim}`}>{day.result || " "}</span>
+        <span className="cal-label block truncate font-bold tracking-tight">{day.detail}</span>
+        <span className={`cal-top block truncate tabular-nums ${dim}`}>{day.result || " "}</span>
       </span>
     </button>
   );

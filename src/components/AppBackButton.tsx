@@ -66,7 +66,8 @@ export default function AppBackButton() {
         else router.push(parentOf(pathname));
       }}
       // 누르는 자리는 44px(iOS 최소 크기). 화살표가 머리글 왼쪽 여백 선에 오도록 왼쪽으로 당기고, 로고는 버튼 끝에 붙인다.
-      className="press -mr-3 -ml-3 hidden size-11 shrink-0 place-items-center rounded-full text-foreground active:bg-surface-2 in-app:grid"
+      // 글자 배율과 상관없이 44px로 둔다(큰 글씨 2배에서 88px로 커져 가운데 제목이 'KOR Le…'로 잘렸다, 이슈 #264)
+      className="press -mr-[12px] -ml-[12px] hidden size-[44px] shrink-0 place-items-center rounded-full text-foreground active:bg-surface-2 in-app:grid"
     >
       <svg
         aria-hidden

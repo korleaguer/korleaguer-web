@@ -8,6 +8,7 @@ import ResultPill from "@/components/ResultPill";
 import Highlights from "@/components/Highlights";
 import ScoreText from "@/components/ScoreText";
 import type { BarSlot } from "./columns";
+import Words from "@/components/Words";
 
 interface Props {
   slots: BarSlot[];
@@ -220,7 +221,7 @@ export default function GameBars({ slots, role, days, minors = false }: Props) {
             <p
               className={`mt-0.5 text-summary text-pretty ${current.played ? "" : "font-medium text-muted"}`}
             >
-              {formatSummary(current.summary)}
+              <Words text={formatSummary(current.summary)} />
             </p>
             <Highlights line={current} className="mt-1.5" />
           </>

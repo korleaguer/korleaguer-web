@@ -63,12 +63,14 @@ export default function MonthBars({ months, pitcher }: { months: SeasonMonth[]; 
 
   return (
     <div className="mt-3">
-      <div className="mb-1.5 flex items-center gap-2.5 text-caption text-muted">
+      {/* 큰 글씨에서 범례가 한 줄에 못 들어가면 다음 줄로(제목이 '달마다/wRC+'로 갈리지 않게, 이슈 #264) */}
+      <div className="mb-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-caption text-muted">
         <span className="mr-auto">{`달마다 ${stat}`}</span>
         {hasMajors && <LegendKey color="var(--accent)" label="메이저" />}
         {minorLevels.length > 0 && <LegendKey color={MINOR_BAR} label={minorLevels.join("·")} />}
       </div>
-      <ol className="grid grid-cols-6 items-end" aria-label={`달마다 ${stat}, 100이 리그 평균`}>
+      {/* month-bars: 여섯 칸 글자는 칸 폭만큼만 키운다(globals.css, 이슈 #264) */}
+      <ol className="month-bars grid grid-cols-6 items-end" aria-label={`달마다 ${stat}, 100이 리그 평균`}>
         {months.map((m) => (
           <MonthColumn key={m.month} m={m} pitcher={pitcher} />
         ))}
@@ -100,7 +102,7 @@ function MonthColumn({ m, pitcher }: { m: SeasonMonth; pitcher: boolean }) {
   return (
     <li className="flex min-w-0 flex-col items-center">
       <span className="sr-only">{spoken}</span>
-      <span aria-hidden className={`mb-0.5 text-label font-bold tracking-tight tabular-nums ${tone}`}>
+      <span aria-hidden className={`month-bars-num mb-0.5 font-bold tracking-tight tabular-nums ${tone}`}>
         {value}
       </span>
       {/* 칸 사이 틈이 없어 칸마다 그은 점선이 한 줄로 이어진다 */}
@@ -112,10 +114,10 @@ function MonthColumn({ m, pitcher }: { m: SeasonMonth; pitcher: boolean }) {
           style={{ height, background: color }}
         />
       </span>
-      <span aria-hidden className="mt-1 text-micro text-muted">{`${m.month}월`}</span>
+      <span aria-hidden className="month-bars-small mt-1 text-muted">{`${m.month}월`}</span>
       {/* 투수만: 팬에게 익숙한 평균자책점을 작게(기록 없는 달은 자리만 맞춘다) */}
       {pitcher && (
-        <span aria-hidden className="text-micro text-muted tabular-nums">
+        <span aria-hidden className="month-bars-small text-muted tabular-nums">
           {has ? formatEra(m.era) : "\u00a0"}
         </span>
       )}

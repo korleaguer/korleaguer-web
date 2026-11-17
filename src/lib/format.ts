@@ -77,11 +77,13 @@ export function formatTime(value: string | null | undefined): string {
 }
 
 /**
- * 한 줄 기록 문장. 괄호 안("(2루타 1)")에서는 줄이 바뀌지 않게 띄어쓰기를 줄바꿈 없는 공백으로 바꾼다.
- * "4타수 2안타(2루타 / 1) ..."처럼 괄호가 두 줄로 갈리는 것을 막는다.
+ * 한 줄 기록 문장. 괄호 안의 '이름 숫자'("2루타 1")는 줄이 바뀌지 않게 띄어쓰기를 줄바꿈 없는 공백으로 바꾼다.
+ * "4타수 2안타(2루타 / 1) ..."처럼 이름과 숫자가 갈리는 것을 막는다. 쉼표 뒤("(2루타 1, 홈런 1)")는 줄바꿈 자리로 남긴다
+ * (괄호 전체를 붙이면 큰 글씨에서 한 덩어리가 줄보다 길어진다). 아이폰(WebKit)은 여는 괄호 뒤('2안타(' / '2루타 1)')에서도
+ * 줄을 바꾸므로 화면에는 Words로 감싸 그린다(이슈 #264).
  */
 export function formatSummary(summary: string): string {
-  return summary.replace(/\([^)]*\)/g, (group) => group.replace(/ /g, " "));
+  return summary.replace(/\([^)]*\)/g, (group) => group.replace(/([^,]) /g, "$1\u00a0"));
 }
 
 /** 타율·OPS 등 비율: 0.276 → ".276", 1.05 → "1.050", null → "-" */
