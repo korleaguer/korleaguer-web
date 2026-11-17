@@ -503,8 +503,9 @@ function countBefore(play: GamePlay): string | null {
 }
 /**
  * 타석 한 줄. 타자면 홈런은 채운 주황 알약(가장 큰 활약), 안타는 굵게.
- * 투수면 결과는 상대 타자 쪽 말이라, 맞은 홈런·안타는 주황 없이 '피홈런'·보통 글자로, 잡은 삼진만 굵게, 점수는 'N실점'으로 쓴다
- * (주황은 좋은 활약에만: DESIGN.md The Hot Is Earned Rule).
+ * 투수면 결과는 상대 타자 쪽 말이라, 맞은 홈런·안타는 주황 없이 '피홈런'·보통 글자로, 잡은 삼진만 굵게 쓴다
+ * (주황은 좋은 활약에만: DESIGN.md The Hot Is Earned Rule). 점수는 그 타석 타자의 타점이라 투수도 'N타점 허용'이다.
+ * 예전에는 'N실점'이라 썼는데, 승계 주자·실책·폭투 점수는 투수 책임 실점과 타점이 달라 숫자가 틀렸다(11-17 전수조사).
  */
 function PlayRow({
   play,
@@ -551,7 +552,7 @@ function PlayRow({
           ) : (
             <span className={`text-summary ${strong ? "font-bold" : ""}`}>{result}</span>
           )}
-          {play.rbi > 0 && <span className="text-meta text-muted">{pitcher ? `${play.rbi}실점` : `${play.rbi}타점`}</span>}
+          {play.rbi > 0 && <span className="text-meta text-muted">{pitcher ? `${play.rbi}타점 허용` : `${play.rbi}타점`}</span>}
         </p>
         {meta && <p className="mt-0.5 text-meta text-muted tabular-nums">{meta}</p>}
         {batted && <p className={`text-meta tabular-nums ${homeRun ? "font-bold text-hot-ink" : "text-muted"}`}>{batted}</p>}

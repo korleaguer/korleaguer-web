@@ -655,7 +655,10 @@ export interface GamePlay {
   resultKo: string;
   /** MLB 결과 종류(home_run, single, strikeout, field_out …) */
   eventType: string;
-  /** 타점(투수면 그 타석에 준 점수) */
+  /**
+   * 그 타석 타자의 타점(MLB play-by-play rbi). 투수 화면에서도 같은 값이다. 투수가 책임지는 실점과는 다르다:
+   * 앞 투수가 내보낸 주자의 득점(승계 주자)·실책·폭투 점수는 타점과 어긋난다(공식 야구 규칙 9.16)
+   */
   rbi: number;
   /** 상대(타자면 투수, 투수면 타자) 영어 이름 */
   opponentName: string | null;
