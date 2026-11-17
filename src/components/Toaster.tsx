@@ -79,7 +79,10 @@ export default function Toaster() {
 
 function ActionButton({ item }: { item: ToastItem }) {
   const action = item.action!;
-  const className = "press tap-target shrink-0 rounded-lg px-2 py-1 text-button text-toast-action";
+  // 포커스 테두리도 버튼 글자와 같은 밝은 파랑. 사이트 기본 파랑(accent)은 다크 알림 바탕(#3a404a) 위에서 2.02:1이라
+  // 키보드로 옮겨 와도 잘 안 보였다(WCAG 1.4.11 3:1, 전수조사). 밝은 파랑은 라이트 7.78:1 · 다크 5.98:1
+  const className =
+    "press tap-target shrink-0 rounded-lg px-2 py-1 text-button text-toast-action focus-visible:outline-toast-action";
   const onClick = () => {
     action.onClick?.();
     dismissToast(item.id);
