@@ -113,10 +113,21 @@ function shownGame(entry: MyPlayer): GameLine | null {
   return entry.games.find((g) => g.gameStatus !== "scheduled" && g.gameStatus !== "postponed") ?? entry.games[0] ?? null;
 }
 
-/** "2026-07-07" → "7월 7일" */
+/** "2026-07-07" → "7월 7일". 달과 날 사이는 줄바꿈 없는 공백이라 Words로 그리면 큰 글씨에서도 '7월'/'7일'로 갈리지 않는다 */
 function monthDay(date: string): string {
   const [, m, d] = date.split("-");
-  return `${Number(m)}월 ${Number(d)}일`;
+  return `${Number(m)}월\u00a0${Number(d)}일`;
+}
+
+/**
+ * 경기 한 줄 앞에 붙는 날짜(전수조사 L425): 오늘(today, 한국 날짜)이면 없음, 하루 전이면 '어제', 그보다 전이면 '7월 15일'.
+ * 층은 선수마다 7일 안의 마지막 경기라, 날짜가 없으면 며칠 전 경기도 오늘 경기처럼 읽혔다. 뉴스 탭 날짜 묶기와 같은 오늘·어제 규칙이다
+ */
+function dayLabel(game: GameLine, today: string | null): string | null {
+  const day = kstDayKey(game.startTimeKst);
+  if (!day || !today || day === today) return null;
+  const yesterday = kstDayKey(new Date(Date.parse(`${today}T12:00:00+09:00`) - 86_400_000));
+  return day === yesterday ? "어제" : monthDay(day);
 }
 
 /** 이름 아래 한 줄: 마지막 경기 한 줄 기록(부상이면 재활 경기, FA면 마지막 경기) */
@@ -180,8 +191,8 @@ function sideText(entry: MyPlayer, game: GameLine | null): string | null {
 function moveText(entry: MyPlayer): { text: string; color: string } | null {
   const status = entry.status;
   if (!status?.since) return null;
-  if (status.kind === "CALLED_UP") return { text: `↑ ${monthDay(status.since)} 메이저로 올라옴`, color: "text-accent-ink" };
-  if (status.kind === "RETURNED") return { text: `↑ ${monthDay(status.since)} 부상에서 돌아옴`, color: "text-success-fg" };
+  if (status.kind === "CALLED_UP") return { text: `↑\u00a0${monthDay(status.since)} 메이저로 올라옴`, color: "text-accent-ink" };
+  if (status.kind === "RETURNED") return { text: `↑\u00a0${monthDay(status.since)} 부상에서 돌아옴`, color: "text-success-fg" };
   return null;
 }
 
@@ -249,7 +260,7 @@ export default async function SeasonFloors({ recent, asOf }: Props) {
             </h3>
             <ul className="card divide-y divide-line overflow-hidden">
               {floor.players.map((entry) => (
-                <FloorRow key={entry.player.id} entry={entry} starred={mine.includes(entry.player.id)} />
+                <FloorRow key={entry.player.id} entry={entry} starred={mine.includes(entry.player.id)} today={today} />
               ))}
             </ul>
           </div>
@@ -259,8 +270,9 @@ export default async function SeasonFloors({ recent, asOf }: Props) {
   );
 }
 
-function FloorRow({ entry, starred }: { entry: MyPlayer; starred: boolean }) {
+function FloorRow({ entry, starred, today }: { entry: MyPlayer; starred: boolean; today: string | null }) {
   const { text, game } = lineOf(entry);
+  const day = game ? dayLabel(game, today) : null;
   const side = sideText(entry, game);
   const move = moveText(entry);
   const team = teamText(entry);
@@ -294,6 +306,12 @@ function FloorRow({ entry, starred }: { entry: MyPlayer; starred: boolean }) {
             {team && <span className="min-w-0 flex-1 truncate text-caption text-muted">{team}</span>}
           </span>
           <span className={`mt-0.5 block text-body text-pretty ${game && !game.played ? "text-muted" : ""}`}>
+            {/* 오늘 경기가 아니면 앞에 흐린 날짜('어제 ·'·'7월 15일 ·'). 날짜와 점은 한 덩어리로 줄을 바꾼다 */}
+            {day && (
+              <span className="text-muted">
+                <Words text={`${day}\u00a0·`} />{" "}
+              </span>
+            )}
             <Words text={text} />
             {game && game.played && game.result && (
               <span className="text-muted">
@@ -302,7 +320,11 @@ function FloorRow({ entry, starred }: { entry: MyPlayer; starred: boolean }) {
               </span>
             )}
           </span>
-          {move && <span className={`mt-0.5 block text-label ${move.color}`}>{move.text}</span>}
+          {move && (
+            <span className={`mt-0.5 block text-label ${move.color}`}>
+              <Words text={move.text} />
+            </span>
+          )}
         </span>
         {/* 상태 말이 길면('지명 할당(DFA) 12일째') 6.5rem 안에서 낱말 단위로 줄을 바꾼다. 아래 줄로 내려가면 기록 칸과
             왼쪽을 맞추고(사진 44px + 간격), 비었으면 그 줄을 만들지 않는다 */}
