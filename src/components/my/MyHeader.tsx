@@ -93,8 +93,12 @@ export default function MyHeader({ subtitle, players, selectedIds }: Props) {
             </div>
           )}
           <h2 className="sr-only">전체 선수</h2>
+          {/* 쿠키라 브라우저마다, 앱이면 앱 안에만 따로 저장된다. '이 기기'라고 쓰면 같은 휴대폰의 다른 브라우저·앱에도 있는 줄 알았다
+              (11-17 점검). 앱인지는 html[data-app]로 CSS가 가른다(서버가 그린 글과 어긋나지 않게 둘 다 그려 두고 하나만 보인다) */}
           <p className="px-2 pb-1.5 pt-1 text-caption text-muted">
-            누르면 내 선수에 넣거나 뺄 수 있어요. 가입 없이 이 기기에만 저장돼요.
+            누르면 내 선수에 넣거나 뺄 수 있어요. 가입 없이{" "}
+            <span className="in-app:hidden">이 브라우저에만</span>
+            <span className="hidden in-app:inline">이 앱에만</span> 저장돼요.
           </p>
           {players.length === 0 ? (
             <p className="px-2 py-3 text-body text-muted">아직 등록된 선수가 없어요.</p>
