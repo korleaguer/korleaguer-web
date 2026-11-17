@@ -1,6 +1,6 @@
-"use client"; // 끌어서 옮기기(pointer 이벤트)와 키보드 옮기기가 있어서 클라이언트 컴포넌트다.
+"use client"; // 끌어서 옮기기(pointer 이벤트)와 버튼·키보드 옮기기가 있어서 클라이언트 컴포넌트다.
 
-import { useOptimistic, useRef, useState, useTransition, type KeyboardEvent, type PointerEvent } from "react";
+import { useLayoutEffect, useOptimistic, useRef, useState, useTransition, type KeyboardEvent, type PointerEvent } from "react";
 import { setMyPlayersOrder } from "@/app/my/actions";
 import type { PlayerSummary } from "@/lib/api";
 import { haptic } from "@/lib/app";
@@ -26,7 +26,9 @@ function move<T>(list: readonly T[], from: number, to: number): T[] {
 
 /**
  * '내 선수' 화면 순서 목록. 손잡이를 마우스·손가락으로 끌어 위아래로 옮긴다.
- * 키보드는 손잡이에 초점을 두고 위·아래 화살표. 놓으면 쿠키 순서를 바꾸고 카드 순서가 바로 바뀐다.
+ * 끌지 않고도 바꿀 수 있게 줄마다 '위로'·'아래로' 버튼을 둔다(WCAG 2.2 SC 2.5.7, 이슈 #250: 화면 낭독기·스위치·음성 제어).
+ * 키보드는 손잡이에 초점을 두고 위·아래 화살표도 된다. 옮기면 쿠키 순서를 바꾸고 카드 순서가 바로 바뀐다.
+ * 옮긴 뒤에도 포커스는 옮긴 줄의 같은 버튼에 남는다(줄 순서를 바꾸면 React가 DOM을 옮겨 포커스가 사라질 수 있다).
  * 줄 높이가 모두 같다고 보고(한 줄 48px) 포인터 위치로 들어갈 자리를 정한다.
  */
 export default function OrderList({ players }: { players: PlayerSummary[] }) {
@@ -37,7 +39,18 @@ export default function OrderList({ players }: { players: PlayerSummary[] }) {
   const [drag, setDrag] = useState<Drag | null>(null);
   const [message, setMessage] = useState("");
   const listRef = useRef<HTMLOListElement>(null);
+  /** 옮긴 뒤 포커스를 돌려줄 버튼('<선수 번호>-<up|down|handle>') */
+  const refocusRef = useRef<string | null>(null);
   const order = live ?? saved;
+
+  // 줄을 옮기면 React가 DOM 줄을 다시 꽂으며 그 안의 포커스가 사라질 수 있다. 옮긴 버튼에 다시 포커스를 둔다
+  useLayoutEffect(() => {
+    const key = refocusRef.current;
+    if (!key) return;
+    refocusRef.current = null;
+    const el = listRef.current?.querySelector<HTMLElement>(`[data-move="${key}"]`);
+    if (el && document.activeElement !== el) el.focus();
+  }, [order]);
 
   const rowHeight = () => (listRef.current?.firstElementChild as HTMLElement | null)?.offsetHeight ?? 48;
   const listTop = () => listRef.current?.getBoundingClientRect().top ?? 0;
@@ -83,20 +96,27 @@ export default function OrderList({ players }: { players: PlayerSummary[] }) {
     setLive(null);
   }
 
+  /** 한 칸 위(-1)·아래(1)로. 맨 위·맨 아래면 그대로 */
+  function moveBy(id: number, step: -1 | 1, control: "up" | "down" | "handle") {
+    const from = order.indexOf(id);
+    const to = from + step;
+    if (to < 0 || to >= order.length) return;
+    refocusRef.current = `${id}-${control}`;
+    haptic("select");
+    commit(move(order, from, to), id);
+  }
+
   function onKeyDown(e: KeyboardEvent<HTMLButtonElement>, id: number) {
     const step = e.key === "ArrowUp" ? -1 : e.key === "ArrowDown" ? 1 : 0;
     if (step === 0) return;
     e.preventDefault();
-    const from = order.indexOf(id);
-    const to = from + step;
-    if (to < 0 || to >= order.length) return;
-    commit(move(order, from, to), id);
+    moveBy(id, step, "handle");
   }
 
   return (
     <>
       <p id="order-help" className="sr-only">
-        위·아래 화살표로 순서를 옮길 수 있어요. 마우스나 손가락으로 손잡이를 끌어도 돼요.
+        줄마다 위로·아래로 버튼이나 키보드 위·아래 화살표로 순서를 옮길 수 있어요. 손잡이를 끌어도 돼요.
       </p>
       <ol ref={listRef} className="relative">
         {order.map((id, index) => {
@@ -120,6 +140,7 @@ export default function OrderList({ players }: { players: PlayerSummary[] }) {
                 type="button"
                 aria-label={`${player.nameKo} 순서 옮기기`}
                 aria-describedby="order-help"
+                data-move={`${id}-handle`}
                 onPointerDown={(e) => onPointerDown(e, id)}
                 onPointerMove={onPointerMove}
                 onPointerUp={onPointerEnd}
@@ -141,6 +162,20 @@ export default function OrderList({ players }: { players: PlayerSummary[] }) {
               </span>
               <PlayerAvatar size={28} nameKo={player.nameKo} photoUrl={player.photoUrl} teamAbbr={player.teamAbbr} />
               <span className="min-w-0 flex-1 truncate text-summary">{player.nameKo}</span>
+              <MoveButton
+                dir="up"
+                name={player.nameKo}
+                id={id}
+                atEnd={index === 0}
+                onMove={() => moveBy(id, -1, "up")}
+              />
+              <MoveButton
+                dir="down"
+                name={player.nameKo}
+                id={id}
+                atEnd={index === order.length - 1}
+                onMove={() => moveBy(id, 1, "down")}
+              />
             </li>
           );
         })}
@@ -149,5 +184,42 @@ export default function OrderList({ players }: { players: PlayerSummary[] }) {
         {message}
       </p>
     </>
+  );
+}
+
+/**
+ * 한 칸 위·아래로 버튼(누름 44px). 맨 위의 '위로'·맨 아래의 '아래로'는 끄되 disabled 대신 aria-disabled로 둔다:
+ * 옮겨서 끝에 닿은 순간 버튼이 disabled가 되면 그 버튼에 있던 포커스가 사라진다
+ */
+function MoveButton({
+  dir,
+  name,
+  id,
+  atEnd,
+  onMove,
+}: {
+  dir: "up" | "down";
+  name: string;
+  id: number;
+  atEnd: boolean;
+  onMove: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={`${name} ${dir === "up" ? "위로" : "아래로"}`}
+      aria-disabled={atEnd || undefined}
+      data-move={`${id}-${dir}`}
+      onClick={() => {
+        if (!atEnd) onMove();
+      }}
+      className={`press grid size-11 shrink-0 place-items-center rounded-lg text-muted ${
+        atEnd ? "cursor-default opacity-30" : "cursor-pointer hover:bg-surface-2 hover:text-foreground"
+      }`}
+    >
+      <svg aria-hidden viewBox="0 0 16 16" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+        <path d={dir === "up" ? "m4 10 4-4 4 4" : "m4 6 4 4 4-4"} />
+      </svg>
+    </button>
   );
 }
