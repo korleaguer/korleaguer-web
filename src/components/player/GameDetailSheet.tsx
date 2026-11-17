@@ -407,6 +407,21 @@ function DetailContent({
       : null,
   );
   const [loadingPlay, setLoadingPlay] = useState<string | null>(null);
+  /**
+   * 타석 ▶로 영상을 바꾸면 창은 맨 위 영상으로 올라가는데 포커스는 화면 밖 ▶에 남아, 키보드·낭독기 사용자는 영상을 찾아 거슬러
+   * 올라가야 했다(11-17 전수조사). 그래서 ▶로 바꾼 영상이 그려지면 영상 묶음(figure)으로 포커스를 옮긴다. 하이라이트 고르기는
+   * 포커스가 바로 아래 목록에 있어 옮기지 않는다
+   */
+  const figureRef = useRef<HTMLElement>(null);
+  const focusClipRef = useRef(false);
+  /** 창 안 낭독 한 줄: 받는 동안 '영상을 불러오는 중', 없으면 그 말. 창 밖 알림 띠는 모달이 열린 동안 낭독기가 읽지 못할 수 있다 */
+  const [clipStatus, setClipStatus] = useState("");
+
+  useEffect(() => {
+    if (!focusClipRef.current) return;
+    focusClipRef.current = false;
+    figureRef.current?.focus({ preventScroll: true });
+  }, [clip]);
 
   const showHighlight = (i: number) => {
     const h = detail.highlights[i];
@@ -419,12 +434,17 @@ function DetailContent({
       if (!play.playId || loadingPlay) return;
       haptic("select");
       setLoadingPlay(play.playId);
+      setClipStatus("영상을 불러오는 중");
       const mp4Url = await fetchClip(playerId, gamePk, play.playId).catch(() => null);
       setLoadingPlay(null);
       if (!mp4Url) {
+        setClipStatus("이 장면 영상은 아직 없어요.");
         toast("이 장면 영상은 아직 없어요.");
         return;
       }
+      // 영상 이름은 포커스를 받은 영상 묶음이 읽는다(같은 말을 두 번 읽지 않게 낭독 줄은 비운다)
+      setClipStatus("");
+      focusClipRef.current = true;
       setClip({ key: `p-${play.playId}`, hlsUrl: null, mp4Url, posterUrl: null, autoPlay: true, label: playTitle(play), sub: "그 타석 마지막 공" });
       // 영상이 창 맨 위에 있어 그리로 올린다
       scrollRef.current?.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
@@ -435,7 +455,8 @@ function DetailContent({
   return (
     <div className="px-4 pt-4">
       {clip ? (
-        <figure>
+        // 포커스만 받고 Tab 순서에는 넣지 않는다(-1). 키보드로 왔을 때만 포커스 테두리가 보인다
+        <figure ref={figureRef} tabIndex={-1} aria-label={`${clip.label} 영상`} className="rounded-xl">
           <ClipPlayer clip={clip} />
           <figcaption className="mt-2">
             <span className="block text-summary">{clip.label}</span>
@@ -502,6 +523,9 @@ function DetailContent({
         </ol>
       )}
       <p className="mt-4 text-micro text-muted">기록·영상 출처: MLB, Baseball Savant</p>
+      <p aria-live="polite" className="sr-only">
+        {clipStatus}
+      </p>
     </div>
   );
 }
@@ -588,6 +612,7 @@ function PlayRow({
           type="button"
           // 재생 중인 타석은 채운 파랑(눈)만으로 알렸다. 화면 낭독기에도 '지금 보는 영상'과 이름으로 알린다(11-17 전수조사)
           aria-current={playing ? "true" : undefined}
+          aria-busy={loading || undefined}
           aria-label={playing ? `${playTitle(play)} 영상 보는 중` : `${playTitle(play)} 영상 보기`}
           onClick={onPlay}
           className={`press tap-target grid size-9 shrink-0 place-items-center rounded-full ${playing ? "bg-accent text-accent-fg" : "bg-surface-2 text-foreground"}`}
