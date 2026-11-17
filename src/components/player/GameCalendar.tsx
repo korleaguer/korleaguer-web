@@ -56,6 +56,16 @@ function dedupeRehab(moves: RosterMove[]): RosterMove[] {
 /** 상세 창을 열며 쌓은 주소 기록 표시(history.state의 키) */
 const SHEET_STATE = "korleaguerGameSheet";
 
+/**
+ * 고른 날 아래 '경기 상세' 버튼 글자. 영상(MLB 하이라이트·공 영상)은 메이저 경기를 뛴 날에만 있어서, 마이너 경기만 뛴 날·결장·경기 전에도
+ * '영상 보기'라고 하면 눌러 보고 헛걸음한다(11-17 전수조사). 메이저 경기인데 영상이 아직 없는 드문 날은 그대로 '영상 보기'다
+ */
+function detailButtonText(day: CalendarDay): string {
+  if (day.entries.some((e) => e.kind === "mlb" && lineOf(e).played)) return "경기 상세 · 영상 보기";
+  if (day.entries.some((e) => lineOf(e).played)) return "경기 상세 보기";
+  return "경기 정보 보기";
+}
+
 /** 이동 기록 날짜(미국 날짜) "2026-09-21" → "9.21" */
 function moveDay(date: string): string {
   return `${Number(date.slice(5, 7))}.${Number(date.slice(8, 10))}`;
@@ -90,7 +100,7 @@ export default function GameCalendar({
   // ---- 상세 창 ----
   const [sheetKey, setSheetKey] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
-  /** 창을 연 버튼(날짜 칸이나 '경기 상세 · 영상 보기'). 닫으면 여기로 포커스를 돌려준다 */
+  /** 창을 연 버튼(날짜 칸이나 아래 '경기 상세' 버튼). 닫으면 여기로 포커스를 돌려준다 */
   const openerRef = useRef<HTMLElement | null>(null);
   /** 창이 처음 연 날짜와 마지막으로 보인 날짜(앞뒤 경기로 바뀌었나) */
   const spanRef = useRef<{ first: string; last: string } | null>(null);
@@ -335,7 +345,7 @@ export default function GameCalendar({
           }}
           className="press-soft flex min-h-[max(2.75rem,44px)] w-full items-center justify-center gap-1 border-t border-line py-2.5 text-label text-accent-ink"
         >
-          경기 상세 · 영상 보기
+          {detailButtonText(selected)}
           <svg aria-hidden viewBox="0 0 16 16" className="size-3.5" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
             <path d="m6 3 5 5-5 5" />
           </svg>
