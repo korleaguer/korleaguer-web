@@ -97,7 +97,8 @@ async function RecordsContent({ searchParams }: Pick<Props, "searchParams">) {
   const [params, result, home] = await Promise.all([searchParams, getRecords(), getHome()]);
   if (!result.ok) {
     if (result.failure === "notFound") {
-      return <StateNotice emoji="🏆" title="기록을 준비하고 있어요" detail="곧 한국인 메이저리거 역대 기록이 열려요." />;
+      // 바로 위 화면 제목이 '한국인 메이저리거 역대 기록'이라 같은 말을 되풀이하지 않는다
+      return <StateNotice emoji="🏆" title="기록을 준비하고 있어요" detail="곧 열려요." />;
     }
     return <ApiErrorNotice failure={result.failure} />;
   }
