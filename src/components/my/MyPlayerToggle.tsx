@@ -13,10 +13,15 @@ interface Props {
   className?: string;
 }
 
-/** 내 선수 넣기·빼기 별표 버튼. 화면 낭독기는 "이정후 내 선수, 누름"처럼 읽는다. */
+/**
+ * 내 선수 넣기·빼기 별표 버튼. 둥근 별(icon)은 보이는 글자가 없어 "이정후 내 선수, 누름"처럼 읽는다.
+ * 알약(pill)은 이름이 보이는 글자로 시작한다: 꺼지면 "내 선수에 넣기, 이정후", 켜지면 "내 선수, 이정후"(WCAG 2.5.3,
+ * 11-17 전수조사). 음성 조작으로 보이는 글자를 말하면 눌려야 하는데, 예전 이름 "이정후 내 선수"에는 '내 선수에 넣기'가 없었다
+ */
 export default function MyPlayerToggle({ playerId, nameKo, initialOn, variant, className = "" }: Props) {
   const { on, pending, toggle } = useMyPlayerToggle(playerId, initialOn, nameKo);
   const label = `${nameKo} 내 선수`;
+  const pillText = on ? "내 선수" : "내 선수에 넣기";
 
   if (variant === "icon") {
     return (
@@ -40,12 +45,12 @@ export default function MyPlayerToggle({ playerId, nameKo, initialOn, variant, c
       <button
         type="button"
         aria-pressed={on}
-        aria-label={label}
+        aria-label={`${pillText}, ${nameKo}`}
         onClick={toggle}
         className={`press tap-target inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-label transition duration-150 ${on ? "bg-accent-soft text-accent-ink" : "bg-surface-2 text-neutral-pill-fg hover:text-foreground"} ${pending ? "opacity-70" : ""}`}
       >
         <StarIcon filled={on} className="size-4" />
-        <span aria-hidden>{on ? "내 선수" : "내 선수에 넣기"}</span>
+        <span aria-hidden>{pillText}</span>
       </button>
     </span>
   );
