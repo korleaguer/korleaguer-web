@@ -33,6 +33,26 @@ export function sampleLabel(season: LevelSeason<HitterSeason | PitcherSeason>, p
 }
 
 /**
+ * 이보다 적으면 표본이 적어 '참고용'이다: 타자 100타석, 투수 30이닝(90아웃). 서버가 MLB 중 위치를 견주는 선수 기준이고
+ * 선수 페이지 'MLB 타자 중에서'(LeaguePosition)의 '참고용' 문턱과 같은 값이다(11-17 사용자 결정 '추천대로')
+ */
+export const STEADY_PLATE_APPEARANCES = 100;
+export const STEADY_OUTS = 90;
+
+/**
+ * 표본이 적은 묶음이면 이름표 뒤에 붙일 말('4이닝이라 참고용', '31타석이라 참고용'), 충분하면 null.
+ * 몇 경기 안 되는 기록이 큰 숫자로 서면 92경기 묶음과 같은 무게로 읽혀서(4이닝 평균자책점 9.00), 선수 페이지가 작은 한 줄로 줄인다
+ */
+export function smallSampleNote(season: LevelSeason<HitterSeason | PitcherSeason>, pitcher: boolean): string | null {
+  if (pitcher) {
+    const line = season.line as PitcherSeason;
+    return line.outs < STEADY_OUTS ? `${line.inningsText}이닝이라 참고용` : null;
+  }
+  const line = season.line as HitterSeason;
+  return line.plateAppearances < STEADY_PLATE_APPEARANCES ? `${line.plateAppearances}타석이라 참고용` : null;
+}
+
+/**
  * 선수 한 명의 시즌 핵심 기록 세 칸(선수 목록 카드, 공유 미리보기 그림).
  * 타자끼리, 투수끼리 같은 칸이 같은 자리에 와서 나란히 비교할 수 있다. 기록이 없으면 null
  */

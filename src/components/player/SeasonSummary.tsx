@@ -1,7 +1,7 @@
 import { Fragment, type ReactNode } from "react";
 import type { HitterSeason, PitcherSeason } from "@/lib/api";
 import { formatEra, formatRate } from "@/lib/format";
-import { levelSeasons, sampleLabel } from "@/lib/seasonStats";
+import { levelSeasons, sampleLabel, smallSampleNote } from "@/lib/seasonStats";
 import RollingNumber from "@/components/RollingNumber";
 import Section from "@/components/Section";
 import { cacheLife } from "next/cache";
@@ -24,7 +24,8 @@ type RestStat = [label: string, value: number, numberFirst?: boolean];
  * 선수 시즌 성적. 단계(메이저·마이너)마다 큰 숫자 카드 네 장 + 세부 기록 한 장이고, 올해 주로 뛴 단계가 먼저다.
  * 세부 기록은 팬이 먼저 찾는 넷(안타·홈런·타점·도루)을 크게, 나머지는 아래 한 줄로 모은다(사용자가 고른 시안 B, 이슈 #232).
  * 묶음마다 '메이저 4경기'처럼 단계·경기 수를 먼저 적는다. 메이저만 보이면 트리플A 85경기를 뛴 김혜성이 43경기로 읽히고,
- * 메이저 4경기 9.00이 시즌 전체처럼 보였다(이슈 #184).
+ * 메이저 4경기 9.00이 시즌 전체처럼 보였다(이슈 #184). 표본이 적은 묶음(타자 100타석·투수 30이닝 미만)은 큰 숫자 대신
+ * 작은 한 줄 카드와 '참고용'이다(StatLine, 11-17 사용자 결정).
  */
 export default async function SeasonSummary({
   season,
@@ -44,53 +45,80 @@ export default async function SeasonSummary({
     <Section id="season-title" title={`${season} 시즌 성적`}>
       {/* 묶음 사이 28px: 20px이면 앞 묶음 세부 카드와 다음 묶음 이름표가 붙어 이름표가 어느 숫자의 것인지 흐렸다(11-17 전수조사) */}
       <div className="space-y-7">
-        {hitterSeasons.map((s) => (
-          <LevelBlock key={s.levelKo} label={sampleLabel(s, false)}>
-            <StatBlock
-              // 야구 중계에서 쓰는 '타율/출루율/장타율' + OPS
-              big={[
-                ["타율", formatRate(s.line.avg)],
-                ["출루율", formatRate(s.line.obp)],
-                ["장타율", formatRate(s.line.slg)],
-                ["OPS", formatRate(s.line.ops)],
-              ]}
-              // 9칸을 같은 크기로 늘어놓으면 계산기 자판처럼 읽혀서, 기사에서 '149안타 10홈런 57타점 12도루'로 부르는 넷만 크게 둔다
-              main={[
-                ["안타", s.line.hits],
-                ["홈런", s.line.homeRuns],
-                ["타점", s.line.rbi],
-                ["도루", s.line.stolenBases],
-              ]}
-              rest={[
-                ["경기", s.line.games, true],
-                ["타수", s.line.atBats, true],
-                ["2루타", s.line.doubles],
-                ["볼넷", s.line.walks],
-                ["삼진", s.line.strikeouts],
-              ]}
-            />
-          </LevelBlock>
-        ))}
-        {pitcherSeasons.map((s) => (
-          <LevelBlock key={s.levelKo} label={sampleLabel(s, true)}>
-            <StatBlock
-              big={[
-                ["평균자책점", formatEra(s.line.era)],
-                ["승-패", `${s.line.wins}-${s.line.losses}`],
-                ["이닝", s.line.inningsText],
-                ["탈삼진", s.line.strikeouts],
-              ]}
-              // 위 큰 칸에 있는 이닝·승패·탈삼진은 되풀이하지 않는다(문구 점검 11-13). 투수 출전 수는 '등판'. 넷뿐이라 아래 한 줄은 없다
-              main={[
-                ["등판", s.line.games],
-                ["세이브", s.line.saves],
-                ["볼넷", s.line.walks],
-                ["피안타", s.line.hitsAllowed],
-              ]}
-              rest={[]}
-            />
-          </LevelBlock>
-        ))}
+        {hitterSeasons.map((s) => {
+          // 야구 중계에서 쓰는 '타율/출루율/장타율' + OPS
+          const big: Stat[] = [
+            ["타율", formatRate(s.line.avg)],
+            ["출루율", formatRate(s.line.obp)],
+            ["장타율", formatRate(s.line.slg)],
+            ["OPS", formatRate(s.line.ops)],
+          ];
+          // 9칸을 같은 크기로 늘어놓으면 계산기 자판처럼 읽혀서, 기사에서 '149안타 10홈런 57타점 12도루'로 부르는 넷만 크게 둔다
+          const main: Stat[] = [
+            ["안타", s.line.hits],
+            ["홈런", s.line.homeRuns],
+            ["타점", s.line.rbi],
+            ["도루", s.line.stolenBases],
+          ];
+          const note = smallSampleNote(s, false);
+          return (
+            <LevelBlock key={s.levelKo} label={sampleLabel(s, false)} note={note}>
+              {note ? (
+                // 작은 한 줄: 도루는 0이면 뺀다(모두가 쌓는 기록이 아니라 몇 경기 묶음에서는 대개 0이다)
+                <StatLine stats={[...big, ...main.filter(([label, value]) => label !== "도루" || value !== 0)]} />
+              ) : (
+                <StatBlock
+                  big={big}
+                  main={main}
+                  rest={[
+                    ["경기", s.line.games, true],
+                    ["타수", s.line.atBats, true],
+                    ["2루타", s.line.doubles],
+                    ["볼넷", s.line.walks],
+                    ["삼진", s.line.strikeouts],
+                  ]}
+                />
+              )}
+            </LevelBlock>
+          );
+        })}
+        {pitcherSeasons.map((s) => {
+          const big: Stat[] = [
+            ["평균자책점", formatEra(s.line.era)],
+            ["승-패", `${s.line.wins}-${s.line.losses}`],
+            ["이닝", s.line.inningsText],
+            ["탈삼진", s.line.strikeouts],
+          ];
+          const note = smallSampleNote(s, true);
+          return (
+            <LevelBlock key={s.levelKo} label={sampleLabel(s, true)} note={note}>
+              {note ? (
+                // 작은 한 줄: 등판은 이름표('메이저 4번 등판')에 있어 빼고, 세이브는 0이면 뺀다(결정 그림 ④의 한 줄과 같다)
+                <StatLine
+                  stats={[
+                    ...big.slice(0, 2),
+                    ...(s.line.saves > 0 ? [["세이브", s.line.saves] as Stat] : []),
+                    ...big.slice(2),
+                    ["볼넷", s.line.walks],
+                    ["피안타", s.line.hitsAllowed],
+                  ]}
+                />
+              ) : (
+                <StatBlock
+                  big={big}
+                  // 위 큰 칸에 있는 이닝·승패·탈삼진은 되풀이하지 않는다(문구 점검 11-13). 투수 출전 수는 '등판'. 넷뿐이라 아래 한 줄은 없다
+                  main={[
+                    ["등판", s.line.games],
+                    ["세이브", s.line.saves],
+                    ["볼넷", s.line.walks],
+                    ["피안타", s.line.hitsAllowed],
+                  ]}
+                  rest={[]}
+                />
+              )}
+            </LevelBlock>
+          );
+        })}
         {hitterSeasons.length === 0 && pitcherSeasons.length === 0 && (
           <p className="card px-4 py-5 text-body text-muted">
             {statsAvailable ? "이번 시즌 기록이 없어요." : "아직 시즌 기록을 받지 못했어요."}
@@ -103,14 +131,36 @@ export default async function SeasonSummary({
 
 /**
  * 단계 묶음: '메이저 143경기' 이름표(작은 제목) + 숫자 카드들.
- * 이름표는 본문 글자색이다. 흐린 글자로 두면 바로 아래 28px 숫자에 묻혀 어느 단계 기록인지 잘 안 보였다(11-17 전수조사)
+ * 이름표는 본문 글자색이다. 흐린 글자로 두면 바로 아래 28px 숫자에 묻혀 어느 단계 기록인지 잘 안 보였다(11-17 전수조사).
+ * 표본이 적으면 이름표 뒤에 흐린 '· 4이닝이라 참고용'(note)
  */
-function LevelBlock({ label, children }: { label: string; children: ReactNode }) {
+function LevelBlock({ label, note, children }: { label: string; note: string | null; children: ReactNode }) {
   return (
     <div className="space-y-2.5">
-      <h3 className="px-1 text-label text-foreground">{label}</h3>
+      <h3 className="px-1 text-label text-foreground">
+        {label}
+        {note && <span className="font-normal text-muted">{` · ${note}`}</span>}
+      </h3>
       {children}
     </div>
+  );
+}
+
+/**
+ * 표본이 적은 묶음(타자 100타석·투수 30이닝 미만)의 작은 한 줄 카드: '평균자책점 9.00 승-패 0-0 이닝 4 …'(이름 흐림, 숫자 굵게).
+ * 큰 숫자 카드로 두면 메이저 4번 등판이 마이너 36번 등판과 같은 무게로 읽혔다(4이닝은 한 경기만 못 던져도 크게 흔들린다,
+ * 11-17 사용자 결정 '추천대로' 결정 그림 ④). 항목 안에서는 줄을 바꾸지 않고, 좁으면(큰 글씨) 항목 사이에서 바꾼다
+ */
+function StatLine({ stats }: { stats: Stat[] }) {
+  return (
+    <dl className="card flex flex-wrap gap-x-3.5 gap-y-1 px-4 py-3 text-body tabular-nums">
+      {stats.map(([label, value]) => (
+        <div key={label} className="flex gap-1 whitespace-nowrap">
+          <dt className="text-muted">{label}</dt>
+          <dd className="font-semibold">{value}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }
 
