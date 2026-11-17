@@ -39,12 +39,15 @@ export function minorAsLine(m: MinorGameLine, base: Pick<GameLine, "playerId" | 
   };
 }
 
-/** 그달(또는 단계)의 성적 글: 타자는 ".295", 투수는 "평균자책 3.86". 기록이 없으면 빈 글 */
+/**
+ * 그달(또는 단계)의 성적 글: 타자는 ".295", 투수는 "평균자책점 3.86". 기록이 없으면 빈 글.
+ * 같은 페이지의 시즌 성적·경기 줄이 '평균자책점'이라 줄여 쓰지 않는다(한 대상은 한 이름, 11-17 전수조사)
+ */
 function rate(lines: GameLine[], role: Role): string {
   if (role === "PITCHER") {
     const outs = lines.reduce((s, g) => s + (g.pitching?.outs ?? 0), 0);
     const er = lines.reduce((s, g) => s + (g.pitching?.earnedRuns ?? 0), 0);
-    return outs > 0 ? `평균자책 ${formatEra((er * 27) / outs)}` : "";
+    return outs > 0 ? `평균자책점 ${formatEra((er * 27) / outs)}` : "";
   }
   const ab = lines.reduce((s, g) => s + (g.batting?.atBats ?? 0), 0);
   const hits = lines.reduce((s, g) => s + (g.batting?.hits ?? 0), 0);
@@ -53,7 +56,8 @@ function rate(lines: GameLine[], role: Role): string {
 
 /**
  * 그달 성적 글: 단계마다 뛴 경기 수와 성적. 최근에 뛴 단계부터.
- * 예: "트리플A 10경기 .195 · 메이저 1경기". 그달에 뛴 경기가 없으면 '뛴 경기 없음'(투수는 '등판 없음')
+ * 예: "트리플A 10경기 .195 · 메이저 1경기", 투수는 "트리플A 8번 등판 평균자책점 12.54"(투수 출전 수는 '등판'으로 부른다,
+ * 시즌 성적 이름표 '메이저 4번 등판'과 같은 말). 그달에 뛴 경기가 없으면 '뛴 경기 없음'(투수는 '등판 없음')
  */
 export function monthSummary(entries: LogGame[], role: Role): string {
   const byLevel = new Map<string, GameLine[]>();
@@ -67,7 +71,9 @@ export function monthSummary(entries: LogGame[], role: Role): string {
   }
   if (byLevel.size === 0) return role === "PITCHER" ? "등판 없음" : "뛴 경기 없음";
   return [...byLevel]
-    .map(([level, lines]) => [level, `${lines.length}경기`, rate(lines, role)].filter(Boolean).join(" "))
+    .map(([level, lines]) =>
+      [level, role === "PITCHER" ? `${lines.length}번 등판` : `${lines.length}경기`, rate(lines, role)].filter(Boolean).join(" "),
+    )
     .join(" · ");
 }
 

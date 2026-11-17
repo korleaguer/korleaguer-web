@@ -31,8 +31,9 @@ function filled(tone: DayTone): boolean {
 }
 
 /**
- * 휴대폰 칸의 마이너 단계 짧은 표기. 칸이 약 43px라 두 자리 날짜 옆에 'AAA'가 들어가지 않는다(점검 11-15: '20 A…'로 잘림).
- * 넓은 칸은 'AAA' 그대로 쓴다
+ * 칸의 마이너 단계 짧은 표기. 휴대폰 칸이 약 43px라 두 자리 날짜 옆에 'AAA'가 들어가지 않는다(점검 11-15: '20 A…'로 잘림).
+ * 넓은 칸도 같은 표기다: 'AAA'와 아래 경기 줄의 '트리플A'가 한 페이지에서 세 가지 이름이 되지 않게(11-17 전수조사),
+ * '트리플A'는 PC 두 칸 배치의 칸 안쪽(약 64px)에 날짜·로고와 함께 들어가지 않는다
  */
 const SHORT_LEVEL: Record<string, string> = { AAA: "3A", AA: "2A", ROK: "R" };
 
@@ -385,7 +386,7 @@ function DayCell({ day, on, onPick }: { day: CalendarDay; on: boolean; onPick: (
           {day.count > 1 ? `×${day.count}` : level && (SHORT_LEVEL[level] ?? level)}
         </span>
         <span className="hidden items-center gap-1 sm:flex">
-          {level && <span className={`font-bold ${dim}`}>{level}</span>}
+          {level && <span className={`font-bold ${dim}`}>{SHORT_LEVEL[level] ?? level}</span>}
           <span className={filled(tone) ? "rounded-md bg-white" : ""}>
             <TeamMark logoUrl={logoUrl} color={color} size="sm" />
           </span>
