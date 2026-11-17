@@ -107,6 +107,11 @@ export default function JumpNav({ targets }: { targets: JumpTarget[] }) {
     const y = el.getBoundingClientRect().top + window.scrollY - stickTop - nav.offsetHeight - GAP;
     const top = Math.min(Math.max(0, y), document.documentElement.scrollHeight - window.innerHeight);
     setActive(i);
+    // 키보드·낭독기 사용자도 그 칸에서 이어 가게 칸 제목으로 포커스를 옮긴다. 예전에는 화면만 내려가고 포커스는 탭 줄에 남아,
+    // 다음 Tab이 페이지 위쪽부터 다시 시작했다(11-17 전수조사). 제목은 원래 포커스를 받지 않아 tabindex=-1을 붙이고(Tab 순서에는
+    // 들지 않는다), 스크롤은 위에서 직접 하니 막는다. 테두리는 키보드로 왔을 때만 보인다(:focus-visible)
+    if (!el.hasAttribute("tabindex")) el.setAttribute("tabindex", "-1");
+    el.focus({ preventScroll: true });
     // 이미 그 자리면 스크롤이 일어나지 않아 잠금을 풀 일이 없으니 잠그지 않고 켜 두기만 한다
     if (Math.abs(window.scrollY - top) < 2) {
       heldRef.current = { index: i, y: window.scrollY };
