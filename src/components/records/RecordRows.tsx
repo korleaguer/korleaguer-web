@@ -69,7 +69,7 @@ export function LeaderRow({ leader, unit }: { leader: RecordLeader; unit: string
   );
 }
 
-/** 다음 선배 한 줄: 사진 · 지금 값 · 누구를 넘으면 몇 위 · 남은 수 · 막대 */
+/** 다음에 넘을 기록 한 줄: 사진 · 지금 값 · 누구를 넘으면 몇 위 · 남은 수 · 막대 */
 export function NextRow({ next }: { next: RecordNext }) {
   const pct = Math.min(100, Math.round((next.value / next.targetValue) * 100));
   return (
@@ -103,7 +103,7 @@ export function NextRow({ next }: { next: RecordNext }) {
   );
 }
 
-/** 넘은 선배: 선수·기록마다 한 줄로 묶는다(이정후 안타: 최희섭 220 · 강정호 233) */
+/** 넘은 기록: 선수·기록마다 한 줄로 묶는다(이정후 안타: 최희섭 220 · 강정호 233) */
 export interface PassedGroup {
   key: string;
   first: RecordPassed;
@@ -131,7 +131,7 @@ export function PassedRow({ group }: { group: PassedGroup }) {
   const { first, items } = group;
   // 넘은 순서대로(작은 값부터) 읽히게
   const names = [...items].sort((a, b) => a.passedValue - b.passedValue);
-  // 줄 폭이 18rem보다 좁으면(큰 글씨) 넘은 선배 이름들을 둘째 줄로 내려 줄 폭을 다 쓴다. 한 줄에 두면 이름들 칸이
+  // 줄 폭이 18rem보다 좁으면(큰 글씨) 넘은 선수 이름들을 둘째 줄로 내려 줄 폭을 다 쓴다. 한 줄에 두면 이름들 칸이
   // 한두 글자 폭이 돼 열 줄 넘게 세로로 늘어졌다(1.5배에서 17줄, 이슈 #264). 보통 크기 휴대폰(19rem 이상)은 그대로다
   return (
     <li className="@container">
