@@ -115,7 +115,7 @@ export default function LinkedTeamSheet({
               type="button"
               aria-label="닫기"
               onClick={onClose}
-              className="press grid size-11 shrink-0 place-items-center rounded-full text-muted hover:bg-surface-2"
+              className="press grid size-[max(2.75rem,44px)] shrink-0 place-items-center rounded-full text-muted hover:bg-surface-2"
             >
               <svg aria-hidden viewBox="0 0 16 16" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
                 <path d="M4 4l8 8M12 4l-8 8" />

@@ -70,20 +70,7 @@ export default function GameDetailSheet({
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  const prevRef = useRef<HTMLButtonElement>(null);
-  const nextRef = useRef<HTMLButtonElement>(null);
-  const closeRef = useRef<HTMLButtonElement>(null);
-  /** 마지막으로 누른 앞뒤 버튼. 끝 경기에 닿아 그 버튼이 꺼지면 포커스가 사라지니 반대쪽(없으면 닫기)으로 옮긴다(이슈 #249) */
-  const pressedRef = useRef<"prev" | "next" | null>(null);
-  useEffect(() => {
-    const pressed = pressedRef.current;
-    pressedRef.current = null;
-    if (!pressed) return;
-    const same = pressed === "prev" ? prevRef.current : nextRef.current;
-    if (!same?.disabled) return;
-    const other = pressed === "prev" ? nextRef.current : prevRef.current;
-    (other && !other.disabled ? other : closeRef.current)?.focus();
-  }, [day.key]);
+
 
   // 열린 동안 뒤 페이지가 스크롤되지 않게 하고, 모달로 연다(포커스가 창 안에 머문다)
   useEffect(() => {
@@ -155,39 +142,16 @@ export default function GameDetailSheet({
         >
           <div aria-hidden className="mx-auto mt-2 h-1.5 w-10 rounded-full bg-line sm:hidden" />
           <div className="flex items-center gap-1 px-2 py-2 sm:py-3">
-            <NavButton
-              ref={prevRef}
-              label="이전 경기"
-              dir="prev"
-              onClick={
-                onPrev &&
-                (() => {
-                  pressedRef.current = "prev";
-                  onPrev();
-                })
-              }
-            />
+            <NavButton label="이전 경기" onClick={onPrev} dir="prev" />
             <h2 id={titleId} className="min-w-0 flex-1 text-center text-heading tabular-nums">
               {formatDate(day.key)}
             </h2>
-            <NavButton
-              ref={nextRef}
-              label="다음 경기"
-              dir="next"
-              onClick={
-                onNext &&
-                (() => {
-                  pressedRef.current = "next";
-                  onNext();
-                })
-              }
-            />
+            <NavButton label="다음 경기" onClick={onNext} dir="next" />
             <button
-              ref={closeRef}
               type="button"
               aria-label="닫기"
               onClick={onClose}
-              className="press grid size-11 shrink-0 place-items-center rounded-full text-muted hover:bg-surface-2"
+              className="press grid size-[max(2.75rem,44px)] shrink-0 place-items-center rounded-full text-muted hover:bg-surface-2"
             >
               <svg aria-hidden viewBox="0 0 16 16" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
                 <path d="M4 4l8 8M12 4l-8 8" />
@@ -202,28 +166,26 @@ export default function GameDetailSheet({
   );
 }
 
-function NavButton({
-  ref,
-  label,
-  onClick,
-  dir,
-}: {
-  ref: RefObject<HTMLButtonElement | null>;
-  label: string;
-  onClick: (() => void) | null;
-  dir: "prev" | "next";
-}) {
+/**
+ * 앞뒤 경기 버튼. 첫·끝 경기에서는 끄되 disabled 대신 aria-disabled로 둔다(내 선수 순서 버튼과 같다, 이슈 #256):
+ * 누른 버튼이 disabled가 되면 포커스가 사라지고, 반대 버튼으로 옮기면 Enter를 누르고 있을 때 앞뒤로 오락가락한다.
+ * 꺼진 버튼은 아이콘만 흐리게 해서 포커스 테두리는 또렷하게 남긴다
+ */
+function NavButton({ label, onClick, dir }: { label: string; onClick: (() => void) | null; dir: "prev" | "next" }) {
+  const off = !onClick;
   return (
     <button
-      ref={ref}
       type="button"
       aria-label={label}
-      disabled={!onClick}
+      aria-disabled={off || undefined}
       onClick={() => {
+        if (!onClick) return;
         haptic("select");
-        onClick?.();
+        onClick();
       }}
-      className="press grid size-11 shrink-0 place-items-center rounded-full text-muted hover:bg-surface-2 disabled:opacity-30"
+      className={`grid size-[max(2.75rem,44px)] shrink-0 place-items-center rounded-full text-muted ${
+        off ? "cursor-default [&>svg]:opacity-30" : "press hover:bg-surface-2"
+      }`}
     >
       <svg aria-hidden viewBox="0 0 16 16" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
         <path d={dir === "prev" ? "M10 3 5 8l5 5" : "m6 3 5 5-5 5"} />

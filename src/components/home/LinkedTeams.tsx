@@ -79,15 +79,41 @@ export default function LinkedTeams({
   const returnRef = useRef<HTMLElement | null>(null);
   /** 열려 있던 구단(창이 닫힌 뒤 포커스를 돌려줄 때 쓴다) */
   const shownRef = useRef<string | null>(null);
+  /**
+   * 지금 주소 기록이 창을 열며 쌓은 것인가. history.state의 표시만 보면 안 된다: 앱이 화면으로 돌아올 때 부르는
+   * router.refresh()가 Next 16에서 우리 표시를 지워서(이슈 #256), 그 뒤 닫으면 쌓은 기록이 빈 채로 남았다
+   */
+  const ownsEntryRef = useRef(false);
 
   // 뒤로·앞으로 가기: 주소 기록의 표시에 맞춰 창을 열고 닫는다(경기 상세 창과 같은 방식).
   // 창에서 기사로 갔다가 돌아오면 그 기록 위라서 창이 다시 열린다
   useEffect(() => {
-    const sync = () => setOpenTeam(teamInHistory(window.history.state, sheetKey));
+    const sync = () => {
+      const team = teamInHistory(window.history.state, sheetKey);
+      ownsEntryRef.current = team !== null;
+      setOpenTeam(team);
+    };
     sync();
     window.addEventListener("popstate", sync);
-    return () => window.removeEventListener("popstate", sync);
+    return () => {
+      window.removeEventListener("popstate", sync);
+      // 다른 화면으로 가며 이 칸이 지워지거나 숨겨지면(Next는 떠난 화면을 숨겨 두었다가 되살린다) 창을 닫아 둔다.
+      // 뒤로 가기로 돌아오면 위 sync가 기록대로 다시 연다. 이때 닫히는 창은 포커스를 돌려주지 않는다
+      // ('홈' 메뉴로 돌아왔는데 창이 깜빡이거나 페이지가 알약 쪽으로 스크롤되지 않게, 이슈 #256)
+      shownRef.current = null;
+      returnRef.current = null;
+      setOpenTeam(null);
+    };
   }, [sheetKey]);
+
+  // 앱이 화면으로 돌아올 때 부르는 router.refresh()는 지금 기록에서 우리 표시를 지운다. 창이 열린 채 우리가 쌓은 기록이면
+  // 표시를 다시 붙인다(기사로 갔다가 뒤로 와도 창이 다시 열리게, 이슈 #256). refresh 뒤에는 새 counts로 다시 그려져 이 효과가 돈다
+  useEffect(() => {
+    if (!openTeam || !ownsEntryRef.current) return;
+    const state = window.history.state;
+    if (teamInHistory(state, sheetKey) === openTeam) return;
+    window.history.replaceState({ ...state, [SHEET_STATE]: `${sheetKey}:${openTeam}` }, "");
+  });
 
   // 창이 닫히면 연 버튼으로 포커스를 돌려준다(WAI-ARIA APG Dialog). 창은 부품째 지워지며 닫혀서 브라우저가 돌려주지 못한다.
   // 연 버튼이 없으면(돌아와서 다시 열린 창) 그 구단 알약, 그것도 없으면(목록 안 구단) '외 n개 구단'으로
@@ -126,11 +152,12 @@ export default function LinkedTeams({
     const state = window.history.state;
     if (state?.[SHEET_STATE]) window.history.replaceState({ ...state, [SHEET_STATE]: mark }, "");
     else window.history.pushState({ [SHEET_STATE]: mark }, "");
+    ownsEntryRef.current = true;
     setOpenTeam(t.abbreviation);
   };
   // 닫기·바깥 누르기·Esc·끌어 내리기: 쌓은 기록이면 뒤로 가기로 지우고(popstate가 창을 닫는다), 아니면 바로 닫는다
   const close = () => {
-    if (teamInHistory(window.history.state, sheetKey)) window.history.back();
+    if (ownsEntryRef.current) window.history.back();
     else setOpenTeam(null);
   };
   const sheetTeam = linked.find((t) => t.abbreviation === openTeam && canOpen(t));
@@ -185,8 +212,9 @@ export default function LinkedTeams({
           )}
         </ul>
       )}
-      {/* 알약 32px에 누르는 영역 44px: 위아래로 6px씩 넓어지니 줄 사이(gap-y-3)와 위아래 이웃(mb-2·mt-2)을 그만큼 띄운다 */}
-      <ul className={`flex flex-wrap items-center gap-x-1.5 gap-y-3 ${pcBars ? "lg:hidden" : ""}`}>
+      {/* 알약 32px(2rem)에 누르는 영역 44px: 줄 사이를 알약 높이와 합쳐 44px 이상으로 띄워 넓힌 영역끼리 겹치지 않는다.
+          앱에서 글자를 작게 하면 알약이 줄어드니 줄 사이를 max(12px 상당, 44px − 알약 높이)로 */}
+      <ul className={`flex flex-wrap items-center gap-x-1.5 gap-y-[max(0.75rem,calc(44px-2rem))] ${pcBars ? "lg:hidden" : ""}`}>
         {shown.map((t) => {
           const body = (
             <>
@@ -248,18 +276,43 @@ function Chevron({ small = false }: { small?: boolean }) {
 const HOVER_CLOSE_MS = 150;
 /** 목록 폭(px, w-64) */
 const LIST_WIDTH = 256;
+/** 목록 한 줄 높이(min-h: max(2.75rem, 44px))와 위아래 여백·테두리(p-1.5 + border). 앱 글자 배율을 따라 rem이 바뀐다 */
+function listHeight(rows: number): number {
+  const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+  return rows * Math.max(2.75 * rem, 44) + 0.75 * rem + 2;
+}
+/** iOS 앱 아래 탭 막대(웹 위에 떠 있다, 84px)와 홈 표시줄 */
+const IOS_TAB_BAR = 84 + 34;
 
 /** 브라우저가 popover(맨 위 층)를 아는가. 모르는 옛 브라우저(iOS 16 이하 등)는 예전처럼 body 끝에 띄운다 */
 function supportsPopover(): boolean {
   return typeof HTMLElement !== "undefined" && "showPopover" in HTMLElement.prototype;
 }
 
-/** 버튼 바로 아래 목록 자리. 화면 오른쪽을 넘으면 버튼 오른쪽 끝에 맞춘다(휴대폰에서 알약 줄 끝에 있을 때) */
-function placeUnder(button: HTMLElement | null): { top: number; left: number } | null {
+/** 목록을 띄울 수 있는 세로 자리: 앱의 위에 붙은 사이트 머리글 아래부터 iOS 앱 아래 탭 막대 위까지 */
+function openBand(): { top: number; bottom: number } {
+  const header = document.querySelector<HTMLElement>("[data-site-header]");
+  const sticky = header && getComputedStyle(header).position === "sticky";
+  const top = sticky ? Math.max(0, header.getBoundingClientRect().bottom) : 0;
+  const bottom = window.innerHeight - (document.querySelector('[data-app="ios"]') ? IOS_TAB_BAR : 0);
+  return { top, bottom };
+}
+
+/**
+ * 목록 자리. 버튼 바로 아래에 열고, 아래 자리가 모자라고 위가 더 넉넉하면 위로 연다(Material 3 Menus, 이슈 #256).
+ * 화면 오른쪽을 넘으면 버튼 오른쪽 끝에 맞춘다(휴대폰에서 알약 줄 끝에 있을 때).
+ * shown: 버튼이 머리글 밑이나 화면 밖으로 나가 안 보이면 false(그때는 목록을 닫는다)
+ */
+function placeList(button: HTMLElement | null, rows: number): { top: number; left: number; shown: boolean } | null {
   const rect = button?.getBoundingClientRect();
   if (!rect) return null;
   const left = rect.left + LIST_WIDTH > window.innerWidth - 16 ? Math.max(16, rect.right - LIST_WIDTH) : rect.left;
-  return { top: rect.bottom + 4, left };
+  const band = openBand();
+  const height = listHeight(rows);
+  const below = band.bottom - 8 - (rect.bottom + 4);
+  const above = rect.top - 4 - (band.top + 8);
+  const top = below < height && above > below ? Math.max(band.top + 8, rect.top - 4 - height) : rect.bottom + 4;
+  return { top, left, shown: rect.bottom > band.top && rect.top < band.bottom };
 }
 
 /**
@@ -289,11 +342,11 @@ function MoreTeams({ teams, onPick }: { teams: Team[]; onPick: (t: Team, from: H
   };
   const show = (hover: boolean) => {
     cancelClose();
-    const next = placeUnder(buttonRef.current);
+    const next = placeList(buttonRef.current, teams.length);
     if (!next) return;
     byHover.current = hover;
     focusFirst.current = !hover;
-    setPos(next);
+    setPos({ top: next.top, left: next.left });
   };
   const hide = () => {
     cancelClose();
@@ -337,15 +390,25 @@ function MoreTeams({ teams, onPick }: { teams: Team[]; onPick: (t: Team, from: H
       setPos(null);
       if (inside) buttonRef.current?.focus();
     };
-    // 스크롤·창 크기 바꾸기: 닫지 않고 버튼을 따라간다(한 프레임에 한 번). 가로로 밀리는 칸 안 스크롤도 잡게 capture
+    // 스크롤·창 크기 바꾸기: 닫지 않고 버튼을 따라간다(한 프레임에 한 번). 가로로 밀리는 칸 안 스크롤도 잡게 capture.
+    // 버튼이 머리글 밑이나 화면 밖으로 나가면 닫는다(맨 위 층 목록이 앱 머리글을 덮지 않게, 이슈 #256)
     let frame = 0;
     const follow = () => {
       if (frame) return;
       frame = requestAnimationFrame(() => {
         frame = 0;
-        const next = placeUnder(buttonRef.current);
+        const next = placeList(buttonRef.current, teams.length);
+        if (!next) return;
+        if (!next.shown) {
+          const focused = document.activeElement;
+          const inside = boxRef.current?.contains(focused) || listRef.current?.contains(focused);
+          setPos(null);
+          // 스크롤하던 페이지가 버튼 쪽으로 되돌아가지 않게
+          if (inside) buttonRef.current?.focus({ preventScroll: true });
+          return;
+        }
         // 버튼이 움직였을 때만 다시 그린다
-        if (next) setPos((prev) => (prev && prev.top === next.top && prev.left === next.left ? prev : next));
+        setPos((prev) => (prev && prev.top === next.top && prev.left === next.left ? prev : { top: next.top, left: next.left }));
       });
     };
     document.addEventListener("pointerdown", onDown);
@@ -358,8 +421,10 @@ function MoreTeams({ teams, onPick }: { teams: Team[]; onPick: (t: Team, from: H
       window.removeEventListener("scroll", follow, { capture: true });
       window.removeEventListener("resize", follow);
       cancelAnimationFrame(frame);
+      // 다른 화면으로 가며 숨겨지거나 지워지면 목록을 닫아 둔다(숨겨 둔 홈이 되살아날 때 옛 자리에 다시 뜨지 않게)
+      setPos(null);
     };
-  }, [open]);
+  }, [open, teams.length]);
 
   useEffect(() => cancelClose, []);
 
@@ -370,6 +435,8 @@ function MoreTeams({ teams, onPick }: { teams: Team[]; onPick: (t: Team, from: H
       popover={supportsPopover() ? "manual" : undefined}
       onPointerEnter={cancelClose}
       onPointerLeave={hideSoon}
+      // 목록 빈 곳을 눌러도 뒤 카드(card-link)가 눌린 듯 줄지 않게
+      data-no-press
       style={{ top: pos.top, left: pos.left, width: LIST_WIDTH }}
       // popover 기본 모양(가운데 놓기·여백·테두리)을 지우고 버튼 아래 고정 자리에 둔다. z-40은 popover를 모르는 옛 브라우저용
       // (맨 위 층은 z-index와 상관없이 맨 위다)
@@ -396,13 +463,13 @@ function MoreTeams({ teams, onPick }: { teams: Team[]; onPick: (t: Team, from: H
                     // 목록은 닫히니 창을 닫으면 '외 n개 구단'으로 돌아온다
                     onPick(t, buttonRef.current);
                   }}
-                  className="flex min-h-11 w-full cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-left text-label hover:bg-surface-2"
+                  className="flex min-h-[max(2.75rem,44px)] w-full cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-left text-label hover:bg-surface-2"
                 >
                   {row}
                   <Chevron />
                 </button>
               ) : (
-                <span className="flex min-h-11 items-center gap-2 px-2 py-1.5 text-label">{row}</span>
+                <span className="flex min-h-[max(2.75rem,44px)] items-center gap-2 px-2 py-1.5 text-label">{row}</span>
               )}
             </li>
           );
