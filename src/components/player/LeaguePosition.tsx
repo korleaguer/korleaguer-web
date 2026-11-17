@@ -12,7 +12,10 @@ interface Row {
   label: string;
   /** 1~99(높을수록 좋다). 견줄 선수가 아직 없으면 null */
   pct: number | null;
-  /** 막대 아래 한 줄에 모으는 그 칸의 실제 값("WAR +1.0", "주루 +0.7점") */
+  /**
+   * 막대 아래 한 줄에 모으는 그 칸의 실제 값("종합 WAR +1.0", "주루 +0.7점"). 값만 모아 두면 'WAR'가 어느 막대 값인지
+   * 줄마다 맞춰 봐야 해서 막대 이름을 앞에 붙인다(주루·수비·삼진·볼넷은 값 이름에 이미 들어 있다)
+   */
   raw: string | null;
 }
 
@@ -29,8 +32,8 @@ function rowsOf(saber: PlayerSaber): Row[] | null {
     const p = saber.percentiles;
     if (!p) return null;
     return [
-      { label: "종합", pct: p.overall, raw: saber.war == null ? null : `WAR ${signed(saber.war)}` },
-      { label: "타격", pct: p.batting, raw: saber.wrcPlus == null ? null : `wRC+ ${Math.round(saber.wrcPlus)}` },
+      { label: "종합", pct: p.overall, raw: saber.war == null ? null : `종합 WAR ${signed(saber.war)}` },
+      { label: "타격", pct: p.batting, raw: saber.wrcPlus == null ? null : `타격 wRC+ ${Math.round(saber.wrcPlus)}` },
       { label: "주루", pct: p.baseRunning, raw: saber.baseRunning == null ? null : `주루 ${signed(saber.baseRunning)}점` },
       { label: "수비", pct: p.fielding, raw: saber.fielding == null ? null : `수비 ${signed(saber.fielding)}점` },
     ];
@@ -38,17 +41,18 @@ function rowsOf(saber: PlayerSaber): Row[] | null {
   const p = saber.percentiles;
   if (!p) return null;
   return [
-    { label: "종합", pct: p.overall, raw: saber.war == null ? null : `WAR ${signed(saber.war)}` },
-    { label: "실점 억제", pct: p.runPrevention, raw: saber.eraMinus == null ? null : `ERA- ${Math.round(saber.eraMinus)}` },
+    { label: "종합", pct: p.overall, raw: saber.war == null ? null : `종합 WAR ${signed(saber.war)}` },
+    { label: "실점 억제", pct: p.runPrevention, raw: saber.eraMinus == null ? null : `실점 억제 ERA- ${Math.round(saber.eraMinus)}` },
     { label: "삼진", pct: p.strikeouts, raw: saber.strikeoutRate == null ? null : `삼진 비율 ${saber.strikeoutRate.toFixed(1)}%` },
-    { label: "볼넷", pct: p.walks, raw: saber.walkRate == null ? null : `볼넷 비율 ${saber.walkRate.toFixed(1)}%` },
+    // '볼넷 상위 10%'는 볼넷을 많이 준다로 읽혀 '실점 억제'처럼 '볼넷 억제'(볼넷을 적게 줄수록 위). 이름 칸(4.25rem)에 그대로 든다
+    { label: "볼넷 억제", pct: p.walks, raw: saber.walkRate == null ? null : `볼넷 비율 ${saber.walkRate.toFixed(1)}%` },
   ];
 }
 
 /**
  * 선수 화면 'MLB 타자(투수) 중에서'(사용자 11-13 결정, Baseball Savant의 백분위 막대처럼).
  * 제목은 아래 줄과 이어 읽힌다: 'MLB 타자 중에서 타격 상위 41%'(처음 이름 'MLB 안 위치'는 어색하다는 사용자 의견으로 바꿨다).
- * 같은 시즌 MLB 선수 중 어디쯤인지를 네 줄로: 타자는 종합·타격·주루·수비, 투수는 종합·실점 억제·삼진·볼넷.
+ * 같은 시즌 MLB 선수 중 어디쯤인지를 네 줄로: 타자는 종합·타격·주루·수비, 투수는 종합·실점 억제·삼진·볼넷 억제.
  * 타율 하나로 폼을 판단하지 않게(사용자: "현대 야구에서 타율만으로 평가하진 않아서"), 실제 값은 막대 아래 한 줄에 작게만 둔다.
  * 중간보다 아래는 순위 대신 회색 '중간 아래'(혹평처럼 읽히지 않게). 가운데 선이 MLB 중간값(백분위 50)이라 '평균'이라 쓰지 않는다:
  * 'WAR +1.0'인데 '평균 아래'면 모순처럼 읽혔다(WAR는 0이 평균이 아니다). 숫자는 서버가 MLB 공식 세이버 지표로 계산한다(korleaguer-server#133).
@@ -96,7 +100,7 @@ export default async function LeaguePosition({ saber }: { saber: PlayerSaber }) 
               key={r.label}
               row={r}
               who={who}
-              // 이름 칸: 타자 2.5rem(두 글자), 투수 4.25rem('실점 억제'). Tailwind가 읽게 클래스를 통째로 적는다
+              // 이름 칸: 타자 2.5rem(두 글자), 투수 4.25rem('실점 억제'·'볼넷 억제'). Tailwind가 읽게 클래스를 통째로 적는다
               cols={hitter ? "grid-cols-[2.5rem_minmax(0,1fr)_4.5rem]" : "grid-cols-[4.25rem_minmax(0,1fr)_4.5rem]"}
             />
           ))}
