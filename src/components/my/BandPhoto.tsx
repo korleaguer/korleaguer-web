@@ -7,6 +7,11 @@ interface Props {
   nameKo: string;
   photoUrl: string | null;
   teamAbbr: string | null;
+  /**
+   * 첫 화면에 보이는 카드(내 선수 첫 줄)면 true: 사진을 바로 받는다. 아니면 화면에 다가올 때 받는다(loading="lazy").
+   * 예전에는 화면 밖 카드 사진까지 처음에 모두 받았다(11-17 점검). 첫 화면 사진을 늦추면 늦게 떠서 첫 줄만 바로 받는다
+   */
+  eager?: boolean;
 }
 
 /**
@@ -15,7 +20,7 @@ interface Props {
  * 그림자를 둘러 팀 색 배경과 떨어져 보이게 한다.
  * 사진이 없거나 안 뜨면 흰 테두리 이니셜 원으로 대신한다. 이름이 바로 아래 있어 사진은 읽지 않는다.
  */
-export default function BandPhoto({ nameKo, photoUrl, teamAbbr }: Props) {
+export default function BandPhoto({ nameKo, photoUrl, teamAbbr, eager = false }: Props) {
   const { failed, ref, onError } = useImageFailed(photoUrl);
 
   if (!photoUrl || failed) {
@@ -35,6 +40,8 @@ export default function BandPhoto({ nameKo, photoUrl, teamAbbr }: Props) {
       alt=""
       width={112}
       height={112}
+      loading={eager ? "eager" : "lazy"}
+      decoding="async"
       referrerPolicy="no-referrer"
       onError={onError}
       // 띠(92px)보다 크게 두고 아래 16px을 띠 밖으로 내린다. 모자 위로는 여백이 조금 남는다.

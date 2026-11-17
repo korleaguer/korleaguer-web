@@ -21,6 +21,8 @@ interface Props {
   isMine?: boolean;
   /** 선수 이름의 제목 단계. 내 선수 화면은 h2, 섹션 제목(h2) 아래에 놓는 비시즌 홈은 h3 */
   nameAs?: "h2" | "h3";
+  /** 첫 화면에 보이는 카드면 true: 무대 사진을 바로 받는다(아니면 화면에 다가올 때 받는다, BandPhoto) */
+  eagerPhoto?: boolean;
 }
 
 /**
@@ -28,7 +30,14 @@ interface Props {
  * 경기별 막대 → 경기 기록 모두 보기. 마이너에 있으면 숫자·막대가 마이너 기록이고(이름표에 단계),
  * 비시즌·FA면 기간 대신 시즌 합계를 보인다(이슈 #13). 비시즌 홈도 같은 카드로 선수 6명을 보인다.
  */
-export default async function FormCard({ entry, days, statsAvailable, isMine = true, nameAs: Name = "h2" }: Props) {
+export default async function FormCard({
+  entry,
+  days,
+  statsAvailable,
+  isMine = true,
+  nameAs: Name = "h2",
+  eagerPhoto = false,
+}: Props) {
   // 잠깐 재사용: 같은 데이터면 30초 동안 그려 둔 것을 다시 쓴다(쿠키와 상관없는 부품이라 모두에게 같다).
   // 운영 서버(라즈베리파이 4)는 화면 그리기가 느려서 큰 부품을 매번 그리지 않는다.
   "use cache";
@@ -54,7 +63,7 @@ export default async function FormCard({ entry, days, statsAvailable, isMine = t
       {/* isolate: 상태 배지의 z-10이 무대 안에서만 통하게 해서, 배지를 눌러도 카드 링크로 간다 */}
       <div className="player-stage @container isolate h-[92px]" style={{ "--team": team } as CSSProperties}>
         {entry.status && <StatusBadge status={entry.status} />}
-        <BandPhoto nameKo={player.nameKo} photoUrl={player.photoUrl} teamAbbr={player.teamAbbr} />
+        <BandPhoto nameKo={player.nameKo} photoUrl={player.photoUrl} teamAbbr={player.teamAbbr} eager={eagerPhoto} />
       </div>
 
       {/* 아래 여백: '경기 기록 모두 보기' 버튼으로 끝나면 버튼이 제 위아래 여백을 가져 8px, 숫자 칸·안내로 끝나면 좌우와 같은 16px

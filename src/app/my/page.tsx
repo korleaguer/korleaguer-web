@@ -84,9 +84,16 @@ async function MyContent({ searchParams }: Pick<PageProps<"/my">, "searchParams"
               {`최근 ${days}일에 안 뛴 선수는 마지막 경기까지 ${days}일을 보여 줘요.`}
             </p>
           )}
+          {/* 첫 줄(PC 세 칸) 카드만 무대 사진을 바로 받고, 나머지는 화면에 다가올 때 받는다(6명이면 화면 밖 사진까지 처음에 다 받았다) */}
           <ul className="grid items-start gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {picked.map((entry) => (
-              <FormCard key={entry.player.id} entry={entry} days={my.days} statsAvailable={my.statsAvailable} />
+            {picked.map((entry, index) => (
+              <FormCard
+                key={entry.player.id}
+                entry={entry}
+                days={my.days}
+                statsAvailable={my.statsAvailable}
+                eagerPhoto={index < 3}
+              />
             ))}
           </ul>
         </>
