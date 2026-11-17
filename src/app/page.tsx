@@ -5,7 +5,7 @@ import DataBanners from "@/components/DataBanners";
 import LoadingBlock from "@/components/LoadingBlock";
 import MlbChallenge from "@/components/home/MlbChallenge";
 import OffseasonPlayers from "@/components/home/OffseasonPlayers";
-import SeasonFloors from "@/components/home/SeasonFloors";
+import SeasonFloors, { preloadFloors } from "@/components/home/SeasonFloors";
 import SeasonLeaders from "@/components/home/SeasonLeaders";
 import SeasonStats from "@/components/home/SeasonStats";
 import PageSuspense from "@/components/PageSuspense";
@@ -24,6 +24,8 @@ export default function HomePage() {
 }
 
 async function HomeContent() {
+  // 선수 목록을 /api/home과 함께 받기 시작한다(층·비시즌 성적표가 둘 다 쓴다, 전수조사 L309)
+  preloadFloors();
   const result = await getHome();
   if (!result.ok) return <ApiErrorNotice failure={result.failure} />;
 
@@ -41,8 +43,11 @@ async function HomeContent() {
         </>
       ) : (
         <>
-          {/* 시즌 중: 선수들이 지금 어디서 뛰나(메이저·트리플A·부상 재활)를 층으로(이슈 #245) */}
-          <SeasonFloors recent={home.recent} asOf={asOf} />
+          {/* 시즌 중: 선수들이 지금 어디서 뛰나(메이저·트리플A·부상 재활)를 층으로(이슈 #245).
+              층만 /api/my를 한 번 더 기다리므로 따로 기다린다: 시즌 1위·기록 표는 먼저 그리고 층 자리는 뼈대로 둔다(전수조사 L309) */}
+          <PageSuspense fallback={<LoadingBlock rows={6} />}>
+            <SeasonFloors recent={home.recent} asOf={asOf} />
+          </PageSuspense>
           <SeasonLeaders
             season={home.season}
             statsAvailable={home.statsAvailable}

@@ -213,6 +213,15 @@ const TITLE: Record<Floor["tone"], string> = {
   fa: "text-fa-fg",
 };
 
+/**
+ * 층에 쓰는 선수 목록(/api/players)을 홈이 /api/home을 기다리는 동안 미리 받기 시작한다(전수조사 L309, Next 문서 'Preloading data').
+ * 층은 홈 응답 → 선수 목록 → /api/my 차례라, 선수 목록이 늦게 시작하면 그만큼 늦었다. getPlayers는 React cache라
+ * 층(과 비시즌 성적표)이 같은 요청을 다시 쓴다. /api/my는 선수 번호가 있어야 해서 차례가 남는다
+ */
+export function preloadFloors() {
+  void getPlayers();
+}
+
 interface Props {
   recent: HomeResponse["recent"];
   asOf: string;
