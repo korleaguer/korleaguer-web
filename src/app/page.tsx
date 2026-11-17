@@ -34,7 +34,7 @@ async function HomeContent() {
   return (
     <div className="space-y-7">
       <DataBanners dataMode={home.dataMode} statsAvailable={home.statsAvailable} />
-      {/* 비시즌: 층과 '시즌 1위' 카드 대신 선수 전원의 시즌 카드 */}
+      {/* 비시즌: 층과 '한국 선수 중 1위' 카드 대신 선수 전원의 시즌 카드 */}
       {home.offseason ? (
         <>
           {/* 포스팅 시즌: 이번 겨울 MLB에 도전하는 KBO 선수와 선배들의 계약 시기 */}
@@ -44,7 +44,7 @@ async function HomeContent() {
       ) : (
         <>
           {/* 시즌 중: 선수들이 지금 어디서 뛰나(메이저·트리플A·부상 재활)를 층으로(이슈 #245).
-              층만 /api/my를 한 번 더 기다리므로 따로 기다린다: 시즌 1위·기록 표는 먼저 그리고 층 자리는 뼈대로 둔다(전수조사 L309) */}
+              층만 /api/my를 한 번 더 기다리므로 따로 기다린다: 1위 카드·기록 표는 먼저 그리고 층 자리는 뼈대로 둔다(전수조사 L309) */}
           <PageSuspense fallback={<LoadingBlock rows={6} />}>
             <SeasonFloors recent={home.recent} asOf={asOf} />
           </PageSuspense>
