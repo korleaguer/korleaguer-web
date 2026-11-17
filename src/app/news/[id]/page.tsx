@@ -5,7 +5,7 @@ import { readableLead, splitSentences } from "@/lib/news";
 import { newsShareImage, shareMeta } from "@/lib/share";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import ExternalLinkIcon from "@/components/ExternalLinkIcon";
-import LoadingBlock from "@/components/LoadingBlock";
+import { ArticleSkeleton } from "@/components/PageSkeleton";
 import NotFoundNotice from "@/components/NotFoundNotice";
 import Section from "@/components/Section";
 import NewsPhoto from "@/components/news/NewsPhoto";
@@ -60,7 +60,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default function NewsArticlePage({ params }: Props) {
   return (
-    <PageSuspense fallback={<LoadingBlock rows={6} />}>
+    <PageSuspense fallback={<ArticleSkeleton />}>
       <NewsContent params={params} />
     </PageSuspense>
   );

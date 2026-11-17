@@ -4,7 +4,7 @@ import { formatDateRange } from "@/lib/format";
 import { readMyPlayers } from "@/lib/myPlayers";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import DataBanners from "@/components/DataBanners";
-import LoadingBlock from "@/components/LoadingBlock";
+import { MySkeleton } from "@/components/PageSkeleton";
 import FormCard from "@/components/my/FormCard";
 import MyHeader from "@/components/my/MyHeader";
 import PillNav from "@/components/PillNav";
@@ -33,7 +33,7 @@ function parseDays(value: string | string[] | undefined): Period {
 
 export default function MyPage({ searchParams }: PageProps<"/my">) {
   return (
-    <PageSuspense fallback={<LoadingBlock rows={8} />}>
+    <PageSuspense fallback={<MySkeleton />}>
       <MyContent searchParams={searchParams} />
     </PageSuspense>
   );

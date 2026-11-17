@@ -4,7 +4,7 @@ import { playerShareImage, shareMeta } from "@/lib/share";
 import { readMyPlayers } from "@/lib/myPlayers";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import DataBanners from "@/components/DataBanners";
-import LoadingBlock from "@/components/LoadingBlock";
+import { PlayerSkeleton } from "@/components/PageSkeleton";
 import NotFoundNotice from "@/components/NotFoundNotice";
 import CareerSeasons from "@/components/player/CareerSeasons";
 import GameLog from "@/components/player/GameLog";
@@ -47,7 +47,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default function PlayerPage({ params }: Props) {
   return (
-    <PageSuspense fallback={<LoadingBlock rows={8} />}>
+    <PageSuspense fallback={<PlayerSkeleton />}>
       <PlayerContent params={params} />
     </PageSuspense>
   );
