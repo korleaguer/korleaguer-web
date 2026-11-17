@@ -11,6 +11,7 @@ import ScoreText from "@/components/ScoreText";
 import Section from "@/components/Section";
 import TeamMark from "@/components/TeamMark";
 import RecentGames from "./RecentGames";
+import MyPlayersLink from "@/components/home/MyPlayersLink";
 
 /**
  * 시즌 중 홈 맨 위: 선수들이 지금 어디서 뛰나를 층으로 묶는다(이슈 #245, 11-16·17 개편 결정).
@@ -185,6 +186,10 @@ export default async function SeasonFloors({ recent, asOf }: Props) {
 
   return (
     <Section id="floors-title" title="지금 어디서 뛰나" aside={asOf}>
+      {/* '내 선수'(/my)로 가는 입구(이슈 #262). 내 선수는 층마다 파란 고리로 먼저 놓인다 */}
+      <div className="-mt-1 mb-2 flex justify-end px-1">
+        <MyPlayersLink count={mine.length} />
+      </div>
       {derby && <DerbyCard pair={derby} />}
       {/* PC: 층을 두 칸에 나눠 놓는다(한 줄이 화면 끝까지 늘어나지 않게). 층을 잇는 세로선은 휴대폰에서만 */}
       <div className="space-y-3 lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-6 lg:gap-y-4 lg:space-y-0">

@@ -6,6 +6,7 @@ import ApiErrorNotice from "@/components/ApiErrorNotice";
 import Section from "@/components/Section";
 import FormCard from "@/components/my/FormCard";
 import SeasonReportCard from "@/components/home/SeasonReportCard";
+import MyPlayersLink from "@/components/home/MyPlayersLink";
 
 /** 비시즌 카드는 시즌 합계라 기간이 뜻이 없다. /api/my가 요구하는 기간만 채운다 */
 const DAYS = 7;
@@ -68,7 +69,7 @@ export default async function OffseasonPlayers({ offseason }: { offseason: OffSe
       title={report.size > 0 ? `${offseason.season} 시즌 성적표` : `${offseason.season} 시즌 끝`}
       aside={report.size > 0 ? "잘한 순" : undefined}
     >
-      <ul className="-mt-0.5 mb-3 flex flex-wrap gap-1.5 px-1">
+      <ul className="-mt-0.5 mb-3 flex flex-wrap items-center gap-1.5 px-1">
         {pills(offseason, entries).map((part) => (
           <li
             key={part}
@@ -77,6 +78,10 @@ export default async function OffseasonPlayers({ offseason }: { offseason: OffSe
             {part}
           </li>
         ))}
+        {/* '내 선수'(/my)로 가는 입구(이슈 #262). 줄 오른쪽 끝 */}
+        <li className="ml-auto">
+          <MyPlayersLink count={myIds.length} />
+        </li>
       </ul>
 
       {myResult && !myResult.ok ? (
