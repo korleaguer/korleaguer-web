@@ -42,7 +42,8 @@ export default async function SeasonSummary({
   const pitcherSeasons = levelSeasons(pitching, minorPitching);
   return (
     <Section id="season-title" title={`${season} 시즌 성적`}>
-      <div className="space-y-5">
+      {/* 묶음 사이 28px: 20px이면 앞 묶음 세부 카드와 다음 묶음 이름표가 붙어 이름표가 어느 숫자의 것인지 흐렸다(11-17 전수조사) */}
+      <div className="space-y-7">
         {hitterSeasons.map((s) => (
           <LevelBlock key={s.levelKo} label={sampleLabel(s, false)}>
             <StatBlock
@@ -100,11 +101,14 @@ export default async function SeasonSummary({
   );
 }
 
-/** 단계 묶음: '메이저 143경기' 이름표(작은 제목) + 숫자 카드들 */
+/**
+ * 단계 묶음: '메이저 143경기' 이름표(작은 제목) + 숫자 카드들.
+ * 이름표는 본문 글자색이다. 흐린 글자로 두면 바로 아래 28px 숫자에 묻혀 어느 단계 기록인지 잘 안 보였다(11-17 전수조사)
+ */
 function LevelBlock({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="space-y-2.5">
-      <h3 className="px-1 text-label text-muted">{label}</h3>
+      <h3 className="px-1 text-label text-foreground">{label}</h3>
       {children}
     </div>
   );
