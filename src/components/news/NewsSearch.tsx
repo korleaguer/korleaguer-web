@@ -44,8 +44,8 @@ function isFingerDevice(): boolean {
  *   같은 자리에 같은 '검색' 버튼을 둔다(예전에는 입력칸이 대신 나와 선수에 따라 조작이 달랐다, 사용자 결정 11-17).
  * - PC: 입력칸은 늘 보이고 그 밑에 알약을 늘 보인다(자리가 넉넉하다).
  * - 입력하다 잠깐 멈추면 바로 찾고(한글을 치는 도중에는 조금 더 기다린다, typingPause), 검색 키(엔터)를 누르면 곧바로
- *   찾으면서 키보드를 내린다. 친 말은 기록을 쌓지 않는다(replace, 글자마다 '뒤로'가 쌓이지 않게). 알약은 브라우저에서만 기록을
- *   쌓아 '뒤로'가 앞에 고른 말로 돌아간다(선수 고르기와 같다, NewsPlayerPicker).
+ *   찾으면서 키보드를 내린다. 친 말은 기록을 쌓지 않는다(replace, 글자마다 '뒤로'가 쌓이지 않게). 알약(줄의 알약과 휴대폰
+ *   입력칸 밑 알약 모두)은 브라우저에서만 기록을 쌓아 '뒤로'가 앞에 고른 말로 돌아간다(선수 고르기와 같다, NewsPlayerPicker).
  * - 알약의 말은 api가 지금 범위의 최근 기사에서 고르고, 숫자는 누르면 나오는 줄 수다(기사 전체, korleaguer-server#167).
  * - 거르기·검색 결과가 오면 화면 낭독기에 한 줄로 알린다(늘 있는 상태 줄, WCAG 4.1.3). 눈으로는 알약 숫자와 목록이 같은 말이라
  *   목록 위에 건수 줄을 따로 두지 않는다.
@@ -118,12 +118,20 @@ export default function NewsSearch({
     [player],
   );
 
-  function go(next: string | null) {
+  /**
+   * 그 말로 찾는다(주소 ?q=). 보통은 기록을 쌓지 않는다(친 말·지우기·취소: 글자마다 '뒤로'가 쌓이지 않게).
+   * push면 기록을 쌓는다(입력칸 밑 알약으로 고른 말, pick)
+   */
+  function go(next: string | null, push = false) {
     if (timer.current) clearTimeout(timer.current);
     const q = next?.trim() || null;
     if (q === requested.current) return;
     requested.current = q;
-    startTransition(() => router.replace(newsHref(player, q), { scroll: false }));
+    const href = newsHref(player, q);
+    startTransition(() => {
+      if (push) router.push(href, { scroll: false });
+      else router.replace(href, { scroll: false });
+    });
   }
 
   function onChange(next: string) {
@@ -170,9 +178,14 @@ export default function NewsSearch({
     closeInput(() => setValue(back ?? ""), byKeyboard);
   }
 
+  /**
+   * 입력칸 밑 자주 나온 말 고르기. 줄의 알약(TopicChip)과 같이 브라우저에서는 기록을 쌓아 '뒤로'가 고르기 전 목록으로 돌아오고,
+   * 앱 안에서는 쌓지 않는다(앱의 뒤로 버튼·안드로이드 뒤로 키가 알약을 한 칸씩 되돌리지 않게). 예전에는 늘 바꿔치기라
+   * 브라우저에서 이 알약으로 고른 뒤 '뒤로'를 누르면 고르기 전 목록이 아니라 그 앞 화면(뉴스 탭 밖)으로 갔다
+   */
   function pick(word: string, byKeyboard: boolean) {
     haptic("select");
-    go(word);
+    go(word, !inApp);
     closeInput(() => setValue(word), byKeyboard);
   }
 
