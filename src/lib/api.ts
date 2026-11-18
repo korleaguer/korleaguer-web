@@ -230,6 +230,11 @@ export interface NewsPage {
   summary: string | null;
   /** 기사 첫머리(언론사 피드가 준 글자 200자 안팎). 요약이 없을 때 쓴다. 없으면 null */
   lead: string | null;
+  /**
+   * 같은 글을 실은 다른 언론사(낸 순, 이 기사의 언론사는 빼고). 출처 줄 아래 '같은 기사' 줄에 쓴다(이슈 #277).
+   * 기사 상세 응답에는 korleaguer-server#180부터 들어 있다. 그 전 api면 빈 목록이고, 그때는 그 줄을 그리지 않는다
+   */
+  alsoBy: string[];
   /** 같은 선수의 다른 기사(늦은 순 5건, 이 기사는 빼고) */
   more: NewsHeadline[];
 }
@@ -265,7 +270,12 @@ export interface NewsList {
   next: string | null;
   /** 이 쪽을 거른 검색어. 없으면 null */
   query: string | null;
-  /** 지금 범위의 최근 기사에 많이 나온 말(검색창 바로가기, korleaguer-server#158). 첫 쪽이고 검색어가 없을 때만 */
+  /**
+   * 그 검색어로 나오는 줄 수(지금 범위 전체, 같은 기사는 한 줄. 알약 숫자와 같은 셈). 첫 쪽이고 검색어가 있을 때만 온다.
+   * 세어 주지 않는 api면 null이고, 화면은 알약 숫자나 받은 줄 수로 대신한다(뉴스 탭 page.tsx)
+   */
+  queryCount: number | null;
+  /** 지금 범위의 최근 기사에 많이 나온 말(검색창 바로가기, korleaguer-server#158). 첫 쪽에만(검색어가 있어도 온다, #165) */
   topics: NewsTopic[];
 }
 
@@ -595,6 +605,11 @@ export interface PlayerResponse {
   dataMode: DataMode;
   statsAvailable: boolean;
   season: number;
+  /**
+   * 이 응답을 만든 시각(ISO). 시즌 성적 제목 옆 '기준 …'(이슈 #277). 서버가 아직 주지 않아(korleaguer-server에 더할 일)
+   * 옛 api면 null이고, 그때는 기준 글을 빼고 그린다
+   */
+  generatedAt: string | null;
   player: PlayerDetail;
   hitting: HitterSeason | null;
   pitching: PitcherSeason | null;
@@ -992,9 +1007,13 @@ function normalizeHeadline(n: NewsHeadline): NewsHeadline | null {
     summary: n.summary ?? null,
     // 기사 사진은 언론사 서버에서 브라우저가 직접 받는다. https 주소만 쓴다
     imageUrl: n.imageUrl?.startsWith("https://") ? n.imageUrl : null,
-    // 같은 글을 실은 다른 언론사. 옛 API는 이 칸을 주지 않는다
-    alsoBy: Array.isArray(n.alsoBy) ? n.alsoBy.filter((p) => typeof p === "string" && p.trim() !== "") : [],
+    alsoBy: alsoByOf(n.alsoBy),
   };
+}
+
+/** 같은 글을 실은 다른 언론사 이름. 옛 API는 이 칸을 주지 않아 빈 목록이다. 빈 이름은 뺀다 */
+function alsoByOf(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((p): p is string => typeof p === "string" && p.trim() !== "") : [];
 }
 
 function normalizeNewsPage(raw: NewsPage): NewsPage {
@@ -1009,6 +1028,8 @@ function normalizeNewsPage(raw: NewsPage): NewsPage {
     imageUrl: raw.imageUrl?.startsWith("https://") ? raw.imageUrl : null,
     summary: raw.summary ?? null,
     lead: raw.lead ?? null,
+    // 기사 상세의 같은 기사 언론사는 korleaguer-server#180부터 온다(뉴스 탭 목록 한 줄과 같은 계산)
+    alsoBy: alsoByOf(raw.alsoBy),
     more: (raw.more ?? []).flatMap((n) => normalizeHeadline(n) ?? []),
   };
 }
@@ -1093,6 +1114,7 @@ function normalizeNewsList(raw: NewsList): NewsList {
     }),
     next: typeof raw.next === "string" && raw.next !== "" ? raw.next : null,
     query: typeof raw.query === "string" && raw.query !== "" ? raw.query : null,
+    queryCount: typeof raw.queryCount === "number" && raw.queryCount >= 0 ? raw.queryCount : null,
     topics: (raw.topics ?? []).filter((t) => typeof t.word === "string" && t.word !== "" && typeof t.count === "number"),
   };
 }
@@ -1130,6 +1152,7 @@ function normalizePlayer(raw: PlayerResponse): PlayerResponse {
   const p = raw.player;
   return {
     ...raw,
+    generatedAt: typeof raw.generatedAt === "string" ? raw.generatedAt : null,
     player: {
       ...normalizeSummary(p),
       teamEn: p.teamEn ?? null,

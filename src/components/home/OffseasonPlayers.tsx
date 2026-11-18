@@ -4,6 +4,7 @@ import { formatDate } from "@/lib/format";
 import { readMyPlayers } from "@/lib/myPlayers";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import Section from "@/components/Section";
+import { WordGroup } from "@/components/Words";
 import FormCard from "@/components/my/FormCard";
 import SeasonReportList from "@/components/home/SeasonReportList";
 import MyPlayersLink from "@/components/home/MyPlayersLink";
@@ -61,7 +62,14 @@ function summaryParts(offseason: OffSeason, entries: MyPlayer[]): string[] {
  * 서버가 성적표를 주면 흰 카드 한 장 안 한 줄 목록(누르면 펼치기, 이슈 #276), 옛 api면 '내 선수' 카드의 시즌 합계 모양 카드.
  * 별은 실제로 '내 선수'로 골랐는지를 따른다.
  */
-export default async function OffseasonPlayers({ offseason }: { offseason: OffSeason }) {
+export default async function OffseasonPlayers({
+  offseason,
+  asOf,
+}: {
+  offseason: OffSeason;
+  /** 제목 옆 데이터 기준 시각("기준 11월 17일(화) 09:00"). 이 묶음이 홈 맨 위일 때만(MLB 도전 카드가 없을 때) 받는다(이슈 #277) */
+  asOf?: string;
+}) {
   const [myResult, myIds, playersResult] = await Promise.all([
     offseason.playerIds.length > 0 ? getMyPlayers(offseason.playerIds, DAYS) : Promise.resolve(null),
     readMyPlayers(),
@@ -80,13 +88,22 @@ export default async function OffseasonPlayers({ offseason }: { offseason: OffSe
   // 순서 이름은 실제 기준대로(예전 '잘한 순'은 판정 → 메이저 경기 수 순서와 달랐다, 전수조사 wip-13).
   // 내 선수가 목록에 있을 때만 '내 선수 먼저'를 붙인다
   const anyMine = entries.some((e) => myIds.includes(e.player.id));
-  const orderName = `${anyMine ? "내 선수 먼저 · " : ""}시즌 판정 순`;
+  const orderName = hasReport ? `${anyMine ? "내 선수 먼저 · " : ""}시즌 판정 순` : null;
+  // 제목 옆: 순서 이름, 받았으면 그 뒤에 기준 시각(선수 목록·내 선수 머리 줄과 같은 꼴). 기준 시각은 한 덩어리라
+  // 큰 글씨에서는 순서 이름 다음에서 통째로 내려가고, '·'는 '기준'에 붙여 줄 끝에 홀로 남지 않는다
+  const aside =
+    asOf && orderName ? (
+      <>
+        {`${orderName} `}
+        <WordGroup text={`·\u00a0${asOf}`} />
+      </>
+    ) : (asOf ?? orderName);
 
   return (
     <Section
       id="offseason-title"
       title={hasReport ? `${offseason.season} 시즌 성적표` : `${offseason.season} 시즌 끝`}
-      aside={hasReport ? orderName : undefined}
+      aside={aside}
     >
       {/* 큰 글씨에서 둘이 한 줄에 못 들어가면 '내 선수 n명'이 다음 줄 오른쪽으로 내려간다 */}
       <div className="-mt-0.5 mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-1">
