@@ -17,3 +17,16 @@ export default function Words({ text }: { text: string }) {
     </Fragment>
   ));
 }
+
+/**
+ * 짧은 낱말 묶음을 한 덩어리로(데이터 기준 시각 '· 기준 11월 17일(화) 09:00'). 줄에 남은 자리가 모자라면 통째로 다음 줄로
+ * 넘기고, 그 줄보다도 길 때만(큰 글씨) 띄어쓰기에서 나눈다(inline-block 안의 Words). Words만 쓰면 남은 자리만큼 채우고
+ * 넘겨서, 보통 크기 375px '내 선수' 머리말에서도 '… · 기준 11월' / '17일(화) 09:00'처럼 날짜가 갈렸다(이슈 #277)
+ */
+export function WordGroup({ text }: { text: string }) {
+  return (
+    <span className="inline-block">
+      <Words text={text} />
+    </span>
+  );
+}

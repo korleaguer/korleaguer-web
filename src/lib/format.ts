@@ -37,6 +37,14 @@ export function formatDate(value: string | null | undefined): string {
   return `${part(parts, "month")}월 ${part(parts, "day")}일(${part(parts, "weekday")})`;
 }
 
+/**
+ * 데이터 기준 시각: "기준 11월 17일(화) 09:00"(한국 시간). 시즌 중 홈에만 있던 꼴을 비시즌 홈·선수 목록·선수 화면에도
+ * 같게 쓴다(이슈 #277). 값이 없으면 부르는 쪽이 이 글을 빼야 한다("기준 - -"가 된다)
+ */
+export function formatAsOf(value: string | null | undefined): string {
+  return `기준 ${formatDate(value)} ${formatTime(value)}`;
+}
+
 /** 기간: "9월 21일(월) ~ 27일(일)". 달이 다르면 "8월 31일(월) ~ 9월 6일(일)" */
 export function formatDateRange(from: string, to: string): string {
   const start = formatDate(from);

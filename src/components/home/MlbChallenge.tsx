@@ -16,20 +16,64 @@ import Words from "@/components/Words";
 /** 지금 포스팅 제도의 협상 기간(일) */
 const WINDOW_DAYS = 30;
 /**
- * 역대 계약 순위 막대의 길이 규칙: 금액이 2배면 막대는 1.5배(사용자 결정 11-11).
- * 정비례면 1위(이정후 1억 1,300만 달러) 말고는 막대가 짧아 아래 선수끼리 차이가 안 보인다. 길이 = (금액 / 1위 금액)^지수
+ * 역대 계약 순위 막대에서 2위 막대의 가장 짧은 길이(1위 막대 = 1). 막대 길이는 금액에 정비례하는데, 1위(이정후 1억 1,300만
+ * 달러)가 훨씬 크면 2위부터 막대가 짧아 아래 선수끼리 차이가 안 보인다. 그래서 정비례로 2위가 이보다 짧아지면 1위 막대만 끝을
+ * 끊어 꽉 채우고(실제보다 짧게 그렸다는 표시), 나머지는 2위를 이 길이로 둔 정비례로 그린다(사용자 결정 11-17 '1위만 끊긴 막대',
+ * 이슈 #277). 결정 그림(노시환 6,000만 달러 가정)의 2위 막대가 1위의 약 82%였다.
+ * 예전 '금액 2배 = 막대 1.5배'(11-11)는 1/4 금액이 44% 막대가 되어 작은 계약이 2~4배 커 보였다.
  */
-const BAR_EXPONENT = Math.log2(1.5);
+const SECOND_SHARE = 0.82;
 /** 아무리 작은 계약도 막대가 점처럼 사라지지 않게 */
 const BAR_MIN_SHARE = 0.04;
 
-const STATUS: Record<PostingStatus, { label: string; className: string }> = {
-  UPCOMING: { label: "협상 시작 전", className: "bg-fa-bg text-fa-fg" },
-  NEGOTIATING: { label: "협상 중", className: "bg-fa-bg text-fa-fg" },
-  SIGNED: { label: "계약", className: "bg-success-bg text-success-fg" },
-  NO_DEAL: { label: "결렬", className: "bg-neutral-pill text-neutral-pill-fg" },
-  CLOSED: { label: "결과 확인 중", className: "bg-neutral-pill text-neutral-pill-fg" },
+/**
+ * 막대 길이(0~1)와 끊어 그릴 막대. 꽉 찬 막대(1)에 해당하는 금액(unit)은 정비례면 1위 금액, 1위를 끊으면 2위 금액 / SECOND_SHARE다.
+ * 1위가 여럿(같은 금액)이면 2위가 1위와 같아 끊지 않는다
+ */
+function barScale(amounts: number[]): { share: (amount: number) => number; cut: (amount: number) => boolean } {
+  const [first = 0, second = 0] = [...amounts].sort((a, b) => b - a);
+  // 1위 금액이 0이면(보장액 0만 있는 경우) 나눗셈이 NaN이 되지 않게 모두 최소 길이
+  if (first <= 0) return { share: () => BAR_MIN_SHARE, cut: () => false };
+  const cutting = second > 0 && second / first < SECOND_SHARE;
+  const unit = cutting ? second / SECOND_SHARE : first;
+  return {
+    share: (amount) => Math.min(1, Math.max(BAR_MIN_SHARE, amount / unit)),
+    cut: (amount) => cutting && amount > unit,
+  };
+}
+
+/** 상태 알약의 뜻(DESIGN.md 신호색): 협상은 소속이 바뀌는 일이라 이적 보라, 계약은 초록, 결렬·결과 확인 중은 회색 */
+type StatusTone = "fa" | "success" | "neutral";
+
+const STATUS: Record<PostingStatus, { label: string; tone: StatusTone }> = {
+  UPCOMING: { label: "협상 시작 전", tone: "fa" },
+  NEGOTIATING: { label: "협상 중", tone: "fa" },
+  SIGNED: { label: "계약", tone: "success" },
+  NO_DEAL: { label: "결렬", tone: "neutral" },
+  CLOSED: { label: "결과 확인 중", tone: "neutral" },
 };
+
+/** 이름 옆·여러 명 줄의 알약: 옅은 신호색 바탕 + 진한 글자(성적표 상태 알약과 같다) */
+const PILL_TONE: Record<StatusTone, string> = {
+  fa: "bg-fa-bg text-fa-fg",
+  success: "bg-success-bg text-success-fg",
+  neutral: "bg-neutral-pill text-neutral-pill-fg",
+};
+
+/** 휴대폰 구단 색 띠 위 흰 알약: 점과 글자만 신호색('내 선수' 무대 배지와 같다) */
+const BADGE_TONE: Record<StatusTone, string> = {
+  fa: "text-fa-fg",
+  success: "text-success-fg",
+  neutral: "text-foreground",
+};
+
+/**
+ * 상태 알약 앞 7px 점. 성적표 상태 알약·'내 선수' 무대 배지는 점이 있는데 이 카드만 없어서 같은 '상태'가 달라 보였다
+ * (이슈 #277). 점은 글자색을 따르고, 회색 상태는 흐린 점이다(다른 상태 표시와 같다)
+ */
+function StatusDot({ tone }: { tone: StatusTone }) {
+  return <span aria-hidden className={`size-[7px] shrink-0 rounded-full ${tone === "neutral" ? "bg-muted" : "bg-current"}`} />;
+}
 
 /** 그 시간대의 월·일·요일·시 */
 function parts(iso: string, timeZone: string) {
@@ -194,7 +238,14 @@ function rank(p: PostingPlayer): number {
  *   기사가 없으면 PC 오른쪽은 역대 계약.
  * 포스팅 선수가 여러 명일 때 모양은 나중에 다듬는다(사용자 11-12 "흔한 상황이 아니라 묻어둘게").
  */
-export default async function MlbChallenge({ posting }: { posting: PostingSummary }) {
+export default async function MlbChallenge({
+  posting,
+  asOf,
+}: {
+  posting: PostingSummary;
+  /** 제목 옆 데이터 기준 시각("기준 11월 17일(화) 09:00"). 비시즌 홈 맨 위 묶음이라 여기에 둔다(이슈 #277) */
+  asOf?: string;
+}) {
   // 잠깐 재사용: 같은 데이터면 30초 동안 그려 둔 것을 다시 쓴다(쿠키와 상관없는 부품이라 모두에게 같다).
   // 운영 서버(라즈베리파이 4)는 화면 그리기가 느려서 큰 부품을 매번 그리지 않는다.
   "use cache";
@@ -224,7 +275,7 @@ export default async function MlbChallenge({ posting }: { posting: PostingSummar
   // 기사도 역대 계약도 없으면 오른쪽 칸 없이 한 칸으로 그린다
   const twoColumns = news.length > 0 || showHistory;
   return (
-    <Section id="mlb-challenge-title" title="이번 겨울 MLB 도전">
+    <Section id="mlb-challenge-title" title="이번 겨울 MLB 도전" aside={asOf}>
       <ul className="-mt-0.5 mb-2 flex flex-wrap gap-1.5 px-1">
         <li className="rounded-full bg-surface px-2.5 py-0.5 text-label text-neutral-pill-fg tabular-nums">
           포스팅 {players.length}명
@@ -260,7 +311,7 @@ export default async function MlbChallenge({ posting }: { posting: PostingSummar
             </div>
           )}
           <div className="lg:hidden">
-            <PostingNews items={news} shown={NEWS_SHOWN} player={newsPlayer} />
+            <PostingNews items={news} shown={NEWS_SHOWN} player={newsPlayer} heading={single ? "h4" : "h3"} />
           </div>
         </div>
         {twoColumns && (
@@ -268,7 +319,7 @@ export default async function MlbChallenge({ posting }: { posting: PostingSummar
             {historyOnRight ? (
               <SigningList signings={signings} />
             ) : (
-              <PostingNews items={news} shown={NEWS_SHOWN} player={newsPlayer} flush />
+              <PostingNews items={news} shown={NEWS_SHOWN} player={newsPlayer} heading={single ? "h4" : "h3"} flush />
             )}
           </div>
         )}
@@ -286,11 +337,13 @@ function HeadBand({ player: p }: { player: PostingPlayer }) {
       style={{ "--team": kboTeamColor(p.kboTeam) } as CSSProperties}
     >
       {/* 휴대폰만. PC는 띠가 넓어 알약이 이름에서 멀리 떨어지므로 이름 옆에 둔다(PlayerHead) */}
-      {/* 화면 읽기는 이름 다음의 알약이 맡는다(이름보다 먼저 읽히지 않게) */}
+      {/* 화면 읽기는 이름 다음의 알약이 맡는다(이름보다 먼저 읽히지 않게).
+          글자색은 상태를 따른다(예전에는 늘 보라라 계약한 날에도 '계약'이 보라였다) */}
       <span
         aria-hidden
-        className="absolute right-3 top-3 z-10 rounded-full bg-surface px-2.5 py-0.5 text-badge text-fa-fg shadow-[var(--shadow-card)] lg:hidden"
+        className={`absolute right-3 top-3 z-10 inline-flex items-center gap-1.5 rounded-full bg-surface px-2.5 py-0.5 text-badge shadow-[var(--shadow-card)] lg:hidden ${BADGE_TONE[status.tone]}`}
       >
+        <StatusDot tone={status.tone} />
         {status.label}
       </span>
     </div>
@@ -306,15 +359,19 @@ function PlayerHead({ player: p }: { player: PostingPlayer }) {
     <>
       <div className="-mt-9 flex items-start gap-3">
         <span className="relative z-10 shrink-0 rounded-full ring-4 ring-surface">
-          <KboAvatar nameKo={p.nameKo} photoUrl={p.photoUrl} size={76} />
+          {/* 비시즌 홈 첫 화면 사진이라 바로 받는다(eager) */}
+          <KboAvatar nameKo={p.nameKo} photoUrl={p.photoUrl} size={76} eager />
         </span>
         {/* 이름·한 줄은 띠 아래에서 시작한다(띠에 걸친 사진 높이 36px + 여백) */}
         <div className="min-w-0 pt-[2.75rem]">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <h3 className="text-display">{p.nameKo}</h3>
+            {/* 휴대폰은 화면 읽기에만(눈에는 띠 위 알약). 'sr-only lg:not-sr-only'로 쓰면 not-sr-only가 여백을 0으로 되돌려
+                PC 알약이 글자에 붙어 보였다(운영 1280px 실측 padding 0). 그래서 1024px 미만에만 sr-only를 건다 */}
             <span
-              className={`sr-only whitespace-nowrap rounded-full px-2.5 py-0.5 text-badge lg:not-sr-only lg:inline-block ${status.className}`}
+              className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-badge max-lg:sr-only ${PILL_TONE[status.tone]}`}
             >
+              <StatusDot tone={status.tone} />
               {status.label}
             </span>
           </div>
@@ -392,7 +449,8 @@ function PlayerRows({
         const signed = p.status === "SIGNED" && p.deal?.mlbTeamKo;
         return (
           <li key={p.nameKo} className="flex items-center gap-3 py-2.5 first:pt-0">
-            <KboAvatar nameKo={p.nameKo} photoUrl={p.photoUrl} size={40} />
+            {/* 카드 맨 위 줄들이라 첫 화면 안이다(eager) */}
+            <KboAvatar nameKo={p.nameKo} photoUrl={p.photoUrl} size={40} eager />
             <div className="min-w-0 flex-1">
               <h3 className="text-heading">{p.nameKo}</h3>
               <p className="truncate text-meta text-muted">
@@ -420,7 +478,8 @@ function RowResult({
 }) {
   const status = STATUS[p.status] ?? STATUS.CLOSED;
   const pill = (
-    <span className={`whitespace-nowrap rounded-full px-2.5 py-0.5 text-badge ${status.className}`}>
+    <span className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-badge ${PILL_TONE[status.tone]}`}>
+      <StatusDot tone={status.tone} />
       {status.label}
     </span>
   );
@@ -467,7 +526,7 @@ function RowResult({
  * 올해 계약한 선수가 있을 때만 그리므로 줄 앞 순위 숫자로 그 선수가 몇 위인지 바로 보이게 한다(올해 선수는 강조색).
  * 막대는 위 '지금' 진행 막대와 헷갈리지 않게 바탕 줄 없이, 왼쪽이 거의 투명하고 금액 쪽으로 진해지는 글자색 막대다
  * (`.ink-bar`). 파랑·신호색·팀 색을 쓰지 않는다(The One Blue Rule, 어두운 화면에서 갈색·남색 팀 색이 묻힘).
- * 길이는 금액이 2배면 1.5배(BAR_EXPONENT).
+ * 길이는 금액에 정비례하고, 1위가 훨씬 크면 1위만 끝을 끊어 그린다(barScale, `.ink-bar-cut`).
  */
 function SigningList({
   signings,
@@ -481,12 +540,11 @@ function SigningList({
   /** 위 선·여백 없이(접기 안에 넣을 때) */
   flush?: boolean;
 }) {
-  const top = Math.max(...signings.map((s) => s.amount));
+  const scale = barScale(signings.map((s) => s.amount));
   const list = (
       <ul className="money-flip-pause divide-y divide-line">
         {signings.map((s) => {
-          // 1위 금액이 0이면(보장액 0만 있는 경우) 나눗셈이 NaN이 되지 않게 모두 최소 길이
-          const share = top > 0 ? Math.max(BAR_MIN_SHARE, Math.pow(s.amount / top, BAR_EXPONENT)) : BAR_MIN_SHARE;
+          const share = scale.share(s.amount);
           return (
             <li key={s.key} className="flex items-center gap-3 py-2.5">
               {/* 두 자리(10위)도 한 줄에 들어가는 폭 */}
@@ -515,7 +573,12 @@ function SigningList({
                   </span>
                 </p>
                 <div className="mt-1.5 flex items-center gap-2">
-                  <i aria-hidden className="ink-bar" style={{ "--share": share.toFixed(4) } as CSSProperties} />
+                  {/* 끊긴 막대도 금액은 옆 글자와 화면 낭독기가 그대로 읽는다 */}
+                  <i
+                    aria-hidden
+                    className={scale.cut(s.amount) ? "ink-bar ink-bar-cut" : "ink-bar"}
+                    style={{ "--share": share.toFixed(4) } as CSSProperties}
+                  />
                   <span className="text-label tabular-nums">
                     <DealMoney years={s.years} usd={s.usd} krw={s.krw} align="start" />
                   </span>

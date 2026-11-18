@@ -63,11 +63,12 @@ export default async function SeasonStats({
             <Empty />
           )}
         </TableCard>
+        {/* '타석이 적거나 주로 마이너에서 뛴 선수는 아래에 있어요'는 표 안 띠가 같은 말을 해서 뺐다(이슈 #277) */}
         <Notes
           lines={[
             ranking &&
               majorHitters.length > 0 &&
-              `타율·OPS 1위는 ${ranking.minPlateAppearances}타석 이상인 선수 중에서 골라요. 타석이 적거나 주로 마이너에서 뛴 선수는 아래에 있어요.`,
+              `타율·OPS 1위는 ${ranking.minPlateAppearances}타석 이상인 선수 중에서 골라요.`,
           ]}
         />
       </Group>

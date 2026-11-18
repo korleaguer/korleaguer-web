@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getPlayer } from "@/lib/api";
+import { formatAsOf } from "@/lib/format";
 import { playerShareImage, shareMeta } from "@/lib/share";
 import { readMyPlayers } from "@/lib/myPlayers";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
@@ -80,6 +81,7 @@ async function PlayerContent({ params }: Pick<Props, "params">) {
     dataMode,
     statsAvailable,
     season,
+    generatedAt,
     player,
     hitting,
     pitching,
@@ -118,6 +120,8 @@ async function PlayerContent({ params }: Pick<Props, "params">) {
             pitching={pitching}
             minorHitting={minorHitting}
             minorPitching={minorPitching}
+            // 데이터 기준 시각은 첫 묶음(시즌 성적) 제목 옆. 서버가 아직 주지 않으면 빼고 그린다(이슈 #277)
+            asOf={generatedAt ? formatAsOf(generatedAt) : undefined}
           />
           {saber && <LeaguePosition saber={saber} />}
           {trend && (
