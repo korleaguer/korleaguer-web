@@ -1,6 +1,8 @@
 // 앱(korleaguer-app, 웹뷰)과 주고받는 도우미. 일반 브라우저에서는 모두 아무 일도 하지 않는다.
 // 앱이 문서를 그리기 전에 넣어 두는 값과 받는 메시지는 앱 저장소 src/lib/site.ts(APP_BOOT_SCRIPT, WebMessage)와 같아야 한다.
 
+import { useSyncExternalStore } from "react";
+
 type AppWindow = Window & {
   /** 옛 앱(0.1.x)에는 features가 없다 */
   KORLeaguerApp?: { features?: unknown };
@@ -20,6 +22,29 @@ export function appHas(feature: AppFeature): boolean {
   const { KORLeaguerApp, ReactNativeWebView } = window as AppWindow;
   const features = KORLeaguerApp?.features;
   return Boolean(ReactNativeWebView) && Array.isArray(features) && features.includes(feature);
+}
+
+/** 앱 기능·앱 안인지는 화면을 보는 동안 바뀌지 않으므로 구독할 것이 없다 */
+function subscribeNothing(): () => void {
+  return () => {};
+}
+
+/**
+ * 앱에 이 기능이 있나("news-tab": 뉴스 탭, "records-tab": '내 선수' 자리에 기록 탭). 서버에는 앱 정보가 없어 지금 앱(둘 다 있음)으로
+ * 보고 그리고, 브라우저에서 화면을 이어받은 뒤 실제 값으로 다시 그린다(렌더 중에 window를 바로 읽으면 서버 HTML과 첫 화면이 달라
+ * React가 화면을 통째로 다시 그린다). 서버를 '없음'으로 두면 지금 앱에서 /my를 열 때마다 버튼이 뒤늦게 끼어들어 로고가 옆으로
+ * 튀었다(리뷰 지적, 이슈 #262). 이제는 옛 빌드에서만 고쳐 그린다
+ */
+export function useAppFeature(feature: AppFeature): boolean {
+  return useSyncExternalStore(subscribeNothing, () => appHas(feature), () => true);
+}
+
+/**
+ * 앱(웹뷰) 안인가. 앱은 첫 버전부터 문서를 그리기 전에 <html data-app>을 붙인다(globals.css의 in-app 변형과 같은 표시).
+ * 서버에서는 브라우저로 보고 그린다(화면 모양이 아니라 누를 때 동작을 고를 때 쓴다)
+ */
+export function useInApp(): boolean {
+  return useSyncExternalStore(subscribeNothing, () => document.documentElement.hasAttribute("data-app"), () => false);
 }
 
 /** 앱에 메시지를 보낸다. 앱 안이 아니면 아무 일도 하지 않는다 */

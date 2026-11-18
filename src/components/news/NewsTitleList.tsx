@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import type { NewsHeadline } from "@/lib/api";
 import { formatDate, formatTime } from "@/lib/format";
+import { titleLang } from "@/lib/news";
 import ExternalLinkIcon from "@/components/ExternalLinkIcon";
 import NewsThumb from "@/components/news/NewsThumb";
 import Words from "@/components/Words";
@@ -99,7 +100,11 @@ function NewsTitleRow({
           보통 크기에서 걸리는 칸은 320px 휴대폰(약 10.25rem)과 640~675px 창의 두 칸 홈 카드(약 9.9rem)뿐이다. 운영에서 그 폭은
           제목이 모두 두 줄에서 잘렸고(640px 홈 8건 중 8건, 320px 뉴스 20건 중 20건), 네 줄이면 2건·9건만 잘린다(11-17 측정).
           360px 이상 휴대폰·768px·PC는 걸리지 않는다 */}
-      <span className="mt-0.5 line-clamp-2 text-summary group-hover:underline @max-[11rem]:line-clamp-4">
+      {/* 번역 전 영어 기사 제목은 화면 낭독기가 영어로 읽게 lang="en"(titleLang) */}
+      <span
+        lang={titleLang(n.titleKo ?? n.title)}
+        className="mt-0.5 line-clamp-2 text-summary group-hover:underline @max-[11rem]:line-clamp-4"
+      >
         <Highlighted text={n.titleKo ?? n.title} word={highlight} />
       </span>
       {/* 출처 줄은 한 줄로 둔다. 좁으면 누구·언론사만 '…'으로 줄이고 '외 N곳'과 날짜는 남긴다.

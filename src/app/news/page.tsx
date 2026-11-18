@@ -70,8 +70,31 @@ async function NewsContent({ searchParams }: Pick<Props, "searchParams">) {
   const selected = players.find((p) => p.nameKo === player) ?? null;
   const photos = Object.fromEntries(players.map((p) => [p.nameKo, p.photoUrl]));
 
+  const empty = items.length === 0 && next === null;
+  const unknownTitle = tooLong ? "찾는 선수 기사가 없어요" : `${wanted} 선수 기사가 없어요`;
+  // 검색어 결과를 말할 때 앞부분: 무엇을 어디서 찾았는지. 검색은 제목만 보고, 고른 선수가 있으면 그 선수 기사 안에서다
+  const searched = q === null ? null : `제목에 ‘${q}’ 들어간 ${player ? `${player} ` : ""}기사`;
+  // 검색어로 나오는 줄 수(같은 기사는 한 줄): api가 세어 준 값 → 그 말의 알약 숫자 → 첫 쪽에 다 들어왔으면 받은 줄 수. 모르면 null
+  const queryCount =
+    q === null || unknown
+      ? null
+      : (result.data.queryCount ??
+        topics.find((t) => t.word.toLowerCase() === q.toLowerCase())?.count ??
+        (next === null ? items.length : null));
+  // 화면 낭독기에 알릴 결과 한 줄(NewsSearch 상태 줄). 결과 없음은 화면 안내 제목과 같은 말이고, 검색 줄 수를 모르면
+  // (결과가 한 쪽보다 많고 api가 세어 주지 않으면) 받은 줄 수 '이상'으로 말한다
+  const status = unknown
+    ? unknownTitle
+    : searched === null
+      ? empty
+        ? "아직 기사가 없어요"
+        : `${player ?? "전체"} 기사`
+      : empty
+        ? `${searched}가 없어요`
+        : `${searched} ${queryCount === null ? `${items.length}건 이상` : `${queryCount}건`}`;
+
   return (
-    // 휴대폰: 선수 알약 → 그 선수 기사에 자주 나온 말 알약(검색은 그 줄의 돋보기) → 목록.
+    // 휴대폰: 선수 알약 → 그 선수 기사에 자주 나온 말 알약(검색은 그 줄 맨 앞 '검색' 버튼) → 목록.
     // PC: 왼쪽 칸에 선수 목록(내려도 따라온다), 오른쪽 칸에 검색창·자주 나온 말과 목록(줄이 너무 길지 않게 폭을 묶는다)
     <div className="space-y-3 lg:grid lg:grid-cols-[12rem_minmax(0,48rem)] lg:grid-rows-[auto_1fr] lg:items-start lg:gap-x-6 lg:gap-y-3 lg:space-y-0">
       <div className="lg:sticky lg:top-6 lg:col-start-1 lg:row-span-2 lg:row-start-1">
@@ -84,7 +107,7 @@ async function NewsContent({ searchParams }: Pick<Props, "searchParams">) {
         />
       </div>
       <div className="lg:col-start-2 lg:row-start-1">
-        <NewsSearch player={unknown ? null : player} query={q} topics={topics} />
+        <NewsSearch player={unknown ? null : player} query={q} topics={topics} queryCount={queryCount} status={status} />
       </div>
       <div className="min-w-0 space-y-2.5 lg:col-start-2 lg:row-start-2">
         {selected?.playerId != null && (
@@ -101,7 +124,7 @@ async function NewsContent({ searchParams }: Pick<Props, "searchParams">) {
         {unknown ? (
           <StateNotice
             emoji="🔎"
-            title={tooLong ? "찾는 선수 기사가 없어요" : `${wanted} 선수 기사가 없어요`}
+            title={unknownTitle}
             detail="지금 모으는 선수의 기사만 보여요."
             action={
               <Link href={newsHref(null)} replace className={stateActionClass}>
@@ -109,19 +132,22 @@ async function NewsContent({ searchParams }: Pick<Props, "searchParams">) {
               </Link>
             }
           />
-        ) : items.length === 0 && next === null && q ? (
-          // 검색 결과가 없을 때(먼저 설계할 화면): 무엇을 찾았는지와 다음에 할 일
+        ) : empty && searched !== null ? (
+          // 검색 결과가 없을 때(먼저 설계할 화면): 무엇을 어디서 찾았는지와 다음에 할 일.
+          // 제목만 찾는다는 것과 고른 선수를 제목 한 줄에 넣는다(설명 줄에 '…제목에는 없어요'를 또 쓰면 같은 말 두 번이다).
+          // 설명 줄은 버튼이 하지 않는 일만 말한다. 선수를 고른 때 '전체에서 찾거나'를 쓰면 바로 밑 '전체 기사에서 찾기'
+          // 버튼과 같은 말 두 번이었다(다른 빈 화면처럼 설명이 버튼을 되풀이하지 않는다)
           <StateNotice
             emoji="🔎"
-            title={`‘${q}’ 기사가 없어요`}
-            detail={player ? `${player} 기사에는 없어요. 전체에서 찾거나 다른 말로 찾아보세요.` : "다른 말로 찾아보세요."}
+            title={`${searched}가 없어요`}
+            detail="다른 말로 찾아보세요."
             action={
               <Link href={player ? newsHref(null, q) : newsHref(null)} replace className={stateActionClass}>
                 {player ? "전체 기사에서 찾기" : "검색 지우기"}
               </Link>
             }
           />
-        ) : items.length === 0 && next === null ? (
+        ) : empty ? (
           <StateNotice emoji="📰" title="아직 기사가 없어요" detail="새 기사가 나오면 30분 안에 여기에 모여요." />
         ) : (
           // 선수·검색어를 바꾸면 받아 둔 쪽을 비운다(같은 화면이면 새로 받은 첫 쪽을 받아 둔 목록에 합친다, NewsFeed)
