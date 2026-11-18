@@ -44,10 +44,10 @@ async function HomeContent() {
       ) : (
         <>
           {/* 시즌 중: 선수들이 지금 어디서 뛰나(메이저·트리플A·부상 재활)를 층으로(이슈 #245).
-              층만 /api/my를 한 번 더 기다리므로 따로 기다린다: 1위 카드·기록 표는 먼저 그리고 층 자리는 뼈대로 둔다(전수조사 L309) */}
-          <PageSuspense fallback={<LoadingBlock rows={6} />}>
-            <SeasonFloors recent={home.recent} asOf={asOf} />
-          </PageSuspense>
+              층은 따로 Suspense로 나누지 않는다(전수조사 L309 검토): 나누면 /api/my가 늦을 때 1위 카드·기록 표가 층 뼈대 아래 먼저
+              그려졌다가 층이 들어오며 375px에서 415px 밀렸다. 층 높이는 층·선수 수·맞대결·화면 폭마다 달라 뼈대로 맞출 수 없고,
+              api가 빠르면 React가 0.3초 안에 끝난 경계를 함께 보여 나눈 이득도 없다. 기다림은 선수 목록 미리 받기(위)로 줄인다 */}
+          <SeasonFloors recent={home.recent} asOf={asOf} />
           <SeasonLeaders
             season={home.season}
             statsAvailable={home.statsAvailable}
