@@ -34,10 +34,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <SkipLink />
         <AppBridge />
         <SiteHeader />
-        {/* tabIndex -1: 본문 바로가기로 포커스를 받을 수 있게. 본문 전체에 포커스 테두리가 그려지면 어색해서 끈다 */}
+        {/* tabIndex는 두지 않는다. 늘 두면 본문 글자·빈 곳을 마우스로 누를 때마다 main이 포커스를 받아, 다음 Tab이 본문 맨 위로 가고
+            화면도 위로 튄다. '본문 바로가기'가 누를 때만 붙였다가 포커스가 떠나면 뗀다(SkipLink).
+            그때 본문 전체에 포커스 테두리가 그려지면 어색해서 끈다 */}
         <main
           id="main"
-          tabIndex={-1}
           className="mx-auto w-full max-w-[67.5rem] flex-1 px-3 pb-10 pt-4 focus:outline-none sm:px-6 sm:pt-6"
         >
           {children}

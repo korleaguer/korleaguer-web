@@ -1,6 +1,7 @@
 "use client"; // 펼침 상태를 기억하고 버튼으로 바꿔야 해서 클라이언트 컴포넌트다.
 
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { focusContainer } from "@/lib/focus";
 
 /** 펼친 내용 안에서 포커스를 받을 수 있는 것(링크·버튼·입력칸·tabindex를 준 것) */
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])';
@@ -44,7 +45,9 @@ export default function ShowMore({ moreLabel, lessLabel = "접기", children, bu
     focusAfterOpen.current = false;
     const box = contentRef.current;
     if (!box) return;
-    (box.querySelector<HTMLElement>(FOCUSABLE) ?? box).focus({ preventScroll: true });
+    const first = box.querySelector<HTMLElement>(FOCUSABLE);
+    if (first) first.focus({ preventScroll: true });
+    else focusContainer(box, { preventScroll: true });
   }, [open, rendered]);
 
   function toggle() {
@@ -63,8 +66,9 @@ export default function ShowMore({ moreLabel, lessLabel = "접기", children, bu
   return (
     <>
       {/* reveal: 펼칠 때마다(hidden이 풀릴 때) 새로 나온 줄이 살짝 내려오며 나타난다.
-          tabIndex -1: 누를 것이 없는 줄(이동 기록 등)을 펼쳤을 때 이 상자가 포커스를 받는다(Tab 순서에는 들지 않는다) */}
-      <div ref={contentRef} id={contentId} hidden={!open} tabIndex={-1} className="reveal">
+          누를 것이 없는 줄(이동 기록 등)을 펼치면 이 상자가 포커스를 받는다. tabIndex는 그때만 붙인다(focusContainer):
+          늘 두면 펼친 줄의 글자·빈 곳을 마우스로 누를 때마다 상자가 포커스를 받았다 */}
+      <div ref={contentRef} id={contentId} hidden={!open} className="reveal">
         {rendered ? children : null}
       </div>
       <button
