@@ -336,8 +336,11 @@
     font-size: calc(100% * clamp(0.85, var(--app-font-scale, 1), 2));
     /* 두 손가락 확대는 되고(앱이 확대 막기를 뺐다), 두 번 탭 확대는 막는다(버튼을 빨리 두 번 누르면 화면이 커지지 않게) */
     touch-action: manipulation;
-    /* 앱 안 머리글은 위에 붙어 있어서(SiteHeader), 자리를 찾아 스크롤할 때 그 밑으로 숨지 않게 머리글 높이만큼 띄운다 */
-    scroll-padding-top: 3.5rem;
+    /*
+     * 앱 안 머리글은 위에 붙어 있어서(SiteHeader), 자리를 찾아 스크롤할 때 그 밑으로 숨지 않게 머리글 높이(3.5rem)만큼 띄운다.
+     * html 자신의 rem은 WebKit(아이폰 앱)이 글자 배율과 상관없이 16px로 계산해 큰 글씨에서 모자라서, html 글자 크기를 따르는 em으로 쓴다
+     */
+    scroll-padding-top: 3.5em;
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
     -webkit-tap-highlight-color: transparent;
@@ -355,17 +358,19 @@
    * 선수 페이지 바로 가기 탭(JumpNav)이 위에 붙는 화면(1024px 미만): Tab으로 옮긴 포커스가 붙은 탭 줄 밑에 숨지 않게
    * 탭 줄 높이(1배 48px)만큼 띄운다(11-17 전수조사, WCAG 2.4.11). 앱은 머리글(3.5rem) 아래에 탭 줄이 붙어 둘을 더한다.
    * 탭 줄 높이는 대부분 rem(알약 2rem)이라 큰 글씨에서 함께 커진다. 앱 작은 글씨(0.85배)에서도 모자라지 않게 조금 넉넉히 둔다.
-   * PC(1024px 이상)는 탭 줄이 없다. 띄우는 값은 --jump-nav-inset 하나로 두고 아래 알약 규칙이 같이 쓴다
+   * PC(1024px 이상)는 탭 줄이 없다. 띄우는 값은 --jump-nav-inset(rem 수) 하나로 두고 아래 알약 규칙이 같이 쓴다.
+   * html 자신에서는 em을 곱한다. html의 rem은 WebKit(아이폰 앱)이 글자 배율과 상관없이 16px로 계산해, 2배에서 탭 줄
+   * 아래 끝(208px)보다 적은 116px만 띄웠다. 알약 같은 자식의 rem은 배율을 따라 html의 em과 같은 값이 된다
    */
   @media (width < 64rem) {
     html:has([data-jump-nav]) {
-      --jump-nav-inset: 3.5rem;
-      scroll-padding-top: var(--jump-nav-inset);
+      --jump-nav-inset: 3.5;
+      scroll-padding-top: calc(var(--jump-nav-inset) * 1em);
     }
 
     html[data-app]:has([data-jump-nav]) {
-      --jump-nav-inset: 7.25rem;
-      scroll-padding-top: var(--jump-nav-inset);
+      --jump-nav-inset: 7.25;
+      scroll-padding-top: calc(var(--jump-nav-inset) * 1em);
     }
 
     /*
@@ -376,8 +381,8 @@
      * 화면 아래쪽에 멀쩡히 보이는 탭 줄로 Tab할 때 페이지가 크게 내려간다
      */
     [data-jump-nav][data-stuck] a {
-      scroll-margin-top: calc(-1 * var(--jump-nav-inset));
-      scroll-margin-bottom: var(--jump-nav-inset);
+      scroll-margin-top: calc(var(--jump-nav-inset) * -1rem);
+      scroll-margin-bottom: calc(var(--jump-nav-inset) * 1rem);
     }
   }
 
