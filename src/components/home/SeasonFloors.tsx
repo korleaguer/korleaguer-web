@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { GameLine, HomeResponse, MyPlayer } from "@/lib/api";
 import { getMyPlayers, getPlayers } from "@/lib/api";
-import { formatLineup, formatSummary, formatTime, kstDayKey } from "@/lib/format";
+import { formatLineup, formatScore, formatSummary, formatTime, kstDayKey, kstPrevDayKey } from "@/lib/format";
 import { readMyPlayers } from "@/lib/myPlayers";
 import { teamColor, teamLogoUrl } from "@/lib/teams";
 import { levelKo, statusBadge } from "@/components/my/formLabels";
@@ -126,8 +126,7 @@ function monthDay(date: string): string {
 function dayLabel(game: GameLine, today: string | null): string | null {
   const day = kstDayKey(game.startTimeKst);
   if (!day || !today || day === today) return null;
-  const yesterday = kstDayKey(new Date(Date.parse(`${today}T12:00:00+09:00`) - 86_400_000));
-  return day === yesterday ? "어제" : monthDay(day);
+  return day === kstPrevDayKey(today) ? "어제" : monthDay(day);
 }
 
 /** 이름 아래 한 줄: 마지막 경기 한 줄 기록(부상이면 재활 경기, FA면 마지막 경기) */
@@ -334,8 +333,9 @@ function FloorRow({ entry, starred, today }: { entry: MyPlayer; starred: boolean
               </span>
             )}
             <Words text={text} />
-            {/* 마이너·재활 경기는 점수를 몰라(결과 알약만 있다) 점까지 뺀다. 예전에는 '4타수 2안타 · '처럼 점만 남았다 */}
-            {game && game.played && game.result && game.teamScore != null && game.opponentScore != null && (
+            {/* 마이너·재활 경기는 점수를 몰라(결과 알약만 있다) 점까지 뺀다. 예전에는 '4타수 2안타 · '처럼 점만 남았다.
+                점수가 있는지는 ScoreText와 같은 formatScore로 본다 */}
+            {game && game.played && game.result && formatScore(game) != null && (
               <span className="text-muted">
                 {" · "}
                 <ScoreText line={game} />
