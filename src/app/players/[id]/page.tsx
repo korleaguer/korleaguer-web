@@ -91,8 +91,9 @@ async function PlayerContent({ params }: Pick<Props, "params">) {
     news,
     minorGames,
   } = result.data;
-  // 타격 흐름(누적 wRC+)은 타자만. 마지막 점을 MLB 공식 시즌 wRC+에 맞춘다
-  const trend = saber?.kind === "hitter" && saber.wrcPlus != null ? buildWrcTrend(games, saber.wrcPlus) : null;
+  // 타격 흐름(누적 wRC+)은 타자만. 마지막 점을 MLB 공식 시즌 wRC+에 맞추고, 정규시즌 경기 수만큼만 쌓아 포스트시즌을 뺀다
+  const trend =
+    saber?.kind === "hitter" && saber.wrcPlus != null ? buildWrcTrend(games, saber.wrcPlus, hitting?.games ?? null) : null;
   // 바로 가기 탭(휴대폰·태블릿): 있는 칸만, 휴대폰에서 쌓이는 순서대로. id는 각 칸 제목(h2)
   const jumps: JumpTarget[] = [
     { id: "season-title", label: "성적" },
@@ -135,11 +136,13 @@ async function PlayerContent({ params }: Pick<Props, "params">) {
           <GameLog playerId={player.id} games={games} minorGames={minorGames} moves={moves ?? []} role={player.role} />
           <CareerSeasons seasons={seasons} />
         </div>
-        {/* 오른쪽 칸: 기사(PC) + 이동 기록(메이저·마이너 오간 날짜) */}
+        {/* 오른쪽 칸: 기사(PC) + 이동 기록(메이저·마이너 오간 날짜).
+            PC 기사는 본문 옆 보조 칸이라 aside(보조 영역 '기사')로 그려 낭독기 영역 목록에서 바로 간다(키보드로는 달력 버튼 30여 개 뒤).
+            이동 기록은 휴대폰에서 본문 끝이라 그대로 둔다 */}
         <div className="min-w-0 space-y-7">
           {news.length > 0 && (
             <div className="hidden lg:block">
-              <PlayerNews id="news-title-pc" news={news} photoUrl={player.photoUrl} player={player.nameKo} />
+              <PlayerNews id="news-title-pc" news={news} photoUrl={player.photoUrl} player={player.nameKo} as="aside" />
             </div>
           )}
           {moves && <RosterMoves moves={moves} />}

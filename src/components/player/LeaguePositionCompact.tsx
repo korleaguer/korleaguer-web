@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import type { PlayerSaber } from "@/lib/api";
 import { formatInningsOuts } from "@/lib/format";
 import { type Row, rowsOf } from "@/components/player/LeaguePosition";
+import PositionBar from "@/components/player/PositionBar";
 import { STEADY_OUTS, STEADY_PA } from "@/lib/seasonStats";
 
 /** 서버가 위치를 매기는 최소 표본(타자 50타석, 투수 10이닝 = 30아웃). 이보다 적으면 percentiles가 null이다 */
@@ -10,8 +11,9 @@ const MIN_OUTS = 30;
 
 /**
  * 홈 시즌 성적표 펼친 곳의 'MLB 안 위치' 작은 판(이슈 #276, 사용자가 고른 '목록 + 누르면 펼치기' 그림).
- * 막대 규칙은 선수 화면 'MLB 타자(투수) 중에서'(LeaguePosition)와 같고, 판정 글자가 시즌 전체를 이미 말해서 '종합'은 빼고
- * 세 줄만 둔다(타자 타격·주루·수비, 투수 실점 억제·삼진·볼넷). 실제 값 줄과 각주는 선수 화면에 맡긴다.
+ * 막대는 선수 화면 'MLB 타자(투수) 중에서'(LeaguePosition)와 같은 부품(PositionBar)을 한 단계 작게 쓰고, 판정 글자가 시즌
+ * 전체를 이미 말해서 '종합'은 빼고 세 줄만 둔다(타자 타격·주루·수비, 투수 실점 억제·삼진·볼넷 억제). 줄 이름은 선수 화면과 같은
+ * rowsOf에서 온다. 실제 값 줄과 각주는 선수 화면에 맡긴다.
  * - 머리: 'MLB 타자 465명 중'. 목록 줄 숫자가 마이너 합계면(minorNumbers) 위치가 메이저 몇 타석으로 잰 것인지 붙인다
  *   (김혜성처럼 트리플A 숫자 옆에서 MLB 위치가 같은 표본으로 읽히지 않게). 표본이 적으면(100타석·30이닝 미만) '참고용'.
  * - 위치가 없으면(서버 기준 50타석·10이닝 미만, 메이저 기록 없음) 한 줄로 그렇다고만 쓴다. 위 한 줄 흐름이 이미 메이저 경기
@@ -69,7 +71,7 @@ export default function LeaguePositionCompact({
   );
 }
 
-/** 작은 판 한 줄: 이름 | 막대(가운데 선 = MLB 중간) | 순위(선수 화면 줄보다 글자·막대가 한 단계 작다) */
+/** 작은 판 한 줄: 이름 | 막대(가운데 선 = MLB 중간, PositionBar) | 순위(선수 화면 줄보다 글자·막대가 한 단계 작다) */
 function CompactRow({ row, who, labelCol }: { row: Row; who: string; labelCol: string }) {
   const { label, pct } = row;
   const top = pct != null && pct >= 50;
@@ -82,18 +84,7 @@ function CompactRow({ row, who, labelCol }: { row: Row; who: string; labelCol: s
       style={{ "--label-col": labelCol } as CSSProperties}
     >
       <span className="text-meta">{label}</span>
-      <div aria-hidden className="relative h-1.5 rounded-full bg-surface-2 @max-[13rem]:col-span-2 @max-[13rem]:row-start-2">
-        <span className="absolute inset-y-[-3px] left-1/2 w-px bg-line" />
-        {pct != null && (
-          <>
-            <span className={`absolute inset-y-0 left-0 rounded-full ${top ? "bg-accent" : "bg-muted/40"}`} style={{ width: `${pct}%` }} />
-            <span
-              className={`absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-surface ${top ? "bg-accent" : "bg-muted"}`}
-              style={{ left: `${pct}%` }}
-            />
-          </>
-        )}
-      </div>
+      <PositionBar pct={pct} size="sm" className="@max-[13rem]:col-span-2 @max-[13rem]:row-start-2" />
       <span className={`whitespace-nowrap text-right text-label font-extrabold tabular-nums ${top ? "text-accent-ink" : "text-muted"}`}>
         <span className="sr-only">{`MLB ${who} 중 `}</span>
         {verdict}
