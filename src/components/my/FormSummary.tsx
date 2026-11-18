@@ -46,6 +46,9 @@ export function StatusBadge({ status }: { status: CardStatus }) {
   if (!badge) return null;
   return (
     <span
+      // 화면 낭독기는 이 배지를 건너뛰고 이름 제목 안에서 읽는다(StatusSrText). 무대가 이름보다 앞이라 이름보다 먼저 읽혔고,
+      // 제목으로 건너뛰면 부상·콜업을 놓쳤다(이슈 #273)
+      aria-hidden
       className={`absolute left-[14px] top-[12px] z-10 inline-flex max-w-[calc(100%-136px)] items-center @max-[18rem]:max-w-[calc(100%-28px)] gap-1.5 rounded-full bg-surface px-2.5 py-0.5 text-badge shadow-[var(--shadow-card)] ${BADGE_TONE[badge.tone]}`}
     >
       <span aria-hidden className={`size-[7px] shrink-0 rounded-full ${DOT_TONE[badge.tone]}`} />
@@ -79,11 +82,16 @@ export function StatusPill({ status }: { status: CardStatus }) {
   );
 }
 
+/*
+ * 출전 줄 칸. 흐림(투명도) 없이 단색이라 카드 대비 3:1을 넘는다(경기별 막대와 같은 이유, 이슈 #273).
+ * 선발·교체를 모르는 출전은 strip-played: 밝은 모드는 경기별 막대의 안 고른 색(옅은 파랑), 다크 모드는 그 색이 선발 파랑과
+ * 같아져서 밝은 파랑이다(값은 globals.css 한곳에서 정한다)
+ */
 const STRIP: Record<PlayCode, string> = {
   STARTER: "bg-accent",
-  PLAYED: "bg-accent/60",
+  PLAYED: "bg-strip-played",
   SUB: "border-2 border-accent",
-  ABSENT: "border-[1.5px] border-dashed border-muted/70",
+  ABSENT: "border-[1.5px] border-dashed border-muted",
 };
 
 /**
@@ -125,19 +133,24 @@ export function SummaryLines({ entry }: { entry: MyPlayer }) {
       )}
       {pitcher && <p className="mt-2 text-meta text-muted tabular-nums">{pitcher}</p>}
       {status && <p className="mt-1 text-meta text-muted">{status}</p>}
-      {entry.fact && <FactPill fact={entry.fact} />}
+      {/* 시즌 합계 카드(비시즌·FA)에는 한 줄 소식을 두지 않는다: 운영 6명 모두 '시즌 최장 N경기 연속 안타' 같은 주황 소식이라
+          부진한 시즌도 '좋은 일' 색이었고, 모두 같은 말이면 아무것도 가르지 못한다(11-17 점검, 홈 자랑 알약을 뺀 것과 같은 판단) */}
+      {entry.fact && entry.basis !== "SEASON" && <FactPill fact={entry.fact} />}
     </>
   );
 }
 
-/** 한 줄 소식: 좋은 일은 옅은 주황, 안 좋은 일은 회색 바탕 + 진한 파랑 글자 */
+/**
+ * 한 줄 소식: 좋은 일은 옅은 주황, 안 좋은 일은 회색 바탕 + 본문 글자·흐린 점.
+ * 안 좋은 일을 파랑으로 칠하지 않는다: 다른 화면의 파랑은 1위·좋음·고른 칸이다(11-17 사용자 결정 '추천대로')
+ */
 function FactPill({ fact }: { fact: FormFact }) {
   const hot = fact.tone === "HOT";
   return (
     <p
-      className={`mt-2 inline-flex items-center gap-1.5 self-start rounded-full px-2.5 py-0.5 text-badge ${hot ? "bg-hot-soft text-hot-ink" : "bg-surface-2 text-accent-ink"}`}
+      className={`mt-2 inline-flex items-center gap-1.5 self-start rounded-full px-2.5 py-0.5 text-badge ${hot ? "bg-hot-soft text-hot-ink" : "bg-surface-2 text-foreground"}`}
     >
-      <span aria-hidden className={`size-1.5 shrink-0 rounded-full ${hot ? "bg-hot" : "bg-accent-ink"}`} />
+      <span aria-hidden className={`size-1.5 shrink-0 rounded-full ${hot ? "bg-hot" : "bg-muted"}`} />
       {fact.text}
     </p>
   );
@@ -193,7 +206,8 @@ export function Numbers({
   return (
     // 작은 숫자 셋이 큰 숫자 옆에 다 들어가지 않으면(큰 글씨) 아래 줄로 내린다(flex-wrap). 옆에 두면 1.5배부터 '탈삼진'·
     // '홈런' 칸이 카드 밖으로 나갔다(이슈 #264). 문턱 없이 글자 폭으로 정해서, 보통 크기는 가장 좁은 카드(640px 창 두 칸,
-    // 16.1rem)에서도 운영처럼 옆에 둔다(11-17 측정: 가장 넓은 카드 '평균자책점 + 이닝 50⅔' 14.75rem).
+    // 16.1rem)에서도 운영처럼 옆에 둔다(11-18 측정, 작은 숫자 17px: '평균자책점 + 이닝 50⅔' 14.43rem, 가장 긴 이름표
+    // '트리플A 최근 30일 평균자책점 + 50⅔' 15.78rem. 20px일 때는 14.82rem·16.17rem이라 마지막 경우가 아래 줄로 내려갔다).
     // 작은 숫자 상자는 내용 폭보다 좁아지지 않고(min-width: auto) 남는 폭을 다 쓴다. 셋이 한 줄에 못 들어가면(아주 좁은 휴대폰 + 2배) 두 칸씩
     <div className="@container mt-3.5">
       <div className="flex flex-wrap items-end gap-x-4 gap-y-2.5">
@@ -205,12 +219,14 @@ export function Numbers({
           </dd>
           {note != null && <dd className="mt-1.5 text-caption text-muted">{note}</dd>}
         </dl>
-        {/* 세 칸을 똑같이 나누지 않고 내용 너비대로 고르게 벌린다. 좁은 카드에서 "50⅔"이 "50"/"⅔"로 갈리지 않게 */}
+        {/* 세 칸을 똑같이 나누지 않고 내용 너비대로 고르게 벌린다. 좁은 카드에서 "50⅔"이 "50"/"⅔"로 갈리지 않게.
+            작은 숫자는 이름(20px)보다 한 단계 작은 17px(heading)이다: 이름과 같은 20px·800이면 위계가 없었다(11-17 점검).
+            큰 숫자 44px · 이름 20px · 작은 숫자 17px의 세 단계 */}
         <dl className="grid flex-1 grid-cols-[repeat(3,auto)] justify-evenly gap-y-1.5 rounded-xl bg-surface-2 py-2 text-center @max-[7rem]:grid-cols-[repeat(2,auto)]">
           {small.map(([k, v]) => (
             <div key={k} className="whitespace-nowrap">
               <dt className="text-caption text-muted">{k}</dt>
-              <dd className="text-stat tabular-nums">
+              <dd className="text-heading tabular-nums">
                 {v}
               </dd>
             </div>
@@ -219,4 +235,13 @@ export function Numbers({
       </div>
     </div>
   );
+}
+
+/**
+ * 무대 위 상태 배지(StatusBadge, 화면 낭독기에서는 감춤)의 글을 이름 제목 안, 이름 뒤에서 읽게 한다: '이정후, 부상자 명단 12일째'.
+ * 제목으로 건너뛰어도 상태를 같이 듣는다. 보이는 화면은 그대로다
+ */
+export function StatusSrText({ status }: { status: CardStatus }) {
+  const badge = statusBadge(status);
+  return badge ? <span className="sr-only">{`, ${badge.text}`}</span> : null;
 }

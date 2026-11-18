@@ -210,3 +210,12 @@ export function kstDayKey(value: string | Date | null | undefined): string | nul
   const date = value instanceof Date ? value : toDate(value);
   return date ? dayKeyFormat.format(date) : null;
 }
+
+/**
+ * 한국 날짜 열쇠의 전날: "2026-11-15" → "2026-11-14". '오늘'·'어제' 글자를 정하는 곳(뉴스 탭 날짜 묶기, 층 홈 경기 한 줄)이
+ * 같은 규칙을 쓰게 한 곳에 둔다. 그날 한국 낮 12시에서 24시간을 빼서 센다(한국은 서머타임이 없다). 날짜 모양이 아니면 null
+ */
+export function kstPrevDayKey(day: string): string | null {
+  const noon = Date.parse(`${day}T12:00:00+09:00`);
+  return Number.isNaN(noon) ? null : kstDayKey(new Date(noon - 86_400_000));
+}

@@ -6,7 +6,7 @@ import { teamColor } from "@/lib/teams";
 import { GameRow } from "@/components/player/GameLog";
 import ShowMore from "@/components/ShowMore";
 import BandPhoto from "./BandPhoto";
-import { Notice, Numbers, SeasonNumbers, StatusBadge, SummaryLines } from "./FormSummary";
+import { Notice, Numbers, SeasonNumbers, StatusBadge, StatusSrText, SummaryLines } from "./FormSummary";
 import GameBars from "./GameBars";
 import MyPlayerToggle from "./MyPlayerToggle";
 import { barSlots } from "./columns";
@@ -28,7 +28,13 @@ interface Props {
  * 경기별 막대 → 경기 기록 모두 보기. 마이너에 있으면 숫자·막대가 마이너 기록이고(이름표에 단계),
  * 비시즌·FA면 기간 대신 시즌 합계를 보인다(이슈 #13). 비시즌 홈도 같은 카드로 선수 6명을 보인다.
  */
-export default async function FormCard({ entry, days, statsAvailable, isMine = true, nameAs: Name = "h2" }: Props) {
+export default async function FormCard({
+  entry,
+  days,
+  statsAvailable,
+  isMine = true,
+  nameAs: Name = "h2",
+}: Props) {
   // 잠깐 재사용: 같은 데이터면 30초 동안 그려 둔 것을 다시 쓴다(쿠키와 상관없는 부품이라 모두에게 같다).
   // 운영 서버(라즈베리파이 4)는 화면 그리기가 느려서 큰 부품을 매번 그리지 않는다.
   "use cache";
@@ -46,14 +52,21 @@ export default async function FormCard({ entry, days, statsAvailable, isMine = t
   return (
     // 이름 링크를 카드 전체로 넓혀서(after:absolute) 카드 어디를 눌러도 선수 페이지로 간다(이슈 #155, 선수 목록 카드와 같은 방식).
     // 화면 낭독기는 이름만 읽는다. 별·막대·펼치기는 링크 위(relative z-10)에 올려 제 동작만 한다.
-    <li className="card card-link relative flex flex-col overflow-hidden has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-accent">
+    // data-player-id: 별로 이 카드를 빼서 포커스가 사라지면 옆 카드 이름으로 옮길 때 찾는다(useFocusAfterRemove)
+    <li
+      data-player-id={player.id}
+      className="card card-link relative flex flex-col overflow-hidden has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-accent"
+    >
       {/* isolate: 상태 배지의 z-10이 무대 안에서만 통하게 해서, 배지를 눌러도 카드 링크로 간다 */}
       <div className="player-stage @container isolate h-[92px]" style={{ "--team": team } as CSSProperties}>
         {entry.status && <StatusBadge status={entry.status} />}
+        {/* 사진을 바로 받을지는 카드 밖 목록이 PhotoPriority로 건넨다(props면 "use cache" 열쇠가 자리마다 갈린다) */}
         <BandPhoto nameKo={player.nameKo} photoUrl={player.photoUrl} teamAbbr={player.teamAbbr} />
       </div>
 
-      <div className="flex flex-1 flex-col px-4 pb-2 pt-3">
+      {/* 아래 여백: '경기 기록 모두 보기' 버튼으로 끝나면 버튼이 제 위아래 여백을 가져 8px, 숫자 칸·안내로 끝나면 좌우와 같은 16px
+          (8px이면 비시즌 카드 6장 모두 숫자 칸 아래가 좌우 여백의 절반이라 답답했다, 11-17 점검) */}
+      <div className={`flex flex-1 flex-col px-4 pt-3 ${showsGames ? "pb-2" : "pb-4"}`}>
         <div className="flex items-start gap-2">
           <div className="min-w-0 flex-1">
             <Name className="text-title">
@@ -63,6 +76,8 @@ export default async function FormCard({ entry, days, statsAvailable, isMine = t
               >
                 {player.nameKo}
               </Link>
+              {/* 무대의 상태 배지는 이름보다 앞에 그려져 화면 낭독기에서 감추고, 여기(이름 뒤)에서 읽는다 */}
+              {entry.status && <StatusSrText status={entry.status} />}
             </Name>
             {meta && <p className="text-meta text-muted">{meta}</p>}
             {/* 기간을 당긴 카드(마지막으로 뛴·다치기 전): 어느 기간인지 적는다 */}
@@ -93,10 +108,10 @@ export default async function FormCard({ entry, days, statsAvailable, isMine = t
         ) : period ? (
           <>
             {entry.hitting && (
-              <HitterNumbers period={periodLabel(basis, level, days, entry.isFallback)} hitting={entry.hitting} />
+              <HitterNumbers period={periodLabel(basis, level, days, entry.isFallback)} hitting={entry.hitting} minors={minors} />
             )}
             {entry.pitching && (
-              <PitcherNumbers period={periodLabel(basis, level, days, entry.isFallback)} pitching={entry.pitching} />
+              <PitcherNumbers period={periodLabel(basis, level, days, entry.isFallback)} pitching={entry.pitching} minors={minors} />
             )}
             {/* 기간이 바뀌면 막대 자리도 바뀌므로 고른 막대를 처음부터 다시 정한다(key).
                 막대 사이 빈틈을 잘못 눌러 페이지가 바뀌지 않게 그래프 묶음 전체를 링크 위에 둔다 */}
@@ -107,6 +122,7 @@ export default async function FormCard({ entry, days, statsAvailable, isMine = t
                 role={player.role}
                 days={days}
                 minors={minors}
+                name={player.nameKo}
               />
             </div>
           </>
@@ -118,7 +134,7 @@ export default async function FormCard({ entry, days, statsAvailable, isMine = t
         {showsGames && (
           // 펼친 경기 목록도 읽는 곳이라 링크 위에 둔다
           <div data-no-press className="relative z-10 mt-auto pt-3">
-            <ShowMore moreLabel="경기 기록 모두 보기" buttonClassName="rounded-lg py-2">
+            <ShowMore moreLabel="경기 기록 모두 보기" buttonClassName="rounded-lg py-2" srContext={player.nameKo}>
               <ul className="-mx-4 border-y border-line divide-y divide-line">
                 {games.map((game) => (
                   <GameRow key={game.gameId} game={game} />
@@ -132,12 +148,12 @@ export default async function FormCard({ entry, days, statsAvailable, isMine = t
   );
 }
 
-function HitterNumbers({ period, hitting }: { period: string; hitting: HitterPeriod }) {
+function HitterNumbers({ period, hitting, minors }: { period: string; hitting: HitterPeriod; minors: boolean }) {
   return (
     <Numbers
       label={`${period} 타율`}
       value={formatRate(hitting.avg)}
-      note={<RateDelta value={hitting.avg} season={hitting.seasonAvg} played={hitting.games > 0} />}
+      note={<RateDelta value={hitting.avg} season={hitting.seasonAvg} played={hitting.games > 0} minors={minors} />}
       small={[
         ["안타", hitting.hits],
         ["홈런", hitting.homeRuns],
@@ -147,12 +163,12 @@ function HitterNumbers({ period, hitting }: { period: string; hitting: HitterPer
   );
 }
 
-function PitcherNumbers({ period, pitching }: { period: string; pitching: PitcherPeriod }) {
+function PitcherNumbers({ period, pitching, minors }: { period: string; pitching: PitcherPeriod; minors: boolean }) {
   return (
     <Numbers
       label={`${period} 평균자책점`}
       value={formatEra(pitching.era)}
-      note={<EraDelta value={pitching.era} season={pitching.seasonEra} played={pitching.games > 0} />}
+      note={<EraDelta value={pitching.era} season={pitching.seasonEra} played={pitching.games > 0} minors={minors} />}
       small={[
         ["등판", pitching.games],
         ["이닝", pitching.inningsText],
@@ -162,37 +178,60 @@ function PitcherNumbers({ period, pitching }: { period: string; pitching: Pitche
   );
 }
 
-/** "시즌 .301보다 ▲.047". 타수가 없거나 시즌 기록이 없으면 그 사실만 */
-function RateDelta({ value, season, played }: { value: number | null; season: number | null; played: boolean }) {
+/**
+ * 비교하는 시즌 이름. 마이너 카드의 시즌 값은 그해 마이너 전체(여러 단계를 더한 값)라 '마이너 시즌'이다.
+ * 그냥 '시즌 .262보다'면 트리플A 최근 기록을 메이저 시즌과 견준 것처럼 읽혔다(11-17 점검)
+ */
+function seasonName(minors: boolean): string {
+  return minors ? "마이너 시즌" : "시즌";
+}
+
+/** "시즌 .301보다 ▲.047"(마이너 카드는 "마이너 시즌 .262보다"). 타수가 없거나 시즌 기록이 없으면 그 사실만 */
+function RateDelta({ value, season, played, minors }: { value: number | null; season: number | null; played: boolean; minors: boolean }) {
   if (!played) return <>이 기간 출전 없음</>;
   if (value == null) return <>이 기간 타수 없음</>;
   if (season == null) return null;
   // 소수 셋째 자리에서 비교해 화면 숫자와 어긋나지 않게 한다. 타율은 높을수록 좋다
   const diff = Math.round(value * 1000) - Math.round(season * 1000);
-  return <Delta seasonText={formatRate(season)} diff={diff} better={diff > 0} amount={formatRate(Math.abs(diff) / 1000)} />;
+  return (
+    <Delta
+      seasonText={`${seasonName(minors)} ${formatRate(season)}`}
+      diff={diff}
+      better={diff > 0}
+      amount={formatRate(Math.abs(diff) / 1000)}
+    />
+  );
 }
 
 /** "시즌 3.12보다 ▼0.85". 평균자책점은 낮을수록 좋다. 등판이 없거나 시즌 기록이 없으면 그 사실만 */
-function EraDelta({ value, season, played }: { value: number | null; season: number | null; played: boolean }) {
+function EraDelta({ value, season, played, minors }: { value: number | null; season: number | null; played: boolean; minors: boolean }) {
   if (!played) return <>이 기간 등판 없음</>;
   if (season == null) return null;
-  if (value == null) return <>{`시즌 ${formatEra(season)}`}</>;
+  if (value == null) return <>{`${seasonName(minors)} ${formatEra(season)}`}</>;
   // 소수 둘째 자리(화면 숫자)에서 비교한다
   const diff = Math.round(value * 100) - Math.round(season * 100);
-  return <Delta seasonText={formatEra(season)} diff={diff} better={diff < 0} amount={(Math.abs(diff) / 100).toFixed(2)} />;
+  return (
+    <Delta
+      seasonText={`${seasonName(minors)} ${formatEra(season)}`}
+      diff={diff}
+      better={diff < 0}
+      amount={(Math.abs(diff) / 100).toFixed(2)}
+    />
+  );
 }
 
 /**
- * 시즌과 비교한 차이. 화살표는 숫자가 오른 쪽(▲)·내린 쪽(▼), 색은 좋아짐(불꽃 주황)·나빠짐(진한 파랑).
- * 한국 중계·증권 화면처럼 오름 빨강 계열, 내림 파랑 계열로 읽힌다(타율 기준). 화면 낭독기는 "좋아짐/나빠짐"도 읽는다.
+ * 시즌과 비교한 차이. 화살표는 숫자가 오른 쪽(▲)·내린 쪽(▼), 좋아지면 불꽃 주황(좋은 활약 색), 나빠지면 색 없이 본문 글자.
+ * 예전에는 증권 화면처럼 나빠짐을 진한 파랑으로 칠했는데, 다른 화면의 파랑은 1위·좋음·고른 칸이라 같은 색이
+ * 정반대 뜻이 됐다(11-17 점검, 사용자 결정 '추천대로'). 화면 낭독기는 "좋아짐/나빠짐"도 읽는다.
  */
 function Delta({ seasonText, diff, better, amount }: { seasonText: string; diff: number; better: boolean; amount: string }) {
-  if (diff === 0) return <>{`시즌 ${seasonText} · 차이 없음`}</>;
+  if (diff === 0) return <>{`${seasonText} · 차이 없음`}</>;
   const up = diff > 0;
   return (
     <span className="inline-flex items-center gap-0.5">
-      {`시즌 ${seasonText}보다`}
-      <span className={`ml-0.5 inline-flex items-center gap-0.5 font-semibold ${better ? "text-hot-ink" : "text-accent-ink"}`}>
+      {`${seasonText}보다`}
+      <span className={`ml-0.5 inline-flex items-center gap-0.5 font-semibold ${better ? "text-hot-ink" : "text-foreground"}`}>
         <svg aria-hidden viewBox="0 0 10 10" className={`size-2.5 fill-current ${up ? "" : "rotate-180"}`}>
           <path d="M5 1.5 9 8.5H1z" />
         </svg>
