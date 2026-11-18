@@ -38,6 +38,14 @@ function teamInHistory(state: unknown, sheetKey: string): string | null {
   return typeof mark === "string" && mark.startsWith(prefix) ? mark.slice(prefix.length) : null;
 }
 
+/**
+ * 이 칸(sheetKey)의 기사 창이 지금 주소 기록에서 열려 있나. 홈 성적표 목록이 창이 든 줄을 펼쳐 두려고 쓴다:
+ * 기사를 보고 뒤로 오거나 새로 고쳐 창이 다시 열릴 때 그 줄이 접혀 있으면 창을 닫은 뒤 포커스를 돌려줄 알약이 숨어 있다
+ */
+export function linkedSheetOpen(sheetKey: string): boolean {
+  return teamInHistory(window.history.state, sheetKey) !== null;
+}
+
 /** 지금 화면에 그려진 요소인가(휴대폰 알약·PC 막대 중 숨긴 쪽 버튼은 아니다) */
 function isShown(el: Element | null | undefined): el is HTMLElement {
   return el instanceof HTMLElement && el.isConnected && el.getClientRects().length > 0;
