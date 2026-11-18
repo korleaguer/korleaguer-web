@@ -200,8 +200,7 @@ export default function NewsSearch({
   const hasTopics = shownTopics.length > 0;
   // 휴대폰에서 입력칸은 '검색' 버튼으로 열었을 때만 보인다. 자주 나온 말이 없는 선수도 줄 맨 앞 같은 버튼으로 연다(예전에는
   // 그 선수만 같은 자리에 입력칸이 대신 나와 선수에 따라 조작이 달랐다, 운영 5명 중 2명, 사용자 결정 11-17).
-  // 버튼 줄과 입력칸은 같은 높이(44px)라 열고 닫아도 아래 목록이 움직이지 않는다
-  const inputOnPhone = open;
+  // 버튼 줄과 입력칸은 같은 높이(44px)라 열고 닫아도 아래 목록이 움직이지 않는다(open이면 입력 줄, 아니면 알약 줄)
   // 휴대폰에서 연 입력칸이 비어 있으면 그 밑에 자주 나온 말(누르면 그 말로 찾고 줄로 돌아간다). PC는 줄이 늘 보인다
   const showTopicsUnderInput = open && focused && value.trim() === "" && hasTopics;
   // 요약·본문은 찾지 않아 '제목'을 늘 적는다(선수를 고른 때도 빠지지 않게). 입력칸 이름(화면 낭독기)으로도 같은 말을 써서
@@ -222,7 +221,7 @@ export default function NewsSearch({
           if (open && value.trim() === (requested.current ?? "")) setOpen(false);
         }}
       >
-        <div className={inputOnPhone ? "flex items-center gap-1" : "hidden lg:flex"}>
+        <div className={open ? "flex items-center gap-1" : "hidden lg:flex"}>
           <form
             role="search"
             onSubmit={(e) => {
@@ -323,7 +322,7 @@ export default function NewsSearch({
           // 자주 나온 말이 없으면 '검색' 버튼(과 직접 친 말)뿐이라 '자주 나온 말' 목록 이름을 달지 않는다
           aria-labelledby={hasTopics ? topicsLabelId : undefined}
           // 휴대폰: 화면 양끝까지 밀어 볼 수 있게 main의 좌우 여백만큼 넓힌다(선수 알약 줄과 같다). PC: 이름표 옆에 여러 줄로
-          className={`${inputOnPhone ? "hidden" : "flex"} no-scrollbar -mx-3 items-center gap-1.5 overflow-x-auto overflow-y-hidden px-3 py-[max(0.25rem,calc(22px-1.125rem))] sm:-mx-6 sm:px-6 lg:mx-0 lg:flex lg:min-w-0 lg:flex-1 lg:flex-wrap lg:overflow-visible lg:px-0 lg:py-0`}
+          className={`${open ? "hidden" : "flex"} no-scrollbar -mx-3 items-center gap-1.5 overflow-x-auto overflow-y-hidden px-3 py-[max(0.25rem,calc(22px-1.125rem))] sm:-mx-6 sm:px-6 lg:mx-0 lg:flex lg:min-w-0 lg:flex-1 lg:flex-wrap lg:overflow-visible lg:px-0 lg:py-0`}
         >
           <li className="shrink-0 lg:hidden">
             <button
