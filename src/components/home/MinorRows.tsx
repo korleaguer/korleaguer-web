@@ -13,7 +13,7 @@ export function MinorRowLabel({ nameKo }: { nameKo: string }) {
 }
 
 /**
- * 표 안 묶음의 제목 줄(띠): '마이너에서만 뛴 선수'(이슈 #88), 순위 대상 아래 묶음 '타석이 적거나 주로 마이너에서 뛴 선수'
+ * 표 안 묶음의 제목 줄(띠): '마이너에서만 뛴 선수'(투수 표는 '마이너에서만 던진 투수', 이슈 #88), 순위 대상 아래 묶음 '타석이 적거나 주로 마이너에서 뛴 선수'
  * (이슈 #277). 표 전체 너비를 차지하고, 표를 가로로 밀어도 글자는 왼쪽에 붙어 있다. 화면 낭독기에는 묶음 제목으로 읽힌다.
  */
 export function GroupHeader({ colSpan, label }: { colSpan: number; label: string }) {

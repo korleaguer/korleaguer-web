@@ -13,7 +13,7 @@ const COLUMNS = 7;
  * 투수 시즌 성적 표(이슈 #88). 메이저 줄(pitchers) 바로 밑에 같은 투수의 마이너 기록(minors) 줄을 붙이고,
  * 마이너에서만 뛴 투수는 맨 아래 따로 묶는다.
  * 줄은 세 묶음이고 묶음마다 평균자책점 낮은 순이다(표 위 이름표 '평균자책점 순', 이슈 #277): 순위 대상(올해 주로 메이저 +
- * 이닝 기준을 채움) → 띠 '이닝이 적거나 주로 마이너에서 던진 투수' → 띠 '마이너에서만 뛴 선수'. 타자 표와 같은 규칙이다.
+ * 이닝 기준을 채움) → 띠 '이닝이 적거나 주로 마이너에서 던진 투수' → 띠 '마이너에서만 던진 투수'. 타자 표와 같은 규칙이다(띠 말은 같은 표 안에서 '던진 투수'로 맞춘다).
  * 메이저 줄은 열마다 가장 좋은 값을 굵게 표시한다(평균자책점은 순위 기준(최소 이닝)을 채운 투수 중에서만).
  * 마이너 줄은 단계가 섞여 1위를 표시하지 않고, 팀 칸에 단계를 붙인다.
  */
@@ -105,7 +105,7 @@ export default function PitcherTable({
       {rest.map(pairBody)}
       {minorsOnlyByEra.length > 0 && (
         <tbody className="divide-y divide-line">
-          <GroupHeader colSpan={COLUMNS} label="마이너에서만 뛴 선수" />
+          <GroupHeader colSpan={COLUMNS} label="마이너에서만 던진 투수" />
           {minorsOnlyByEra.map((p) => (
             <tr key={p.playerId} data-href={`/players/${p.playerId}`} className={ROW_LINK}>
               {nameCell(p)}
