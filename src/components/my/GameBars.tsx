@@ -313,29 +313,33 @@ export default function GameBars({ slots, role, days, minors = false, name }: Pr
       </p>
 
       <div className="mt-3 flow-root rounded-xl bg-surface-2 px-3 py-2.5">
-        {/* 이전·다음 경기 버튼(44px). 막대 한 칸이 14일 약 18px·30일 약 8px라 손가락이 2~5칸을 덮어서, 한 경기씩 정확히 옮기는 길을 둔다.
-            바뀌는 글(aria-live) 밖에 두고, 오른쪽에 띄워(float) 머리 줄만 좁힌다(기록 한 줄은 칸 폭을 다 쓴다).
-            위아래 음수 여백(0.68rem - 22px)으로 버튼 가운데를 머리 줄 가운데에 맞추고 머리 줄 높이만큼만 차지한다(큰 글씨에서도) */}
-        {current && gameCount > 1 && (
-          <span className="float-right -mr-3 my-[calc(0.68rem_-_22px)] ml-1 flex">
-            <StepButton dir="prev" label={`${name ? `${name} ` : ""}이전 경기`} target={prevGame} onStep={pick} />
-            <StepButton dir="next" label={`${name ? `${name} ` : ""}다음 경기`} target={nextGame} onStep={pick} />
-          </span>
+        {current && (
+          <>
+            {/* 보이는 머리 줄. 화면 낭독기는 아래 바뀌는 글(aria-live) 안의 같은 줄을 읽어서 여기서는 감춘다.
+                버튼보다 앞에 둬서 칸 폭을 다 쓴다(점수·결과가 한 줄에 남고 결과 알약이 칸 오른쪽 끝에 붙는다) */}
+            <p aria-hidden className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-meta text-muted">
+              <GameHead line={current} />
+            </p>
+            {/* 이전·다음 경기 버튼(44px). 막대 한 칸이 14일 약 18px·30일 약 8px라 손가락이 2~5칸을 덮어서, 한 경기씩 정확히 옮기는 길을 둔다.
+                바뀌는 글(aria-live) 밖에 두고, 기록 한 줄 오른쪽에 띄운다(float). 머리 줄 오른쪽에 띄우면 flex인 머리 줄 전체가 버튼 폭(약 80px)만큼
+                좁아져, 운영 30일 97경기 중 375px에서 63경기·PC 세 칸에서 74경기의 머리 줄이 두 줄로 내려가고 결과 알약이 칸 끝에서 떨어졌다(11-18 검토).
+                기록 한 줄은 첫 줄만 좁아진다(같은 97경기 중 그 때문에 두 줄이 되는 것은 375px 1경기·PC 3경기). 보통 크기에서는 머리 줄이 늘 한 줄이라
+                버튼 자리가 경기마다 흔들리지 않는다. 위 음수 여백(0.8rem - 22px)은 버튼 가운데를 기록 한 줄 가운데(머리 줄 아래 0.125rem + 한 줄
+                1.36rem의 절반)에 맞추고, 아래 음수 여백(0.68rem - 22px)은 버튼이 그 한 줄 높이만큼만 차지하게 한다(큰 글씨에서도) */}
+            {gameCount > 1 && (
+              <span className="float-right -mr-3 mb-[calc(0.68rem_-_22px)] ml-1 mt-[calc(0.8rem_-_22px)] flex">
+                <StepButton dir="prev" label={`${name ? `${name} ` : ""}이전 경기`} target={prevGame} onStep={pick} />
+                <StepButton dir="next" label={`${name ? `${name} ` : ""}다음 경기`} target={nextGame} onStep={pick} />
+              </span>
+            )}
+          </>
         )}
-        {/* 고른 경기 한 줄. 막대나 버튼으로 바꾸면 화면 낭독기가 새 줄을 읽는다 */}
+        {/* 고른 경기. 막대나 버튼으로 바꾸면 화면 낭독기가 새 줄을 읽는다(머리 줄은 위 보이는 줄과 같은 내용을 낭독기에만) */}
         <div aria-live="polite">
           {current ? (
             <>
-              {/* 카드가 좁고 상대 팀 이름이 길면(시카고 화이트삭스, 마이너 팀 영어 이름) 점수·결과를 다음 줄로 넘긴다 */}
-              <p className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-meta text-muted">
-                <span className="whitespace-nowrap tabular-nums">{`${formatShortDate(current.startTimeKst)}(${formatWeekday(current.startTimeKst)})`}</span>
-                <span>{`vs ${current.opponentKo}`}</span>
-                {formatLineup(current) && <span>{`· ${formatLineup(current)}`}</span>}
-                {/* 점수와 승패는 한 묶음으로 넘어가고, 남은 너비를 채워 승패를 오른쪽 끝에 둔다 */}
-                <span className="flex grow items-center gap-1.5">
-                  <ScoreText line={current} className="text-summary font-bold text-foreground" />
-                  <ResultPill result={current.result} className="ml-auto" />
-                </span>
+              <p className="sr-only flex">
+                <GameHead line={current} />
               </p>
               <p
                 className={`mt-0.5 text-summary text-pretty ${current.played ? "" : "font-medium text-muted"}`}
@@ -350,6 +354,26 @@ export default function GameBars({ slots, role, days, minors = false, name }: Pr
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * 고른 경기 머리 줄 조각: '9.21(월) vs 샌프란시스코 · 선발 4 - 2 승'. 보이는 줄과 화면 낭독기용 줄이 같이 쓴다(flex 줄 안에 둔다).
+ * 카드가 좁고 상대 팀 이름이 길면(시카고 화이트삭스, 마이너 팀 영어 이름) 점수·결과를 다음 줄로 넘긴다
+ */
+function GameHead({ line }: { line: GameLine }) {
+  const lineup = formatLineup(line);
+  return (
+    <>
+      <span className="whitespace-nowrap tabular-nums">{`${formatShortDate(line.startTimeKst)}(${formatWeekday(line.startTimeKst)})`}</span>
+      <span>{`vs ${line.opponentKo}`}</span>
+      {lineup && <span>{`· ${lineup}`}</span>}
+      {/* 점수와 승패는 한 묶음으로 넘어가고, 남은 너비를 채워 승패를 오른쪽 끝에 둔다 */}
+      <span className="flex grow items-center gap-1.5">
+        <ScoreText line={line} className="text-summary font-bold text-foreground" />
+        <ResultPill result={line.result} className="ml-auto" />
+      </span>
+    </>
   );
 }
 
