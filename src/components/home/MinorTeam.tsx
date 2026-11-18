@@ -1,7 +1,12 @@
 import TeamName from "@/components/TeamName";
 import LevelPill from "./LevelPill";
 
-/** 여러 마이너 단계를 더한 줄의 단계 이름(서버 levelKo, DESIGN.md '숫자에는 어느 리그 기록인지') */
+/**
+ * 여러 마이너 단계를 더한 줄의 단계 이름(서버 levelKo, DESIGN.md '숫자에는 어느 리그 기록인지').
+ * 서버(MinorRecords.levelKo)는 한 단계에서만 뛰었지만 그 단계를 모르는 줄(MLB api가 다섯 단계 약어 밖의 값을 준 경기)에도
+ * 같은 '마이너'를 줘서, 그런 줄도 휴대폰에서 '여러 단계'로 보인다. 11-19 운영의 '마이너' 줄(김하성 트리플A·더블A·루키,
+ * 고우석 트리플A·더블A)은 모두 진짜 여러 단계라 지금은 그런 줄이 없다. 서버가 섞임을 따로 알려 주면 그 값으로 가른다(PR #299 리뷰)
+ */
 const MIXED_LEVELS = "마이너";
 
 /**
