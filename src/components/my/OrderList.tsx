@@ -4,7 +4,11 @@ import { useLayoutEffect, useOptimistic, useRef, useState, useTransition, type K
 import { setMyPlayersOrder } from "@/app/my/actions";
 import type { PlayerSummary } from "@/lib/api";
 import { haptic } from "@/lib/app";
+import { toast, type ToastPress } from "@/lib/toast";
 import PlayerAvatar from "@/components/PlayerAvatar";
+
+/** 줄을 옮기는 버튼: 위로·아래로·손잡이(끌기·화살표) */
+type Control = "up" | "down" | "handle";
 
 interface Drag {
   id: number;
@@ -30,6 +34,7 @@ function move<T>(list: readonly T[], from: number, to: number): T[] {
  * 키보드는 손잡이에 초점을 두고 위·아래 화살표도 된다. 옮기면 쿠키 순서를 바꾸고 카드 순서가 바로 바뀐다.
  * 옮긴 뒤에도 포커스는 옮긴 줄의 같은 버튼에 남는다(줄 순서를 바꾸면 React가 DOM을 옮겨 포커스가 사라질 수 있다).
  * 줄 높이가 모두 같다고 보고(한 줄 48px) 포인터 위치로 들어갈 자리를 정한다.
+ * 저장하지 못하면 원래 순서로 돌아가고, 별 저장과 같은 알림 '저장하지 못했어요' + '다시 시도'를 띄운다(save).
  */
 export default function OrderList({ players }: { players: PlayerSummary[] }) {
   const byId = new Map(players.map((p) => [p.id, p]));
@@ -39,30 +44,80 @@ export default function OrderList({ players }: { players: PlayerSummary[] }) {
   const [drag, setDrag] = useState<Drag | null>(null);
   const [message, setMessage] = useState("");
   const listRef = useRef<HTMLOListElement>(null);
-  /** 옮긴 뒤 포커스를 돌려줄 버튼('<선수 번호>-<up|down|handle>') */
-  const refocusRef = useRef<string | null>(null);
+  /** 옮긴 뒤 포커스를 돌려줄 버튼('<선수 번호>-<up|down|handle>')과 그 버튼이 보이게 화면을 움직일지 */
+  const refocusRef = useRef<{ key: string; scroll: boolean } | null>(null);
+  // 마지막으로 그린 순서. 알림의 '다시 시도'는 저장에 실패한 때 만든 함수라 그때 값을 들고 있어서, 누르는 때의 순서는 여기서 본다
+  const savedRef = useRef(saved);
   const order = live ?? saved;
+
+  useLayoutEffect(() => {
+    savedRef.current = saved;
+  });
 
   // 줄을 옮기면 React가 DOM 줄을 다시 꽂으며 그 안의 포커스가 사라질 수 있다. 옮긴 버튼에 다시 포커스를 둔다
   useLayoutEffect(() => {
-    const key = refocusRef.current;
-    if (!key) return;
+    const target = refocusRef.current;
+    if (!target) return;
     refocusRef.current = null;
-    const el = listRef.current?.querySelector<HTMLElement>(`[data-move="${key}"]`);
-    if (el && document.activeElement !== el) el.focus();
+    const el = listRef.current?.querySelector<HTMLElement>(`[data-move="${target.key}"]`);
+    if (el && document.activeElement !== el) el.focus(target.scroll ? undefined : { preventScroll: true });
   }, [order]);
 
   const rowHeight = () => (listRef.current?.firstElementChild as HTMLElement | null)?.offsetHeight ?? 48;
   const listTop = () => listRef.current?.getBoundingClientRect().top ?? 0;
 
-  function commit(next: number[], movedId: number) {
-    const name = byId.get(movedId)?.nameKo ?? "";
-    setMessage(`${name}, ${next.length}명 중 ${next.indexOf(movedId) + 1}번째`);
-    if (next.join() === saved.join()) return;
+  /** 옮긴 순서를 알리고 저장한다. 알림의 '다시 시도'(옛 화면의 함수)도 부르므로 그린 값 대신 savedRef와 비교한다 */
+  function commit(next: number[], movedId: number, control: Control) {
+    setMessage(`${byId.get(movedId)?.nameKo ?? ""}, ${next.length}명 중 ${next.indexOf(movedId) + 1}번째`);
+    if (next.join() === savedRef.current.join()) return;
+    save(next, movedId, control);
+  }
+
+  /**
+   * 순서를 쿠키에 저장한다. 서버까지 닿지 못하거나(연결 끊김) 서버가 실패하면 서버 함수가 오류를 던진다. 잡지 않으면 화면 전체가
+   * 오류 화면(error.tsx)으로 바뀌었다(전수조사 L324). 쿠키 순서는 그대로라 이 전환이 끝나며 목록이 원래 순서로 돌아간다
+   * (useOptimistic). 별 저장과 같은 알림을 띄우고, 화면 낭독기에는 그 선수가 원래 자리로 돌아갔다고 알린다
+   * (알림 띠도 읽히지만 두 알림이 한꺼번에 오면 낭독기가 하나를 건너뛸 수 있어 목록 알림에도 실패를 넣는다)
+   */
+  function save(next: number[], movedId: number, control: Control) {
     startTransition(async () => {
       setSaved(next);
-      await setMyPlayersOrder(next);
+      const ok = await setMyPlayersOrder(next).then(
+        () => true,
+        () => false,
+      );
+      if (ok) return;
+      haptic("error");
+      // 원래 순서로 돌아가며 줄이 옮겨질 때 그 안의 포커스가 사라지지 않게, 지금 포커스가 있는 이 목록 버튼에 다시 둔다
+      const active = document.activeElement;
+      if (active instanceof HTMLElement && active.dataset.move && listRef.current?.contains(active)) {
+        refocusRef.current = { key: active.dataset.move, scroll: true };
+      }
+      setMessage(`${byId.get(movedId)?.nameKo ?? ""}, 저장하지 못해 원래 자리로 돌아갔어요`);
+      toast("저장하지 못했어요", {
+        tone: "error",
+        action: { label: "다시 시도", onClick: (press) => retry(movedId, next.indexOf(movedId), control, press) },
+      });
     });
+  }
+
+  /**
+   * 알림 '다시 시도': 못 옮긴 선수를 누르는 때의 순서에서 그 자리(to)로 다시 옮긴다. 실패한 때의 순서를 통째로 다시 보내면
+   * 그사이 옮긴 다른 줄이 되돌아간다. 그사이 내 선수에서 빠졌으면 그대로 둔다.
+   * 알림 버튼에 포커스가 있었으면(알림과 함께 사라진다) 그 줄의 같은 버튼으로 돌려준다. 키보드로 눌렀을 때만 화면을 움직인다
+   */
+  function retry(id: number, to: number, control: Control, press: ToastPress) {
+    const now = savedRef.current;
+    const from = now.indexOf(id);
+    if (from < 0) return;
+    const next = move(now, from, Math.min(to, now.length - 1));
+    if (press.focused) {
+      const key = `${id}-${control}`;
+      listRef.current?.querySelector<HTMLElement>(`[data-move="${key}"]`)?.focus(press.keyboard ? undefined : { preventScroll: true });
+      // 순서가 바뀌면 줄이 옮겨지며 포커스가 사라질 수 있어 그린 뒤 다시 둔다(이미 그 자리면 그대로라 남기지 않는다)
+      if (next.join() !== now.join()) refocusRef.current = { key, scroll: press.keyboard };
+    }
+    commit(next, id, control);
   }
 
   function onPointerDown(e: PointerEvent<HTMLButtonElement>, id: number) {
@@ -91,19 +146,19 @@ export default function OrderList({ players }: { players: PlayerSummary[] }) {
   }
 
   function onPointerEnd() {
-    if (drag && live) commit(live, drag.id);
+    if (drag && live) commit(live, drag.id, "handle");
     setDrag(null);
     setLive(null);
   }
 
   /** 한 칸 위(-1)·아래(1)로. 맨 위·맨 아래면 그대로 */
-  function moveBy(id: number, step: -1 | 1, control: "up" | "down" | "handle") {
+  function moveBy(id: number, step: -1 | 1, control: Control) {
     const from = order.indexOf(id);
     const to = from + step;
     if (to < 0 || to >= order.length) return;
-    refocusRef.current = `${id}-${control}`;
+    refocusRef.current = { key: `${id}-${control}`, scroll: true };
     haptic("select");
-    commit(move(order, from, to), id);
+    commit(move(order, from, to), id, control);
   }
 
   function onKeyDown(e: KeyboardEvent<HTMLButtonElement>, id: number) {

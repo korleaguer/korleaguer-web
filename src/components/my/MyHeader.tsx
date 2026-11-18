@@ -122,7 +122,8 @@ export default function MyHeader({ subtitle, players, selectedIds }: Props) {
 
 /** 고르기 목록 한 줄: 사진 · 이름 · 팀 · 별. 줄 전체가 버튼이다 */
 function PickerRow({ player, initialOn }: { player: PlayerSummary; initialOn: boolean }) {
-  const { on, pending, toggle } = useMyPlayerToggle(player.id, initialOn, player.nameKo);
+  // ref: 알림의 '되돌리기'·'다시 시도'를 누르면 알림과 함께 사라지는 포커스를 이 줄로 돌려받는다
+  const { on, pending, toggle, ref } = useMyPlayerToggle(player.id, initialOn, player.nameKo);
   // 팀은 카드 이름 아래 줄(metaLine)과 같게: 국내 복귀면 그 팀, FA면 '전 마지막 팀'
   const team = player.returnedKo ?? (player.freeAgent && player.teamKo ? `전 ${player.teamKo}` : player.teamKo);
   const meta = [team, player.positionKo].filter(Boolean).join(" · ");
@@ -130,6 +131,7 @@ function PickerRow({ player, initialOn }: { player: PlayerSummary; initialOn: bo
   return (
     <li>
       <button
+        ref={ref}
         type="button"
         aria-pressed={on}
         onClick={toggle}

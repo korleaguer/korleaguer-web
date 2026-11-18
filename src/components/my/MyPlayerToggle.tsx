@@ -22,7 +22,8 @@ interface Props {
  * (WAI-ARIA APG 버튼: 켜고 끄는 버튼은 이름을 바꾸지 않는다, PR #291 리뷰)
  */
 export default function MyPlayerToggle({ playerId, nameKo, initialOn, variant, className = "" }: Props) {
-  const { on, pending, toggle } = useMyPlayerToggle(playerId, initialOn, nameKo);
+  // ref: 알림의 '되돌리기'·'다시 시도'를 누르면 알림과 함께 사라지는 포커스를 이 버튼으로 돌려받는다
+  const { on, pending, toggle, ref } = useMyPlayerToggle(playerId, initialOn, nameKo);
   const label = `${nameKo} 내 선수`;
   const pillText = on ? "내 선수" : "내 선수에 넣기";
   const pillAction = on ? "내 선수에서 빼기" : "내 선수에 넣기";
@@ -32,6 +33,7 @@ export default function MyPlayerToggle({ playerId, nameKo, initialOn, variant, c
       <span className={`inline-flex flex-col items-end ${className}`}>
         {/* data-my-toggle: 내 선수 화면이 카드 별로 뺐는지 알아보는 표시(useFocusAfterRemove) */}
         <button
+          ref={ref}
           type="button"
           aria-pressed={on}
           aria-label={label}
@@ -49,6 +51,7 @@ export default function MyPlayerToggle({ playerId, nameKo, initialOn, variant, c
   return (
     <span className={`inline-flex items-center gap-2 ${className}`}>
       <button
+        ref={ref}
         type="button"
         aria-label={`${pillAction}, ${nameKo}`}
         onClick={toggle}

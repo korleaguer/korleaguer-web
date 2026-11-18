@@ -5,7 +5,19 @@ export interface ToastAction {
   label: string;
   /** 누르면 갈 주소(우리 사이트 안). 앱 안에서는 앱이 그 탭·화면을 연다 */
   href?: string;
-  onClick?: () => void;
+  /**
+   * 누르면 할 일. 알림은 누르면 사라져서 그 버튼에 있던 포커스도 사라진다(문서 처음으로 돌아간 셈이라 키보드·화면 낭독기가
+   * 자리를 잃었다). press.focused면 할 일이 닿는 곳(되돌린 별 등)으로 포커스를 옮겨 준다
+   */
+  onClick?: (press: ToastPress) => void;
+}
+
+/** 알림 버튼을 누른 방식 */
+export interface ToastPress {
+  /** 버튼이 포커스를 가진 채 눌렸다(키보드, 크롬의 마우스 누름). 사파리·iOS는 마우스·손가락으로 누른 버튼에 포커스를 주지 않는다 */
+  focused: boolean;
+  /** 키보드로 눌렀다(click의 detail 0). 그때만 포커스를 옮긴 곳이 보이게 화면을 움직인다 */
+  keyboard: boolean;
 }
 
 export interface ToastItem {

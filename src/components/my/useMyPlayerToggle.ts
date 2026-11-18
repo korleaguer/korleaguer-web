@@ -1,8 +1,9 @@
-import { useOptimistic, useTransition } from "react";
+import { useOptimistic, useRef, useTransition } from "react";
 import { setMyPlayer } from "@/app/my/actions";
 import { haptic } from "@/lib/app";
 import { withObjectParticle } from "@/lib/format";
-import { toast } from "@/lib/toast";
+import { toast, type ToastPress } from "@/lib/toast";
+import { noteStarPress } from "./useFocusAfterRemove";
 
 /** '내 선수' 목록의 한 자리(setMyPlayer가 돌려준다): 번호와 바로 앞 선수 id */
 type Slot = NonNullable<Awaited<ReturnType<typeof setMyPlayer>>>;
@@ -11,10 +12,27 @@ type Slot = NonNullable<Awaited<ReturnType<typeof setMyPlayer>>>;
  * '내 선수' 넣기·빼기. 누르는 즉시 화면이 바뀌고(optimistic), 쿠키가 바뀌면 서버가 화면을 다시 그린다.
  * 결과는 알림 띠로 알린다(토스처럼): 넣으면 '보기', 빼면 '되돌리기' 버튼. 20명이 꽉 차서 못 넣으면 원래 모양으로 돌아가고,
  * 한 명을 빼고 넣으라고 알린다(내 선수 화면이 아니면 '내 선수 정리' 버튼).
+ * 저장하지 못하면(연결 끊김·서버 오류) 원래 모양으로 돌아가고 '저장하지 못했어요' + '다시 시도'를 알린다. 예전에는 화면 전체가
+ * 오류 화면(error.tsx)으로 바뀌어 보던 화면을 잃었다(전수조사 L324).
+ * ref는 이 훅을 쓰는 버튼에 단다: 알림 버튼을 누르면 알림과 함께 사라지는 포커스를 이 버튼으로 돌려준다(refocus).
  */
 export function useMyPlayerToggle(playerId: number, initialOn: boolean, nameKo: string) {
   const [on, setOptimisticOn] = useOptimistic(initialOn);
   const [pending, startTransition] = useTransition();
+  const ref = useRef<HTMLButtonElement>(null);
+
+  /**
+   * 알림 버튼('되돌리기'·'다시 시도')을 누르면 알림이 사라지며 그 버튼에 있던 포커스도 문서 처음(body)으로 빠졌다
+   * (키보드 사용자가 자리를 잃었다, #288 뒤 점검). 그 버튼이 포커스를 가졌으면(키보드, 크롬의 마우스) 이 버튼으로 돌려준다.
+   * 내 선수 화면 카드의 별이면 카드가 빠지거나 되살아날 때 그 화면이 다시 옮긴다(useFocusAfterRemove): 카드 별로 뺀 뒤
+   * '되돌리기'면 누른 별은 카드째 사라져 없으므로 되살린 카드의 별로, '다시 시도'로 다시 빼면 옆 카드 이름으로
+   */
+  function refocus(press: ToastPress) {
+    if (!press.focused) return;
+    const button = ref.current;
+    if (button?.isConnected) button.focus(press.keyboard ? undefined : { preventScroll: true });
+    if (!button?.isConnected || button.closest("[data-player-id]")) noteStarPress(playerId, press.keyboard);
+  }
 
   /**
    * undoAt: '되돌리기'로 다시 넣는 중이면 빠지기 전 자리(번호와 바로 앞 선수). 그 선수 뒤(없으면 그 번호)에 다시 넣고,
@@ -27,8 +45,25 @@ export function useMyPlayerToggle(playerId: number, initialOn: boolean, nameKo: 
     if (!next) haptic("tap");
     startTransition(async () => {
       setOptimisticOn(next);
-      // 넣었으면 들어간 자리, 뺐으면 빠지기 전 자리. 20명이 차서 못 넣었으면 null
-      const slot = await setMyPlayer(playerId, next, undoAt);
+      // 넣었으면 들어간 자리, 뺐으면 빠지기 전 자리. 20명이 차서 못 넣었으면 null.
+      // undefined면 서버까지 닿지 못했거나(연결 끊김) 서버가 실패했다(서버 함수가 오류를 던진다)
+      const slot = await setMyPlayer(playerId, next, undoAt).catch(() => undefined);
+      if (slot === undefined) {
+        // 쿠키는 그대로라 별은 이 전환이 끝나며 원래 모양으로 돌아간다(useOptimistic).
+        // 같은 일(되돌리기였으면 그 자리로 다시 넣기)을 한 번 더 하는 버튼을 둔다
+        haptic("error");
+        toast("저장하지 못했어요", {
+          tone: "error",
+          action: {
+            label: "다시 시도",
+            onClick: (press) => {
+              refocus(press);
+              set(next, undoAt);
+            },
+          },
+        });
+        return;
+      }
       const ok = slot != null;
       if (next) haptic(ok ? "success" : "error");
       // 이미 내 선수 화면이면 그 화면으로 가는 버튼('보기'·'내 선수 정리')은 필요 없다(누르는 때의 주소로 판단해 훅이 주소를 구독하지 않게)
@@ -48,10 +83,18 @@ export function useMyPlayerToggle(playerId: number, initialOn: boolean, nameKo: 
           action: undo || onMyPage ? undefined : { label: "보기", href: "/my" },
         });
       } else {
-        toast(`${name} 내 선수에서 뺐어요`, { action: { label: "되돌리기", onClick: () => set(true, slot) } });
+        toast(`${name} 내 선수에서 뺐어요`, {
+          action: {
+            label: "되돌리기",
+            onClick: (press) => {
+              refocus(press);
+              set(true, slot);
+            },
+          },
+        });
       }
     });
   }
 
-  return { on, pending, toggle: () => set(!on) };
+  return { on, pending, toggle: () => set(!on), ref };
 }

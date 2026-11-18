@@ -4,7 +4,7 @@
 // 토스(TDS Toast)처럼: 머리글 바로 아래에 떴다가 3초(버튼이 있으면 10초) 뒤 사라지고, 위로 밀면 바로 치워진다.
 // 앱(웹뷰) 안에서는 아래 네이티브 탭 막대가 화면 아래를 덮고 있어서 위쪽에 둔다.
 import Link from "next/link";
-import { useEffect, useRef, useState, useSyncExternalStore, type PointerEvent } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type MouseEvent, type PointerEvent } from "react";
 import { currentToast, dismissToast, subscribeToast, type ToastItem } from "@/lib/toast";
 
 const SHOW_MS = 3000;
@@ -58,8 +58,13 @@ export default function Toaster() {
 
   const toastItem = shown?.item;
   return (
-    // 화면 낭독기가 새 알림을 읽도록 자리는 늘 둔다
-    <div role="status" aria-live="polite" className="pointer-events-none fixed inset-x-0 top-16 z-50 flex justify-center px-3">
+    // 화면 낭독기가 새 알림을 읽도록 자리는 늘 둔다. data-toast: 포커스가 아직 사라지는 알림 안에 있는지 알아볼 때 쓴다(useFocusAfterRemove)
+    <div
+      role="status"
+      aria-live="polite"
+      data-toast
+      className="pointer-events-none fixed inset-x-0 top-16 z-50 flex justify-center px-3"
+    >
       {toastItem && (
         <div
           key={toastItem.id}
@@ -88,8 +93,9 @@ function ActionButton({ item }: { item: ToastItem }) {
   // 키보드로 옮겨 와도 잘 안 보였다(WCAG 1.4.11 3:1, 전수조사). 밝은 파랑은 라이트 7.78:1 · 다크 5.98:1
   const className =
     "press tap-target shrink-0 rounded-lg px-2 py-1 text-button text-toast-action focus-visible:outline-toast-action";
-  const onClick = () => {
-    action.onClick?.();
+  // 누를 때 이 버튼에 포커스가 있었는지 함께 넘긴다. 알림이 사라지면 그 포커스도 사라지니 할 일 쪽이 옮길 곳을 정한다
+  const onClick = (e: MouseEvent<HTMLElement>) => {
+    action.onClick?.({ focused: document.activeElement === e.currentTarget, keyboard: e.detail === 0 });
     dismissToast(item.id);
   };
   return action.href ? (
