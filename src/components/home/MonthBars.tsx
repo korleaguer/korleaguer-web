@@ -141,7 +141,8 @@ function MonthColumn({ m, pitcher }: { m: SeasonMonth; pitcher: boolean }) {
       ? `${m.month}월 ${where} ${m.games}등판 ERA+ ${v}, 평균자책점 ${formatEra(m.era)}${hot}`
       : `${m.month}월 ${where} ${m.games}경기 wRC+ ${v}${hot}`
     : `${m.month}월 ${m.kind === "NONE" ? "기록 없음" : value}`;
-  const tone = m.hot
+  // 주황은 기록 있는 달만: 안내 '주황 = 아주 잘한 달'(anyHot)과 낭독(hot)도 같은 조건이다
+  const tone = has && m.hot
     ? "text-hot-ink"
     : m.kind === "INJURED"
       ? "text-foreground"
