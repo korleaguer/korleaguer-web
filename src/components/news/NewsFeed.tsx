@@ -52,7 +52,7 @@ export default function NewsFeed({
   const listRef = useRef<HTMLDivElement>(null);
   const moreRef = useRef<HTMLButtonElement>(null);
   // 마지막 쪽을 받으면 '기사 더 보기'가 사라져 그 버튼에 있던 포커스가 갈 곳을 잃는다(키보드·화면 낭독기가 문서 처음으로
-  // 돌아갔다). 그때 새로 붙은 첫 기사로 옮기려고, 받기 전 줄 수를 적어 둔다(다음 그림 뒤에 옮긴다)
+  // 돌아갔다). 그때 새로 붙은 첫 기사로 옮기려고, 그 줄 자리를 적어 둔다(다음 그림 뒤에 옮긴다)
   const focusRowAt = useRef<number | null>(null);
   useEffect(() => {
     const at = focusRowAt.current;
@@ -71,7 +71,6 @@ export default function NewsFeed({
 
   function load() {
     if (!next || pending) return;
-    const shownCount = rows.length;
     startTransition(async () => {
       const result = await loadMoreNews(player, next, query);
       if (!result.ok) {
@@ -79,8 +78,13 @@ export default function NewsFeed({
         return;
       }
       setFailed(false);
-      if (result.next === null && document.activeElement === moreRef.current) focusRowAt.current = shownCount;
-      setRows((shown) => merge(shown, result.items));
+      const focusNew = result.next === null && document.activeElement === moreRef.current;
+      setRows((shown) => {
+        // 새로 붙는 첫 줄 자리는 받은 쪽을 붙일 때의 줄 수다. 받기 전에 세어 두면, 받는 사이 앱 복귀 새로 고침이 맨 위에
+        // 새 기사를 더했을 때 그만큼 앞의 옛 기사로 포커스가 갔다(리뷰 지적)
+        if (focusNew) focusRowAt.current = shown.length;
+        return merge(shown, result.items);
+      });
       setNext(result.next);
     });
   }
