@@ -6,7 +6,11 @@
  *   (창 'error' 이벤트, 콘솔 'Uncaught InvalidStateError')
  * - 첫 화면을 받으며 늦게 온 내용을 드러낼 때: React 스트리밍 스크립트가 전환의 ready에 finally만 걸어 거절이 처리되지 않는다
  *   ('unhandledrejection', 콘솔 'Uncaught (in promise)')
- * 숨은 문서 때문에 건너뛴 전환의 오류만 거르고 다른 오류는 그대로 둔다. 스트리밍 스크립트보다 먼저 들어야 해서 head 안 인라인 스크립트다
+ * 숨은 문서 때문에 건너뛴 전환의 오류만 거르고 다른 오류는 그대로 둔다. 스트리밍 스크립트보다 먼저 들어야 해서 head 안 인라인 스크립트다.
+ * preventDefault는 콘솔 줄을, stopImmediatePropagation은 뒤에 붙는 창 리스너를 막는다. 개발 오버레이(Next 16 next-devtools
+ * use-error-handler)는 defaultPrevented를 보지 않아 뒤쪽이 있어야 뜨지 않는다. 운영의 다른 창 리스너는 Next 리다이렉트 처리
+ * (리다이렉트 오류만 다룬다)뿐이라 지금 막히는 것은 없고, 나중에 붙일 오류 수집 도구도 이 소음은 받지 않게 일부러 둔다.
+ * 크롬이 문구를 또 바꾸면 다시 콘솔에 찍힌다(동작은 그대로)
  */
 const SCRIPT = `(function () {
   var hidden = /^(Transition was aborted because of invalid state\\. Document hidden|View transition was skipped because document visibility state is hidden|Skipping view transition because document visibility state has become hidden)/;
