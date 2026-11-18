@@ -519,11 +519,12 @@
     }
 
     /*
-     * 달별 막대가 200을 넘어 잘린 끝의 꺾임 띠(MonthBars): 막대 안에 있어 막대의 forced-color-adjust: none을 물려받아
-     * 카드 색(--surface) 그대로 남는다. 그러면 다시 칠한 막대(CanvasText)와 같은 색이 될 수 있어(흰 카드 + 어두운 고대비면
-     * 둘 다 흰색) 늘 막대와 대비되는 바탕색(Canvas)으로 끊는다
+     * 달별 막대가 200을 넘어 잘린 끝의 꺾임 표시(MonthBars: 카드 색 틈 + 위아래 흐린 글자색 선): 막대 안에 있어 막대의
+     * forced-color-adjust: none을 물려받아 평소 색 그대로 남는다. 그러면 다시 칠한 막대(CanvasText)와 같은 색이 될 수 있어
+     * (흰 카드 + 어두운 고대비면 둘 다 흰색) 틈·선 모두 늘 막대와 대비되는 바탕색(Canvas)으로 끊는다
      */
     [data-bar-break] {
+      background: Canvas !important;
       border-color: Canvas !important;
     }
 

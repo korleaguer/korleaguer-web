@@ -77,8 +77,8 @@ function plusText(v: number): string {
  * - 경기가 적은 달(서버 few: 타자 10경기·투수 5등판 미만)은 막대·숫자를 옅게 해 4경기 wRC+ 249가 시즌 최고 달처럼 보이지 않게 한다.
  * - 아주 잘한 달(서버 hot: wRC+ 130·ERA+ 143 이상)만 숫자를 주황으로(The Hot Is Earned Rule). 그런 달이 있으면 안내 줄에
  *   주황 글자 '주황 = 아주 잘한 달'을 두고 낭독에도 ', 아주 잘한 달'을 붙인다(전수조사 L295, 범례에 없으면 주황의 뜻을 알 수 없었다).
- * - 200을 넘는 달은 막대가 꽉 차서 200과 같아 보인다. 그 막대 위 끝에 카드 바탕색 사선 띠 두 줄(꺾임 표시)을 두고, 안내 줄에
- *   '꺾인 막대는 200 넘음'(전수조사 L302). 점선 기준으로 위아래로 뻗는 막대는 바닥에서 키우는 막대(11-16 'B 보완')와 부딪혀 쓰지 않는다.
+ * - 200을 넘는 달은 막대가 꽉 차서 200과 같아 보인다. 그 막대 위 끝을 카드 색 사선 틈(위아래 흐린 글자색 선)으로 끊고(꺾임 표시),
+ *   안내 줄에 '꺾인 막대는 200 넘음'(전수조사 L302). 점선 기준으로 위아래로 뻗는 막대는 바닥에서 키우는 막대(11-16 'B 보완')와 부딪혀 쓰지 않는다.
  * 화면 읽기 프로그램에는 달마다 '4월 메이저 31경기 wRC+ 118' 한 줄씩 읽힌다(막대·숫자 칸은 숨긴다).
  */
 export default function MonthBars({ months, pitcher }: { months: SeasonMonth[]; pitcher: boolean }) {
@@ -159,20 +159,22 @@ function MonthColumn({ m, pitcher }: { m: SeasonMonth; pitcher: boolean }) {
       <span aria-hidden className="relative flex h-11 w-full items-end px-[9px]">
         <span className="absolute inset-x-0 bottom-[calc(50%-1px)] border-t-2 border-dashed" style={{ borderColor: AVERAGE_LINE }} />
         <span
-          // 경기 적은 달은 옅은 색(barFill)
-          className={`relative w-full ${has ? "rounded-t-[5px] rounded-b-[2px]" : "rounded-full"}`}
+          // 경기 적은 달은 옅은 색(barFill). overflow-hidden: 꺾임 표시를 막대 모양(둥근 위 끝) 안으로 자른다
+          className={`relative w-full overflow-hidden ${has ? "rounded-t-[5px] rounded-b-[2px]" : "rounded-full"}`}
           style={{ height, background: barFill(m, has, 5) }}
           // 고대비 모드(Windows)에서는 바탕색이 지워져 막대가 사라진다. 시스템 색으로 다시 칠할 표시(globals.css).
           // 메이저는 글자색, 마이너·기록 없는 달의 바닥 줄은 흐린 색
           data-bar={has && m.kind === "MLB" ? "" : "dim"}
         >
-          {/* 200을 넘어 잘린 막대: 위 끝을 카드 바탕색 사선 띠 두 줄로 끊는다(꺾임 표시, 전수조사 L302). 마이너 빗금(45°)과
-              헷갈리지 않게 기울기를 낮게 두고 굵게 그린다. 고대비 모드에서는 바탕색(Canvas)으로(globals.css) */}
+          {/* 200을 넘어 잘린 막대: 위 끝을 카드 색 사선 틈(4px)으로 끊고 틈 위아래에 흐린 글자색 1px 선을 긋는다(꺾임 표시,
+              전수조사 L302). 카드 색만으로 끊으면 옅은 막대(경기 적은 달·마이너)와 대비가 1.4~2.1:1이라 안 보였다(PR #299 리뷰).
+              선은 그런 막대와, 틈은 꽉 찬 파란 막대와 3:1 이상이라(라이트·다크) 어느 막대에서나 둘 중 하나는 보인다.
+              마이너 빗금(45°)과 헷갈리지 않게 기울기는 낮게 둔다. 고대비 모드에서는 틈·선 모두 바탕색(Canvas)으로(globals.css) */}
           {capped(m, pitcher) && (
             <span
               data-bar-break
-              className="absolute inset-x-[-1px] top-[5px] h-[8px] -skew-y-[12deg] border-y-[2.5px]"
-              style={{ borderColor: "var(--surface)" }}
+              className="absolute inset-x-[-1px] top-[5px] h-[6px] -skew-y-[12deg] border-y"
+              style={{ background: "var(--surface)", borderColor: "var(--muted)" }}
             />
           )}
         </span>
