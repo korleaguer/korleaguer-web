@@ -23,9 +23,21 @@ export const TREND_MIN_PA = 50;
 /**
  * 경기(최신부터)를 누적 wRC+ 점(오래된 것부터)으로. 마지막 점은 seasonWrc(MLB 공식 값)와 같게 전체를 옮긴다.
  * 경기별 세부 칸(2루타·타석 등)이 없는 경기는 건너뛰고, 그런 경기가 2할을 넘거나(옛 데이터) 점이 10개 미만이면 null(그리지 않는다).
+ *
+ * regularGames: 이 시즌 정규시즌에 뛴 경기 수(선수 응답 hitting.games). 주면 뛴 경기를 앞에서부터 그만큼만 쓴다.
+ * 경기 목록에는 포스트시즌도 표시 없이 섞여 와서(김하성 9.30~10.7, 김혜성 10.8), 그대로 쌓으면 포스트시즌까지 더한 마지막 점을
+ * 정규시즌 공식 값에 맞춰 선 전체가 어긋났다. 포스트시즌은 정규시즌이 끝난 뒤라 앞에서부터 세면 된다.
+ * 이 수는 MLB 시즌 기록의 G를 따로 받아 온 값이 아니라, 서버가 이 경기 목록과 같은 출전 기록(appearance)에서 정규시즌 것만 센
+ * 수다(목록의 played도 그 경기 출전 기록이 있다는 뜻). 그래서 동기화가 늦어 한 경기가 빠지면 두 쪽에서 함께 빠져 1:1이 깨지지
+ * 않는다(2026 타자 5명 모두 자른 앞부분의 타석·타수·안타 합이 시즌 합계와 같다). 서버가 이 수를 다른 곳에서 받게 바뀌면 이
+ * 자르기도 바꿔야 한다.
+ * 날짜로 거르려 해도 웹에는 정규시즌 끝 날짜가 없고, 끝난 뒤 치르는 보충 경기(2024 메츠·브레이브스 9.30)도 정규시즌이다.
+ * 서버가 경기마다 정규·포스트시즌을 알려 주면(gameType) 그것으로 바꾼다. 모르면(null) 지금처럼 다 쓴다.
  */
-export function buildWrcTrend(games: GameLine[], seasonWrc: number): TrendPoint[] | null {
-  const batted = games.filter((g) => g.played && g.batting).reverse();
+export function buildWrcTrend(games: GameLine[], seasonWrc: number, regularGames: number | null = null): TrendPoint[] | null {
+  const appeared = games.filter((g) => g.played).reverse();
+  const regular = regularGames == null ? appeared : appeared.slice(0, regularGames);
+  const batted = regular.filter((g) => g.batting);
   // MLB가 세부 칸을 안 준 경기는 건너뛴다. 대부분 없으면(옛 데이터) 그리지 않는다
   const played = batted.filter((g) => g.batting!.plateAppearances != null && g.batting!.doubles != null);
   if (played.length < batted.length * 0.8) return null;
