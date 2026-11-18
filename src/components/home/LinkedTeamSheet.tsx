@@ -54,8 +54,9 @@ export default function LinkedTeamSheet({
     };
   }, []);
 
-  // 아래로 끌어 닫기(휴대폰 손잡이·머리 줄). 놓으면 미끄러져 닫히거나 제자리로 돌아온다(경기 상세 창과 같은 훅)
-  const { onDragStart, onDragMove, onDragEnd } = useSheetDrag(panelRef, onClose);
+  // 아래로 끌어 닫기(휴대폰 손잡이·머리 줄). 놓으면 미끄러져 닫히거나 제자리로 돌아온다(경기 상세 창과 같은 훅).
+  // 다른 닫기도 훅의 close로 부른다: 미끄러지는 중에 닫으면 훅이 타이머를 치워 뒤로 가기가 한 번만 일어난다
+  const { onDragStart, onDragMove, onDragEnd, close } = useSheetDrag(panelRef, onClose);
 
   const titleId = `linked-team-${team.abbreviation}`;
   return createPortal(
@@ -64,10 +65,10 @@ export default function LinkedTeamSheet({
       aria-labelledby={titleId}
       onCancel={(e) => {
         e.preventDefault();
-        onClose();
+        close();
       }}
       onClick={(e) => {
-        if (e.target === dialogRef.current) onClose();
+        if (e.target === dialogRef.current) close();
       }}
       className="fixed inset-0 m-0 h-full max-h-none w-full max-w-none border-0 bg-black/45 p-0 text-foreground open:flex open:items-end open:justify-center sm:open:items-center"
     >
@@ -108,7 +109,7 @@ export default function LinkedTeamSheet({
             <button
               type="button"
               aria-label="닫기"
-              onClick={onClose}
+              onClick={close}
               className="press grid size-[44px] shrink-0 place-items-center rounded-full text-muted hover:bg-surface-2"
             >
               <svg aria-hidden viewBox="0 0 16 16" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
