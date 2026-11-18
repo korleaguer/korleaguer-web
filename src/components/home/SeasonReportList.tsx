@@ -64,14 +64,20 @@ export default function SeasonReportList({
   entries,
   reports,
   myIds,
+  eagerPhotos = 0,
 }: {
   entries: MyPlayer[];
   reports: SeasonReport[];
   myIds: number[];
+  /**
+   * 사진을 바로 받을(eager) 앞 줄 수. 이 목록이 홈 맨 위일 때(MLB 도전 카드가 없을 때) 첫 화면 안 줄만(전수조사 L270).
+   * 기본 0: 모두 화면에 다가올 때 받는다(lazy)
+   */
+  eagerPhotos?: number;
 }) {
   const byId = new Map(reports.map((r) => [r.playerId, r]));
-  const rows = entries.map((entry) =>
-    buildRow(entry, byId.get(entry.player.id) ?? null, myIds.includes(entry.player.id)),
+  const rows = entries.map((entry, i) =>
+    buildRow(entry, byId.get(entry.player.id) ?? null, myIds.includes(entry.player.id), i < eagerPhotos),
   );
   const bars = barsGuide(entries, byId);
   return (
@@ -100,7 +106,7 @@ function barsGuide(entries: MyPlayer[], byId: Map<number, SeasonReport>): string
   return `막대 = ${Math.min(...months)}~${Math.max(...months)}월 달마다 ${stat}`;
 }
 
-function buildRow(entry: MyPlayer, report: SeasonReport | null, isMine: boolean): ReportRow {
+function buildRow(entry: MyPlayer, report: SeasonReport | null, isMine: boolean, eagerPhoto: boolean): ReportRow {
   const { player } = entry;
   const pitcher = player.role === "PITCHER";
   // 성적표는 모두 끝난 시즌이라 '시즌 끝'은 쓰지 않는다(사용자 11-13 시안 C). FA·국내 복귀 등은 그대로
@@ -233,7 +239,9 @@ function buildRow(entry: MyPlayer, report: SeasonReport | null, isMine: boolean)
 
   return {
     id: player.id,
-    photo: <PlayerAvatar size={44} nameKo={player.nameKo} photoUrl={player.photoUrl} teamAbbr={player.teamAbbr} />,
+    photo: (
+      <PlayerAvatar size={44} nameKo={player.nameKo} photoUrl={player.photoUrl} teamAbbr={player.teamAbbr} eager={eagerPhoto} />
+    ),
     head,
     spark: months.length > 0 ? <MonthSpark months={months} pitcher={pitcher} /> : null,
     second,

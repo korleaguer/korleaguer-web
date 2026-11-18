@@ -362,8 +362,8 @@ function PlayerHead({ player: p }: { player: PostingPlayer }) {
     <>
       <div className="-mt-9 flex items-start gap-3">
         <span className="relative z-10 shrink-0 rounded-full ring-4 ring-surface">
-          {/* 비시즌 홈 첫 화면 사진이라 바로 받는다(eager) */}
-          <KboAvatar nameKo={p.nameKo} photoUrl={p.photoUrl} size={76} eager />
+          {/* 비시즌 홈 첫 화면 사진이라 바로 받고(eager), 첫 화면에서 가장 큰 사진이라 다른 사진보다 먼저 받는다(high) */}
+          <KboAvatar nameKo={p.nameKo} photoUrl={p.photoUrl} size={76} eager fetchPriority="high" />
         </span>
         {/* 이름·한 줄은 띠 아래에서 시작한다(띠에 걸친 사진 높이 36px + 여백) */}
         <div className="min-w-0 pt-[2.75rem]">

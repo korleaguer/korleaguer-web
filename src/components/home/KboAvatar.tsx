@@ -9,17 +9,20 @@ import { useImageFailed } from "@/lib/useImageFailed";
  * 사진이 없거나 안 뜨면 회색 원 + 이름 첫 글자. size는 지름(px), 기본 52.
  * eager: 첫 화면 안 사진(비시즌 홈 맨 위 MLB 도전 카드 머리)은 바로 받는다. lazy면 화면 배치를 마친 뒤에야 받기 시작해
  * 첫 화면 사진이 늦게 뜬다(web.dev 'lazy loading', 이슈 #277). 그 밖(뉴스 선수 고르기 등)은 lazy 그대로
+ * fetchPriority: 첫 화면에서 가장 큰 사진(MLB 도전 카드 76px 머리)은 "high"로 다른 사진보다 먼저 받는다(전수조사 L270)
  */
 export default function KboAvatar({
   nameKo,
   photoUrl,
   size = 52,
   eager = false,
+  fetchPriority,
 }: {
   nameKo: string;
   photoUrl: string | null;
   size?: number;
   eager?: boolean;
+  fetchPriority?: "high" | "low";
 }) {
   const { failed, ref, onError } = useImageFailed(photoUrl);
   // 56px 이하 원은 화면 배율에 맞춰 줄인 사진(lib/photo). KBO 사진(94px)은 그보다 키우지 않는다
@@ -41,6 +44,7 @@ export default function KboAvatar({
           onError={onError}
           className="size-full object-cover object-top"
           loading={eager ? "eager" : "lazy"}
+          fetchPriority={fetchPriority}
           referrerPolicy="no-referrer"
         />
       ) : (
