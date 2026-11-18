@@ -33,10 +33,11 @@ export function sampleLabel(season: LevelSeason<HitterSeason | PitcherSeason>, p
 }
 
 /**
- * 이보다 적으면 표본이 적어 '참고용'이다: 타자 100타석, 투수 30이닝(90아웃). 서버가 MLB 중 위치를 견주는 선수 기준이고
- * 선수 페이지 'MLB 타자 중에서'(LeaguePosition)의 '참고용' 문턱과 같은 값이다(11-17 사용자 결정 '추천대로')
+ * 이보다 적으면 표본이 적어 '참고용'이다: 타자 100타석, 투수 30이닝(90아웃). 서버가 MLB 중 위치를 견주는 선수 기준이다(11-17 사용자 결정
+ * '추천대로'). 시즌 성적 한 줄(smallSampleNote)과 'MLB 타자 중에서'(LeaguePosition)·홈 성적표 작은 판(LeaguePositionCompact)이
+ * 모두 이 값을 쓴다. 한쪽만 바뀌어 '참고용' 문턱이 갈라지지 않게 여기 하나로 둔다(PR #291 리뷰)
  */
-export const STEADY_PLATE_APPEARANCES = 100;
+export const STEADY_PA = 100;
 export const STEADY_OUTS = 90;
 
 /**
@@ -49,7 +50,7 @@ export function smallSampleNote(season: LevelSeason<HitterSeason | PitcherSeason
     return line.outs < STEADY_OUTS ? `${line.inningsText}이닝이라 참고용` : null;
   }
   const line = season.line as HitterSeason;
-  return line.plateAppearances < STEADY_PLATE_APPEARANCES ? `${line.plateAppearances}타석이라 참고용` : null;
+  return line.plateAppearances < STEADY_PA ? `${line.plateAppearances}타석이라 참고용` : null;
 }
 
 /**
