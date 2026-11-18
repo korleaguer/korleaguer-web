@@ -378,8 +378,13 @@
     font-size: calc(100% * clamp(0.85, var(--app-font-scale, 1), 2));
     /* 두 손가락 확대는 되고(앱이 확대 막기를 뺐다), 두 번 탭 확대는 막는다(버튼을 빨리 두 번 누르면 화면이 커지지 않게) */
     touch-action: manipulation;
-    /* 앱 안 머리글은 위에 붙어 있어서(SiteHeader), 자리를 찾아 스크롤할 때 그 밑으로 숨지 않게 머리글 높이만큼 띄운다 */
-    scroll-padding-top: 3.5rem;
+    /*
+     * 앱 안 머리글은 위에 붙어 있어서(SiteHeader), 자리를 찾아 스크롤할 때 그 밑으로 숨지 않게 머리글 높이(3.5rem)만큼 띄운다.
+     * 띄우는 값은 --sticky-top-rem(rem 수) 하나로 두고 아래 '위에 붙은 띠 안 버튼' 규칙이 같이 쓴다. html 자신에서는 em을 곱한다:
+     * html의 rem은 WebKit(아이폰 앱)이 글자 배율과 상관없이 16px로 계산해 큰 글씨에서 모자랐다(자식의 rem은 배율을 따른다)
+     */
+    --sticky-top-rem: 3.5;
+    scroll-padding-top: calc(var(--sticky-top-rem) * 1em);
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
     -webkit-tap-highlight-color: transparent;
@@ -409,6 +414,44 @@
   html[data-app] :is(input, textarea, [contenteditable="true"]) {
     -webkit-user-select: text;
     user-select: text;
+  }
+
+  /*
+   * 위에 붙은 띠 안의 버튼·링크(앱 머리글의 뒤로·공유·로고, 아래 붙은 바로 가기 탭 알약)는 위에서 띄운 띠 안에 있어서,
+   * 포커스가 들어가면 브라우저가 가려졌다고 보고 페이지를 끌어올렸다. 띠는 붙어 있어 그대로이고 읽던 자리만 튄다
+   * (375px 선수 페이지에서 크로뮴은 알약마다 410px·앱 머리글 버튼 436px, WebKit은 48px·110px, 리뷰 지적).
+   * 스크롤 상자를 띄운 만큼 아래로 옮겨 보이는 칸 안에 들게 한다. 위만 음수로 줄이면 상자 높이가 음수가 되어
+   * WebKit(아이폰 앱)은 큰 글씨에서 다시 튄다. 앱 머리글은 처음부터 늘 맨 위에 붙어 있다(브라우저 머리글은 붙지 않는다)
+   */
+  html[data-app] [data-site-header] :is(a, button) {
+    scroll-margin-top: calc(var(--sticky-top-rem) * -1rem);
+    scroll-margin-bottom: calc(var(--sticky-top-rem) * 1rem);
+  }
+
+  /*
+   * 선수 페이지 바로 가기 탭(JumpNav)이 위에 붙는 화면(1024px 미만): Tab으로 옮긴 포커스가 붙은 탭 줄 밑에 숨지 않게
+   * 탭 줄 높이(1배 48px)만큼 띄운다(11-17 전수조사, WCAG 2.4.11). 앱은 머리글(3.5rem) 아래에 탭 줄이 붙어 둘을 더한다.
+   * 탭 줄 높이는 대부분 rem(알약 2rem)이라 큰 글씨에서 함께 커진다. 앱 작은 글씨(0.85배)에서도 모자라지 않게 조금 넉넉히 둔다.
+   * PC(1024px 이상)는 탭 줄이 없다. 값은 위 --sticky-top-rem을 바꿔 html 여백과 띠 안 버튼 규칙이 함께 따른다
+   */
+  @media (width < 64rem) {
+    html:has([data-jump-nav]) {
+      --sticky-top-rem: 3.5;
+      scroll-padding-top: calc(var(--sticky-top-rem) * 1em);
+    }
+
+    html[data-app]:has([data-jump-nav]) {
+      --sticky-top-rem: 7.25;
+    }
+
+    /*
+     * 바로 가기 탭 알약은 붙어 있을 때만(JumpNav의 data-stuck) 옮긴다(위 '띠 안 버튼'과 같은 까닭). 붙기 전에도 옮기면
+     * 화면 아래쪽에 멀쩡히 보이는 탭 줄로 Tab할 때 페이지가 크게 내려간다
+     */
+    [data-jump-nav][data-stuck] a {
+      scroll-margin-top: calc(var(--sticky-top-rem) * -1rem);
+      scroll-margin-bottom: calc(var(--sticky-top-rem) * 1rem);
+    }
   }
 
   ::selection {
@@ -463,7 +506,7 @@
 
     /*
      * 막대 그래프(data-bar, 역대 계약·거론 구단 기사 수 .ink-bar)는 사용자 색으로 다시 칠한다: 보통 막대는 글자색,
-     * 흐린 막대(마이너·평균 아래·기록 없는 날 바닥 줄)는 흐린 글자색, 고른 막대는 강조색. 막대의 색은 style 속성으로도
+     * 흐린 막대(마이너·중간 아래·기록 없는 날 바닥 줄)는 흐린 글자색, 고른 막대는 강조색. 막대의 색은 style 속성으로도
      * 들어와서(달별 막대) !important로 덮는다. 막대 안에는 글자가 없어 forced-color-adjust: none이 글자를 건드리지 않는다
      */
     :is([data-bar], .ink-bar) {
@@ -484,12 +527,11 @@
       border-color: Canvas !important;
     }
 
-    /* 내 선수 경기별 막대: 고른 막대는 강조색. 안 고른 막대를 흐리게 둔 투명도는 걷는다(색이 고른 것을 알린다) */
-    [aria-pressed] [data-bar] {
-      opacity: 1 !important;
-    }
-
-    [aria-pressed="true"] [data-bar] {
+    /*
+     * 내 선수 경기별 막대: 고른 막대는 강조색(색이 고른 것을 알린다). 막대 하나하나는 하나만 고르는 라디오(role="radio", aria-checked)다.
+     * 안 고른 막대도 투명도 없는 단색이라(이슈 #273) 투명도를 걷는 규칙은 두지 않는다
+     */
+    [aria-checked="true"] [data-bar] {
       background: Highlight !important;
     }
 
@@ -910,6 +952,22 @@
     font-size: min(var(--text-caption), calc(100cqi / var(--days) / 2.4));
     line-height: var(--text-caption--line-height);
   }
+
+  /*
+   * 선수 페이지 타격 흐름 그래프 오른쪽 값 눈금 숫자('120'·'100'·'80', WrcTrend, 이슈 #279). 눈금 사이 간격은 그래프 높이
+   * (150·180px)에 묶여 글자를 따라 커지지 않아서, 글자만 키우면 숫자끼리 붙는다(2배 22px에서 김하성 '100'·'80' 사이 틈 약 4px,
+   * 범위가 더 넓은 선수는 맞닿는다). 숫자 크기를 가장 좁은 눈금 사이 간격(--tick-gap, 그래프 높이에 대한 비율)까지만 키운다:
+   * 숫자 높이 약 0.73em에 틈 0.27em이 남는다. 1배는 간격이 16px 이상(MIN_GRID_GAP_PX)이라 Micro(11px) 그대로다.
+   * 그래프 칸(trend-ticks)은 높이가 정해져 있어 높이 기준 컨테이너로 두고 그 높이(100cqh)로 잰다.
+   */
+  .trend-ticks {
+    container-type: size;
+  }
+
+  .trend-tick {
+    font-size: min(var(--text-micro), 100cqh * var(--tick-gap, 1));
+    line-height: var(--text-micro--line-height);
+  }
 }
 
 @keyframes card-rise {
@@ -1149,9 +1207,14 @@
   }
 }
 
-/* 옆으로 미는 줄(뉴스 탭 선수 고르기): 스크롤 막대를 숨긴다. 손가락·트랙패드로 밀고, 키보드는 칸마다 Tab으로 옮긴다 */
+/*
+ * 옆으로 미는 알약 줄(뉴스 선수·말 고르기, 기록 탭 고르기, 선수 페이지 바로 가기·달·하이라이트): 스크롤 막대를 숨긴다.
+ * 손가락·트랙패드로 밀고, 키보드는 칸마다 Tab으로 옮긴다. 줄 끝에 닿아도 페이지로 넘기지 않는다(overscroll-behavior-x):
+ * 맥 트랙패드로 줄을 끝까지 민 다음 밀기가 페이지 '뒤로 가기'가 됐다(11-17 전수조사)
+ */
 @utility no-scrollbar {
   scrollbar-width: none;
+  overscroll-behavior-x: contain;
   &::-webkit-scrollbar {
     display: none;
   }

@@ -6,7 +6,7 @@ import { haptic } from "@/lib/app";
 /** 머리 카드에 넘겨 볼 사진 한 장(소속팀 하나) */
 export interface Shot {
   key: string;
-  /** "키움 히어로즈", 지금 팀은 "샌프란시스코" */
+  /** "키움 히어로즈", 지금 팀은 "샌프란시스코"(FA·국내 복귀면 마지막 MLB 팀 "전 미네소타") */
   label: string;
   /** "2017–2023". 지금 팀은 null */
   years: string | null;
@@ -106,7 +106,8 @@ export default function PhotoStage({
             <button
               type="button"
               onClick={next}
-              aria-label={`다음 소속팀 사진 보기 (지금: ${shot.label})`}
+              // '지금:'은 FA·국내 복귀 선수에게 지금 소속처럼 읽혀서(지금: 미네소타) 보이는 사진이 무엇인지만 말한다
+              aria-label={`다음 소속팀 사진 보기 (보이는 사진: ${shot.label})`}
               className="rounded-full transition-transform duration-150 active:scale-[0.97] motion-reduce:transition-none"
             >
               {circle}

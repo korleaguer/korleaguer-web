@@ -18,17 +18,20 @@ export default function PlayerNews({
   photoUrl,
   id,
   player,
+  as = "section",
 }: {
   news: NewsHeadline[];
   photoUrl: string | null;
   id: string;
   /** 이 선수의 한글 이름(뉴스 탭에서 거를 이름) */
   player: string;
+  /** PC 오른쪽 칸처럼 본문 옆 보조 칸이면 "aside"(보조 영역). 휴대폰처럼 본문 흐름 안이면 기본 section */
+  as?: "section" | "aside";
 }) {
   if (news.length === 0) return null;
   const items = news.slice(0, SHOWN).map((n) => ({ ...n, who: null, playerPhotoUrl: photoUrl }));
   return (
-    <Section id={id} title="기사">
+    <Section id={id} title="기사" as={as}>
       <div className="card px-4 py-1">
         <NewsTitleList items={items} />
         {news.length > SHOWN && <AllNewsLink player={player} className="border-t border-line py-2.5" />}
