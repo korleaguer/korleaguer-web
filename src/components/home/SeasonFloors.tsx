@@ -155,29 +155,36 @@ function teamText(entry: MyPlayer): string | null {
 }
 
 /**
- * 오른쪽 작은 글씨: 메이저는 선발·교체·구원, 그 밖은 무슨 상태로 며칠째인지(전수조사 L308). 'n일째'만 쓰던 때는
+ * 오른쪽 작은 글씨: 메이저는 선발·교체·구원, 그 밖은 그 상태로 며칠째인지(전수조사 L308). 'n일째'만 쓰던 때는
  * '출장 정지·지명 할당' 층처럼 두 상태가 섞이면 무엇의 날수인지 알 수 없었다.
- * 말은 '내 선수' 상태 배지와 같다('부상자 명단 12일째'·'지명 할당(DFA) 5일째'·'FA 19일째'). 마이너 배지에는 날수가 없어
- * 단계 이름에 붙이고('트리플A 12일째'), 이름 아래 줄이 이미 '부상자 명단'이면 날수만 둔다(같은 말 두 번 금지).
+ * 상태 이름은 둘레가 말하지 않을 때만 보인다(같은 말 두 번 금지, 리뷰 지적). 두 상태가 섞인 층은 '내 선수' 상태 배지 말
+ * ('지명 할당(DFA) 5일째'·재활 경기 중이면 '부상자 명단 12일째'), 층 제목이 곧 상태인 층(트리플A 등 마이너·'FA · 팀 찾는 중')과
+ * 이름 아래 줄이 이미 '부상자 명단'인 줄은 날수만('12일째'). 층 제목이 말해서 뺀 이름은 낭독에만 붙인다(srPrefix):
+ * 링크로 훑는 화면 낭독기는 층 제목을 듣지 못한다.
  * 날수를 모르면 비운다. 마이너 부상자 명단은 오른 날을 믿기 어려워(배지에도 날수가 없다), 국내 복귀·시즌 끝은
  * 이름 아래 '마지막 경기' 줄이 말해서 비운다
  */
-function sideText(entry: MyPlayer, game: GameLine | null): string | null {
+function sideText(entry: MyPlayer, game: GameLine | null): { text: string; srPrefix: string | null } | null {
   const status = entry.status;
   if (!status || status.kind === "CALLED_UP" || status.kind === "RETURNED") {
-    return game && game.played ? (formatLineup(game) ?? (game.role === "PITCHER" ? "등판" : null)) : null;
+    const lineup = game && game.played ? (formatLineup(game) ?? (game.role === "PITCHER" ? "등판" : null)) : null;
+    return lineup ? { text: lineup, srPrefix: null } : null;
   }
   if (status.days == null) return null;
+  const days = `${status.days}일째`;
   switch (status.kind) {
     case "MINORS":
-      return `${levelKo(status.level)} ${status.days}일째`;
+      // 층 제목이 단계 이름('트리플A')이다
+      return { text: days, srPrefix: levelKo(status.level) };
+    case "FA":
+      return { text: days, srPrefix: "FA" };
     case "IL":
-      // 재활 경기가 없으면 이름 아래 줄이 '부상자 명단'이다(lineOf)
-      return game ? (statusBadge(status)?.text ?? null) : `${status.days}일째`;
+      // 재활 경기가 없으면 이름 아래 줄이 '부상자 명단'이다(lineOf). 재활 경기 줄이면 이름을 붙인다('부상·재활' 층에는
+      // 마이너 부상자 명단도 섞인다)
+      return { text: game ? (statusBadge(status)?.text ?? days) : days, srPrefix: null };
     case "SUSPENDED":
     case "DFA":
-    case "FA":
-      return statusBadge(status)?.text ?? null;
+      return { text: statusBadge(status)?.text ?? days, srPrefix: null };
     default:
       return null;
   }
@@ -185,13 +192,17 @@ function sideText(entry: MyPlayer, game: GameLine | null): string | null {
 
 /**
  * 이름 아래 한 줄(7일 안): 메이저로 올라옴은 '콜업 N일째' 배지와 같은 진한 파랑, 부상 복귀는 복귀 초록(DESIGN.md 신호색).
- * 예전에는 둘 다 초록이었다(초록은 부상 해제·계약 뜻, 전수조사 L306)
+ * 예전에는 둘 다 초록이었다(초록은 부상 해제·계약 뜻, 전수조사 L306).
+ * 날짜(since)는 이동 기록의 미국 날짜라 '(미국)'을 붙인다(formatUsDate와 같은 규칙, 사용자 11-17 '추천대로'). 시각이 없어
+ * 한국 날짜로 바꿀 근거가 없고, 바로 위 경기 한 줄의 날짜('어제'·'7월 8일')는 한국 날짜라 붙이지 않으면 미국 저녁 경기와
+ * 하루 어긋나 보였다(리뷰 지적)
  */
 function moveText(entry: MyPlayer): { text: string; color: string } | null {
   const status = entry.status;
   if (!status?.since) return null;
-  if (status.kind === "CALLED_UP") return { text: `↑\u00a0${monthDay(status.since)} 메이저로 올라옴`, color: "text-accent-ink" };
-  if (status.kind === "RETURNED") return { text: `↑\u00a0${monthDay(status.since)} 부상에서 돌아옴`, color: "text-success-fg" };
+  const day = `${monthDay(status.since)}(미국)`;
+  if (status.kind === "CALLED_UP") return { text: `↑\u00a0${day} 메이저로 올라옴`, color: "text-accent-ink" };
+  if (status.kind === "RETURNED") return { text: `↑\u00a0${day} 부상에서 돌아옴`, color: "text-success-fg" };
   return null;
 }
 
@@ -355,7 +366,8 @@ function FloorRow({ entry, starred, today }: { entry: MyPlayer; starred: boolean
           {game && game.played && <ResultPill result={game.result} />}
           {side && (
             <span className="text-caption text-muted tabular-nums">
-              <Words text={side} />
+              {side.srPrefix && <span className="sr-only">{`${side.srPrefix} `}</span>}
+              <Words text={side.text} />
             </span>
           )}
         </span>

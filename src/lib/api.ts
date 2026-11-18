@@ -791,7 +791,7 @@ export type CardStatusKind =
 
 export interface CardStatus {
   kind: CardStatusKind;
-  /** 그 상태가 시작된 미국 날짜("2026-09-20"). 모르면 null */
+  /** 그 상태가 시작된 미국 날짜("2026-09-20", 이동 기록 날짜라 시각이 없다). 모르면 null */
   since: string | null;
   /** since부터 며칠째인지. 모르면 null */
   days: number | null;
@@ -799,7 +799,10 @@ export interface CardStatus {
   level: string | null;
   /** 마이너 팀 이름(영어) */
   teamName: string | null;
-  /** FA·시즌 끝일 때 마지막 경기(미국 날짜)와 단계("MLB" 또는 마이너 약어) */
+  /**
+   * FA·시즌 끝·국내 복귀(KBO)일 때 마지막 경기의 날짜와 단계("MLB" 또는 마이너 약어). 날짜는 그 경기 시작 시각의 한국 날짜다
+   * (korleaguer-server #185부터, 선수 화면 경기 달력이 그 경기를 놓는 날과 같다. 예전에는 미국 날짜였다). since는 미국 날짜 그대로다
+   */
   lastGameDate: string | null;
   lastGameLevel: string | null;
 }
