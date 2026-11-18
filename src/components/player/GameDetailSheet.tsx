@@ -12,6 +12,7 @@ import Highlights from "@/components/Highlights";
 import LoadingDots from "@/components/LoadingDots";
 import ResultPill from "@/components/ResultPill";
 import ScoreText from "@/components/ScoreText";
+import StepButton from "@/components/StepButton";
 import TeamName from "@/components/TeamName";
 import type { Clip } from "./ClipPlayer";
 import Words from "@/components/Words";
@@ -170,30 +171,23 @@ export default function GameDetailSheet({
 }
 
 /**
- * 앞뒤 경기 버튼. 첫·끝 경기에서는 끄되 disabled 대신 aria-disabled로 둔다(내 선수 순서 버튼과 같다, 이슈 #256):
- * 누른 버튼이 disabled가 되면 포커스가 사라지고, 반대 버튼으로 옮기면 Enter를 누르고 있을 때 앞뒤로 오락가락한다.
- * 꺼진 버튼은 아이콘만 흐리게 해서 포커스 테두리는 또렷하게 남긴다
+ * 앞뒤 경기 버튼: 내 선수 카드와 같은 화살표 버튼(StepButton, 첫·끝 경기면 꺼진다) + 누르면 앱 안이면 고르기 틱.
+ * 흰 창 위라 마우스를 올리면 surface-2 원
  */
 function NavButton({ label, onClick, dir }: { label: string; onClick: (() => void) | null; dir: "prev" | "next" }) {
-  const off = !onClick;
   return (
-    <button
-      type="button"
-      aria-label={label}
-      aria-disabled={off || undefined}
-      onClick={() => {
-        if (!onClick) return;
-        haptic("select");
-        onClick();
-      }}
-      className={`grid size-[44px] shrink-0 place-items-center rounded-full text-muted ${
-        off ? "cursor-default [&>svg]:opacity-30" : "press hover:bg-surface-2"
-      }`}
-    >
-      <svg aria-hidden viewBox="0 0 16 16" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-        <path d={dir === "prev" ? "M10 3 5 8l5 5" : "m6 3 5 5-5 5"} />
-      </svg>
-    </button>
+    <StepButton
+      dir={dir}
+      label={label}
+      onClick={
+        onClick &&
+        (() => {
+          haptic("select");
+          onClick();
+        })
+      }
+      hoverClass="hover:bg-surface-2"
+    />
   );
 }
 

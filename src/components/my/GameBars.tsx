@@ -7,6 +7,7 @@ import { formatDate, formatLineup, formatShortDate, formatSummary, formatWeekday
 import ResultPill from "@/components/ResultPill";
 import Highlights from "@/components/Highlights";
 import ScoreText from "@/components/ScoreText";
+import StepButton from "@/components/StepButton";
 import type { BarSlot } from "./columns";
 import Words from "@/components/Words";
 
@@ -344,9 +345,20 @@ export default function GameBars({ slots, role, days, minors = false, name }: Pr
                 버튼 자리가 경기마다 흔들리지 않는다. 위 음수 여백(0.8rem - 22px)은 버튼 가운데를 기록 한 줄 가운데(머리 줄 아래 0.125rem + 한 줄
                 1.36rem의 절반)에 맞추고, 아래 음수 여백(0.68rem - 22px)은 버튼이 그 한 줄 높이만큼만 차지하게 한다(큰 글씨에서도) */}
             {gameCount > 1 && (
+              // 경기 상세 창의 앞뒤 버튼과 같은 버튼(StepButton). 끝이면 꺼진다. 회색 칸 위라 마우스를 올리면 한 단계 다른 회색(line) 원
               <span className="float-right -mr-3 mb-[calc(0.68rem_-_22px)] ml-1 mt-[calc(0.8rem_-_22px)] flex">
-                <StepButton dir="prev" label={`${name ? `${name} ` : ""}이전 경기`} target={prevGame} onStep={pick} />
-                <StepButton dir="next" label={`${name ? `${name} ` : ""}다음 경기`} target={nextGame} onStep={pick} />
+                <StepButton
+                  dir="prev"
+                  label={`${name ? `${name} ` : ""}이전 경기`}
+                  onClick={prevGame >= 0 ? () => pick(prevGame) : null}
+                  hoverClass="cursor-pointer hover:bg-line hover:text-foreground"
+                />
+                <StepButton
+                  dir="next"
+                  label={`${name ? `${name} ` : ""}다음 경기`}
+                  onClick={nextGame >= 0 ? () => pick(nextGame) : null}
+                  hoverClass="cursor-pointer hover:bg-line hover:text-foreground"
+                />
               </span>
             )}
           </>
@@ -391,42 +403,5 @@ function GameHead({ line }: { line: GameLine }) {
         <ResultPill result={line.result} className="ml-auto" />
       </span>
     </>
-  );
-}
-
-/**
- * 고른 경기 앞뒤로 옮기는 버튼(경기 상세 창의 앞뒤 버튼과 같은 모양). 크기는 글자 배율과 상관없이 44px(px)다.
- * 끝(target -1)이면 끄되 disabled 대신 aria-disabled로 둔다: 누른 버튼이 disabled가 되면 포커스가 사라진다(내 선수 순서 버튼과 같다).
- * 꺼진 버튼은 아이콘만 흐리게 해서 포커스 테두리는 또렷하게 남긴다
- */
-function StepButton({
-  dir,
-  label,
-  target,
-  onStep,
-}: {
-  dir: "prev" | "next";
-  label: string;
-  target: number;
-  onStep: (index: number) => void;
-}) {
-  const off = target < 0;
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      aria-disabled={off || undefined}
-      onClick={() => {
-        if (!off) onStep(target);
-      }}
-      // 회색 칸 위라 마우스를 올리면 한 단계 다른 회색(line) 원
-      className={`grid size-[44px] shrink-0 place-items-center rounded-full text-muted ${
-        off ? "cursor-default [&>svg]:opacity-30" : "press cursor-pointer hover:bg-line hover:text-foreground"
-      }`}
-    >
-      <svg aria-hidden viewBox="0 0 16 16" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-        <path d={dir === "prev" ? "M10 3 5 8l5 5" : "m6 3 5 5-5 5"} />
-      </svg>
-    </button>
   );
 }
