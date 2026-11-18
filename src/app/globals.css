@@ -366,8 +366,9 @@
    * 앱 안 글자 선택은 누르는 것(링크·버튼·탭·알약·메뉴)에만 막는다. 길게 눌러 고르다 글자가 잡히면 앱답지 않다.
    * 예전에는 문서 전체를 막아 기사 요약을 복사하거나 '선택 항목 말하기'(손쉬운 사용)로 들을 수 없었다(전수조사).
    * 끌어서 쓰는 곳(내 선수 순서 손잡이는 버튼, 경기·구단 창 머리와 알림 띠는 select-none, 막대 훑기는 select-none)도 막힌 그대로다.
+   * 누르면 선수 화면으로 가는 표 줄(홈 기록 표의 [data-href])도 누르는 것이라 막는다(빠뜨렸더니 숫자 칸을 길게 누르면 글자가 잡혔다)
    */
-  html[data-app] :is(a, button, [role="button"], [role="tab"], [role="slider"], summary, label, nav) {
+  html[data-app] :is(a, button, [role="button"], [role="tab"], [role="slider"], summary, label, nav, [data-href]) {
     -webkit-user-select: none;
     user-select: none;
   }
