@@ -37,10 +37,8 @@ export default async function RosterMoves({ moves }: { moves: RosterMove[] }) {
           {/* 펼치면 나머지 줄이 버튼 위에 붙고, 버튼은 맨 아래에서 '접기'가 된다 */}
           {rest.length > 0 && (
             <ShowMore moreLabel={`${rest.length}건 더 보기`} buttonClassName="border-t border-line py-2.5">
-              {/* 펼친 줄은 높이 제한 없이 그대로 늘어난다. 예전엔 26rem 상자 안에서 다시 스크롤했는데(11-10, 고우석 26건) 페이지 스크롤
-                  안에 또 스크롤이 생겨 손가락이 어느 쪽을 미는지 헷갈리고 키보드로는 닿지도 않았다(경기 기록도 같은 이유로 안쪽 스크롤을
-                  뺐다). 이 칸은 휴대폰에선 맨 아래, PC에선 오른쪽 칸 맨 아래라 펼쳐도 밀려 내려가는 칸이 없고, 맨 아래 '접기'로 바로 접힌다 */}
-              <ol className="divide-y divide-line border-t border-line">
+              {/* 이동이 많은 선수(20건 넘게)도 화면이 아래로 끝없이 늘지 않게, 펼친 줄은 일정 높이 안에서 스크롤한다 */}
+              <ol className="max-h-[26rem] divide-y divide-line overflow-y-auto overscroll-contain border-t border-line">
                 {rest.map((move, i) => (
                   <MoveRow key={`${move.date}-${move.typeCode}-r${i}`} move={move} />
                 ))}
