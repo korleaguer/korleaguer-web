@@ -232,7 +232,7 @@ export interface NewsPage {
   lead: string | null;
   /**
    * 같은 글을 실은 다른 언론사(낸 순, 이 기사의 언론사는 빼고). 출처 줄 아래 '같은 기사' 줄에 쓴다(이슈 #277).
-   * 서버가 아직 주지 않아(korleaguer-server에 더할 일) 옛 api면 빈 목록이고, 그때는 그 줄을 그리지 않는다
+   * 기사 상세 응답에는 korleaguer-server#180부터 들어 있다. 그 전 api면 빈 목록이고, 그때는 그 줄을 그리지 않는다
    */
   alsoBy: string[];
   /** 같은 선수의 다른 기사(늦은 순 5건, 이 기사는 빼고) */
@@ -990,7 +990,7 @@ function normalizeNewsPage(raw: NewsPage): NewsPage {
     imageUrl: raw.imageUrl?.startsWith("https://") ? raw.imageUrl : null,
     summary: raw.summary ?? null,
     lead: raw.lead ?? null,
-    // 기사 상세의 같은 기사 언론사는 서버에 아직 없다(목록 응답에만 있다)
+    // 기사 상세의 같은 기사 언론사는 korleaguer-server#180부터 온다(뉴스 탭 목록 한 줄과 같은 계산)
     alsoBy: alsoByOf(raw.alsoBy),
     more: (raw.more ?? []).flatMap((n) => normalizeHeadline(n) ?? []),
   };
