@@ -1,6 +1,6 @@
 import type { PitcherSeason, RankingMinimums } from "@/lib/api";
 import { formatEra } from "@/lib/format";
-import { bestOf, isBest, pairWithMinors, rankedPitcher, sortByValue } from "@/lib/stats";
+import { bestOf, isBest, pairWithMinors, rankedPitcher, sortByValue, splitByMinors } from "@/lib/stats";
 import PlayerLink from "@/components/PlayerLink";
 import TeamName from "@/components/TeamName";
 import { ROW_LINK, RowHeader, TableScroll, Td, Th } from "@/components/table";
@@ -27,9 +27,12 @@ export default function PitcherTable({
   ranking: RankingMinimums | null;
 }) {
   const ranked = rankedPitcher(ranking);
+  // 1위(굵은 숫자)는 시즌 1위 카드와 같은 규칙: 주로 마이너에서 던진 투수(아래 띠 묶음)는 빼고, 남은 메이저 투수가 2명 이상일 때만,
+  // 평균자책점은 순위 기준 이닝도 채운 투수 중에서(타자 표와 같다)
+  const { majors } = splitByMinors(pitchers);
   const best = {
-    era: bestOf(pitchers, (p) => p.era, "min", ranked),
-    strikeouts: bestOf(pitchers, (p) => p.strikeouts, "max"),
+    era: bestOf(majors, (p) => p.era, "min", ranked),
+    strikeouts: bestOf(majors, (p) => p.strikeouts, "max"),
   };
   const { pairs, minorsOnly } = pairWithMinors(pitchers, minors);
   const byEra = (list: typeof pairs) => sortByValue(list, (p) => p.major.era, "min");
@@ -37,23 +40,26 @@ export default function PitcherTable({
   const rest = byEra(pairs.filter((p) => p.major.mainlyMinors || !ranked(p.major)));
   const minorsOnlyByEra = sortByValue(minorsOnly, (p) => p.era, "min");
 
-  // 이름 칸 다음의 기록 칸들. 마이너 줄(compared = false)은 1위 비교에서 뺀다
-  const cells = (p: PitcherSeason, compared: boolean) => (
-    <>
-      <Td align="left" className="text-muted">
-        {p.levelKo ? (
-          <MinorTeam teamKo={p.teamKo} level={p.levelKo} />
-        ) : (
-          <TeamName teamKo={p.teamKo} teamAbbr={p.teamAbbr} />
-        )}
-      </Td>
-      <Td>{p.games}</Td>
-      <Td>{p.inningsText}</Td>
-      <Td strong={compared && ranked(p) && isBest(p.era, best.era)}>{formatEra(p.era)}</Td>
-      <Td>{`${p.wins}-${p.losses}-${p.saves}`}</Td>
-      <Td strong={compared && isBest(p.strikeouts, best.strikeouts)}>{p.strikeouts}</Td>
-    </>
-  );
+  // 이름 칸 다음의 기록 칸들. 마이너 줄(compared = false)과 주로 마이너에서 던진 투수의 메이저 줄은 1위 비교에서 뺀다
+  const cells = (p: PitcherSeason, compared: boolean) => {
+    const lead = compared && !p.mainlyMinors;
+    return (
+      <>
+        <Td align="left" className="text-muted">
+          {p.levelKo ? (
+            <MinorTeam teamKo={p.teamKo} level={p.levelKo} />
+          ) : (
+            <TeamName teamKo={p.teamKo} teamAbbr={p.teamAbbr} />
+          )}
+        </Td>
+        <Td>{p.games}</Td>
+        <Td>{p.inningsText}</Td>
+        <Td strong={lead && ranked(p) && isBest(p.era, best.era)}>{formatEra(p.era)}</Td>
+        <Td>{`${p.wins}-${p.losses}-${p.saves}`}</Td>
+        <Td strong={lead && isBest(p.strikeouts, best.strikeouts)}>{p.strikeouts}</Td>
+      </>
+    );
+  };
   const nameCell = (p: PitcherSeason) => (
     <RowHeader>
       <PlayerLink playerId={p.playerId} nameKo={p.nameKo} photoUrl={p.photoUrl} teamAbbr={p.teamAbbr} />
