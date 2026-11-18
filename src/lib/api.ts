@@ -394,8 +394,21 @@ export interface SeasonReport {
   reason: string | null;
   /** 카드 숫자를 어느 단계 시즌 합계로 보일지 */
   level: "MLB" | "MINORS";
-  /** 메이저 WAR(소수 한 자리). 좋은·제 몫 시즌에만 보인다 */
+  /** 메이저 WAR(소수 한 자리). 홈 목록에는 쓰지 않는다(선수끼리 같은 숫자를 두려고 뺐다, 이슈 #276) */
   war: number | null;
+  /**
+   * 아래 넷은 korleaguer-server#179(옛 api면 없다). 목록 한 줄의 숫자(타자 경기·wRC+·타율, 투수 등판·ERA+·평균자책점)와
+   * 펼친 곳의 MLB 안 위치에 쓴다.
+   * wrcPlus: 타자 시즌 wRC+(리그 평균 = 100). 숫자 칸과 같은 단계 합계다(마이너 시즌이면 마이너 합계를 그 단계 리그 평균과).
+   * 투수거나 50타석 미만이면 null
+   */
+  wrcPlus?: number | null;
+  /** 투수 시즌 ERA+(리그 평균 = 100, 높을수록 잘함). wrcPlus와 같은 단계. 타자거나 10이닝 미만이면 null */
+  eraPlus?: number | null;
+  /** wrcPlus·eraPlus가 마이너 합계일 때 그 단계 이름('트리플A', 섞였으면 '마이너'). 메이저면 null */
+  statLevelKo?: string | null;
+  /** 선수 화면과 같은 MLB 안 위치(백분위). 메이저 기록이 없거나 서버가 위치를 못 읽으면 null, 옛 api면 없다(undefined) */
+  saber?: PlayerSaber | null;
   /** 정규시즌 달마다 어디서 뛰었나와 타율·평균자책점(카드의 달별 막대, korleaguer-server#170). 옛 api면 없다 */
   months?: SeasonMonth[];
   /** 시즌이 끝난 뒤 이동(FA 선언 등), 최근 순 */
@@ -941,6 +954,7 @@ function normalizeHome(raw: HomeResponse): HomeResponse {
           nextOpeningDay: raw.offseason.nextOpeningDay ?? null,
           daysToOpening: raw.offseason.daysToOpening ?? null,
           playerIds: raw.offseason.playerIds ?? [],
+          report: raw.offseason.report?.map(normalizeReport),
         }
       : null,
     posting: raw.posting
@@ -958,6 +972,25 @@ function normalizeHome(raw: HomeResponse): HomeResponse {
           })),
         }
       : null,
+  };
+}
+
+/**
+ * 성적표 한 장. 시즌 wRC+·ERA+·단계·MLB 안 위치(korleaguer-server#179)는 옛 api면 없다.
+ * MLB 안 위치는 선수 화면처럼 kind(타자·투수)를 붙인다(서버는 키로만 나눈다). 칸이 아예 없으면(옛 api) undefined로 남겨
+ * 화면이 위치 줄을 그리지 않는다. null은 메이저 기록이 없거나 서버가 위치를 못 읽은 것이라, 화면은 메이저 경기가 없을 때만
+ * '위치는 없어요'를 쓰고 메이저에서 뛴 선수면 줄을 뺀다(SeasonReportList).
+ * 기사는 관련 기사와 같은 규칙으로 다듬는다(원문 주소가 http(s)가 아닌 기사는 링크로 쓸 수 없어 뺀다)
+ */
+function normalizeReport(r: SeasonReport): SeasonReport {
+  return {
+    ...r,
+    wrcPlus: num(r.wrcPlus),
+    eraPlus: num(r.eraPlus),
+    statLevelKo: typeof r.statLevelKo === "string" && r.statLevelKo.trim() !== "" ? r.statLevelKo : null,
+    saber: r.saber === undefined ? undefined : normalizeSaber(r.saber),
+    winterMoves: Array.isArray(r.winterMoves) ? r.winterMoves : [],
+    news: r.news == null ? r.news : r.news.flatMap((n) => normalizeHeadline(n) ?? []),
   };
 }
 
