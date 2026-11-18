@@ -200,11 +200,13 @@ export default function GameBars({ slots, role, days, minors = false, name }: Pr
             </span>
           );
 
-          // 달이 바뀐 첫 칸: 왼쪽(칸 사이 가운데)에 옅은 세로선. 아래 '10월'과 함께 달 경계를 보인다(타격 흐름 달 눈금과 같은 모양)
+          // 달이 바뀐 첫 칸: 왼쪽(칸 사이 가운데)에 옅은 세로선. 아래 '10월'과 함께 달 경계를 보인다(타격 흐름 달 눈금과 같은 모양).
+          // 바탕색 대신 1px 왼쪽 테두리로 그린다: 고대비 모드에서 바탕은 지워지고 테두리는 바닥선처럼 남는다. data-bar로 다시 칠하면
+          // 막대 버튼(aria-pressed) 안이라 그 경기를 고를 때 선까지 강조색이 된다(globals.css)
           const monthLine = slot.monthStart && (
             <span
               aria-hidden
-              className="absolute inset-y-0 w-px bg-line"
+              className="absolute inset-y-0 border-l border-line"
               style={{ left: `calc(${-gapRem / 2}rem - 0.5px)` }}
             />
           );
@@ -256,13 +258,19 @@ export default function GameBars({ slots, role, days, minors = false, name }: Pr
                   />
                 ) : (
                   // 뛰었지만 안타 0(또는 아웃 0·숫자 모름): 바닥에 얇은 막대. 흐린 글자색 그대로 둬서 바닥선(경기 없는 날)과 갈린다
-                  <span className={`block h-1 w-[72%] max-w-7 rounded-sm ${on ? `bg-foreground ${ring}` : "bg-muted"}`} />
+                  <span
+                    className={`block h-1 w-[72%] max-w-7 rounded-sm ${on ? `bg-foreground ${ring}` : "bg-muted"}`}
+                    // 고대비 모드에서는 흐린 막대(GrayText)로, 고르면 강조색으로 다시 칠한다(globals.css). 범례 견본도 같은 값
+                    data-bar="dim"
+                  />
                 )}
                 {homeRun && height && (
                   <span
                     aria-hidden
                     className="absolute left-1/2 size-2 -translate-x-1/2 rounded-full bg-hot"
                     style={{ bottom: `calc(${height} + 4px)` }}
+                    // 고대비 모드에서도 막대와 같은 색(고르면 강조색) 점으로 남긴다. 범례 '홈런' 견본도 같은 값
+                    data-bar=""
                   />
                 )}
               </span>
@@ -292,16 +300,17 @@ export default function GameBars({ slots, role, days, minors = false, name }: Pr
         </div>
       )}
 
+      {/* 견본은 위 막대·점과 같은 data-bar 값이라 고대비 모드에서도 같은 색으로 보인다(점선 견본은 테두리라 그대로 보인다) */}
       <p className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-micro text-muted">
         {!pitcher && (
           <span className="inline-flex items-center gap-1">
-            <span aria-hidden className="size-2 rounded-full bg-hot" />
+            <span aria-hidden data-bar="" className="size-2 rounded-full bg-hot" />
             홈런
           </span>
         )}
         {/* 바닥의 얇은 막대는 뛰었지만 0이라는 뜻(빈칸·결장과 헷갈렸다) */}
         <span className="inline-flex items-center gap-1">
-          <span aria-hidden className="h-1 w-2.5 rounded-sm bg-muted" />
+          <span aria-hidden data-bar="dim" className="h-1 w-2.5 rounded-sm bg-muted" />
           {pitcher ? "0이닝" : "무안타"}
         </span>
         {!minors && (
