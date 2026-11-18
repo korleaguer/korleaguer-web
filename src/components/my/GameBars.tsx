@@ -251,6 +251,8 @@ export default function GameBars({ slots, role, days, minors = false, name }: Pr
                   <span
                     className={`bar-rise block w-[72%] max-w-7 rounded-t-md rounded-b-sm transition-colors duration-150 ${on ? `bg-game-bar-on ${ring}` : "bg-game-bar group-hover:bg-[color-mix(in_oklab,var(--game-bar),var(--game-bar-on))]"}`}
                     style={{ height, "--i": i } as CSSProperties}
+                    // 고대비 모드에서 시스템 색으로 다시 칠할 막대(globals.css). 고른 막대는 강조색
+                    data-bar=""
                   />
                 ) : (
                   // 뛰었지만 안타 0(또는 아웃 0·숫자 모름): 바닥에 얇은 막대. 흐린 글자색 그대로 둬서 바닥선(경기 없는 날)과 갈린다

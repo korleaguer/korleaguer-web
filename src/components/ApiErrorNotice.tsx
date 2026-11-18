@@ -21,12 +21,16 @@ const MESSAGES: Record<ApiFailure, { emoji: string; title: string; detail: strin
   },
 };
 
-/** api 호출이 실패했을 때 에러 화면 대신 보여 주는 안내. 없는 것이면 홈으로, 연결 문제면 다시 불러오기 */
-export default function ApiErrorNotice({ failure }: { failure: ApiFailure }) {
+/**
+ * api 호출이 실패했을 때 에러 화면 대신 보여 주는 안내. 없는 것이면 홈으로, 연결 문제면 다시 불러오기.
+ * level: 이 안내가 화면을 통째로 대신해 다른 h1이 없으면(선수·기사 화면, 내 선수) 1, 제목이 있는 화면 안이면 2(기본)
+ */
+export default function ApiErrorNotice({ failure, level }: { failure: ApiFailure; level?: 1 | 2 }) {
   const { emoji, title, detail } = MESSAGES[failure];
   return (
     <StateNotice
       alert
+      level={level}
       emoji={emoji}
       title={title}
       detail={detail}

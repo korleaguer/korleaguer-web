@@ -48,6 +48,7 @@ export default function ShareButton() {
       // 누르는 자리는 44px(iOS 최소 크기). 아이콘이 머리글 오른쪽 여백 선에 오도록 오른쪽으로 당긴다(AppBackButton과 대칭)
       className="press -mr-[12px] ml-auto hidden size-[44px] shrink-0 place-items-center rounded-full text-foreground active:bg-surface-2 in-app:grid"
     >
+      {/* 그림은 기기마다 익숙한 공유 그림으로(Jakob 법칙, 전수조사): 아이폰은 위 화살표가 나오는 상자 */}
       <svg
         aria-hidden
         width="22"
@@ -58,10 +59,30 @@ export default function ShareButton() {
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
+        className="in-android-app:hidden"
       >
         <path d="M12 14V3.5" />
         <path d="m7.5 7.5 4.5-4.5 4.5 4.5" />
         <path d="M8.5 10H7a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-1.5" />
+      </svg>
+      {/* 안드로이드는 Material 'share'처럼 점 셋을 잇는 선(같은 22px·선 굵기 2) */}
+      <svg
+        aria-hidden
+        width="22"
+        height="22"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="hidden in-android-app:block"
+      >
+        <circle cx="18" cy="5" r="3" />
+        <circle cx="6" cy="12" r="3" />
+        <circle cx="18" cy="19" r="3" />
+        <path d="m8.6 13.5 6.8 4" />
+        <path d="m15.4 6.5-6.8 4" />
       </svg>
     </button>
   );

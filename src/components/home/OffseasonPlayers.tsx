@@ -1,6 +1,6 @@
 import type { MyPlayer, OffSeason } from "@/lib/api";
 import { getMyPlayers, getPlayers } from "@/lib/api";
-import { formatDate } from "@/lib/format";
+import { formatUsDate } from "@/lib/format";
 import { readMyPlayers } from "@/lib/myPlayers";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import Section from "@/components/Section";
@@ -38,10 +38,11 @@ function reportOrder(entries: MyPlayer[], reportIndex: Map<number, number>, myId
 }
 
 /**
- * 머리 한 줄(흐린 글자): "2027 개막 D-132 · 3월 25일(목) · FA 2명". 개막일은 D-day와 날짜를 함께 쓴다
+ * 머리 한 줄(흐린 글자): "2027 개막 D-132 · 3월 25일(목, 미국) · FA 2명". 개막일은 D-day와 날짜를 함께 쓴다
  * (예전에는 아래 문장 '2027 정규시즌은 미국 날짜로 …에 시작해요.'가 같은 말을 한 번 더 했다, 사용자 11-13 시안 C).
  * '2026 시즌 끝'도 쓰지 않는다: 제목이 '2026 시즌 성적표'라 비시즌인 게 보인다.
- * 예전에는 흰 알약 둘이었는데, 누를 수 없는 이름표라 알약을 아끼려고 글자로 바꿨다(이슈 #276, 알약은 누르는 것·드문 상태만)
+ * 예전에는 흰 알약 둘이었는데, 누를 수 없는 이름표라 알약을 아끼려고 글자로 바꿨다(이슈 #276, 알약은 누르는 것·드문 상태만).
+ * 개막일은 MLB 일정 그대로의 미국 날짜(시각 없음)라 날짜 뒤에 '미국'을 붙인다. 사이트의 다른 날짜는 한국 날짜다(전수조사).
  */
 function summaryParts(offseason: OffSeason, entries: MyPlayer[]): string[] {
   const out: string[] = [];
@@ -49,7 +50,7 @@ function summaryParts(offseason: OffSeason, entries: MyPlayer[]): string[] {
   if (days == null) {
     out.push(`${offseason.nextSeason} 개막일 발표 전`);
   } else {
-    const day = formatDate(offseason.nextOpeningDay); // 미국 날짜(MLB 일정 그대로)
+    const day = formatUsDate(offseason.nextOpeningDay);
     out.push(days > 0 ? `${offseason.nextSeason} 개막 D-${days}${day !== "-" ? ` · ${day}` : ""}` : `${offseason.nextSeason} 오늘 개막`);
   }
   const freeAgents = entries.filter((e) => e.status?.kind === "FA").length;

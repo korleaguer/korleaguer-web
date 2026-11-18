@@ -70,7 +70,8 @@ export default function Toaster() {
           onPointerLeave={() => setHeld(false)}
           onFocus={() => setHeld(true)}
           onBlur={() => setHeld(false)}
-          className={`pointer-events-auto flex max-w-[26rem] touch-none items-center gap-2.5 rounded-2xl bg-toast-bg py-3 pl-4 pr-3 text-summary text-toast-fg shadow-[0_8px_24px_rgb(0_0_0/0.18)] ${shown.leaving ? "toast-out" : "toast-in"}`}
+          // 위로 밀어 치우는 띠라 글자가 잡히지 않게 select-none(앱 안 글자 선택은 누르는 것·끄는 곳에만 막는다)
+          className={`pointer-events-auto flex max-w-[26rem] touch-none select-none items-center gap-2.5 rounded-2xl bg-toast-bg py-3 pl-4 pr-3 text-summary text-toast-fg shadow-[0_8px_24px_rgb(0_0_0/0.18)] ${shown.leaving ? "toast-out" : "toast-in"}`}
         >
           {toastItem.tone !== "info" && <ToneIcon tone={toastItem.tone} />}
           <span className="min-w-0 flex-1 pr-1">{toastItem.message}</span>
@@ -83,7 +84,10 @@ export default function Toaster() {
 
 function ActionButton({ item }: { item: ToastItem }) {
   const action = item.action!;
-  const className = "press tap-target shrink-0 rounded-lg px-2 py-1 text-button text-toast-action";
+  // 포커스 테두리도 버튼 글자와 같은 밝은 파랑. 사이트 기본 파랑(accent)은 다크 알림 바탕(#3a404a) 위에서 2.02:1이라
+  // 키보드로 옮겨 와도 잘 안 보였다(WCAG 1.4.11 3:1, 전수조사). 밝은 파랑은 라이트 7.78:1 · 다크 5.98:1
+  const className =
+    "press tap-target shrink-0 rounded-lg px-2 py-1 text-button text-toast-action focus-visible:outline-toast-action";
   const onClick = () => {
     action.onClick?.();
     dismissToast(item.id);

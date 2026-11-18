@@ -98,10 +98,13 @@ function deadlineKst(iso: string): string {
   return `${p.md}(${p.weekday}) ${p.clock}`;
 }
 
-/** "12월 1일 오후 5시"(미국 동부) */
+/**
+ * "12월 1일(화) 오후 5시"(미국 동부). 한국 시간 줄처럼 요일을 붙인다: 날짜가 하루 다르니 요일까지 있어야
+ * 한국 날짜와 견주기 쉽다(전수조사)
+ */
 function deadlineUs(iso: string): string {
   const p = parts(iso, "America/New_York");
-  return `${p.md} ${p.clock}`;
+  return `${p.md}(${p.weekday}) ${p.clock}`;
 }
 
 /** "11월 2일"(한국 날짜) */

@@ -4,7 +4,7 @@ import { formatAsOf, formatDateRange } from "@/lib/format";
 import { readMyPlayers } from "@/lib/myPlayers";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import DataBanners from "@/components/DataBanners";
-import LoadingBlock from "@/components/LoadingBlock";
+import { MySkeleton } from "@/components/PageSkeleton";
 import FormCard from "@/components/my/FormCard";
 import MyHeader from "@/components/my/MyHeader";
 import PillNav from "@/components/PillNav";
@@ -36,7 +36,7 @@ function parseDays(value: string | string[] | undefined): Period {
 
 export default function MyPage({ searchParams }: PageProps<"/my">) {
   return (
-    <PageSuspense fallback={<LoadingBlock rows={8} />}>
+    <PageSuspense fallback={<MySkeleton />}>
       <MyContent searchParams={searchParams} />
     </PageSuspense>
   );
@@ -51,10 +51,11 @@ async function MyContent({ searchParams }: Pick<PageProps<"/my">, "searchParams"
     ids.length > 0 ? getMyPlayers(ids, days) : Promise.resolve(null),
     ids.length > 0 ? Promise.resolve(null) : getHome(),
   ]);
-  if (!playersResult.ok) return <ApiErrorNotice failure={playersResult.failure} />;
+  // 제목 '내 선수'(MyHeader의 h1)를 그리기 전에 실패하면 안내 제목이 이 화면의 h1이다
+  if (!playersResult.ok) return <ApiErrorNotice failure={playersResult.failure} level={1} />;
   if (myResult && !myResult.ok) {
     // /api/my는 404를 주지 않는다. 404면 api가 이 기능보다 오래된 것이다.
-    return <ApiErrorNotice failure={myResult.failure === "notFound" ? "badResponse" : myResult.failure} />;
+    return <ApiErrorNotice failure={myResult.failure === "notFound" ? "badResponse" : myResult.failure} level={1} />;
   }
 
   const my = myResult?.data ?? null;

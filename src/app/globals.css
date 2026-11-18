@@ -8,6 +8,11 @@
  * 회색 바탕 위 흰 카드, 강조는 파랑 하나. 글자색은 바탕 대비 4.5:1 이상으로 맞춘다.
  */
 :root {
+  /*
+   * 밝은·어두운 모드를 모두 쓴다고 브라우저에 알린다. 그래야 다크 모드에서 브라우저가 그리는 것(체크박스·기본 스크롤바·
+   * 입력칸 자동 채움 색)도 어두운 모양이 된다. 페이지 색은 아래 변수가 정한다(iframe은 쓰지 않아 흰 바탕 문제는 없다)
+   */
+  color-scheme: light dark;
   --background: #eef0f3; /* 페이지 바탕 */
   --foreground: #111827;
   --surface: #ffffff; /* 카드 */
@@ -52,8 +57,9 @@
    * 의미 색. 승패(파랑·회색)에는 쓰지 않는다.
    * 빨강 = 위기(부상자 명단 등재·이동, DFA, 방출, 출장 정지), 초록 = 복귀·계약(명단 해제, 정지 해제, 계약),
    * 보라 = 소속이 바뀜(FA, FA 선언, 트레이드, 웨이버 클레임)
+   * 빨강은 점과 그래프에만 쓰고 글자·바탕에는 쓰지 않는다(위기 알약은 회색 바탕 + 빨간 점 + 본문 글자). 빨간 글자·바탕은
+   * 좋은 활약 주황과 거의 같은 색이라(글자 색차 9.1, 바탕 5.6) 색만으로 헷갈렸다(사용자 11-17 '추천대로'). 그래서 빨간 바탕 색은 없다
    */
-  --danger-bg: #fde8e7;
   --danger-fg: #b42318;
   --success-bg: #e2f5e9;
   --success-fg: #13703a;
@@ -107,7 +113,6 @@
     --toast-success: #4ade80;
     --toast-error: #ff8a80;
 
-    --danger-bg: #3a1615;
     --danger-fg: #ffa39b;
     --success-bg: #0f2c1b;
     --success-fg: #80dea4;
@@ -162,7 +167,6 @@
   --color-toast-action: var(--toast-action);
   --color-toast-success: var(--toast-success);
   --color-toast-error: var(--toast-error);
-  --color-danger-bg: var(--danger-bg);
   --color-danger-fg: var(--danger-fg);
   --color-success-bg: var(--success-bg);
   --color-success-fg: var(--success-fg);
@@ -289,20 +293,25 @@
   --text-meta--letter-spacing: 0;
   --text-meta--font-weight: 400;
 
+  /*
+   * 아래 셋(알약·보조 글·각주)은 11px 아래로 줄지 않는다. 앱에서 기기 글자를 작게(0.85배) 두면 rem 글자가 함께 줄어
+   * 각주가 9.35px까지 작아졌다(Apple HIG 최소 11pt, 전수조사·사용자 11-17 '추천대로'). 보통 크기(1배) 이상은 그대로다
+   */
+
   /* 모든 알약(승패·상태·자랑·판정). py-0.5와 함께 높이 22px */
-  --text-badge: 0.75rem;
+  --text-badge: max(11px, 0.75rem);
   --text-badge--line-height: 1.125rem;
   --text-badge--letter-spacing: 0;
   --text-badge--font-weight: 700;
 
   /* 기준 시각, 보조 한 줄, 숫자 칸 이름표, 표 머리(600), 바닥글 */
-  --text-caption: 0.75rem;
+  --text-caption: max(11px, 0.75rem);
   --text-caption--line-height: 1rem;
   --text-caption--letter-spacing: 0;
   --text-caption--font-weight: 400;
 
   /* 점수 아래 메타, 그래프 눈금, 각주, 영문 이름 줄 */
-  --text-micro: 0.6875rem;
+  --text-micro: max(11px, 0.6875rem);
   --text-micro--line-height: 1rem;
   --text-micro--letter-spacing: 0;
   --text-micro--font-weight: 400;
@@ -322,6 +331,12 @@
 @custom-variant in-ios-app (&:where([data-app="ios"] *));
 
 /*
+ * 안드로이드 앱 안에서만. 기기마다 익숙한 그림이 다른 곳(공유 버튼: 아이폰은 위 화살표가 나오는 상자, 안드로이드는 점 셋을 잇는 선)에 쓴다.
+ * 서버가 그린 HTML과 상관없이 CSS로 갈려서 화면을 이어받을 때 그림이 바뀌며 깜빡이지 않는다.
+ */
+@custom-variant in-android-app (&:where([data-app="android"] *));
+
+/*
  * 아래 규칙은 @layer base / components 안에 둔다.
  * 레이어 밖에 두면 Tailwind 클래스(focus-visible:outline-none 등)보다 항상 이겨 버린다.
  */
@@ -334,16 +349,20 @@
     overflow-wrap: break-word;
   }
 
-  /* 브라우저 기본 모양(선택 영역, 커서, 포커스, 스크롤바, 밑줄)도 같은 색으로 맞춘다. */
+  /*
+   * 브라우저 기본 모양(선택 영역, 커서, 포커스, 스크롤바, 밑줄)도 같은 색으로 맞춘다.
+   * 스크롤 막대 손잡이는 흐린 글자색 80%: 바탕 대비 라이트 3.57:1, 다크 5.13:1(WCAG 1.4.11 3:1).
+   * 예전 45%는 1.9:1(다크 2.4:1)이라 PC에서 손잡이가 잘 보이지 않았다(전수조사)
+   */
   html {
     accent-color: var(--accent);
     caret-color: var(--accent);
-    scrollbar-color: color-mix(in oklab, var(--muted) 45%, transparent) var(--background);
+    scrollbar-color: color-mix(in oklab, var(--muted) 80%, transparent) var(--background);
   }
 
   /*
-   * 앱 안: 브라우저 티가 나는 동작을 끈다(누를 때 회색 번쩍임, 길게 눌러 뜨는 링크·사진 메뉴, 글자 선택).
-   * 입력칸은 글자를 고칠 수 있게 그대로 둔다.
+   * 앱 안: 브라우저 티가 나는 동작을 끈다(누를 때 회색 번쩍임, 길게 눌러 뜨는 링크·사진 메뉴, 누르는 것의 글자 선택).
+   * 글자 선택은 아래에서 누르는 것에만 막는다(기사 요약 복사·'선택 항목 말하기'가 되게).
    */
   html[data-app] {
     /*
@@ -359,7 +378,15 @@
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
     -webkit-tap-highlight-color: transparent;
-    -webkit-touch-callout: none;
+  }
+
+  /*
+   * 앱 안 글자 선택은 누르는 것(링크·버튼·탭·알약·메뉴)에만 막는다. 길게 눌러 고르다 글자가 잡히면 앱답지 않다.
+   * 예전에는 문서 전체를 막아 기사 요약을 복사하거나 '선택 항목 말하기'(손쉬운 사용)로 들을 수 없었다(전수조사).
+   * 끌어서 쓰는 곳(내 선수 순서 손잡이는 버튼, 경기·구단 창 머리와 알림 띠는 select-none, 막대 훑기는 select-none)도 막힌 그대로다.
+   * 누르면 선수 화면으로 가는 표 줄(홈 기록 표의 [data-href])도 누르는 것이라 막는다(빠뜨렸더니 숫자 칸을 길게 누르면 글자가 잡혔다)
+   */
+  html[data-app] :is(a, button, [role="button"], [role="tab"], [role="slider"], summary, label, nav, [data-href]) {
     -webkit-user-select: none;
     user-select: none;
   }
@@ -367,6 +394,11 @@
      더 보기' 뒤 새 기사 등) 그 밑으로 숨지 않게 아래도 띄운다(거론 구단 창·경기 창과 같은 셈) */
   html[data-app="ios"] {
     scroll-padding-bottom: calc(env(safe-area-inset-bottom) + 84px);
+  }
+
+  /* 링크·사진을 길게 눌러 뜨는 미리보기·저장 메뉴는 앱 안에서 계속 막는다(글자 선택 메뉴는 뜬다) */
+  html[data-app] :is(a, img) {
+    -webkit-touch-callout: none;
   }
 
   html[data-app] :is(input, textarea, [contenteditable="true"]) {
@@ -394,6 +426,62 @@
   @media (width >= 40rem) {
     :root {
       --text-article-title: 1.5rem;
+    }
+  }
+
+  /*
+   * Windows 고대비 모드(forced colors). 브라우저가 바탕색·그림자를 지우고 글자·테두리를 사용자 색으로 바꾼다.
+   * 그래서 바탕색으로 그린 막대 그래프가 사라지고(경기별 막대는 점선 '결장'만 남았다), 그림자로 그린 카드 경계·
+   * 버튼 모양·검색칸 테두리와 포커스도 사라졌다(전수조사). 고대비 모드에서만 적용되어 평소 화면·크기는 그대로다.
+   * 휴대폰에는 이 모드가 없다.
+   */
+  @media (forced-colors: active) {
+    /*
+     * 카드·버튼은 1px 테두리로 경계를 그린다. :where라서 테두리를 따로 정한 곳(교체 칸·점선 막대 등)은 그 테두리가 이기고,
+     * 포커스 테두리(outline)와 겹치지 않는다. 버튼처럼 생긴 링크는 부품에서 forced-colors:border를 붙인다(PillNav·stateActionClass)
+     */
+    :where(.card, button) {
+      border: 1px solid CanvasText;
+    }
+
+    /*
+     * 뉴스 검색칸: 칸 테두리와 포커스 표시가 그림자(box-shadow)이고 입력칸은 outline을 껐다. 칸 둘레에 선을 두고,
+     * 글을 치는 동안은 강조색 2px로 포커스를 보인다
+     */
+    form[role="search"] {
+      outline: 1px solid CanvasText;
+    }
+
+    form[role="search"]:focus-within {
+      outline: 2px solid Highlight;
+    }
+
+    /*
+     * 막대 그래프(data-bar, 역대 계약·거론 구단 기사 수 .ink-bar)는 사용자 색으로 다시 칠한다: 보통 막대는 글자색,
+     * 흐린 막대(마이너·평균 아래·기록 없는 날 바닥 줄)는 흐린 글자색, 고른 막대는 강조색. 막대의 색은 style 속성으로도
+     * 들어와서(달별 막대) !important로 덮는다. 막대 안에는 글자가 없어 forced-color-adjust: none이 글자를 건드리지 않는다
+     */
+    :is([data-bar], .ink-bar) {
+      forced-color-adjust: none;
+      background: CanvasText !important;
+    }
+
+    [data-bar="dim"] {
+      background: GrayText !important;
+    }
+
+    /* 내 선수 경기별 막대: 고른 막대는 강조색. 안 고른 막대를 흐리게 둔 투명도는 걷는다(색이 고른 것을 알린다) */
+    [aria-pressed] [data-bar] {
+      opacity: 1 !important;
+    }
+
+    [aria-pressed="true"] [data-bar] {
+      background: Highlight !important;
+    }
+
+    /* MLB 중 위치 막대의 바탕 줄(100% 길이)은 선으로 */
+    [data-bar-track] {
+      outline: 1px solid CanvasText;
     }
   }
 }

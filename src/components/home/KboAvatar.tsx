@@ -1,5 +1,6 @@
 "use client"; // 사진이 안 뜰 때(onError) 이름 원으로 바꿔야 해서 클라이언트 컴포넌트다.
 
+import { smallPhoto } from "@/lib/photo";
 import { useImageFailed } from "@/lib/useImageFailed";
 
 /**
@@ -21,6 +22,8 @@ export default function KboAvatar({
   eager?: boolean;
 }) {
   const { failed, ref, onError } = useImageFailed(photoUrl);
+  // 56px 이하 원은 화면 배율에 맞춰 줄인 사진(lib/photo). KBO 사진(94px)은 그보다 키우지 않는다
+  const small = smallPhoto(photoUrl, size);
   return (
     <div
       aria-hidden
@@ -30,7 +33,16 @@ export default function KboAvatar({
     >
       {photoUrl && !failed ? (
         // eslint-disable-next-line @next/next/no-img-element -- 외부 구단 사진, 크기 고정
-        <img ref={ref} src={photoUrl} alt="" onError={onError} className="size-full object-cover object-top" loading={eager ? "eager" : "lazy"} referrerPolicy="no-referrer" />
+        <img
+          ref={ref}
+          src={small?.src ?? photoUrl}
+          srcSet={small?.srcSet}
+          alt=""
+          onError={onError}
+          className="size-full object-cover object-top"
+          loading={eager ? "eager" : "lazy"}
+          referrerPolicy="no-referrer"
+        />
       ) : (
         nameKo.slice(0, 1)
       )}

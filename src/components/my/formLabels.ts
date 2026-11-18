@@ -16,7 +16,7 @@ export function levelKo(level: string | null | undefined): string {
   return (level && LEVEL_KO[level]) || "마이너";
 }
 
-/** 배지 색: 위기 빨강 · 복귀 초록 · 콜업 파랑 · 이적 보라 · 그 밖 회색(DESIGN.md 신호색) */
+/** 배지 색: 위기 빨간 점(글자는 본문색) · 복귀 초록 · 콜업 파랑 · 이적 보라 · 그 밖 회색(DESIGN.md 신호색) */
 export type BadgeTone = "danger" | "success" | "accent" | "fa" | "neutral";
 
 export function statusBadge(status: CardStatus): { text: string; tone: BadgeTone } | null {

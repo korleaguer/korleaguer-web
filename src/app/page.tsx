@@ -4,7 +4,7 @@ import { formatAsOf } from "@/lib/format";
 import { SITE_DESCRIPTION, SITE_NAME, shareMeta } from "@/lib/share";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import DataBanners from "@/components/DataBanners";
-import LoadingBlock from "@/components/LoadingBlock";
+import { HomeSkeleton } from "@/components/PageSkeleton";
 import MlbChallenge from "@/components/home/MlbChallenge";
 import OffseasonPlayers from "@/components/home/OffseasonPlayers";
 import SeasonFloors from "@/components/home/SeasonFloors";
@@ -21,7 +21,7 @@ export default function HomePage() {
     <>
       {/* 눈에는 안 보이고 화면 낭독기만 읽는 페이지 제목 */}
       <h1 className="sr-only">KOR Leaguer — 해외파 한국 선수 기록 모아보기</h1>
-      <PageSuspense fallback={<HomeLoading />}>
+      <PageSuspense fallback={<HomeSkeleton />}>
         <HomeContent />
       </PageSuspense>
     </>
@@ -68,15 +68,6 @@ async function HomeContent() {
         minorPitchers={home.minorPitchers}
         folded={home.offseason != null}
       />
-    </div>
-  );
-}
-
-function HomeLoading() {
-  return (
-    <div className="space-y-4">
-      <LoadingBlock rows={6} />
-      <LoadingBlock rows={4} />
     </div>
   );
 }
