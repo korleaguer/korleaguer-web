@@ -146,8 +146,10 @@ function PositionRow({ row, who, cols }: { row: Row; who: string; cols: string }
           <span className={`absolute inset-y-0 left-0 rounded-full ${top ? "bg-accent" : "bg-muted/40"}`} style={{ width: `${pct}%` }} />
         )}
         {/* 가운데 선(MLB 중간): 각주가 읽으라고 하는 기준선이라 바탕 대비 3:1이 되게 muted 70%로, 파랑 채움 위에서도 보이게
-            채움 위에 카드색 1px 테두리를 둘러 그린다. 점보다는 아래라 점이 가운데 근처면 점이 선을 덮는다 */}
-        <span className="absolute inset-y-[-3px] left-1/2 -ml-px w-0.5 bg-muted/70 ring-1 ring-surface" />
+            채움 위에 카드색 1px 테두리를 둘러 그린다. 점보다는 아래라 점이 가운데 근처면 점이 선을 덮는다.
+            선 폭(w-0.5)이 rem이라 큰 글씨에서 굵어져도 막대 가운데에 오게 제 폭의 반만큼 당긴다(-ml-px로 1px만 당기면 2배에서 4px 선이
+            가운데보다 1px 오른쪽이었다) */}
+        <span className="absolute inset-y-[-3px] left-1/2 w-0.5 -translate-x-1/2 bg-muted/70 ring-1 ring-surface" />
         {pct != null && (
           <span
             className={`absolute top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-surface ${top ? "bg-accent" : "bg-muted"}`}
