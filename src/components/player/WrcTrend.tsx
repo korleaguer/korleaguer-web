@@ -1,6 +1,6 @@
 "use client"; // 손가락(마우스)으로 훑는 자리를 기억하고 그날 값을 바꿔 보여 줘야 해서 클라이언트 컴포넌트다.
 
-import { useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
+import { useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent } from "react";
 import type { TrendPoint } from "@/lib/wrcTrend";
 import { formatShortDate } from "@/lib/format";
 import { haptic } from "@/lib/app";
@@ -14,7 +14,10 @@ const MIN_TICK_GAP = 11;
  * 100(리그 평균) 점선 위아래 20씩만 그어 '20이 이만큼'을 읽게 한다(사용자 11-17 '추천대로'). 범위 밖이면 긋지 않는다
  */
 const GRID = [80, 120];
-/** 눈금 숫자끼리 이만큼(그래프 높이 150px 기준 px)은 떨어져야 그린다. 범위가 아주 넓으면 80·120이 100 숫자에 붙는다 */
+/**
+ * 눈금 숫자끼리 이만큼(그래프 높이 150px 기준 px)은 떨어져야 그린다. 범위가 아주 넓으면 80·120이 100 숫자에 붙는다.
+ * 1배 숫자(11px) 기준이라, 큰 글씨에서는 숫자 크기를 눈금 사이 간격까지만 키운다(아래 tickGap)
+ */
 const MIN_GRID_GAP_PX = 16;
 
 /** 그래프 아래 달 눈금 하나: 그 달 첫 경기 자리(%)와 달 */
@@ -99,6 +102,9 @@ export default function WrcTrend({ points }: { points: TrendPoint[] }) {
   const grid = GRID.filter(
     (v) => v > lo + (hi - lo) * 0.05 && v < hi - (hi - lo) * 0.05 && (Math.abs(v - 100) / (hi - lo)) * H >= MIN_GRID_GAP_PX,
   );
+  // 눈금 숫자 사이 가장 좁은 간격(그래프 높이에 대한 비율, 눈금이 100 하나면 1). 그래프 높이는 px라 글자만 커지면 숫자끼리 붙어서
+  // 숫자 크기가 이 간격을 넘지 않게 한다(globals.css .trend-tick). 2배(22px)에서 김하성 '100'·'80' 사이 틈이 약 4px였다
+  const tickGap = Math.min(1, ...grid.map((v) => Math.abs(v - 100) / (hi - lo)));
 
   return (
     <div className="@container card px-4 pb-3 pt-4">
@@ -142,7 +148,11 @@ export default function WrcTrend({ points }: { points: TrendPoint[] }) {
       >
         {/* 칸 폭(휴대폰 340px ~ PC 670px)에 맞게 가로로 늘린다. 선 굵기는 그대로(non-scaling-stroke), 점은 늘어나지 않게 그림 밖 원으로.
             640px 이상은 180px: 그래프가 넓어지는데 높이가 그대로면 가로세로 비가 휴대폰(2.2:1)의 두 배로 납작해 기울기가 반으로 보였다 */}
-        <div aria-hidden className="relative h-[150px] sm:h-[180px]">
+        <div
+          aria-hidden
+          className="trend-ticks relative h-[150px] sm:h-[180px]"
+          style={{ "--tick-gap": tickGap.toFixed(4) } as CSSProperties}
+        >
           <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="absolute inset-0 h-full w-full overflow-visible">
             {/* 달 경계 옅은 세로선: 아래 'N월' 눈금이 어느 자리인지 이어 준다(맨 왼쪽 끝은 그래프 시작이라 긋지 않는다) */}
             {ticks
@@ -186,11 +196,12 @@ export default function WrcTrend({ points }: { points: TrendPoint[] }) {
           </svg>
           {/* 눈금 숫자: SVG 안 글자는 그래프와 함께 가로로 늘어나 찌그러져서, 점처럼 % 자리의 글자로 그래프 오른쪽 밖(mr-8 자리)에
               둔다. 오른쪽 끝을 카드 안쪽 끝(위 wRC+ 숫자와 같은 세로줄)에 맞추면 세 자리 숫자도 마지막 점(지름 13px, 그래프 끝에서
-              반쯤 나옴)과 5px 넘게 떨어진다. 마우스가 숫자 위에 가면 그래프를 떠난 것으로 */}
+              반쯤 나옴)과 5px 넘게 떨어진다. 마우스가 숫자 위에 가면 그래프를 떠난 것으로.
+              크기는 Micro지만 큰 글씨에서는 눈금 사이 간격까지만 커진다(trend-tick) */}
           {[...grid, 100].map((v) => (
             <span
               key={v}
-              className="pointer-events-none absolute -right-8 -translate-y-1/2 text-micro text-muted tabular-nums"
+              className="trend-tick pointer-events-none absolute -right-8 -translate-y-1/2 text-muted tabular-nums"
               style={{ top: `${(y(v) / H) * 100}%` }}
             >
               {v}
