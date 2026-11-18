@@ -5,8 +5,8 @@ import type { ReactNode } from "react";
  * 짧고 모양도 달라서, 첫 화면에 바닥글이 먼저 보였다가 내용이 오면 밀려 내려갔다(NN/g Skeleton Screens, web.dev CLS, 전수조사).
  * 이제 화면마다 실제 배치(375px에서 잰 카드·줄 높이)를 닮은 뼈대를 두고, 뼈대 틀은 화면 높이(100dvh) 이상이라 바닥글이
  * 첫 화면에 나오지 않는다. 페이지 제목(h1)이 정해진 화면(선수·뉴스·기록)은 제목을 뼈대 밖에 그대로 두고, 제목이 데이터
- * 머리 줄 안에 있는 내 선수 화면은 뼈대가 같은 자리에 진짜 제목을 그린다. 홈은 비시즌(MLB 도전 + 성적표)과 시즌 중(층 카드)
- * 모양이 달라 둘을 대신하는 큰 카드 하나 + 카드 격자다. 앱 뼈대(korleaguer-app LoadingSkeleton)와 같은 회색 상자 방식이다.
+ * 머리 줄 안에 있는 내 선수 화면은 뼈대가 같은 자리에 진짜 제목을 그린다. 홈은 지금 운영 모양인 비시즌(MLB 도전 큰 카드 +
+ * 성적표 줄 목록)을 닮게 그린다(HomeSkeleton). 앱 뼈대(korleaguer-app LoadingSkeleton)와 같은 회색 상자 방식이다.
  */
 
 /**
@@ -76,7 +76,93 @@ function StageCard() {
   );
 }
 
-/** 홈: 큰 카드 하나(비시즌 MLB 도전·시즌 중 층 자리) + 섹션 제목·알약 줄 + 선수 카드 격자 */
+/** 글 한 줄 자리: 줄 높이(h)만큼 칸을 잡고 그 가운데 회색 막대(bone 클래스)를 둔다. 실제 글줄과 높이를 맞추려고 쓴다 */
+function Line({ h, bone }: { h: string; bone: string }) {
+  return (
+    <div className={`flex items-center ${h}`}>
+      <Bone className={bone} />
+    </div>
+  );
+}
+
+/**
+ * 성적표 목록 한 줄(SeasonReportList): 사진 44px | 이름·판정·상태·숫자 줄(lines: 둘째 줄부터 막대 폭) | 작은 달별 막대 84×30.
+ * second가 있으면 사진만큼 들인 둘째 줄(거론 구단·이번 겨울 기사), open이면 막대 자리에 '접기'와 아래 펼친 곳
+ */
+function ReportRowSkeleton({ lines, second = false, open = false }: { lines: string[]; second?: boolean; open?: boolean }) {
+  return (
+    <div>
+      <div className={`grid grid-cols-[44px_minmax(0,1fr)_84px] items-center gap-x-3 pt-3 ${second ? "pb-1" : "pb-3"}`}>
+        <Circle className="size-11" />
+        <div>
+          <Line h="h-[1.375rem]" bone="h-4 w-[4.5rem]" />
+          {lines.map((w, i) => (
+            <Line key={i} h="h-5" bone={`h-3 ${w}`} />
+          ))}
+        </div>
+        {open ? (
+          <Bone className="h-4 w-10 self-start justify-self-end" />
+        ) : (
+          // 작은 달별 막대: 칸 가운데(평균) 위아래로 높이가 다른 여섯 막대
+          <div className="flex h-[30px] w-[84px] items-end gap-1 px-0.5">
+            {["h-[18px]", "h-[13px]", "h-[22px]", "h-[11px]", "h-[16px]", "h-[8px]"].map((h, i) => (
+              <div key={i} className={`flex-1 rounded-t-[3px] bg-surface-2 ${h}`} />
+            ))}
+          </div>
+        )}
+      </div>
+      {second && (
+        <div className="pb-2 pl-14">
+          <Line h="h-6" bone="h-3 w-[85%]" />
+        </div>
+      )}
+      {open && <ReportPanelSkeleton />}
+    </div>
+  );
+}
+
+/** 펼친 곳(375px에서 잰 359px): 한 줄 흐름 → 달별 막대(범례·여섯 칸·안내) → MLB 안 위치 세 줄 → 선 아래 별·링크 */
+function ReportPanelSkeleton() {
+  return (
+    <div className="pb-4">
+      <Line h="h-[1.375rem]" bone="h-4 w-60" />
+      <div className="mt-3 flex h-4 items-center justify-between">
+        <Bone className="h-3 w-16" />
+        <Bone className="h-3 w-24" />
+      </div>
+      <div className="mt-1.5 grid h-[5.375rem] grid-cols-6 items-end">
+        {["h-6", "h-[1.375rem]", "h-7", "h-4", "h-5", "h-2.5"].map((h, i) => (
+          <div key={i} className="flex flex-col items-center gap-1.5 px-[9px]">
+            <Bone className="h-3 w-6" />
+            <div className={`w-full rounded-t-[5px] rounded-b-[2px] bg-surface-2 ${h}`} />
+            <Bone className="mb-0.5 h-2.5 w-5" />
+          </div>
+        ))}
+      </div>
+      <Line h="mt-1 h-4" bone="h-3 w-48" />
+      <div className="mt-4 space-y-2">
+        <Line h="h-5" bone="h-3 w-28" />
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="flex h-7 items-center gap-3">
+            <Bone className="h-3 w-8" />
+            <Bone className="h-2 flex-1" />
+            <Bone className="h-3 w-12" />
+          </div>
+        ))}
+      </div>
+      <div className="mt-4 flex h-[3.0625rem] items-center justify-between border-t border-line pt-1">
+        <Circle className="size-6" />
+        <Bone className="h-3.5 w-20" />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * 홈: 큰 카드 하나(비시즌 MLB 도전·시즌 중 층 자리) + 비시즌 성적표(흰 카드 한 장 안 줄 목록, 맨 위 줄은 펼침).
+ * 성적표 자리는 예전 '내 선수' 무대 카드 격자였는데, 성적표가 줄 목록으로 바뀌어(#286) 모양·높이가 달랐다(전수조사 L253).
+ * 375px에서 실제 성적표 카드(1,046px)와 비슷한 높이(약 1,000px)다
+ */
 export function HomeSkeleton() {
   return (
     <Frame className="space-y-7">
@@ -124,15 +210,21 @@ export function HomeSkeleton() {
       </section>
       <section>
         <SectionTitle className="w-40" />
-        <div className="-mt-0.5 mb-3 flex gap-1.5 px-1">
-          <Bone white className="h-6 w-56" />
-          <Bone white className="h-6 w-14" />
+        {/* 흐린 요약 한 줄('2027 개막 D-128 · …')과 오른쪽 '내 선수 n명 ›' */}
+        <div className="-mt-0.5 mb-3 flex h-6 items-center justify-between gap-3 px-1">
+          <Bone onPage className="h-3 w-48" />
+          <Bone onPage className="h-3.5 w-20" />
         </div>
-        <div className="grid items-start gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <StageCard />
-          <StageCard />
-          <div className="hidden lg:block">
-            <StageCard />
+        <div className="card px-4 pb-1">
+          {/* 목록 맨 위 흐린 안내('막대 = 4~9월 달마다 wRC+ · 줄을 누르면 펼쳐져요') */}
+          <Line h="h-7 pt-2" bone="h-3 w-64" />
+          <div className="divide-y divide-line">
+            <ReportRowSkeleton lines={["w-40"]} second open />
+            <ReportRowSkeleton lines={["w-28", "w-40"]} second />
+            <ReportRowSkeleton lines={["w-32", "w-24", "w-36"]} />
+            <ReportRowSkeleton lines={["w-28", "w-20", "w-40"]} />
+            <ReportRowSkeleton lines={["w-36"]} second />
+            <ReportRowSkeleton lines={["w-24", "w-40"]} second />
           </div>
         </div>
       </section>
