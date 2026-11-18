@@ -1,5 +1,6 @@
 "use client"; // 줄마다 펼치고 접는 상태를 기억하고, 별을 눌러 순서가 바뀌어도 줄을 그 자리에 두려고 처음 순서를 붙잡아 두는 클라이언트 컴포넌트다.
 
+import { useRouter } from "next/navigation";
 import { useEffect, useId, useState, type ReactNode } from "react";
 import { linkedSheetOpen } from "@/components/home/LinkedTeams";
 
@@ -30,8 +31,20 @@ export interface ReportRow {
  * 펼친 상태는 주소에 쓰지 않는다.
  * 별을 누르면 쿠키가 바뀌어 서버가 '내 선수 먼저' 순서로 다시 그리는데, 누른 줄이 그 자리에서 맨 위로 튀면 손가락 밑 내용이
  * 바뀐다(전수조사 P3 '누른 순간엔 자리 유지, 다음 방문 때 순서 반영'). 그래서 처음 그린 순서를 붙잡아 두고, 새로 생긴 줄만 맨 끝에 둔다.
+ *
+ * 붙잡은 순서는 이번에 들어온 동안만 쓴다. Next 16(cacheComponents)은 다른 화면으로 가도 이 화면을 지우지 않고 숨겨 두었다가
+ * 상태째 다시 보여서, /my에서 별을 바꾸고 '홈' 링크로 돌아와도 옛 순서가 남았다(머리는 '내 선수 먼저'인데 뺀 선수가 맨 위에 펼친 채).
+ * 그래서 목록을 bfcacheId(이 화면 데이터에 Next가 붙이는 번호)로 묶는다. 링크로 새로 들어오면 번호가 바뀌어 지금 순서로
+ * 처음부터 그리고(맨 위 줄만 펼침), 뒤로 가기로 돌아오면 같은 번호라 떠날 때 모습(펼친 줄·순서)이 그대로다.
+ * 같은 화면에서 별을 눌러 서버가 다시 그릴 때도 번호가 그대로라 자리를 지킨다. 다른 화면에서 별을 바꾸면 Next가 뒤로 가기용
+ * 데이터를 버려서, 뒤로 가기로 와도 새 번호로 다시 그린다.
  */
 export default function SeasonReportRows({ rows }: { rows: ReportRow[] }) {
+  const { bfcacheId } = useRouter();
+  return <RowList key={bfcacheId} rows={rows} />;
+}
+
+function RowList({ rows }: { rows: ReportRow[] }) {
   const [firstOrder] = useState(() => rows.map((r) => r.id));
   const at = (id: number) => {
     const i = firstOrder.indexOf(id);
