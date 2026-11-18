@@ -127,6 +127,8 @@ export default function JumpNav({ targets }: { targets: JumpTarget[] }) {
       ref={navRef}
       // 붙은 탭 줄 밑으로 포커스가 숨지 않게 globals.css가 이 표시를 보고 scroll-padding-top을 둔다
       data-jump-nav=""
+      // 붙어 있을 때만: 알약에 포커스가 들어가도 페이지가 튀지 않게 globals.css가 알약의 스크롤 상자를 옮긴다
+      data-stuck={stuck ? "" : undefined}
       aria-label="이 페이지 바로 가기"
       className={`sticky top-0 z-30 -mx-3 px-3 py-0.5 transition-[background-color,box-shadow] duration-150 motion-reduce:transition-none sm:-mx-6 sm:px-6 lg:hidden in-app:top-14 ${
         stuck ? "bg-surface shadow-[0_1px_0_var(--line)]" : "bg-background"
