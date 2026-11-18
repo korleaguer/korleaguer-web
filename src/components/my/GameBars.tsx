@@ -103,11 +103,12 @@ export default function GameBars({ slots, role, days, minors = false, name }: Pr
   // 마지막으로 고른 칸. 손가락이 빨리 움직이면 다시 그리기 전에 같은 칸이 또 와서, state 대신 이것으로 틱이 한 번만 나게 한다
   const picked = useRef(selected);
   /**
-   * 손가락으로 누른 자리와 그때 고른 칸. 손가락은 누르는 순간 고르지 않는다: 막대 위에 엄지를 대고 세로로 밀어 화면을 내리면
-   * 그 사이 선택이 바뀌고 진동이 울렸다(11-17 점검). 가로로 8px 넘게(세로보다 많이) 움직이면 그때부터 훑고,
-   * 움직이지 않고 떼면 누른 칸을 고른다. 마우스·펜은 예전처럼 누르는 순간 고른다
+   * 손가락으로 누른 자리와 그때 고른 칸(id는 그 손가락의 pointerId). 손가락은 누르는 순간 고르지 않는다: 막대 위에 엄지를 대고
+   * 세로로 밀어 화면을 내리면 그 사이 선택이 바뀌고 진동이 울렸다(11-17 점검). 가로로 8px 넘게(세로보다 많이) 움직이면 그때부터 훑고,
+   * 브라우저가 스크롤·확대로 가져가지 않은 채(가져가면 pointercancel이 온다) 떼면 누른 칸을 고른다. 마우스·펜은 예전처럼 누르는 순간 고른다.
+   * 첫 손가락만 본다: 둘째 손가락이 첫 손가락 상태를 덮으면, 확대로 취소될 때 처음 경기가 아니라 훑던 중간 칸으로 되돌렸다(11-18 리뷰)
    */
-  const touch = useRef<{ x: number; y: number; from: number; moved: boolean } | null>(null);
+  const touch = useRef<{ id: number; x: number; y: number; from: number } | null>(null);
   function pick(i: number) {
     if (i === picked.current || !slots[i]?.game) return;
     picked.current = i;
@@ -124,22 +125,24 @@ export default function GameBars({ slots, role, days, minors = false, name }: Pr
   }
   function onPointerMove(e: PointerEvent<HTMLDivElement>) {
     const t = touch.current;
+    // 둘째 손가락은 보지 않는다
+    if (t && e.pointerId !== t.id) return;
     if (t && !scrubbing.current) {
       const dx = Math.abs(e.clientX - t.x);
       const dy = Math.abs(e.clientY - t.y);
-      if (dx <= 8 || dx <= dy) {
-        // 아직 가로 훑기가 아니다(세로로 밀면 곧 브라우저가 스크롤로 가져가 pointercancel이 온다)
-        if (dx > 8 || dy > 8) t.moved = true;
-        return;
-      }
+      // 아직 가로 훑기가 아니다(세로로 밀면 곧 브라우저가 스크롤로 가져가 pointercancel이 온다)
+      if (dx <= 8 || dx <= dy) return;
       scrubbing.current = true;
     }
     if (scrubbing.current) pickAt(e.clientX);
   }
-  function endPointer(cancelled: boolean) {
+  function endPointer(e: PointerEvent<HTMLDivElement>, cancelled: boolean) {
     const t = touch.current;
-    if (t && !scrubbing.current && !t.moved && !cancelled) {
-      // 손가락을 대고 그대로 뗐다(톡): 누른 칸을 고른다
+    // 둘째 손가락을 떼거나 취소된 것은 넘긴다(확대면 첫 손가락도 곧 취소된다)
+    if (t && e.pointerId !== t.id) return;
+    if (t && !scrubbing.current && !cancelled) {
+      // 손가락을 대고 뗐고 브라우저가 스크롤로 가져가지 않았다(톡): 누른 칸을 고른다. 세로로 조금 미끄러진 톡도 고른다:
+      // 8px 넘게 움직이면 무시했더니, 브라우저 스크롤 문턱(iOS 약 10pt)보다 덜 미끄러진 톡은 스크롤도 고르기도 안 됐다(11-18 리뷰)
       pickAt(t.x);
     } else if (t && cancelled && picked.current !== t.from) {
       // 브라우저가 스크롤·확대로 가져갔다: 훑다 바뀐 선택을 처음 경기로 되돌린다(진동 없이)
@@ -169,18 +172,21 @@ export default function GameBars({ slots, role, days, minors = false, name }: Pr
         style={grid}
         onPointerDown={(e) => {
           if (e.button !== 0) return;
+          // 둘째 손가락(두 손가락 확대 등)은 첫 손가락(isPrimary)이 아니다. 첫 손가락은 다른 손가락이 없을 때만 오니 남은 상태를 새로 쓴다
+          if (e.pointerType === "touch" && !e.isPrimary) return;
           // 마우스도 묶음 밖으로 잠깐 나갔다 와도 계속 훑게 손을 뗄 때까지 붙잡는다
           e.currentTarget.setPointerCapture(e.pointerId);
           if (e.pointerType === "touch") {
-            touch.current = { x: e.clientX, y: e.clientY, from: picked.current, moved: false };
+            scrubbing.current = false;
+            touch.current = { id: e.pointerId, x: e.clientX, y: e.clientY, from: picked.current };
             return;
           }
           scrubbing.current = true;
           pickAt(e.clientX);
         }}
         onPointerMove={onPointerMove}
-        onPointerUp={() => endPointer(false)}
-        onPointerCancel={() => endPointer(true)}
+        onPointerUp={(e) => endPointer(e, false)}
+        onPointerCancel={(e) => endPointer(e, true)}
       >
         {slots.map((slot, i) => {
           const day = showsDay(slot, i, slots.length, days);
