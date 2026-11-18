@@ -46,16 +46,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const result = id == null ? null : await getNews(id);
   if (!result?.ok) {
     const missing = result == null || result.failure === "notFound";
+    // api가 잠깐 멈추면 화면은 '정보를 불러오지 못했어요' 안내다. 제목도 그 사실을 말한다('관련 기사'는 아무 기사처럼 읽혔다)
     return missing
       ? { title: "기사를 찾을 수 없어요", robots: { index: false, follow: false } }
-      : { title: "관련 기사", robots: NO_INDEX };
+      : { title: "기사를 불러오지 못했어요", robots: NO_INDEX };
   }
 
   const news = result.data;
   const title = news.titleKo ?? news.title;
   const description = splitSentences(news.summary)[0] ?? undefined;
-  // 공유 카드 그림은 og/[v]/route.tsx(언론사·제목). 주소에 배포 커밋이 들어가 카톡이 옛 그림을 쓰지 않는다
-  return { title, description, robots: NO_INDEX, ...shareMeta(title, description, newsShareImage(news.id)) };
+  // 공유 카드 그림은 og/[v]/route.tsx(언론사·제목). 주소에 배포 커밋이 들어가 카톡이 옛 그림을 쓰지 않는다.
+  // 그림의 대체 글은 그림과 같은 데이터로 그림 속 글(언론사·날짜·제목)을 적는다
+  return { title, description, robots: NO_INDEX, ...shareMeta(title, description, `/news/${news.id}`, newsShareImage(news)) };
 }
 
 export default function NewsArticlePage({ params }: Props) {

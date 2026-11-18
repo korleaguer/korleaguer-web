@@ -27,8 +27,14 @@ function parseId(id: string): number | null {
   return /^[1-9]\d{0,9}$/.test(id) ? Number(id) : null;
 }
 
+/** 주소의 ?game=(경기 상세 창을 여는 경기 번호)이 1~10자리 숫자가 아니면 null. 숫자 검사는 GameCalendar와 같다 */
+function parseGame(game: string | string[] | undefined): string | null {
+  // 경기 창(GameCalendar)이 숫자로 읽는 것과 같은 값으로(?game=007 → 7)
+  return typeof game === "string" && /^\d{1,10}$/.test(game) ? String(Number(game)) : null;
+}
+
 // <title>: "이정후 2026 기록 · KOR Leaguer" (뒷부분은 layout의 template이 붙인다)
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const id = parseId((await params).id);
   const result = id == null ? null : await getPlayer(id);
   if (!result?.ok) {
@@ -42,8 +48,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { player, season } = result.data;
   const title = `${player.nameKo} ${season} 기록`;
   const description = `${player.nameKo}${player.nameEn ? `(${player.nameEn})` : ""} ${season} 시즌 성적과 경기 기록`;
-  // 공유 카드 그림은 og/[v]/route.tsx(사진·핵심 기록). 주소에 배포 커밋이 들어가 카톡이 옛 그림을 쓰지 않는다
-  return { title, description, ...shareMeta(title, description, playerShareImage(player.id)) };
+  // 공유 카드 그림은 og/[v]/route.tsx(사진·핵심 기록). 주소에 배포 커밋이 들어가 카톡이 옛 그림을 쓰지 않는다.
+  // 그림의 대체 글은 그림과 같은 데이터로 그림 속 글(팀·포지션·기록)을 적는다
+  // 공유 주소(og:url)에는 경기 상세 창 주소(?game=경기번호)를 남긴다. '/players/{id}'로 정하면 경기 창 링크가 창 없는
+  // 선수 화면으로 열린다(og:url을 따르는 페이스북 등). 화면을 바꾸지 않는 다른 ?값(utm 등)은 넣지 않는다
+  const game = parseGame((await searchParams).game);
+  const path = game ? `/players/${player.id}?game=${game}` : `/players/${player.id}`;
+  return { title, description, ...shareMeta(title, description, path, playerShareImage(result.data)) };
 }
 
 export default function PlayerPage({ params }: Props) {
