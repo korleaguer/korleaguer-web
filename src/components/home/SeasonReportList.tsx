@@ -116,7 +116,14 @@ function buildRow(entry: MyPlayer, report: SeasonReport | null, isMine: boolean)
   const majorGames = entry.seasonTotals?.mlb?.games ?? 0;
   const position =
     report?.saber === undefined || (report.saber === null && majorGames > 0) ? null : (
-      <LeaguePositionCompact saber={report.saber} pitcher={pitcher} minorNumbers={report.level === "MINORS"} />
+      <LeaguePositionCompact
+        saber={report.saber}
+        pitcher={pitcher}
+        minorNumbers={report.level === "MINORS"}
+        // 한 줄 흐름이 이미 메이저에서 뛴 양을 말하면('7월 미네소타에서 메이저 4경기') 표본이 적어 위치가 없다는 줄은
+        // 같은 말이라 쓰지 않는다(같은 카드 안 같은 말 두 번 금지). 위치 막대가 있을 때는 그대로 그린다
+        sampleSaid={flow != null && /메이저 \d+(경기|등판)/.test(flow)}
+      />
     );
 
   const head = (

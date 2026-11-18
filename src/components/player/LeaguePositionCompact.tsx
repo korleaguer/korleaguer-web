@@ -13,18 +13,22 @@ const MIN_OUTS = 30;
  * 세 줄만 둔다(타자 타격·주루·수비, 투수 실점 억제·삼진·볼넷). 실제 값 줄과 각주는 선수 화면에 맡긴다.
  * - 머리: 'MLB 타자 465명 중'. 목록 줄 숫자가 마이너 합계면(minorNumbers) 위치가 메이저 몇 타석으로 잰 것인지 붙인다
  *   (김혜성처럼 트리플A 숫자 옆에서 MLB 위치가 같은 표본으로 읽히지 않게). 표본이 적으면(100타석·30이닝 미만) '참고용'.
- * - 위치가 없으면(서버 기준 50타석·10이닝 미만, 메이저 기록 없음) 한 줄로 그렇다고만 쓴다.
+ * - 위치가 없으면(서버 기준 50타석·10이닝 미만, 메이저 기록 없음) 한 줄로 그렇다고만 쓴다. 위 한 줄 흐름이 이미 메이저 경기
+ *   수를 말했으면(sampleSaid) 그 줄도 쓰지 않는다.
  * 선수 화면 칸은 캐시하는 async 부품이고 그 화면의 줄 모양을 따로 고치는 작업이 있어서, 홈 목록이 바로 그리는 이 판은 파일을 나눈다.
  */
 export default function LeaguePositionCompact({
   saber,
   pitcher,
   minorNumbers,
+  sampleSaid = false,
 }: {
   /** null이면 그 시즌 메이저 기록이 없다 */
   saber: PlayerSaber | null;
   pitcher: boolean;
   minorNumbers: boolean;
+  /** 위에서 이미 메이저 경기 수를 말했으면(한 줄 흐름) 표본이 적어 위치가 없다는 줄을 쓰지 않는다 */
+  sampleSaid?: boolean;
 }) {
   const hitter = saber ? saber.kind === "hitter" : !pitcher;
   const who = hitter ? "타자" : "투수";
@@ -33,8 +37,9 @@ export default function LeaguePositionCompact({
   const rows = saber ? rowsOf(saber)?.slice(1) : null;
 
   if (!saber || !rows) {
-    // 표본이 넉넉한데 위치가 없으면(견줄 선수가 아직 없는 등) 이유를 지어내지 않고 아무것도 쓰지 않는다
-    if (count >= (hitter ? MIN_PA : MIN_OUTS)) return null;
+    // 표본이 넉넉한데 위치가 없으면(견줄 선수가 아직 없는 등) 이유를 지어내지 않고 아무것도 쓰지 않는다.
+    // 메이저에서 조금 뛴 것을 위 한 줄이 이미 말했으면 같은 말이라 쓰지 않는다(고우석 '메이저 4경기' · '메이저 4이닝뿐이라 …')
+    if (count >= (hitter ? MIN_PA : MIN_OUTS) || (count > 0 && sampleSaid)) return null;
     return (
       <p className="mt-3 text-meta text-muted">
         {count > 0 ? `메이저 ${sample}뿐이라 MLB ${who} 중 위치는 없어요` : `메이저 기록이 없어 MLB ${who} 중 위치는 없어요`}
