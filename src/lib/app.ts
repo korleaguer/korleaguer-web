@@ -40,11 +40,33 @@ export function useAppFeature(feature: AppFeature): boolean {
 }
 
 /**
- * 앱(웹뷰) 안인가. 앱은 첫 버전부터 문서를 그리기 전에 <html data-app>을 붙인다(globals.css의 in-app 변형과 같은 표시).
- * 서버에서는 브라우저로 보고 그린다(화면 모양이 아니라 누를 때 동작을 고를 때 쓴다)
+ * 앱(웹뷰) 안인가. 앱은 첫 버전부터 문서를 그리기 전에 <html data-app="ios|android">를 붙인다(globals.css의 in-app 변형과 같은 표시).
+ * 브라우저에서만 부른다(서버에는 문서가 없어 false). 화면을 그릴 때는 useInApp을 쓴다
+ */
+export function isInApp(): boolean {
+  return typeof document !== "undefined" && document.documentElement.hasAttribute("data-app");
+}
+
+/** 아이폰 앱 안인가(<html data-app="ios">, globals.css의 in-ios-app 변형과 같은 표시). 아래 탭 막대가 웹 위에 떠 있다 */
+export function isIosApp(): boolean {
+  return typeof document !== "undefined" && document.documentElement.getAttribute("data-app") === "ios";
+}
+
+/**
+ * 앱(웹뷰) 안인가(isInApp). 서버에서는 브라우저로 보고 그린다(화면 모양이 아니라 누를 때 동작을 고를 때 쓴다)
  */
 export function useInApp(): boolean {
-  return useSyncExternalStore(subscribeNothing, () => document.documentElement.hasAttribute("data-app"), () => false);
+  return useSyncExternalStore(subscribeNothing, isInApp, () => false);
+}
+
+/**
+ * 아이폰 앱 아래 탭 막대가 웹 화면 아래를 덮는 높이(px, 화면 아래 끝부터 홈 표시줄까지 포함). 아이폰 앱이 아니면 0.
+ * 값은 globals.css의 --app-tab-bar 하나다(앱이 실제 높이를 넣고, 넣지 않은 옛 앱은 전에 쓰던 84px). CSS 변수 자체는
+ * 기본값일 때 calc를 풀지 않은 글자로 읽혀서, 같은 값을 쓰는 html의 scroll-padding-bottom(계산된 px)을 읽는다
+ */
+export function iosTabBarHeight(): number {
+  if (!isIosApp()) return 0;
+  return parseFloat(getComputedStyle(document.documentElement).scrollPaddingBottom) || 0;
 }
 
 /** 앱에 메시지를 보낸다. 앱 안이 아니면 아무 일도 하지 않는다 */

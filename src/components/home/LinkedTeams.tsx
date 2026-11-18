@@ -12,7 +12,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import type { LinkedTeams as LinkedTeamCounts } from "@/lib/api";
-import { haptic } from "@/lib/app";
+import { haptic, iosTabBarHeight } from "@/lib/app";
 import { withTopicParticle } from "@/lib/format";
 import Chevron from "@/components/Chevron";
 import TeamMark from "@/components/TeamMark";
@@ -291,9 +291,6 @@ function listHeight(rows: number): number {
   const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
   return rows * Math.max(2.75 * rem, 44) + 0.75 * rem + 2;
 }
-/** iOS 앱 아래 탭 막대(웹 위에 떠 있다, 84px)와 홈 표시줄 */
-const IOS_TAB_BAR = 84 + 34;
-
 /** 브라우저가 popover(맨 위 층)를 아는가. 모르는 옛 브라우저(iOS 16 이하 등)는 예전처럼 body 끝에 띄운다 */
 function supportsPopover(): boolean {
   return typeof HTMLElement !== "undefined" && "showPopover" in HTMLElement.prototype;
@@ -304,7 +301,8 @@ function openBand(): { top: number; bottom: number } {
   const header = document.querySelector<HTMLElement>("[data-site-header]");
   const sticky = header && getComputedStyle(header).position === "sticky";
   const top = sticky ? Math.max(0, header.getBoundingClientRect().bottom) : 0;
-  const bottom = window.innerHeight - (document.querySelector('[data-app="ios"]') ? IOS_TAB_BAR : 0);
+  // 아이폰 앱 아래 탭 막대는 웹 위에 떠 있다(홈 표시줄 포함, 아이폰 앱이 아니면 0)
+  const bottom = window.innerHeight - iosTabBarHeight();
   return { top, bottom };
 }
 

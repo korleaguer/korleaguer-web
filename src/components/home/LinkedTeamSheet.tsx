@@ -118,7 +118,8 @@ export default function LinkedTeamSheet({
             </button>
           </div>
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] in-ios-app:pb-[calc(env(safe-area-inset-bottom)+84px+0.5rem)]">
+        {/* 아이폰 앱은 아래 탭 막대가 창 위에 떠 있어 그 높이(--app-tab-bar, 홈 표시줄 포함)만큼 더 띄운다(globals.css) */}
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] in-ios-app:pb-[calc(var(--app-tab-bar)+0.5rem)]">
           {articles.length >= CHART_MIN && <DayBars articles={articles} days={days} />}
           <ul>
             {withoutRepeatedPhotos(articles).map((a, i) => (
