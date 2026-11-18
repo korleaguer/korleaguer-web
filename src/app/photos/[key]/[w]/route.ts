@@ -6,6 +6,7 @@
 // 줄이지 못하면 원본 주소로 넘겨서 화면은 원본을 받아 그대로 보인다(원본도 없으면 원본 주소가 404를 주고 화면은 이니셜 원으로).
 import { cacheLife } from "next/cache";
 import sharp from "sharp";
+import { apiUrl } from "@/lib/apiUrl";
 import { PHOTO_KEY, SMALL_PHOTO_WIDTHS } from "@/lib/photo";
 
 /** 처음 요청이면 api가 원본을 받는 동안 기다린다(원본 사진 경로와 같다) */
@@ -35,7 +36,7 @@ export async function GET(_request: Request, { params }: RouteContext<"/photos/[
 async function resized(key: string, width: number): Promise<string | null> {
   "use cache";
   try {
-    const url = new URL(`/api/photos/${key}`, process.env.API_BASE_URL ?? "http://localhost:8080");
+    const url = apiUrl(`/api/photos/${key}`);
     const res = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
     if (!res.ok) throw new Error(`api ${res.status}`);
     const input = Buffer.from(await res.arrayBuffer());

@@ -2,6 +2,7 @@
 import { cache } from "react";
 import { cacheLife } from "next/cache";
 import { connection } from "next/server";
+import { apiUrl } from "@/lib/apiUrl";
 
 /** mlb: MLB 공식 Stats API에서 받은 실제 데이터, sample: 테스트·오프라인용 지어낸 데이터 */
 export type DataMode = "sample" | "mlb";
@@ -1414,8 +1415,7 @@ async function requestApi<T>(
 ): Promise<ApiResult<T>> {
   let res: Response;
   try {
-    const url = new URL(path, process.env.API_BASE_URL ?? "http://localhost:8080");
-    res = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
+    res = await fetch(apiUrl(path), { signal: AbortSignal.timeout(timeoutMs) });
   } catch (e) {
     console.warn(`[api] ${path} 연결 실패:`, e instanceof Error ? e.message : e);
     return { ok: false, failure: "unreachable" };

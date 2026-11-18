@@ -1,4 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { apiUrl } from "@/lib/apiUrl";
+import { NEWS_ID, PLAYER_ID } from "@/lib/ids";
 
 /**
  * 없는 선수·기사 주소에 HTTP 404를 준다(검색엔진이 안내만 있는 200을 soft 404로 보지 않게, 11-17 전수조사).
@@ -24,10 +26,10 @@ export async function proxy(request: NextRequest) {
   return NextResponse.next();
 }
 
-/** id 모양은 각 page.tsx의 parseId와 같다. 다르면 화면은 안내를 그리는데 상태는 200(또는 그 반대)이 된다 */
+/** id 모양은 화면(page.tsx)과 같은 lib/ids 규칙을 쓴다. 다르면 화면은 안내를 그리는데 상태는 200(또는 그 반대)이 된다 */
 const ROUTES = {
-  players: { id: /^[1-9]\d{0,9}$/, api: "/api/players/" },
-  news: { id: /^[1-9]\d{0,14}$/, api: "/api/news/" },
+  players: { id: PLAYER_ID, api: "/api/players/" },
+  news: { id: NEWS_ID, api: "/api/news/" },
 } as const;
 
 /** 어느 화면에도 없는 주소. 밑줄로 시작하는 폴더는 주소가 되지 않아(app 폴더 규칙) 화면 주소와 겹칠 일이 없다 */
@@ -51,8 +53,7 @@ function decode(segment: string): string | null {
  */
 async function apiStatus(path: string): Promise<number | null> {
   try {
-    const url = new URL(path, process.env.API_BASE_URL ?? "http://localhost:8080");
-    const res = await fetch(url, { method: "HEAD", signal: AbortSignal.timeout(CHECK_TIMEOUT_MS) });
+    const res = await fetch(apiUrl(path), { method: "HEAD", signal: AbortSignal.timeout(CHECK_TIMEOUT_MS) });
     return res.status;
   } catch (e) {
     console.warn(`[proxy] ${path} 확인 실패:`, e instanceof Error ? e.message : e);

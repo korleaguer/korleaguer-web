@@ -2,6 +2,7 @@
 // 선수 페이지 머리 카드(PlayerHeader)를 그림으로 옮긴 모양이다.
 import { ImageResponse } from "next/og";
 import { getPlayer } from "@/lib/api";
+import { PLAYER_ID } from "@/lib/ids";
 import { OG_COLORS, OG_SIZE, OgBrand, mixHex, ogFallbackImage, ogFonts, photoDataUrl } from "@/lib/og";
 import { playerShareLines } from "@/lib/share";
 import { teamColor } from "@/lib/teams";
@@ -12,7 +13,7 @@ import { teamColor } from "@/lib/teams";
 
 export async function GET(_request: Request, { params }: RouteContext<"/players/[id]/og/[v]">) {
   const { id } = await params;
-  const result = /^[1-9]\d{0,9}$/.test(id) ? await getPlayer(Number(id)) : null;
+  const result = PLAYER_ID.test(id) ? await getPlayer(Number(id)) : null;
   const fonts = await ogFonts();
   // 없는 선수·잠깐 못 불러온 경우: 로고만 있는 그림(수집기가 저장해 두지 않게 보낸다)
   if (!result?.ok) return ogFallbackImage(fonts);

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getPlayer } from "@/lib/api";
+import { PLAYER_ID } from "@/lib/ids";
 import { formatAsOf } from "@/lib/format";
 import { playerShareImage, shareMeta } from "@/lib/share";
 import { readMyPlayers } from "@/lib/myPlayers";
@@ -22,9 +23,9 @@ import PageSuspense from "@/components/PageSuspense";
 
 type Props = PageProps<"/players/[id]">;
 
-/** 주소의 id가 1 이상 10자리 이하 정수가 아니면 null */
+/** 주소의 id가 선수 번호 모양(lib/ids, proxy와 같은 규칙)이 아니면 null */
 function parseId(id: string): number | null {
-  return /^[1-9]\d{0,9}$/.test(id) ? Number(id) : null;
+  return PLAYER_ID.test(id) ? Number(id) : null;
 }
 
 /** 주소의 ?game=(경기 상세 창을 여는 경기 번호)이 1~10자리 숫자가 아니면 null. 숫자 검사는 GameCalendar와 같다 */

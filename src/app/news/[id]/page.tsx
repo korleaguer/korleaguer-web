@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getNews, type NewsPage } from "@/lib/api";
+import { NEWS_ID } from "@/lib/ids";
 import { formatDate, formatTime } from "@/lib/format";
 import { readableLead, splitSentences, titleLang } from "@/lib/news";
 import { newsShareImage, shareMeta } from "@/lib/share";
@@ -18,9 +19,9 @@ type Props = PageProps<"/news/[id]">;
 /** api가 주는 관련 기사 최대 수(korleaguer-server NewsPageFinder.MORE). 이만큼이면 더 지난 기사가 있을 수 있다 */
 const MORE_FULL = 5;
 
-/** 주소의 id가 1 이상 15자리 이하 정수가 아니면 null */
+/** 주소의 id가 기사 번호 모양(lib/ids, proxy와 같은 규칙)이 아니면 null */
 function parseId(id: string): number | null {
-  return /^[1-9]\d{0,14}$/.test(id) ? Number(id) : null;
+  return NEWS_ID.test(id) ? Number(id) : null;
 }
 
 /**
