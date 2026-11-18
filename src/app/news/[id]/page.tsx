@@ -69,6 +69,7 @@ export default function NewsArticlePage({ params }: Props) {
 }
 
 // 없는 기사는 notFound() 대신 안내를 직접 그린다(선수 페이지와 같은 이유: Suspense 안의 notFound는 서버 HTML에 안 나온다).
+// 주소를 바로 열면 src/proxy.ts가 HTTP 404를 준다(선수 페이지와 같다).
 async function NewsContent({ params }: Pick<Props, "params">) {
   const id = parseId((await params).id);
   if (id == null) return <NotFoundNotice message="찾는 기사가 없어요" />;

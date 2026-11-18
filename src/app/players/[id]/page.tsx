@@ -67,6 +67,8 @@ export default function PlayerPage({ params }: Props) {
 
 // 없는 선수는 notFound() 대신 안내를 직접 그린다.
 // (Suspense 안에서 notFound()를 부르면 서버 HTML에는 안내가 없고 브라우저 JS가 나중에 그린다.)
+// 주소를 바로 열면 src/proxy.ts가 먼저 확인해 HTTP 404(공통 404 화면)를 준다. 이 안내는 앱 안 이동(RSC 요청)과
+// proxy가 확인을 건너뛴 때(api 오류·1초 넘김)에 보인다.
 async function PlayerContent({ params }: Pick<Props, "params">) {
   const id = parseId((await params).id);
   if (id == null) return <NotFoundNotice message="찾는 선수가 없어요" />;
