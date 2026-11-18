@@ -143,7 +143,8 @@ export default function GameCalendar({
   /**
    * 키보드로 옮겨 간 날짜 칸(roving tabindex, WAI-ARIA APG Grid). 칸마다 Tab이 서면 한 달에 20~30번 눌러야 달력을 지나갔다
    * (11-17 전수조사). 그래서 달력은 Tab 한 번으로 들어와 화살표로 칸 사이를 옮기고, 다음 Tab은 달력 밖으로 나간다.
-   * 화살표는 포커스만 옮기고 창은 Enter·Space(누르기)로만 연다(옮기다 창이 열리지 않게). 처음과 그달에 없으면 고른 날이다
+   * 화살표는 포커스만 옮기고 창은 Enter·Space(누르기)로만 연다(옮기다 창이 열리지 않게). 처음과 그달에 없으면 고른 날이다.
+   * 날을 고르면(누르기·창의 앞뒤 경기·주소) showDay가 그날로 맞춘다
    */
   const [focusKey, setFocusKey] = useState<string | null>(null);
 
@@ -170,10 +171,13 @@ export default function GameCalendar({
     [calendar],
   );
 
+  // 고른 날이 바뀌면 Tab 자리도 그날로 옮긴다. 사파리(아이폰 앱 WebKit 포함)는 버튼을 눌러도 포커스를 주지 않아서
+  // onFocus만 보면 화살표로 옮겨 둔 옛 칸이 Tab 자리로 남았다(5일로 옮긴 뒤 20일을 누르면 다음 Tab이 5일로, PR #291 리뷰)
   const showDay = useCallback((key: string) => {
     setMonthKey(key.slice(0, 7));
     setDayKey(key);
     setSheetKey(key);
+    setFocusKey(key);
   }, []);
 
   const gameUrl = (key: string | null) => {
@@ -349,7 +353,7 @@ export default function GameCalendar({
       <div
         role="group"
         aria-label={`${month.year}년 ${month.month}월 경기 달력`}
-        // 화살표로 칸 사이를 옮긴다(위 focusKey). 클릭·창을 닫은 뒤 돌아온 포커스도 그 칸을 Tab 자리로 삼는다
+        // 화살표로 칸 사이를 옮긴다(위 focusKey). 창을 닫은 뒤 돌아온 포커스도 그 칸을 Tab 자리로 삼는다(누른 날은 showDay가 맞춘다)
         onKeyDown={(e) => {
           const current = (e.target as HTMLElement).dataset.day;
           if (!current) return;
