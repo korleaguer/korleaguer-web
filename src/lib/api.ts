@@ -1565,7 +1565,8 @@ const MY_IDS_PER_REQUEST = 20;
 /**
  * GET /api/my. api가 한 번에 20명까지만 받아서, 넘으면 20명씩 나눠 함께 부르고 선수를 준 순서대로 이어 붙인다(전수조사 L426).
  * 예전에는 홈 층이 명단을 20명에서 잘라 21번째부터 말없이 빠지고, 비시즌 성적표는 400으로 통째 오류였다.
- * 하나라도 실패하면 실패로 돌려준다(몇 명만 빠진 화면은 빠진 줄 알 수 없다). 20명 이하면 예전과 같은 요청 한 번이라
+ * 하나라도 실패하면 실패로 돌려준다(몇 명만 빠진 화면은 빠진 줄 알 수 없고, 층의 'n명'도 말없이 틀린다. 층은 받지 못하면
+ * 예전 '최근 경기'를 보인다). 20명 이하면 예전과 같은 요청 한 번이라
  * 캐시 열쇠도 같다('내 선수'는 쿠키가 20명까지라 늘 한 번). cache는 인자를 값이 아니라 참조로 비교하므로, 배열을 문자열로 바꿔 넘긴다.
  */
 export async function getMyPlayers(ids: readonly number[], days: number): Promise<ApiResult<MyPlayersResponse>> {
@@ -1580,10 +1581,14 @@ export async function getMyPlayers(ids: readonly number[], days: number): Promis
     if (!result.ok) return result;
     pages.push(result.data);
   }
-  // 기간·기준 시각은 첫 묶음 것(같은 때 부른 같은 기간이다). 기간을 당긴 선수가 있는지는 어느 묶음이든 하나라도
+  // 머리 정보(기준 시각·기간·데이터 상태)는 가장 늦게 만든 묶음 것을 통째로 쓴다(리뷰 지적). 묶음마다 따로 잠깐 재사용(use cache)해서
+  // 드물게 다른 때의 응답이 섞이고(한 묶음만 캐시에서 빠졌을 때 등), 섞어 쓰면 기준 시각과 기간이 어긋난다. 가장 늦은 것이 지금 날짜를
+  // 맞게 말한다: 층의 '오늘'·'어제'가 이 기준 시각을 따라, 이른 것을 쓰면 새로 받은 묶음의 오늘 경기에 '11월 19일'이 붙는다.
+  // 기간을 당긴 선수가 있는지는 어느 묶음이든 하나라도(응답의 기간은 당기지 않은 오늘 기준이고, 당긴 기간은 선수마다 있다)
+  const newest = pages.reduce((a, b) => (Date.parse(b.generatedAt) > Date.parse(a.generatedAt) ? b : a));
   return {
     ok: true,
-    data: { ...pages[0], isFallback: pages.some((p) => p.isFallback), players: pages.flatMap((p) => p.players) },
+    data: { ...newest, isFallback: pages.some((p) => p.isFallback), players: pages.flatMap((p) => p.players) },
   };
 }
 
