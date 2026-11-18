@@ -397,7 +397,7 @@ export interface SeasonReport {
   eraPlus?: number | null;
   /** wrcPlus·eraPlus가 마이너 합계일 때 그 단계 이름('트리플A', 섞였으면 '마이너'). 메이저면 null */
   statLevelKo?: string | null;
-  /** 선수 화면과 같은 MLB 안 위치(백분위). 메이저 기록이 없으면 null, 옛 api면 없다(undefined) */
+  /** 선수 화면과 같은 MLB 안 위치(백분위). 메이저 기록이 없거나 서버가 위치를 못 읽으면 null, 옛 api면 없다(undefined) */
   saber?: PlayerSaber | null;
   /** 정규시즌 달마다 어디서 뛰었나와 타율·평균자책점(카드의 달별 막대, korleaguer-server#170). 옛 api면 없다 */
   months?: SeasonMonth[];
@@ -963,7 +963,8 @@ function normalizeHome(raw: HomeResponse): HomeResponse {
 /**
  * 성적표 한 장. 시즌 wRC+·ERA+·단계·MLB 안 위치(korleaguer-server#179)는 옛 api면 없다.
  * MLB 안 위치는 선수 화면처럼 kind(타자·투수)를 붙인다(서버는 키로만 나눈다). 칸이 아예 없으면(옛 api) undefined로 남겨
- * 화면이 위치 줄을 그리지 않고, null(새 api: 메이저 기록 없음)이면 '위치는 없어요'를 쓴다.
+ * 화면이 위치 줄을 그리지 않는다. null은 메이저 기록이 없거나 서버가 위치를 못 읽은 것이라, 화면은 메이저 경기가 없을 때만
+ * '위치는 없어요'를 쓰고 메이저에서 뛴 선수면 줄을 뺀다(SeasonReportList).
  * 기사는 관련 기사와 같은 규칙으로 다듬는다(원문 주소가 http(s)가 아닌 기사는 링크로 쓸 수 없어 뺀다)
  */
 function normalizeReport(r: SeasonReport): SeasonReport {
