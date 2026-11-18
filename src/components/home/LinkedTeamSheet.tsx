@@ -7,7 +7,7 @@ import type { LinkedArticle, LinkedTeam } from "@/lib/api";
 import { formatDate, kstDayKey } from "@/lib/format";
 import TeamMark from "@/components/TeamMark";
 import NewsThumb from "@/components/news/NewsThumb";
-import Words from "@/components/Words";
+import Words, { WordGroup } from "@/components/Words";
 import { teamColor, teamLogoUrl } from "@/lib/teams";
 
 /** 아래로 이만큼 끌면 닫는다(px, 경기 상세 창과 같다) */
@@ -113,12 +113,13 @@ export default function LinkedTeamSheet({
                 최근 {days}일 행선지로 거론한 기사 {articles.length}건
                 {/* 줄마다 보이는 문장은 AI 요약에서 뽑은 것이라, 언론사 이름 밑에 있어도 그 언론사가 쓴 문장처럼 읽히지 않게 알린다
                     (인공지능기본법 제31조 생성형 AI 결과 고지). 줄마다 달지 않고 이 줄 끝에 한 번만 둔다(기사 페이지 출처 줄의 'AI 요약'처럼,
-                    이슈 #277). 좁으면 '· 문장은 AI 요약'을 한 덩어리로 다음 줄에 내린다. 요약 문장이 없는 기사는 제목을 보이는데
+                    이슈 #277). 좁으면 '· 문장은 AI 요약'을 한 덩어리로 다음 줄에 내리고(WordGroup), 그 줄보다도 길면(320px 큰 글씨 2배에서 글 칸
+                    140px, 덩어리 149px) '문장은'과 'AI 요약' 사이에서만 나눈다. 요약 문장이 없는 기사는 제목을 보이는데
                     (11-17 운영 90줄 중 1줄), 모든 줄이 제목이면 붙이지 않는다 */}
                 {articles.some((a) => a.reason) && (
                   <>
                     {" "}
-                    <span className="whitespace-nowrap">· 문장은 AI 요약</span>
+                    <WordGroup text={"·\u00a0문장은 AI\u00a0요약"} />
                   </>
                 )}
               </p>
