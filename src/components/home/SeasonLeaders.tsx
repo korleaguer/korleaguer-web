@@ -28,13 +28,15 @@ const LEADERS: Leader[] = [
 ];
 
 /**
- * 시즌 1위 카드 네 장(타율·홈런·OPS·타점). 공동 1위면 "이정후 외 2명".
+ * '한국 선수 중 1위' 카드 네 장(타율·홈런·OPS·타점). 공동 1위면 "이정후 외 2명".
  * 올해 주로 마이너에서 뛴 선수는 빼고 메이저 선수끼리 비교한다.
  * 타율·OPS는 몇 타석만 뛴 선수가 1위가 되지 않게 순위 기준(최소 타석)을 채운 선수 중에서 고른다.
+ * 제목이 '시즌 1위'일 때는 MLB 리그 1위처럼 읽혔다(전수조사 L312). '우리 선수'는 바로 위 층의 '내 선수'(별로 고른 선수)와
+ * 헷갈려서, 다루는 선수를 부르는 이름('해외파 한국 선수', DESIGN.md 문구 원칙)으로 쓴다
  */
 export default function SeasonLeaders({ season, statsAvailable, ranking, hitters }: Props) {
   return (
-    <Section id="leaders-title" title="시즌 1위" aside={`${season} 시즌`}>
+    <Section id="leaders-title" title="한국 선수 중 1위" aside={`${season} 시즌`}>
       {statsAvailable ? (
         // 카드 줄이 13rem보다 좁으면(큰 글씨) 한 칸에 하나씩(두 칸이면 큰 숫자가 두 줄로 갈린다, 이슈 #264).
         // 768px 이상의 네 칸도 줄이 30rem보다 좁으면(큰 글씨) 두 칸으로(가장 긴 숫자 OPS 1.000대 기준 약 28rem,

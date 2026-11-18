@@ -21,11 +21,13 @@ export default function MyPlayerToggle({ playerId, nameKo, initialOn, variant, c
   if (variant === "icon") {
     return (
       <span className={`inline-flex flex-col items-end ${className}`}>
+        {/* data-my-toggle: 내 선수 화면이 카드 별로 뺐는지 알아보는 표시(useFocusAfterRemove) */}
         <button
           type="button"
           aria-pressed={on}
           aria-label={label}
           title={on ? "내 선수에서 빼기" : "내 선수에 넣기"}
+          data-my-toggle
           onClick={toggle}
           className={`press tap-target grid size-9 place-items-center rounded-full transition duration-150 ${on ? "text-accent-ink hover:bg-accent-soft" : "text-muted hover:bg-surface-2 hover:text-foreground"} ${pending ? "opacity-70" : ""}`}
         >

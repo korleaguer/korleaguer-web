@@ -3,7 +3,7 @@
 // 앱(웹뷰) 안 머리글 오른쪽의 공유 버튼(토스처럼 위쪽 오른쪽 하나). 일반 브라우저에서는 브라우저의 공유를 쓰므로 숨긴다.
 // 누르면 지금 화면 주소를 공유한다. 받는 쪽에는 미리보기 그림(opengraph-image)이 카드로 붙는다.
 // - 공유를 아는 앱(features에 "share"): 앱이 기기 공유 창을 연다
-// - 옛 앱: 기기 공유(navigator.share), 그것도 없으면 주소를 복사하고 알림 띠로 알린다
+// - 옛 앱: 기기 공유(navigator.share), 그것도 없으면 주소를 복사하고 알림 띠로 알린다(복사하지 못해도 알린다)
 import { usePathname } from "next/navigation";
 import { appHas, postToApp } from "@/lib/app";
 import { toast } from "@/lib/toast";
@@ -35,7 +35,8 @@ export default function ShareButton() {
       await navigator.clipboard.writeText(url);
       toast("링크를 복사했어요", { tone: "success" });
     } catch {
-      // 복사도 못 하는 환경이면 조용히 둔다
+      // 복사도 못 하면 그렇다고 알린다. 조용히 끝나면 눌렀는데 아무 일도 없는 것처럼 보였다(11-17 점검)
+      toast("링크를 복사하지 못했어요", { tone: "error" });
     }
   }
 
