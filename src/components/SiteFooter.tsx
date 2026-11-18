@@ -6,7 +6,8 @@ const MLB_NOTICE_URL = "http://gdx.mlb.com/components/copyright.txt";
 export default function SiteFooter() {
   return (
     <footer>
-      <div className="mx-auto max-w-[67.5rem] space-y-1 px-4 pb-8 pt-2 text-center text-caption text-muted sm:px-6">
+      {/* 휴대폰에서 두세 줄로 감기는 작은 글이라 줄 간격을 1.5로 연다(caption 토큰의 16px는 한 줄짜리용, 여러 줄이면 1.33으로 빽빽하다) */}
+      <div className="mx-auto max-w-[67.5rem] space-y-1 px-4 pb-8 pt-2 text-center text-caption leading-normal text-muted sm:px-6">
         <p>
           기록 출처: MLB · 개인적·비상업적 용도로만 쓰고 있어요 ·{" "}
           <a

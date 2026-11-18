@@ -161,10 +161,12 @@ const DOT: Record<Floor["tone"], string> = {
   fa: "bg-fa-fg",
   success: "bg-success-fg",
 };
+// 위기 층('부상·재활'·'출장 정지·지명 할당')은 빨간 점 + 본문 글자다. 빨간 글자는 '좋은 활약' 주황과 거의 같은 색이라
+// 빨강은 점에만 쓴다(DESIGN.md 위기 빨강, 사용자 11-17 '추천대로')
 const TITLE: Record<Floor["tone"], string> = {
   accent: "text-accent-ink",
   muted: "text-muted",
-  danger: "text-danger-fg",
+  danger: "text-foreground",
   fa: "text-fa-fg",
   success: "text-success-fg",
 };

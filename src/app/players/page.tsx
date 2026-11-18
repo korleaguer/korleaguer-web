@@ -4,7 +4,7 @@ import { formatAsOf } from "@/lib/format";
 import { readMyPlayers } from "@/lib/myPlayers";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import DataBanners from "@/components/DataBanners";
-import LoadingBlock from "@/components/LoadingBlock";
+import { PlayersSkeleton } from "@/components/PageSkeleton";
 import PlayerCard from "@/components/players/PlayerCard";
 import StateNotice from "@/components/StateNotice";
 import PageSuspense from "@/components/PageSuspense";
@@ -26,7 +26,7 @@ export default function PlayersPage() {
   return (
     <div className="space-y-4">
       <h1 className="px-1 text-display">선수</h1>
-      <PageSuspense fallback={<LoadingBlock rows={6} />}>
+      <PageSuspense fallback={<PlayersSkeleton />}>
         <PlayersContent />
       </PageSuspense>
     </div>

@@ -7,7 +7,7 @@ import { NEWS_QUERY_MAX, newsHref } from "@/lib/news";
 import { hasNewSince, NEWS_SEEN_COOKIE, parseSeen, toSeconds } from "@/lib/newsSeen";
 import { shareMeta, SITE_NAME } from "@/lib/share";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
-import LoadingBlock from "@/components/LoadingBlock";
+import { NewsSkeleton } from "@/components/PageSkeleton";
 import PageSuspense from "@/components/PageSuspense";
 import StateNotice, { stateActionClass } from "@/components/StateNotice";
 import NewsFeed from "@/components/news/NewsFeed";
@@ -36,7 +36,7 @@ export default function NewsTabPage({ searchParams }: Props) {
   return (
     <div className="space-y-4">
       <h1 className="px-1 text-display">뉴스</h1>
-      <PageSuspense fallback={<LoadingBlock rows={8} />}>
+      <PageSuspense fallback={<NewsSkeleton />}>
         <NewsContent searchParams={searchParams} />
       </PageSuspense>
     </div>

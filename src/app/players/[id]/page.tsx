@@ -5,7 +5,7 @@ import { playerShareImage, shareMeta } from "@/lib/share";
 import { readMyPlayers } from "@/lib/myPlayers";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import DataBanners from "@/components/DataBanners";
-import LoadingBlock from "@/components/LoadingBlock";
+import { PlayerSkeleton } from "@/components/PageSkeleton";
 import NotFoundNotice from "@/components/NotFoundNotice";
 import CareerSeasons from "@/components/player/CareerSeasons";
 import GameLog from "@/components/player/GameLog";
@@ -59,7 +59,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
 
 export default function PlayerPage({ params }: Props) {
   return (
-    <PageSuspense fallback={<LoadingBlock rows={8} />}>
+    <PageSuspense fallback={<PlayerSkeleton />}>
       <PlayerContent params={params} />
     </PageSuspense>
   );
@@ -74,7 +74,8 @@ async function PlayerContent({ params }: Pick<Props, "params">) {
   const [result, myIds] = await Promise.all([getPlayer(id), readMyPlayers()]);
   if (!result.ok) {
     if (result.failure === "notFound") return <NotFoundNotice message="찾는 선수가 없어요" />;
-    return <ApiErrorNotice failure={result.failure} />;
+    // 선수 이름(h1)을 그리지 못했으니 안내 제목이 이 화면의 h1이다
+    return <ApiErrorNotice failure={result.failure} level={1} />;
   }
 
   const {

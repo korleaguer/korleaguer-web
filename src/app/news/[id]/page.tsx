@@ -5,7 +5,7 @@ import { readableLead, splitSentences, titleLang } from "@/lib/news";
 import { newsShareImage, shareMeta } from "@/lib/share";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import ExternalLinkIcon from "@/components/ExternalLinkIcon";
-import LoadingBlock from "@/components/LoadingBlock";
+import { ArticleSkeleton } from "@/components/PageSkeleton";
 import NotFoundNotice from "@/components/NotFoundNotice";
 import Section from "@/components/Section";
 import NewsPhoto from "@/components/news/NewsPhoto";
@@ -62,7 +62,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default function NewsArticlePage({ params }: Props) {
   return (
-    <PageSuspense fallback={<LoadingBlock rows={6} />}>
+    <PageSuspense fallback={<ArticleSkeleton />}>
       <NewsContent params={params} />
     </PageSuspense>
   );
@@ -76,7 +76,8 @@ async function NewsContent({ params }: Pick<Props, "params">) {
   const result = await getNews(id);
   if (!result.ok) {
     if (result.failure === "notFound") return <NotFoundNotice message="찾는 기사가 없어요" />;
-    return <ApiErrorNotice failure={result.failure} />;
+    // 기사 제목(h1)을 그리지 못했으니 안내 제목이 이 화면의 h1이다
+    return <ApiErrorNotice failure={result.failure} level={1} />;
   }
 
   const news = result.data;

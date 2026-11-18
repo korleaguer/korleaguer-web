@@ -38,6 +38,18 @@ export function formatDate(value: string | null | undefined): string {
 }
 
 /**
+ * 미국 날짜(MLB 일정·이동 기록처럼 시각 없이 날짜만 오는 값): "3월 25일(목, 미국)".
+ * 사이트의 다른 날짜는 한국 날짜라서, 하루 다를 수 있는 미국 날짜에는 '미국'을 붙인다(전수조사, 사용자 11-17 '추천대로').
+ * 시각이 없어 한국 날짜로 바꿀 근거가 없다(경기처럼 시작 시각이 있으면 한국 날짜로 바꿔 쓴다)
+ */
+export function formatUsDate(value: string | null | undefined): string {
+  const date = toDate(value);
+  if (!date) return "-";
+  const parts = dateFormat.formatToParts(date);
+  return `${part(parts, "month")}월 ${part(parts, "day")}일(${part(parts, "weekday")}, 미국)`;
+}
+
+/**
  * 데이터 기준 시각: "기준 11월 17일(화) 09:00"(한국 시간). 시즌 중 홈에만 있던 꼴을 비시즌 홈·선수 목록·선수 화면에도
  * 같게 쓴다(이슈 #277). 값이 없으면 부르는 쪽이 이 글을 빼야 한다("기준 - -"가 된다)
  */
@@ -98,6 +110,17 @@ export function formatSummary(summary: string): string {
 export function formatRate(value: number | null): string {
   if (value == null) return "-";
   return value.toFixed(3).replace(/^0\./, ".");
+}
+
+/**
+ * WAR(소수 한 자리): 3.24 → "3.2", -0.4 → "−0.4", null → "-".
+ * 음수는 하이픈이 아니라 빼기 글자(−)로 쓴다. 홈 성적표만 하이픈이라 선수 화면('−0.4')과 달랐다(전수조사).
+ * 반올림해 0이 되면 "−0.0" 대신 "0.0"
+ */
+export function formatWar(value: number | null): string {
+  if (value == null) return "-";
+  const fixed = value.toFixed(1);
+  return Number(fixed) === 0 ? "0.0" : fixed.replace("-", "−");
 }
 
 /** 아웃 수 → 이닝 글자: 152 → "50⅔", null → "-" */
