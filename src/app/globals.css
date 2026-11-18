@@ -36,6 +36,8 @@
    */
   --game-bar: #5c8af0;
   --game-bar-on: var(--accent);
+  /* 내 선수 출전 줄의 '선발·교체를 모르는 출전' 칸. 밝은 모드는 안 고른 막대 색이고, 다크 모드는 아래에서 따로 정한다 */
+  --strip-played: var(--game-bar);
 
   /* 패·무 알약 */
   --neutral-pill: #e5e7eb;
@@ -99,6 +101,8 @@
     /* 어두운 카드에서는 파랑 그대로가 안 고른 막대(3.27:1), 고른 막대는 밝은 파랑 */
     --game-bar: var(--accent);
     --game-bar-on: var(--accent-ink);
+    /* 출전 줄 '출전' 칸: 안 고른 막대 색(accent)이면 선발 칸(accent)과 같아져서 밝은 파랑 */
+    --strip-played: var(--game-bar-on);
 
     --neutral-pill: #2e3440;
     --neutral-pill-fg: #d3d8e0;
@@ -157,6 +161,7 @@
   --color-accent-soft: var(--accent-soft);
   --color-game-bar: var(--game-bar);
   --color-game-bar-on: var(--game-bar-on);
+  --color-strip-played: var(--strip-played);
   --color-neutral-pill: var(--neutral-pill);
   --color-neutral-pill-fg: var(--neutral-pill-fg);
   --color-notice-bg: var(--notice-bg);

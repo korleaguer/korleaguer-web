@@ -84,11 +84,12 @@ export function StatusPill({ status }: { status: CardStatus }) {
 
 /*
  * 출전 줄 칸. 흐림(투명도) 없이 단색이라 카드 대비 3:1을 넘는다(경기별 막대와 같은 이유, 이슈 #273).
- * 선발·교체를 모르는 출전은 경기별 막대의 안 고른 색(옅은 파랑)인데, 다크 모드에서는 그 색이 선발 파랑과 같아져서 밝은 파랑으로 가른다
+ * 선발·교체를 모르는 출전은 strip-played: 밝은 모드는 경기별 막대의 안 고른 색(옅은 파랑), 다크 모드는 그 색이 선발 파랑과
+ * 같아져서 밝은 파랑이다(값은 globals.css 한곳에서 정한다)
  */
 const STRIP: Record<PlayCode, string> = {
   STARTER: "bg-accent",
-  PLAYED: "bg-game-bar dark:bg-game-bar-on",
+  PLAYED: "bg-strip-played",
   SUB: "border-2 border-accent",
   ABSENT: "border-[1.5px] border-dashed border-muted",
 };
