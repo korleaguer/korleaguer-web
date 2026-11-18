@@ -4,7 +4,6 @@ import type { CardStatus, CardStatusKind, MyPlayer, NewsHeadline, SeasonReport, 
 import { formatEra, formatRate, kstDayKey } from "@/lib/format";
 import { newsHref } from "@/lib/news";
 import ExternalLinkIcon from "@/components/ExternalLinkIcon";
-import PlayerAvatar from "@/components/PlayerAvatar";
 import MyPlayerToggle from "@/components/my/MyPlayerToggle";
 import StarIcon from "@/components/my/StarIcon";
 import { type BadgeTone, levelKo, statusBadge } from "@/components/my/formLabels";
@@ -207,15 +206,18 @@ function buildRow(entry: MyPlayer, report: SeasonReport | null, isMine: boolean,
       {linked && (
         <LinkedTeams counts={linked} sheetKey={`player-${player.id}`} className="mt-4" playerPhotoUrl={player.photoUrl} />
       )}
-      {/* 상태가 말하지 않는 겨울 이동(트레이드·계약 등). 'FA 선언'은 'FA n일째'가 이미 말한다 */}
+      {/* 상태가 말하지 않는 겨울 이동(트레이드·계약 등). 'FA 선언'은 'FA n일째'가 이미 말한다.
+          이동 기록은 시각 없이 미국 날짜만 와서 '미국'을 붙인다(DESIGN.md 날짜 규칙, 전수조사 L255): 한 건이면
+          '11월 3일(미국) 계약', 여러 건이면 날짜마다 붙이지 않고 이름표 뒤에 한 번 '(미국 날짜)' */}
       {moves.length > 0 && (
         <p className="mt-3 text-meta text-muted tabular-nums">
-          이번 겨울 이동{" "}
+          {moves.length > 1 ? "이번 겨울 이동(미국 날짜)" : "이번 겨울 이동"}{" "}
           {moves.map((m, i) => (
             <Fragment key={`${m.date}-${m.label}`}>
               {i > 0 && " · "}
               <span className="whitespace-nowrap">
-                {monthDay(m.date)} <span className="font-semibold text-foreground">{m.label}</span>
+                {monthDay(m.date)}
+                {moves.length > 1 ? "" : "(미국)"} <span className="font-semibold text-foreground">{m.label}</span>
               </span>
             </Fragment>
           ))}
@@ -239,9 +241,7 @@ function buildRow(entry: MyPlayer, report: SeasonReport | null, isMine: boolean,
 
   return {
     id: player.id,
-    photo: (
-      <PlayerAvatar size={44} nameKo={player.nameKo} photoUrl={player.photoUrl} teamAbbr={player.teamAbbr} eager={eagerPhoto} />
-    ),
+    photo: { nameKo: player.nameKo, photoUrl: player.photoUrl, teamAbbr: player.teamAbbr, eager: eagerPhoto },
     head,
     spark: months.length > 0 ? <MonthSpark months={months} pitcher={pitcher} /> : null,
     second,

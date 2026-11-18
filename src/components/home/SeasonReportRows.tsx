@@ -2,14 +2,25 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useState, type ReactNode } from "react";
+import PlayerAvatar from "@/components/PlayerAvatar";
 import { linkedSheetOpen } from "@/components/home/LinkedTeams";
 
-/** 성적표 목록 한 줄. 내용은 서버가 그리고(SeasonReportList), 여기서는 펼치기·접기만 맡는다 */
+/**
+ * 성적표 목록 한 줄. 내용은 서버가 그리고(SeasonReportList), 여기서는 펼치기·접기만 맡는다.
+ *
+ * 칸 규칙: 서버가 만든 요소 칸(head·spark·second·panel)은 Row에서 늘 감싸개(span·div) 안에 혼자 둔다. 다른 자식과
+ * 나란히 두지 않는다. 클라이언트 JSX는 자식이 여럿이면 만들 때 자식마다 'key 검사 끝' 표시를 하는데, 다른 화면에서 올 때
+ * 클라이언트 코드가 아직 안 받아진 서버 요소는 나중에 풀리는 자리(lazy)로 와서 표시를 못 한다. 풀린 뒤 React가 그 요소를
+ * key 없는 목록 자식으로 검사해 'Each child in a list should have a unique "key" prop … It was passed a child from
+ * SeasonReportList' 경고를 냈다(react-dom warnOnInvalidKey, 이슈 #295, 뉴스 → 홈 이동에서 재현). 자식이 하나면 목록 검사를
+ * 하지 않는다. 버튼 안 사진은 다른 자식과 나란히 놓여야 해서 요소가 아니라 값(photo)으로 받아 여기서 그린다
+ */
 export interface ReportRow {
   /** 선수 번호 */
   id: number;
-  /** 버튼 왼쪽 44px 사진 */
-  photo: ReactNode;
+  /** 버튼 왼쪽 44px 사진에 쓸 값(요소가 아닌 까닭은 위 칸 규칙) */
+  /** eager: 첫 화면 안 줄이면 사진을 바로 받는다(성적표가 홈 맨 위일 때 앞 줄들, SeasonReportList) */
+  photo: { nameKo: string; photoUrl: string | null; teamAbbr: string | null; eager: boolean };
   /** 버튼 가운데: 이름·판정·상태와 숫자 한 줄(버튼 안이라 span만) */
   head: ReactNode;
   /** 접혀 있을 때 버튼 오른쪽 작은 달별 막대. 달별 기록이 없으면 null */
@@ -101,7 +112,8 @@ function Row({ row, defaultOpen }: { row: ReportRow; defaultOpen: boolean }) {
           }}
           className={`press-soft -mx-2 grid w-[calc(100%+1rem)] cursor-pointer grid-cols-[44px_minmax(0,1fr)_84px] items-center gap-x-3 rounded-xl px-2 pt-3 text-left hover:bg-surface-2 @max-[16rem]:grid-cols-[44px_minmax(0,1fr)] @max-[16rem]:items-start ${second ? "pb-1" : open ? "pb-3" : "pb-3 lg:pb-1"}`}
         >
-          {row.photo}
+          {/* 서버 요소 칸(head·spark)은 감싸개 안에 혼자 둔다(ReportRow 칸 규칙: 다른 자식과 나란히 두면 key 경고) */}
+          <PlayerAvatar size={44} nameKo={row.photo.nameKo} photoUrl={row.photo.photoUrl} teamAbbr={row.photo.teamAbbr} eager={row.photo.eager} />
           <span className="min-w-0">{row.head}</span>
           {open ? (
             // 펼치면 막대 자리에 '접기'(펼친 곳에 큰 막대가 있다). 상태는 aria-expanded가 읽어 주므로 글자는 숨긴다
