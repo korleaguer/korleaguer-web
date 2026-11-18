@@ -6,7 +6,6 @@ import type { GameDetail, GameLine, GamePlay, Role } from "@/lib/api";
 import { lineOf, type CalendarDay, type LogGame } from "@/lib/gameLog";
 import { formatDate, formatLineup, formatSummary, formatTime } from "@/lib/format";
 import { haptic } from "@/lib/app";
-import { toast } from "@/lib/toast";
 import { useSheetDrag } from "@/lib/useSheetDrag";
 import Highlights from "@/components/Highlights";
 import LoadingDots from "@/components/LoadingDots";
@@ -75,7 +74,7 @@ async function fetchClip(playerId: number, gamePk: number, playId: string): Prom
   }
 }
 
-/** 공 영상을 못 받았을 때 문구. 없음은 예전 그대로(알림 띠), 오류는 누른 줄 안에 보이고 다시 눌러 보라고 한다 */
+/** 공 영상을 못 받았을 때 누른 타석 줄 안에 보일 문구. 오류는 다시 눌러 보라고 한다 */
 const CLIP_FAILURE: Record<"none" | "error", string> = {
   none: "이 장면 영상은 아직 없어요.",
   error: "영상을 불러오지 못했어요. 잠시 뒤 다시 눌러 주세요.",
@@ -406,13 +405,14 @@ function DetailContent({
    */
   const figureRef = useRef<HTMLElement>(null);
   const focusClipRef = useRef(false);
-  /** 창 안 낭독 한 줄: 받는 동안 '영상을 불러오는 중', 못 받으면 그 까닭(없음·오류). 창 밖 알림 띠는 모달이 열린 동안 낭독기가 읽지 못할 수 있다 */
+  /** 창 안 낭독 한 줄: 받는 동안 '영상을 불러오는 중', 못 받으면 그 까닭(없음·오류). 모달이 열린 동안 창 밖은 낭독기가 읽지 못할 수 있다 */
   const [clipStatus, setClipStatus] = useState("");
   /**
-   * 영상을 못 받은(오류) 타석의 공 번호. 그 줄 안에 '다시 눌러 주세요'를 보인다. 알림 띠는 모달 창 아래 층이라 창이 높으면
-   * (하이라이트가 있는 경기 등, 휴대폰에서 위 77px까지) 창 뒤에 가려져 읽을 수 없었다. 다시 누르면 지운다
+   * 영상을 못 받은 타석(공 번호)과 까닭. 그 줄 안에 문구를 보인다(없음·오류 모두). 알림 띠는 모달 창(최상위 층) 뒤라 창이 높으면
+   * (하이라이트가 있는 경기 등, 휴대폰에서 위 77px까지) 창 뒤에 가려져 아무 반응이 없어 보였다.
+   * 다른 영상으로 바꾸면(▶·하이라이트) 지운다
    */
-  const [clipError, setClipError] = useState<string | null>(null);
+  const [clipNotice, setClipNotice] = useState<{ playId: string; failure: "none" | "error" } | null>(null);
 
   useEffect(() => {
     if (!focusClipRef.current) return;
@@ -423,6 +423,9 @@ function DetailContent({
   const showHighlight = (i: number) => {
     const h = detail.highlights[i];
     haptic("select");
+    // 앞서 못 받은 타석 안내·낭독 줄은 지난 일이라 지운다(▶를 새로 누를 때와 같다)
+    setClipNotice(null);
+    setClipStatus("");
     setClip({ key: `h-${i}`, hlsUrl: h.hlsUrl, mp4Url: h.mp4Url, posterUrl: h.imageUrl, autoPlay: true, label: h.title, sub: highlightSub(h.durationSec) });
   };
 
@@ -431,15 +434,14 @@ function DetailContent({
       if (!play.playId || loadingPlay) return;
       haptic("select");
       setLoadingPlay(play.playId);
-      setClipError(null);
+      setClipNotice(null);
       setClipStatus("영상을 불러오는 중");
       const result = await fetchClip(playerId, gamePk, play.playId);
       setLoadingPlay(null);
       if ("failure" in result) {
+        // 누른 줄 안에 알린다(오류면 다시 누르면 다시 받는다)
         setClipStatus(CLIP_FAILURE[result.failure]);
-        // 오류는 누른 줄 안에(다시 누르면 다시 받는다), 없음은 예전처럼 알림 띠로
-        if (result.failure === "error") setClipError(play.playId);
-        else toast(CLIP_FAILURE.none);
+        setClipNotice({ playId: play.playId, failure: result.failure });
         return;
       }
       const { mp4Url } = result;
@@ -518,7 +520,7 @@ function DetailContent({
               canClip={detail.clips && play.playId != null}
               playing={clip?.key === `p-${play.playId}`}
               loading={loadingPlay === play.playId}
-              notice={play.playId != null && clipError === play.playId ? CLIP_FAILURE.error : null}
+              notice={play.playId != null && clipNotice?.playId === play.playId ? CLIP_FAILURE[clipNotice.failure] : null}
               onPlay={() => showPlay(play)}
             />
           ))}
@@ -573,7 +575,7 @@ function PlayRow({
   canClip: boolean;
   playing: boolean;
   loading: boolean;
-  /** 이 타석 영상을 못 받았을 때(오류) 줄 안에 보일 한 줄. 없으면 null */
+  /** 이 타석 영상을 못 받았을 때(없음·오류) 줄 안에 보일 한 줄. 없으면 null */
   notice: string | null;
   onPlay: () => void;
 }) {
@@ -612,7 +614,7 @@ function PlayRow({
         </p>
         {meta && <p className="mt-0.5 text-meta text-muted tabular-nums">{meta}</p>}
         {batted && <p className={`text-meta tabular-nums ${homeRun ? "font-bold text-hot-ink" : "text-muted"}`}>{batted}</p>}
-        {/* 영상을 못 받았을 때(오류): 누른 ▶ 바로 옆에서 알린다. 흐린 기록 줄과 구분되게 본문색(빨간 글자는 쓰지 않는다, DESIGN.md) */}
+        {/* 영상을 못 받았을 때(없음·오류): 누른 ▶ 바로 옆에서 알린다. 흐린 기록 줄과 구분되게 본문색(빨간 글자는 쓰지 않는다, DESIGN.md) */}
         {notice && (
           <p id={noticeId} className="mt-1 text-meta text-pretty text-foreground">
             {notice}
