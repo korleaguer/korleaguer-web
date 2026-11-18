@@ -27,8 +27,10 @@ export default function SiteHeader() {
         </Link>
         {/* 앱 안에서는 누를 수 없는 글자 로고. 홈은 앱 아래 '홈' 탭이 맡고, 다른 탭에서 누르면 탭 표시와 화면이 어긋난다.
             예전에는 링크에 손가락만 막아 두어 키보드·화면 낭독기로는 여전히 링크였고, 제목이 떠서 투명할 때도 포커스가 갔다(전수조사).
-            제목이 뜨면(data-titled) 흐려진 뒤 visibility도 숨겨 낭독에서도 빠진다. 크기·간격은 위 링크와 같아 머리글 배치는 그대로다 */}
-        <span className="hidden items-center gap-[7px] transition-[opacity,visibility] duration-200 motion-reduce:transition-none in-app:flex group-data-titled:invisible group-data-titled:opacity-0">
+            제목이 뜨면(data-titled) 흐려진 뒤 visibility도 숨겨 낭독에서도 빠진다. 크기·간격은 위 링크와 같아 머리글 배치는 그대로다.
+            앱은 누르는 것에만 글자 선택을 막는데(globals.css) 이 로고는 링크가 아니게 되어 그 목록에서 빠지므로, 길게 눌러도 글자가
+            잡히거나 복사 메뉴가 뜨지 않게 직접 막는다 */}
+        <span className="hidden items-center gap-[7px] transition-[opacity,visibility] duration-200 select-none motion-reduce:transition-none in-app:flex group-data-titled:invisible group-data-titled:opacity-0">
           <Brand />
         </span>
         {/* 현재 주소는 요청 때 알 수 있는 경우가 있어서 Suspense가 필요하다. 그동안은 표시 없는 메뉴를 보여 준다. */}
