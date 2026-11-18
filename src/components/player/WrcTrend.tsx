@@ -222,11 +222,14 @@ export default function WrcTrend({ points }: { points: TrendPoint[] }) {
       </div>
       {/* '100'은 점선 끝 눈금에 있어 되풀이하지 않고 점선의 뜻만 쓴다. 중간 값은 표준 가중치로 어림해 마지막 점(MLB 공식)에 맞춰
           옮긴 값이라 공식 값처럼 읽히지 않게 밝힌다(lib/wrcTrend). 훑을 수 있다는 표시가 없어 손가락 기기·마우스 기기에 맞는 말을
-          하나만 보인다(375px 세 줄). 낭독기는 slider 역할과 값 글로 다루므로 이 안내는 읽지 않는다 */}
+          하나만 보인다. 낭독기는 slider 역할과 값 글로 다루므로 이 안내는 읽지 않는다.
+          휴대폰 두 줄(손가락 문구는 칸 264~319px, 마우스 문구는 287px부터), PC 한 줄에 들게 줄였다. 문장을 더하면서 그대로 이어
+          붙였더니 글이 두 배(약 735px)가 되어 휴대폰 세 줄·PC 두 줄이었다. '시즌 처음부터 그날까지의 타격'은 제목 옆
+          '누적 wRC+'와 같은 말이라 뺐고, 바로 위가 그래프라 '그래프를'·'그래프에'도 붙이지 않는다 */}
       <p className="mt-2 text-micro text-muted">
-        점선은 리그 평균. 시즌 처음부터 그날까지의 타격이고, 50타석부터 그려요. 중간 값은 어림이고 마지막 값만 MLB 공식이에요.
-        <span aria-hidden className="hidden pointer-coarse:inline"> 그래프를 옆으로 훑으면 그날까지 값이 보여요.</span>
-        <span aria-hidden className="hidden pointer-fine:inline"> 그래프에 마우스를 올리면 그날까지 값이 보여요.</span>
+        점선은 리그 평균, 50타석부터 그려요. 중간 값은 어림, 마지막 값만 MLB 공식이에요.
+        <span aria-hidden className="hidden pointer-coarse:inline"> 옆으로 훑으면 그날까지 값이 보여요.</span>
+        <span aria-hidden className="hidden pointer-fine:inline"> 마우스를 올리면 그날까지 값이 보여요.</span>
       </p>
     </div>
   );
