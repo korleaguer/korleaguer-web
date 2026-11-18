@@ -11,7 +11,7 @@ import { useMyPlayerToggle } from "./useMyPlayerToggle";
 interface Props {
   /**
    * 제목 아래 작은 글씨. 예: "내 선수 3명 · 9월 21일(월) ~ 27일(일) · 기준 11월 17일(화) 09:00".
-   * 기준 시각은 띄어쓰기에서만 줄을 바꾸게 요소(Words)로 감싸 오므로 글자가 아니라 ReactNode다
+   * 기준 시각은 한 덩어리로 다음 줄에 넘기게 요소(WordGroup)로 감싸 오므로 글자가 아니라 ReactNode다
    */
   subtitle: ReactNode;
   /** 고를 수 있는 선수 전원 */
