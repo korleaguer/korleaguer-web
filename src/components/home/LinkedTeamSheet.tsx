@@ -9,6 +9,7 @@ import { titleLang } from "@/lib/news";
 import TeamMark from "@/components/TeamMark";
 import NewsThumb from "@/components/news/NewsThumb";
 import Words, { WordGroup } from "@/components/Words";
+import { useAppModal } from "@/lib/app";
 import { teamColor, teamLogoUrl } from "@/lib/teams";
 import { useSheetDrag } from "@/lib/useSheetDrag";
 
@@ -53,6 +54,8 @@ export default function LinkedTeamSheet({
       if (dialog.open) dialog.close();
     };
   }, []);
+  // 앱 안이면 창이 떠 있는 동안 앱이 아이폰 왼쪽 끝 밀어 닫기와 아래 탭 누름을 막는다(경기 상세 창과 같다)
+  useAppModal();
 
   // 아래로 끌어 닫기(휴대폰 손잡이·머리 줄). 놓으면 미끄러져 닫히거나 제자리로 돌아온다(경기 상세 창과 같은 훅).
   // 다른 닫기도 훅의 close로 부른다: 미끄러지는 중에 닫으면 훅이 타이머를 치워 뒤로 가기가 한 번만 일어난다

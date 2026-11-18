@@ -1,7 +1,7 @@
 // 앱(korleaguer-app, 웹뷰)과 주고받는 도우미. 일반 브라우저에서는 모두 아무 일도 하지 않는다.
 // 앱이 문서를 그리기 전에 넣어 두는 값과 받는 메시지는 앱 저장소 src/lib/site.ts(APP_BOOT_SCRIPT, WebMessage)와 같아야 한다.
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 
 type AppWindow = Window & {
   /** 옛 앱(0.1.x)에는 features가 없다 */
@@ -73,6 +73,26 @@ export function iosTabBarHeight(): number {
 export function postToApp(message: { type: string } & Record<string, unknown>): void {
   if (typeof window === "undefined") return;
   (window as AppWindow).ReactNativeWebView?.postMessage(JSON.stringify(message));
+}
+
+/** 지금 열려 있는 웹 안 창(모달) 수. 0에서 1이 될 때 '열림', 0으로 돌아갈 때 '닫힘'을 앱에 알린다 */
+let openModals = 0;
+
+/**
+ * 이 부품이 그려져 있는 동안 웹 안 창(화면을 덮는 모달: 경기 상세·거론 구단 창)이 열려 있다고 앱에 알린다({type:"modal", open}).
+ * 앱은 그동안 아이폰 왼쪽 끝 밀어 닫기와 아래 탭 누름을 막는다. 창이 떠 있는데 뒤 화면이 통째로 닫히거나 탭이 넘어가지 않게
+ * (Apple HIG Modality, 11-17 전수조사). 창이 닫히거나 지워지면 닫혔다고 알린다. 창이 겹쳐 열려도 마지막 창이 닫힐 때 한 번만.
+ * 앱 밖에서는 아무 일도 하지 않고, 이 메시지를 모르는 옛 앱은 버린다(korleaguer-app src/lib/site.ts의 WebMessage)
+ */
+export function useAppModal(): void {
+  useEffect(() => {
+    openModals += 1;
+    if (openModals === 1) postToApp({ type: "modal", open: true });
+    return () => {
+      openModals -= 1;
+      if (openModals === 0) postToApp({ type: "modal", open: false });
+    };
+  }, []);
 }
 
 /**

@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState, type RefObject } from "react"
 import type { GameDetail, GameLine, GamePlay, Role } from "@/lib/api";
 import { lineOf, type CalendarDay, type LogGame } from "@/lib/gameLog";
 import { formatDate, formatLineup, formatSummary, formatTime } from "@/lib/format";
-import { haptic } from "@/lib/app";
+import { haptic, useAppModal } from "@/lib/app";
 import { toast } from "@/lib/toast";
 import { useSheetDrag } from "@/lib/useSheetDrag";
 import Highlights from "@/components/Highlights";
@@ -102,6 +102,8 @@ export default function GameDetailSheet({
       if (dialog.open) dialog.close();
     };
   }, []);
+  // 앱 안이면 창이 떠 있는 동안 앱이 아이폰 왼쪽 끝 밀어 닫기와 아래 탭 누름을 막는다(창 대신 선수 화면이 닫히지 않게)
+  useAppModal();
 
   // 아래로 끌어 닫기(휴대폰 손잡이·머리 줄). 놓으면 미끄러져 닫히거나 제자리로 돌아온다(거론 구단 창과 같은 훅).
   // 다른 닫기도 훅의 close로 부른다: 미끄러지는 중에 닫으면 훅이 타이머를 치워 뒤로 가기가 한 번만 일어난다
