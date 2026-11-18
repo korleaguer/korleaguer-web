@@ -44,7 +44,8 @@ function plusText(v: number): string {
  * - 숫자: 막대와 같은 값(타자 wRC+, 투수 ERA+). 투수 숫자가 평균자책점이면 낮을수록 좋은 숫자가 높을수록 좋은 막대 위에 붙어
  *   0.00인 달이 꽉 찬 막대로 거꾸로 읽혔다(전수조사 P1, 사용자 11-17 '추천대로', 이슈 #261). 팬에게 익숙한 평균자책점은
  *   투수만 달 이름 아래 작은 숫자로 둔다.
- * - 막대 색 = 어디서. 메이저 파랑, 마이너 회색(단계 이름은 머리 줄 범례에). 부상 달은 빨간 '부상', FA 달은 'FA'.
+ * - 막대 색 = 어디서. 메이저 파랑, 마이너 회색(단계 이름은 머리 줄 범례에). 부상 달은 바닥에 빨간 줄과 본문 글자 '부상'
+ *   (빨간 글자는 아주 잘한 달의 주황 숫자와 거의 같은 색이라 빨강은 줄에만 둔다, 사용자 11-17 '추천대로'), FA 달은 'FA'.
  * - 경기가 적은 달(서버 few: 타자 10경기·투수 5등판 미만)은 막대·숫자를 옅게 해 4경기 wRC+ 249가 시즌 최고 달처럼 보이지 않게 한다.
  * - 아주 잘한 달(서버 hot: wRC+ 130·ERA+ 143 이상)만 숫자를 주황으로(The Hot Is Earned Rule).
  * 화면 읽기 프로그램에는 달마다 '4월 메이저 31경기 wRC+ 118' 한 줄씩 읽힌다(막대·숫자 칸은 숨긴다).
@@ -93,7 +94,7 @@ function MonthColumn({ m, pitcher }: { m: SeasonMonth; pitcher: boolean }) {
   const tone = m.hot
     ? "text-hot-ink"
     : m.kind === "INJURED"
-      ? "text-danger-fg"
+      ? "text-foreground"
       : !has || m.few
         ? "text-muted"
         : "";
@@ -112,6 +113,9 @@ function MonthColumn({ m, pitcher }: { m: SeasonMonth; pitcher: boolean }) {
           // 경기 적은 달은 옅게. 마이너 회색은 이미 옅어서(45%) 덜 빼야 막대가 남는다
           className={`relative w-full ${has ? "rounded-t-[5px] rounded-b-[2px]" : "rounded-full"} ${has && m.few ? (m.kind === "MLB" ? "opacity-35" : "opacity-60") : ""}`}
           style={{ height, background: color }}
+          // 고대비 모드(Windows)에서는 바탕색이 지워져 막대가 사라진다. 시스템 색으로 다시 칠할 표시(globals.css).
+          // 메이저는 글자색, 마이너·기록 없는 달의 바닥 줄은 흐린 색
+          data-bar={has && m.kind === "MLB" ? "" : "dim"}
         />
       </span>
       <span aria-hidden className="month-bars-small mt-1 text-muted">{`${m.month}월`}</span>
@@ -122,6 +126,38 @@ function MonthColumn({ m, pitcher }: { m: SeasonMonth; pitcher: boolean }) {
         </span>
       )}
     </li>
+  );
+}
+
+/** 작은 막대 칸 높이(px). 큰 막대(BAR_MAX)와 같은 비율로 줄인다 */
+const SPARK_MAX = 30;
+
+/**
+ * 성적표 목록 한 줄 오른쪽의 작은 달별 막대(이슈 #276). 펼치지 않아도 선수마다 한 해 모양(언제 잘했고 언제 빠졌나)을
+ * 나란히 견주게 한다. 큰 막대(MonthBars)와 같은 높이·색 규칙이고 숫자·달 글자만 없다(점선 = 리그 평균, 메이저 파랑·마이너 회색,
+ * 부상 빨강, 경기 적은 달은 옅게). 펼치기 버튼 안에 놓여 span만 쓰고, 버튼 이름에 섞이지 않게 화면 읽기 프로그램에는 숨긴다
+ * (같은 값은 펼친 곳의 큰 막대가 달마다 읽어 준다). 크기는 px로 고정해 큰 글씨에서도 찌그러지지 않는다.
+ */
+export function MonthSpark({ months, pitcher }: { months: SeasonMonth[]; pitcher: boolean }) {
+  if (months.length === 0) return null;
+  return (
+    <span aria-hidden className="relative grid h-[30px] w-[84px] grid-cols-6 items-end">
+      <span className="absolute inset-x-0 bottom-1/2 border-t border-dashed" style={{ borderColor: AVERAGE_LINE }} />
+      {months.map((m) => {
+        const has = played(m, pitcher);
+        const v = plus(m, pitcher) ?? 0;
+        const height = has ? Math.max(3, Math.round((Math.min(PLUS_MAX, Math.max(0, v)) / PLUS_MAX) * SPARK_MAX)) : 2;
+        const color = has ? (m.kind === "MLB" ? "var(--accent)" : MINOR_BAR) : m.kind === "INJURED" ? INJURED_BAR : "var(--line)";
+        return (
+          <span key={m.month} className="relative flex h-full items-end px-[2px]">
+            <span
+              className={`w-full ${has ? "rounded-t-[3px] rounded-b-[1px]" : "rounded-full"} ${has && m.few ? (m.kind === "MLB" ? "opacity-35" : "opacity-60") : ""}`}
+              style={{ height, background: color }}
+            />
+          </span>
+        );
+      })}
+    </span>
   );
 }
 

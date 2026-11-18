@@ -1,10 +1,6 @@
 import type { CareerSeason } from "@/lib/api";
-import { formatEra, formatInningsOuts, formatRate } from "@/lib/format";
+import { formatEra, formatInningsOuts, formatRate, formatWar } from "@/lib/format";
 import Section from "@/components/Section";
-
-function oneDigit(value: number | null): string {
-  return value == null ? "-" : value.toFixed(1).replace("-", "−");
-}
 
 function whole(value: number | null): string {
   return value == null ? "-" : String(Math.round(value));
@@ -47,8 +43,8 @@ export default function CareerSeasons({ seasons: all }: { seasons: CareerSeason[
             {seasons.map((s) => {
               const cells =
                 s.kind === "hitter"
-                  ? [whole(s.games), formatRate(s.avg), whole(s.homeRuns), formatRate(s.ops), whole(s.wrcPlus), oneDigit(s.war)]
-                  : [whole(s.games), formatInningsOuts(s.inningsOuts), formatEra(s.era), whole(s.strikeouts), whole(s.eraMinus), oneDigit(s.war)];
+                  ? [whole(s.games), formatRate(s.avg), whole(s.homeRuns), formatRate(s.ops), whole(s.wrcPlus), formatWar(s.war)]
+                  : [whole(s.games), formatInningsOuts(s.inningsOuts), formatEra(s.era), whole(s.strikeouts), whole(s.eraMinus), formatWar(s.war)];
               return (
                 <tr key={s.season}>
                   <th scope="row" className="py-2.5 pl-4 pr-2 text-left font-normal">

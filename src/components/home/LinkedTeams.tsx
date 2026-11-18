@@ -14,6 +14,7 @@ import { createPortal } from "react-dom";
 import type { LinkedTeams as LinkedTeamCounts } from "@/lib/api";
 import { haptic } from "@/lib/app";
 import { withTopicParticle } from "@/lib/format";
+import Chevron from "@/components/Chevron";
 import TeamMark from "@/components/TeamMark";
 import LinkedTeamSheet from "@/components/home/LinkedTeamSheet";
 import { teamColor, teamLogoUrl } from "@/lib/teams";
@@ -35,6 +36,14 @@ function teamInHistory(state: unknown, sheetKey: string): string | null {
   const mark = (state as Record<string, unknown> | null)?.[SHEET_STATE];
   const prefix = `${sheetKey}:`;
   return typeof mark === "string" && mark.startsWith(prefix) ? mark.slice(prefix.length) : null;
+}
+
+/**
+ * 이 칸(sheetKey)의 기사 창이 지금 주소 기록에서 열려 있나. 홈 성적표 목록이 창이 든 줄을 펼쳐 두려고 쓴다:
+ * 기사를 보고 뒤로 오거나 새로 고쳐 창이 다시 열릴 때 그 줄이 접혀 있으면 창을 닫은 뒤 포커스를 돌려줄 알약이 숨어 있다
+ */
+export function linkedSheetOpen(sheetKey: string): boolean {
+  return teamInHistory(window.history.state, sheetKey) !== null;
 }
 
 /** 지금 화면에 그려진 요소인가(휴대폰 알약·PC 막대 중 숨긴 쪽 버튼은 아니다) */
@@ -163,11 +172,13 @@ export default function LinkedTeams({
   const sheetTeam = linked.find((t) => t.abbreviation === openTeam && canOpen(t));
   return (
     <div ref={rootRef} className={className}>
-      {/* 큰 글씨에서 둘이 한 줄에 못 들어가면 '최근 n일 기사 수'를 다음 줄로(제목이 세 줄로 찌그러지지 않게, 이슈 #264) */}
-      <p className="mb-2 flex flex-wrap items-baseline justify-between gap-x-2 text-label">
-        <span>행선지로 거론된 구단</span>
+      {/* 큰 글씨에서 둘이 한 줄에 못 들어가면 '최근 n일 기사 수'를 다음 줄로(제목이 세 줄로 찌그러지지 않게, 이슈 #264).
+          '행선지로 거론된 구단'은 카드 안 작은 제목이라 h4다(선수 이름 h3 아래, '관련 기사'와 같다, 이슈 #277).
+          h4는 글꼴을 물려받기만 해서 글자는 바깥 text-label 그대로다 */}
+      <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-2 text-label">
+        <h4>행선지로 거론된 구단</h4>
         <span className="shrink-0 text-caption text-muted tabular-nums">최근 {counts.days}일 기사 수</span>
-      </p>
+      </div>
       {pcBars && (
         <ul className="hidden space-y-1 lg:block">
           {shown.map((t) => {
@@ -262,14 +273,6 @@ export default function LinkedTeams({
         <LinkedTeamSheet team={sheetTeam} days={counts.days} playerPhotoUrl={playerPhotoUrl} onClose={close} />
       )}
     </div>
-  );
-}
-
-function Chevron({ small = false }: { small?: boolean }) {
-  return (
-    <svg aria-hidden viewBox="0 0 16 16" className={`shrink-0 text-muted ${small ? "size-2.5" : "size-3"}`} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M6 3.5 10.5 8 6 12.5" />
-    </svg>
   );
 }
 

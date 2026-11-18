@@ -5,9 +5,10 @@ import { useEffect, useRef, type CSSProperties, type PointerEvent as ReactPointe
 import { createPortal } from "react-dom";
 import type { LinkedArticle, LinkedTeam } from "@/lib/api";
 import { formatDate, kstDayKey } from "@/lib/format";
+import { titleLang } from "@/lib/news";
 import TeamMark from "@/components/TeamMark";
 import NewsThumb from "@/components/news/NewsThumb";
-import Words from "@/components/Words";
+import Words, { WordGroup } from "@/components/Words";
 import { teamColor, teamLogoUrl } from "@/lib/teams";
 
 /** 아래로 이만큼 끌면 닫는다(px, 경기 상세 창과 같다) */
@@ -20,7 +21,8 @@ const CHART_MIN = 3;
  * 경기 상세 창(GameDetailSheet)과 같은 틀이다. 닫기·바깥 누르기·Esc로 닫는다. 뒤로 가기로 닫기와 닫은 뒤 연 버튼으로
  * 포커스 돌려주기는 여는 쪽(LinkedTeams)이 한다(이 부품은 닫힐 때 통째로 지워진다).
  * 안쪽: 기사가 CHART_MIN건 이상이면 최근 며칠 날짜 막대(언제 몰렸나), 그 아래 기사 줄. 줄은 운영 기사 목록과 같은 모양이고
- * 제목 자리에 '왜 거론됐나' 한 줄(AI 요약에서 그 구단 이름이 나온 문장, 없으면 제목)을 두 줄까지 보인다.
+ * 제목 자리에 '왜 거론됐나' 한 줄(AI 요약에서 그 구단 이름이 나온 문장, 없으면 제목)을 네 줄까지 보인다. 두 줄이면 375px에서
+ * 문장 대부분이 끝을 못 보이고 잘렸고, 끝까지 볼 곳도 없었다(사용자 결정 11-17 '추천대로', 이슈 #277).
  * 글만 있으면 눈이 피로해서(사용자 11-16 "텍스트밖에 없어서 눈 아파") 줄마다 기사 사진을 붙인다.
  */
 export default function LinkedTeamSheet({
@@ -94,8 +96,9 @@ export default function LinkedTeamSheet({
         ref={panelRef}
         className="game-sheet flex max-h-[84dvh] w-full flex-col overflow-hidden rounded-t-2xl bg-surface shadow-[var(--shadow-card-hover)] sm:max-h-[80dvh] sm:max-w-lg sm:rounded-2xl"
       >
+        {/* 끌어 닫는 머리: 앱 안에서도 길게 눌러 글자가 잡히지 않게 select-none */}
         <div
-          className="shrink-0 touch-none"
+          className="shrink-0 touch-none select-none"
           onPointerDown={onDragStart}
           onPointerMove={onDragMove}
           onPointerUp={onDragEnd}
@@ -110,6 +113,17 @@ export default function LinkedTeamSheet({
               </h2>
               <p className="text-caption text-muted tabular-nums">
                 최근 {days}일 행선지로 거론한 기사 {articles.length}건
+                {/* 줄마다 보이는 문장은 AI 요약에서 뽑은 것이라, 언론사 이름 밑에 있어도 그 언론사가 쓴 문장처럼 읽히지 않게 알린다
+                    (인공지능기본법 제31조 생성형 AI 결과 고지). 줄마다 달지 않고 이 줄 끝에 한 번만 둔다(기사 페이지 출처 줄의 'AI 요약'처럼,
+                    이슈 #277). 좁으면 '· 문장은 AI 요약'을 한 덩어리로 다음 줄에 내리고(WordGroup), 그 줄보다도 길면(320px 큰 글씨 2배에서 글 칸
+                    140px, 덩어리 149px) '문장은'과 'AI 요약' 사이에서만 나눈다. 요약 문장이 없는 기사는 제목을 보이는데
+                    (11-17 운영 90줄 중 1줄), 모든 줄이 제목이면 붙이지 않는다 */}
+                {articles.some((a) => a.reason) && (
+                  <>
+                    {" "}
+                    <WordGroup text={"·\u00a0문장은 AI\u00a0요약"} />
+                  </>
+                )}
               </p>
             </div>
             <button
@@ -168,12 +182,16 @@ function DayBars({ articles, days }: { articles: LinkedArticle[]; days: number }
                 {n > 0 ? `${n}건` : ""}
               </span>
               {/* 기사가 있는 날은 역대 계약 막대와 같은 잉크 그라데이션(오늘만 강조색), 없는 날은 바닥선만.
-                  막대 폭(1.75rem)은 글자 배율을 따라 커지므로 칸보다 넓어지면 칸 폭 - 4px로 줄인다(2배 375px에서 막대끼리 겹쳤다) */}
+                  막대 폭(1.75rem)은 글자 배율을 따라 커지므로 칸보다 넓어지면 칸 폭 - 4px로 줄인다(2배 375px에서 막대끼리 겹쳤다).
+                  높이는 0부터 건수에 비례한다(가장 많은 날 52px). 예전에는 12px에서 시작해 1건과 3건이 실제(3배)보다 비슷해 보였다
+                  (이슈 #277). 1건 막대는 작아질 수 있지만 위 'n건' 글자가 남는다 */}
               <span
+                // 고대비 모드에서 시스템 색으로 다시 칠할 막대(globals.css). 기사 없는 날의 바닥 줄은 흐린 색
+                data-bar={n > 0 ? "" : "dim"}
                 className={`w-7 max-w-[calc(100%-4px)] rounded-t-md ${n === 0 ? "bg-line" : isToday ? "bg-accent" : ""}`}
                 style={
                   {
-                    height: n > 0 ? `${12 + (n / max) * 40}px` : "3px",
+                    height: n > 0 ? `${(n / max) * 52}px` : "3px",
                     background:
                       n > 0 && !isToday
                         ? "linear-gradient(0deg, color-mix(in oklab, var(--foreground), transparent 80%), var(--foreground))"
@@ -194,27 +212,33 @@ function DayBars({ articles, days }: { articles: LinkedArticle[]; days: number }
   );
 }
 
-/** 운영 기사 목록 줄(NewsTitleList)과 같은 모양: 출처 줄 위, 글 두 줄, 오른쪽 사진 */
+/** 운영 기사 목록 줄(NewsTitleList)과 같은 모양: 출처 줄 위, 글(네 줄까지), 오른쪽 사진 */
 function ArticleRow({ article: a, playerPhotoUrl }: { article: LinkedArticle; playerPhotoUrl: string | null }) {
   const text = a.reason ?? a.titleKo ?? a.title;
   return (
     <Link href={`/news/${a.id}`} className="press-soft group flex items-center gap-3 py-3">
-      {/* 화면 낭독기는 글부터 읽고, 눈에는 출처 줄이 위에 보인다. 출처 줄이 11rem보다 좁으면(큰 글씨) 보통 글처럼 흘린다(NewsTitleList와 같다) */}
+      {/* 화면 낭독기는 글부터 읽고, 눈에는 출처 줄이 위에 보인다. 출처 줄이 11rem보다 좁으면(큰 글씨) 보통 글처럼 흘린다(NewsTitleList와 같다).
+          글은 크기와 상관없이 네 줄까지(위 설명). 예전에는 큰 글씨에서만 네 줄이었다 */}
       <span className="@container flex min-w-0 flex-1 flex-col-reverse">
-        <span className="mt-0.5 line-clamp-2 text-summary group-hover:underline @max-[11rem]:line-clamp-4">
+        {/* 근거 한 줄·번역이 없는 영어 기사는 원제가 나와 화면 낭독기가 영어로 읽게 한다(NewsTitleList와 같다) */}
+        <span lang={titleLang(text)} className="mt-0.5 line-clamp-4 text-summary group-hover:underline">
           <Highlighted text={text} word={a.reasonName} />
         </span>
         <span className="flex min-w-0 whitespace-nowrap text-caption text-muted tabular-nums @max-[11rem]:block @max-[11rem]:whitespace-normal">
           <span className="min-w-0 truncate @max-[11rem]:whitespace-normal">{a.publisher}</span>
           {/* 조각 사이 간격은 NewsTitleList와 같다(한 줄이면 왼쪽 여백, 흘리면 보통 공백이 간격·줄바꿈 자리) */}
+          {/* 같은 글을 실은 다른 언론사 이름은 PC에서 마우스를 올리면 보이고(title), 화면 낭독기에는 읽어 준다(NewsTitleList와
+              같다, 이슈 #277). relative: sr-only 글자(position: absolute)를 이 칸에 가둔다. 가두지 않으면 창(fixed)에 붙어
+              스크롤 칸 밖에 놓여 창의 스크롤 범위를 늘릴 수 있다(기록 표 TableScroll과 같은 이유) */}
           {a.alsoBy.length > 0 && (
             <>
               {" "}
               <span
-                className="shrink-0 whitespace-nowrap pl-[0.25em] @max-[11rem]:pl-0"
+                className="relative shrink-0 whitespace-nowrap pl-[0.25em] @max-[11rem]:pl-0"
                 title={`같은 기사: ${a.alsoBy.join(", ")}`}
               >
                 {`외 ${a.alsoBy.length}곳`}
+                <span className="sr-only">{`(같은 기사: ${a.alsoBy.join(", ")})`}</span>
               </span>
             </>
           )}{" "}

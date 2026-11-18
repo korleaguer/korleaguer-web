@@ -95,6 +95,15 @@ export function uniqueByUrl<T extends { url: string; summary: string | null; lea
   return [...byUrl.values()];
 }
 
+/**
+ * 제목의 언어 표시(lang). 영어 제목이면 "en"이라 화면 낭독기가 영어 읽기로 바꿔 읽는다(WCAG 3.1.2, 페이지는 ko).
+ * 기사 페이지 원제 줄과 번역 전 영어 기사 제목에 쓴다. 한글이 한 글자라도 있으면 붙이지 않는다(한영이 섞인 국내 기사 제목을
+ * 영어로 읽으면 한국어 부분이 엉망이 된다)
+ */
+export function titleLang(text: string): "en" | undefined {
+  return /[A-Za-z]/.test(text) && !/[ᄀ-ᇿ㄰-㆏가-힣]/.test(text) ? "en" : undefined;
+}
+
 /** 뉴스 탭 주소. 선수를 주면 그 선수 기사로 거른 화면(/news?player=이정후), 검색어를 주면 그 말로 찾은 화면(&q=FA) */
 export function newsHref(player?: string | null, q?: string | null): string {
   const params = new URLSearchParams();

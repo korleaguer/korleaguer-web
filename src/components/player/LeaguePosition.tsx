@@ -4,11 +4,11 @@ import { formatInningsOuts } from "@/lib/format";
 import { cacheLife } from "next/cache";
 import { Fragment } from "react";
 
-/** 이보다 적으면 '참고용'(서버가 견주는 선수 기준과 같다: 타자 100타석, 투수 30이닝 = 90아웃) */
-const STEADY_PA = 100;
-const STEADY_OUTS = 90;
+/** 이보다 적으면 '참고용'(서버가 견주는 선수 기준과 같다: 타자 100타석, 투수 30이닝 = 90아웃). 홈 성적표 작은 판도 같은 기준이다 */
+export const STEADY_PA = 100;
+export const STEADY_OUTS = 90;
 
-interface Row {
+export interface Row {
   label: string;
   /** 1~99(높을수록 좋다). 견줄 선수가 아직 없으면 null */
   pct: number | null;
@@ -26,8 +26,8 @@ function signed(value: number | null, digits = 1): string | null {
   return `${value < 0 && Number(fixed) !== 0 ? "−" : "+"}${fixed}`;
 }
 
-/** 막대 네 줄. 표본이 적어 서버가 위치를 매기지 않았으면 null */
-function rowsOf(saber: PlayerSaber): Row[] | null {
+/** 막대 네 줄(맨 앞이 '종합'). 표본이 적어 서버가 위치를 매기지 않았으면 null. 홈 성적표 작은 판(LeaguePositionCompact)도 쓴다 */
+export function rowsOf(saber: PlayerSaber): Row[] | null {
   if (saber.kind === "hitter") {
     const p = saber.percentiles;
     if (!p) return null;
@@ -88,7 +88,8 @@ export default async function LeaguePosition({ saber }: { saber: PlayerSaber }) 
     >
       <div className="card px-4 py-4">
         {!steady && (
-          <p className="mb-3 text-caption text-muted">
+          // 휴대폰에서 두 줄로 감기므로 줄 간격 1.5(바닥글과 같은 이유)
+          <p className="mb-3 text-caption leading-normal text-muted">
             <span className="mr-1.5 rounded-md bg-surface-2 px-1.5 py-0.5 text-badge">참고용</span>
             {hitter ? `${sample}뿐이라 더 뛰면 크게 바뀔 수 있어요` : `${sample}뿐이라 더 던지면 크게 바뀔 수 있어요`}
           </p>
@@ -137,21 +138,28 @@ function PositionRow({ row, who, cols }: { row: Row; who: string; cols: string }
   return (
     <li className={`grid items-center gap-x-3 ${cols} @max-[15rem]:grid-cols-[minmax(0,1fr)_auto] @max-[15rem]:gap-y-1.5`}>
       <span className="text-summary">{label}</span>
-      {/* 바탕은 옅은 안쪽 테두리로 0~100 양 끝을 보인다(흰 카드 위 surface-2만으로는 막대 끝이 거의 안 보였다) */}
+      {/* 바탕은 옅은 안쪽 테두리로 0~100 양 끝을 보인다(흰 카드 위 surface-2만으로는 막대 끝이 거의 안 보였다).
+          data-bar·data-bar-track: 고대비 모드(Windows)에서는 바탕색이 지워져 막대가 사라져서 시스템 색으로 다시 칠한다(globals.css) */}
       <div
         aria-hidden
+        data-bar-track
         className="relative h-2 rounded-full bg-surface-2 ring-1 ring-muted/30 ring-inset @max-[15rem]:order-last @max-[15rem]:col-span-2"
       >
         {pct != null && (
-          <span className={`absolute inset-y-0 left-0 rounded-full ${top ? "bg-accent" : "bg-muted/40"}`} style={{ width: `${pct}%` }} />
+          <span
+            data-bar={top ? "" : "dim"}
+            className={`absolute inset-y-0 left-0 rounded-full ${top ? "bg-accent" : "bg-muted/40"}`}
+            style={{ width: `${pct}%` }}
+          />
         )}
         {/* 가운데 선(MLB 중간): 각주가 읽으라고 하는 기준선이라 바탕 대비 3:1이 되게 muted 70%로, 파랑 채움 위에서도 보이게
             채움 위에 카드색 1px 테두리를 둘러 그린다. 점보다는 아래라 점이 가운데 근처면 점이 선을 덮는다.
             선 폭(w-0.5)이 rem이라 큰 글씨에서 굵어져도 막대 가운데에 오게 제 폭의 반만큼 당긴다(-ml-px로 1px만 당기면 2배에서 4px 선이
             가운데보다 1px 오른쪽이었다) */}
-        <span className="absolute inset-y-[-3px] left-1/2 w-0.5 -translate-x-1/2 bg-muted/70 ring-1 ring-surface" />
+        <span data-bar="dim" className="absolute inset-y-[-3px] left-1/2 w-0.5 -translate-x-1/2 bg-muted/70 ring-1 ring-surface" />
         {pct != null && (
           <span
+            data-bar={top ? "" : "dim"}
             className={`absolute top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-surface ${top ? "bg-accent" : "bg-muted"}`}
             style={{ left: `${pct}%` }}
           />
