@@ -305,12 +305,18 @@ function NewsLine({ news }: { news: NewsHeadline }) {
   );
 }
 
-/** 이름 옆 상태: 점 + 글자(누를 수 없는 이름표라 알약 대신). FA는 보라 글자, 나머지는 본문 글자에 점만 신호색 */
+/**
+ * 이름 옆 상태: 점 + 글자(누를 수 없는 이름표라 알약 대신). FA는 보라 글자, 나머지는 본문 글자에 점만 신호색.
+ * 한 줄로 묶지 않고, 글자 칸보다 길면 낱말 사이에서 줄을 바꾼다(본문이 keep-all이라 낱말 안에서는 끊지 않는다).
+ * 묶어 두면 앱 큰 글씨 2배(375px, 글자 칸 195px)에서 '지명 할당(DFA) 12일째'(258px)가 카드 여백을 지나 화면 밖으로 나가
+ * 페이지가 가로로 밀렸고, '키움 히어로즈 복귀'(207px)도 칸을 넘었다. 보통 크기 320px에서도 DFA(132px)가 글자 칸(112px)을 넘어
+ * 작은 막대에 닿았다. 375px 이상 보통 크기에서는 가장 긴 상태도 글자 칸(167px)에 들어가 모양이 그대로다
+ */
 function StatusText({ status }: { status: CardStatus }) {
   const badge = statusBadge(status);
   if (!badge) return null;
   return (
-    <span className={`whitespace-nowrap text-label ${badge.tone === "fa" ? "text-fa-fg" : "text-foreground"}`}>
+    <span className={`text-label ${badge.tone === "fa" ? "text-fa-fg" : "text-foreground"}`}>
       <span aria-hidden className={`mr-1 inline-block size-[7px] rounded-full align-middle ${STATUS_DOT[badge.tone]}`} />
       {badge.text}
     </span>
