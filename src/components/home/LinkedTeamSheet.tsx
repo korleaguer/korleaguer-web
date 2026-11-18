@@ -1,7 +1,7 @@
 "use client"; // 창을 열고 닫고(모달), 아래로 끌어 닫아야 해서 클라이언트 컴포넌트다.
 
 import Link from "next/link";
-import { useEffect, useRef, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import type { LinkedArticle, LinkedTeam } from "@/lib/api";
 import { formatDate, kstDayKey } from "@/lib/format";
@@ -10,9 +10,8 @@ import TeamMark from "@/components/TeamMark";
 import NewsThumb from "@/components/news/NewsThumb";
 import Words, { WordGroup } from "@/components/Words";
 import { teamColor, teamLogoUrl } from "@/lib/teams";
+import { useSheetDrag } from "@/lib/useSheetDrag";
 
-/** 아래로 이만큼 끌면 닫는다(px, 경기 상세 창과 같다) */
-const SWIPE_CLOSE = 96;
 /** 날짜 막대는 기사가 이만큼 이상일 때만(1~2건은 막대가 정보를 더하지 않는다) */
 const CHART_MIN = 3;
 
@@ -55,28 +54,9 @@ export default function LinkedTeamSheet({
     };
   }, []);
 
-  // 아래로 끌어 닫기(휴대폰 손잡이·머리 줄)
-  const drag = useRef<{ y: number; dy: number } | null>(null);
-  const onDragStart = (e: ReactPointerEvent<HTMLDivElement>) => {
-    if (e.pointerType === "mouse" || (e.target as HTMLElement).closest("button")) return;
-    drag.current = { y: e.clientY, dy: 0 };
-    e.currentTarget.setPointerCapture(e.pointerId);
-  };
-  const onDragMove = (e: ReactPointerEvent<HTMLDivElement>) => {
-    const d = drag.current;
-    const panel = panelRef.current;
-    if (!d || !panel) return;
-    d.dy = Math.max(0, e.clientY - d.y);
-    panel.style.transform = `translateY(${d.dy}px)`;
-  };
-  const onDragEnd = () => {
-    const d = drag.current;
-    const panel = panelRef.current;
-    drag.current = null;
-    if (!d || !panel) return;
-    if (d.dy > SWIPE_CLOSE) onClose();
-    else panel.style.transform = "";
-  };
+  // 아래로 끌어 닫기(휴대폰 손잡이·머리 줄). 놓으면 미끄러져 닫히거나 제자리로 돌아온다(경기 상세 창과 같은 훅).
+  // 다른 닫기도 훅의 close로 부른다: 미끄러지는 중에 닫으면 훅이 타이머를 치워 뒤로 가기가 한 번만 일어난다
+  const { onDragStart, onDragMove, onDragEnd, close } = useSheetDrag(panelRef, onClose);
 
   const titleId = `linked-team-${team.abbreviation}`;
   return createPortal(
@@ -85,10 +65,10 @@ export default function LinkedTeamSheet({
       aria-labelledby={titleId}
       onCancel={(e) => {
         e.preventDefault();
-        onClose();
+        close();
       }}
       onClick={(e) => {
-        if (e.target === dialogRef.current) onClose();
+        if (e.target === dialogRef.current) close();
       }}
       className="fixed inset-0 m-0 h-full max-h-none w-full max-w-none border-0 bg-black/45 p-0 text-foreground open:flex open:items-end open:justify-center sm:open:items-center"
     >
@@ -129,7 +109,7 @@ export default function LinkedTeamSheet({
             <button
               type="button"
               aria-label="닫기"
-              onClick={onClose}
+              onClick={close}
               className="press grid size-[44px] shrink-0 place-items-center rounded-full text-muted hover:bg-surface-2"
             >
               <svg aria-hidden viewBox="0 0 16 16" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
