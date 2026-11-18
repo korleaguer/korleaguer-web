@@ -230,6 +230,11 @@ export interface NewsPage {
   summary: string | null;
   /** 기사 첫머리(언론사 피드가 준 글자 200자 안팎). 요약이 없을 때 쓴다. 없으면 null */
   lead: string | null;
+  /**
+   * 같은 글을 실은 다른 언론사(낸 순, 이 기사의 언론사는 빼고). 출처 줄 아래 '같은 기사' 줄에 쓴다(이슈 #277).
+   * 기사 상세 응답에는 korleaguer-server#180부터 들어 있다. 그 전 api면 빈 목록이고, 그때는 그 줄을 그리지 않는다
+   */
+  alsoBy: string[];
   /** 같은 선수의 다른 기사(늦은 순 5건, 이 기사는 빼고) */
   more: NewsHeadline[];
 }
@@ -265,7 +270,12 @@ export interface NewsList {
   next: string | null;
   /** 이 쪽을 거른 검색어. 없으면 null */
   query: string | null;
-  /** 지금 범위의 최근 기사에 많이 나온 말(검색창 바로가기, korleaguer-server#158). 첫 쪽이고 검색어가 없을 때만 */
+  /**
+   * 그 검색어로 나오는 줄 수(지금 범위 전체, 같은 기사는 한 줄. 알약 숫자와 같은 셈). 첫 쪽이고 검색어가 있을 때만 온다.
+   * 세어 주지 않는 api면 null이고, 화면은 알약 숫자나 받은 줄 수로 대신한다(뉴스 탭 page.tsx)
+   */
+  queryCount: number | null;
+  /** 지금 범위의 최근 기사에 많이 나온 말(검색창 바로가기, korleaguer-server#158). 첫 쪽에만(검색어가 있어도 온다, #165) */
   topics: NewsTopic[];
 }
 
@@ -384,8 +394,21 @@ export interface SeasonReport {
   reason: string | null;
   /** 카드 숫자를 어느 단계 시즌 합계로 보일지 */
   level: "MLB" | "MINORS";
-  /** 메이저 WAR(소수 한 자리). 좋은·제 몫 시즌에만 보인다 */
+  /** 메이저 WAR(소수 한 자리). 홈 목록에는 쓰지 않는다(선수끼리 같은 숫자를 두려고 뺐다, 이슈 #276) */
   war: number | null;
+  /**
+   * 아래 넷은 korleaguer-server#179(옛 api면 없다). 목록 한 줄의 숫자(타자 경기·wRC+·타율, 투수 등판·ERA+·평균자책점)와
+   * 펼친 곳의 MLB 안 위치에 쓴다.
+   * wrcPlus: 타자 시즌 wRC+(리그 평균 = 100). 숫자 칸과 같은 단계 합계다(마이너 시즌이면 마이너 합계를 그 단계 리그 평균과).
+   * 투수거나 50타석 미만이면 null
+   */
+  wrcPlus?: number | null;
+  /** 투수 시즌 ERA+(리그 평균 = 100, 높을수록 잘함). wrcPlus와 같은 단계. 타자거나 10이닝 미만이면 null */
+  eraPlus?: number | null;
+  /** wrcPlus·eraPlus가 마이너 합계일 때 그 단계 이름('트리플A', 섞였으면 '마이너'). 메이저면 null */
+  statLevelKo?: string | null;
+  /** 선수 화면과 같은 MLB 안 위치(백분위). 메이저 기록이 없거나 서버가 위치를 못 읽으면 null, 옛 api면 없다(undefined) */
+  saber?: PlayerSaber | null;
   /** 정규시즌 달마다 어디서 뛰었나와 타율·평균자책점(카드의 달별 막대, korleaguer-server#170). 옛 api면 없다 */
   months?: SeasonMonth[];
   /** 시즌이 끝난 뒤 이동(FA 선언 등), 최근 순 */
@@ -582,6 +605,11 @@ export interface PlayerResponse {
   dataMode: DataMode;
   statsAvailable: boolean;
   season: number;
+  /**
+   * 이 응답을 만든 시각(ISO). 시즌 성적 제목 옆 '기준 …'(이슈 #277). 서버가 아직 주지 않아(korleaguer-server에 더할 일)
+   * 옛 api면 null이고, 그때는 기준 글을 빼고 그린다
+   */
+  generatedAt: string | null;
   player: PlayerDetail;
   hitting: HitterSeason | null;
   pitching: PitcherSeason | null;
@@ -926,6 +954,7 @@ function normalizeHome(raw: HomeResponse): HomeResponse {
           nextOpeningDay: raw.offseason.nextOpeningDay ?? null,
           daysToOpening: raw.offseason.daysToOpening ?? null,
           playerIds: raw.offseason.playerIds ?? [],
+          report: raw.offseason.report?.map(normalizeReport),
         }
       : null,
     posting: raw.posting
@@ -946,6 +975,25 @@ function normalizeHome(raw: HomeResponse): HomeResponse {
   };
 }
 
+/**
+ * 성적표 한 장. 시즌 wRC+·ERA+·단계·MLB 안 위치(korleaguer-server#179)는 옛 api면 없다.
+ * MLB 안 위치는 선수 화면처럼 kind(타자·투수)를 붙인다(서버는 키로만 나눈다). 칸이 아예 없으면(옛 api) undefined로 남겨
+ * 화면이 위치 줄을 그리지 않는다. null은 메이저 기록이 없거나 서버가 위치를 못 읽은 것이라, 화면은 메이저 경기가 없을 때만
+ * '위치는 없어요'를 쓰고 메이저에서 뛴 선수면 줄을 뺀다(SeasonReportList).
+ * 기사는 관련 기사와 같은 규칙으로 다듬는다(원문 주소가 http(s)가 아닌 기사는 링크로 쓸 수 없어 뺀다)
+ */
+function normalizeReport(r: SeasonReport): SeasonReport {
+  return {
+    ...r,
+    wrcPlus: num(r.wrcPlus),
+    eraPlus: num(r.eraPlus),
+    statLevelKo: typeof r.statLevelKo === "string" && r.statLevelKo.trim() !== "" ? r.statLevelKo : null,
+    saber: r.saber === undefined ? undefined : normalizeSaber(r.saber),
+    winterMoves: Array.isArray(r.winterMoves) ? r.winterMoves : [],
+    news: r.news == null ? r.news : r.news.flatMap((n) => normalizeHeadline(n) ?? []),
+  };
+}
+
 /** 관련 기사 한 건. 옛 API는 번호·요약 칸을 주지 않는다. 원문 주소가 http(s)가 아니면 링크로 쓸 수 없어 뺀다(null) */
 function normalizeHeadline(n: NewsHeadline): NewsHeadline | null {
   const url = httpUrl(n.url);
@@ -959,9 +1007,13 @@ function normalizeHeadline(n: NewsHeadline): NewsHeadline | null {
     summary: n.summary ?? null,
     // 기사 사진은 언론사 서버에서 브라우저가 직접 받는다. https 주소만 쓴다
     imageUrl: n.imageUrl?.startsWith("https://") ? n.imageUrl : null,
-    // 같은 글을 실은 다른 언론사. 옛 API는 이 칸을 주지 않는다
-    alsoBy: Array.isArray(n.alsoBy) ? n.alsoBy.filter((p) => typeof p === "string" && p.trim() !== "") : [],
+    alsoBy: alsoByOf(n.alsoBy),
   };
+}
+
+/** 같은 글을 실은 다른 언론사 이름. 옛 API는 이 칸을 주지 않아 빈 목록이다. 빈 이름은 뺀다 */
+function alsoByOf(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((p): p is string => typeof p === "string" && p.trim() !== "") : [];
 }
 
 function normalizeNewsPage(raw: NewsPage): NewsPage {
@@ -976,6 +1028,8 @@ function normalizeNewsPage(raw: NewsPage): NewsPage {
     imageUrl: raw.imageUrl?.startsWith("https://") ? raw.imageUrl : null,
     summary: raw.summary ?? null,
     lead: raw.lead ?? null,
+    // 기사 상세의 같은 기사 언론사는 korleaguer-server#180부터 온다(뉴스 탭 목록 한 줄과 같은 계산)
+    alsoBy: alsoByOf(raw.alsoBy),
     more: (raw.more ?? []).flatMap((n) => normalizeHeadline(n) ?? []),
   };
 }
@@ -1060,6 +1114,7 @@ function normalizeNewsList(raw: NewsList): NewsList {
     }),
     next: typeof raw.next === "string" && raw.next !== "" ? raw.next : null,
     query: typeof raw.query === "string" && raw.query !== "" ? raw.query : null,
+    queryCount: typeof raw.queryCount === "number" && raw.queryCount >= 0 ? raw.queryCount : null,
     topics: (raw.topics ?? []).filter((t) => typeof t.word === "string" && t.word !== "" && typeof t.count === "number"),
   };
 }
@@ -1097,6 +1152,7 @@ function normalizePlayer(raw: PlayerResponse): PlayerResponse {
   const p = raw.player;
   return {
     ...raw,
+    generatedAt: typeof raw.generatedAt === "string" ? raw.generatedAt : null,
     player: {
       ...normalizeSummary(p),
       teamEn: p.teamEn ?? null,

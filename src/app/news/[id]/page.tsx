@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getNews, type NewsPage } from "@/lib/api";
 import { formatDate, formatTime } from "@/lib/format";
-import { readableLead, splitSentences } from "@/lib/news";
+import { readableLead, splitSentences, titleLang } from "@/lib/news";
 import { newsShareImage, shareMeta } from "@/lib/share";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import ExternalLinkIcon from "@/components/ExternalLinkIcon";
@@ -46,16 +46,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const result = id == null ? null : await getNews(id);
   if (!result?.ok) {
     const missing = result == null || result.failure === "notFound";
+    // api가 잠깐 멈추면 화면은 '정보를 불러오지 못했어요' 안내다. 제목도 그 사실을 말한다('관련 기사'는 아무 기사처럼 읽혔다)
     return missing
       ? { title: "기사를 찾을 수 없어요", robots: { index: false, follow: false } }
-      : { title: "관련 기사", robots: NO_INDEX };
+      : { title: "기사를 불러오지 못했어요", robots: NO_INDEX };
   }
 
   const news = result.data;
   const title = news.titleKo ?? news.title;
   const description = splitSentences(news.summary)[0] ?? undefined;
-  // 공유 카드 그림은 og/[v]/route.tsx(언론사·제목). 주소에 배포 커밋이 들어가 카톡이 옛 그림을 쓰지 않는다
-  return { title, description, robots: NO_INDEX, ...shareMeta(title, description, newsShareImage(news.id)) };
+  // 공유 카드 그림은 og/[v]/route.tsx(언론사·제목). 주소에 배포 커밋이 들어가 카톡이 옛 그림을 쓰지 않는다.
+  // 그림의 대체 글은 그림과 같은 데이터로 그림 속 글(언론사·날짜·제목)을 적는다
+  return { title, description, robots: NO_INDEX, ...shareMeta(title, description, `/news/${news.id}`, newsShareImage(news)) };
 }
 
 export default function NewsArticlePage({ params }: Props) {
@@ -117,18 +119,26 @@ function Article({ news }: { news: NewsPage }) {
   const kind = summary.length > 0 ? "AI 요약" : body.length > 0 ? "기사 앞부분" : null;
   return (
     <article className="card min-w-0 p-4 sm:p-6">
-      <h1 className="text-article-title">
+      {/* 영어 제목은 화면 낭독기가 영어로 읽게 lang을 단다(번역 전 영어 기사 제목, 원제 줄). 보이는 모양은 그대로다 */}
+      <h1 lang={titleLang(news.titleKo ?? news.title)} className="text-article-title">
         {news.titleKo ?? news.title}
       </h1>
       {news.titleKo && (
         <p className="mt-1.5 text-meta text-muted">
-          <span className="font-semibold">원제</span> {news.title}
+          <span className="font-semibold">원제</span> <span lang={titleLang(news.title)}>{news.title}</span>
         </p>
       )}
       <p className="mt-2 text-meta text-muted tabular-nums">
         {news.publisher} · {formatDate(news.publishedAt)} {formatTime(news.publishedAt)}
         {kind && ` · ${kind}`}
       </p>
+      {/* 같은 글을 실은 다른 언론사(전재). 목록의 '외 n곳' 이름은 PC 마우스 툴팁(title)과 화면 낭독기에만 있어 휴대폰에서는
+          볼 길이 없었다(이슈 #277). 위 '원제' 줄처럼 이름표 + 값. 서버가 주는 기사만(옛 api면 빈 목록이라 줄이 없다) */}
+      {news.alsoBy.length > 0 && (
+        <p className="mt-0.5 text-meta text-muted">
+          <span className="font-semibold">같은 기사</span> {news.alsoBy.join(", ")}
+        </p>
+      )}
 
       <NewsPhoto newsId={news.id} url={news.imageUrl} fallback={news.playerPhotoUrl} />
 

@@ -125,6 +125,38 @@ function MonthColumn({ m, pitcher }: { m: SeasonMonth; pitcher: boolean }) {
   );
 }
 
+/** 작은 막대 칸 높이(px). 큰 막대(BAR_MAX)와 같은 비율로 줄인다 */
+const SPARK_MAX = 30;
+
+/**
+ * 성적표 목록 한 줄 오른쪽의 작은 달별 막대(이슈 #276). 펼치지 않아도 선수마다 한 해 모양(언제 잘했고 언제 빠졌나)을
+ * 나란히 견주게 한다. 큰 막대(MonthBars)와 같은 높이·색 규칙이고 숫자·달 글자만 없다(점선 = 리그 평균, 메이저 파랑·마이너 회색,
+ * 부상 빨강, 경기 적은 달은 옅게). 펼치기 버튼 안에 놓여 span만 쓰고, 버튼 이름에 섞이지 않게 화면 읽기 프로그램에는 숨긴다
+ * (같은 값은 펼친 곳의 큰 막대가 달마다 읽어 준다). 크기는 px로 고정해 큰 글씨에서도 찌그러지지 않는다.
+ */
+export function MonthSpark({ months, pitcher }: { months: SeasonMonth[]; pitcher: boolean }) {
+  if (months.length === 0) return null;
+  return (
+    <span aria-hidden className="relative grid h-[30px] w-[84px] grid-cols-6 items-end">
+      <span className="absolute inset-x-0 bottom-1/2 border-t border-dashed" style={{ borderColor: AVERAGE_LINE }} />
+      {months.map((m) => {
+        const has = played(m, pitcher);
+        const v = plus(m, pitcher) ?? 0;
+        const height = has ? Math.max(3, Math.round((Math.min(PLUS_MAX, Math.max(0, v)) / PLUS_MAX) * SPARK_MAX)) : 2;
+        const color = has ? (m.kind === "MLB" ? "var(--accent)" : MINOR_BAR) : m.kind === "INJURED" ? INJURED_BAR : "var(--line)";
+        return (
+          <span key={m.month} className="relative flex h-full items-end px-[2px]">
+            <span
+              className={`w-full ${has ? "rounded-t-[3px] rounded-b-[1px]" : "rounded-full"} ${has && m.few ? (m.kind === "MLB" ? "opacity-35" : "opacity-60") : ""}`}
+              style={{ height, background: color }}
+            />
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
 function LegendKey({ color, label }: { color: string; label: string }) {
   return (
     <span className="inline-flex items-center gap-1 whitespace-nowrap">
