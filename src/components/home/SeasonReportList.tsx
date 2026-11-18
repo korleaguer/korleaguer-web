@@ -107,15 +107,18 @@ function buildRow(entry: MyPlayer, report: SeasonReport | null, isMine: boolean)
   const status = entry.status?.kind === "SEASON_OVER" ? null : entry.status;
   const stats = statsOf(entry, report, pitcher);
   const months = report?.months ?? [];
-  const linked = report?.linkedTeams?.teams.some((t) => t.linked > 0) ? report.linkedTeams : null;
+  // 거론 구단: 기사로 거론된 구단만(한 번 거른 것을 둘째 줄과 알약이 함께 쓴다)
+  const linkedTeams = report?.linkedTeams?.teams.filter((t) => t.linked > 0) ?? [];
+  const linked = linkedTeams.length > 0 ? report?.linkedTeams ?? null : null;
   const news = latest(report?.news ?? []);
   const flow = flowOf(report, stats);
   const moves = (report?.winterMoves ?? []).filter((m) => !(status && SAID_BY_STATUS[status.kind]?.includes(m.label)));
   // MLB 안 위치: 칸이 아예 없으면(옛 api) 그리지 않는다. 서버는 위치를 못 읽으면 모두 null로 주므로(korleaguer-server#179)
-  // 메이저에서 뛴 선수인데 null이면 '메이저 기록이 없어'라고 지어내지 않고 줄을 뺀다
-  const majorGames = entry.seasonTotals?.mlb?.games ?? 0;
+  // 메이저에서 뛴 선수인데 null이면 '메이저 기록이 없어'라고 지어내지 않고 줄을 뺀다. 시즌 합계가 아예 없으면(개막 직전 주처럼
+  // 상태가 '시즌 끝'이 아니게 된 때) 메이저에서 뛰었는지 모르므로 역시 지어내지 않는다(메이저 0경기라고 확인될 때만 그 문장)
+  const majorGames = entry.seasonTotals ? (entry.seasonTotals.mlb?.games ?? 0) : null;
   const position =
-    report?.saber === undefined || (report.saber === null && majorGames > 0) ? null : (
+    report?.saber === undefined || (report.saber === null && majorGames !== 0) ? null : (
       <LeaguePositionCompact
         saber={report.saber}
         pitcher={pitcher}
@@ -169,7 +172,6 @@ function buildRow(entry: MyPlayer, report: SeasonReport | null, isMine: boolean)
     </>
   );
 
-  const linkedTeams = linked ? linked.teams.filter((t) => t.linked > 0) : [];
   const second = linked ? (
     <p className={`${SECOND_LINE} tabular-nums`}>
       <span className="font-semibold text-muted">거론 구단</span>{" "}
