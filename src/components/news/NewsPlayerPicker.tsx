@@ -5,6 +5,7 @@ import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import type { NewsListPlayer } from "@/lib/api";
 import { haptic, useInApp } from "@/lib/app";
 import { newsHref } from "@/lib/news";
+import { revealInRow } from "@/lib/scroll";
 import LoadingDots from "@/components/LoadingDots";
 import PlayerAvatar from "@/components/PlayerAvatar";
 import KboAvatar from "@/components/home/KboAvatar";
@@ -49,11 +50,7 @@ export default function NewsPlayerPicker({
   useLayoutEffect(() => {
     const list = listRef.current;
     const chip = list?.querySelector<HTMLElement>('[aria-current="page"]');
-    if (!list || !chip || list.scrollWidth <= list.clientWidth) return;
-    const left = chip.offsetLeft - list.offsetLeft;
-    if (left < list.scrollLeft || left + chip.offsetWidth > list.scrollLeft + list.clientWidth) {
-      list.scrollLeft = left - (list.clientWidth - chip.offsetWidth) / 2;
-    }
+    if (list && chip) revealInRow(list, chip, "center");
   }, [selected]);
 
   return (

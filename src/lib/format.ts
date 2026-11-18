@@ -1,5 +1,5 @@
 // 숫자·날짜를 화면용 문자열로 바꾸는 함수들. 값이 없거나 이상하면 "-"를 돌려준다.
-import type { GameLine } from "./api";
+import type { GameLine, PlayerSummary } from "./api";
 
 const KST = "Asia/Seoul";
 
@@ -141,6 +141,22 @@ export function formatScore(
 ): string | null {
   if (line.teamScore == null || line.opponentScore == null) return null;
   return `${line.teamScore} - ${line.opponentScore}`;
+}
+
+/**
+ * 팀 이름 앞말. FA·국내 복귀 선수의 팀 칸은 마지막 MLB 팀이라 '전'을 붙인다('FA' 옆 '애틀랜타'는 아직 소속처럼 읽혔다,
+ * 점검 11-13). 팀 이름을 쓰는 곳(정보 칩, 선수 머리 카드의 소속팀 사진 알약)이 함께 써서 규칙이 갈라지지 않게 한다
+ * (사진 알약만 '미네소타'로 남아 있었다, 11-17 전수조사). 지금 소속 팀이면 undefined
+ */
+export function teamPrefix(player: Pick<PlayerSummary, "freeAgent" | "returnedKo">): "전" | undefined {
+  return player.freeAgent || player.returnedKo ? "전" : undefined;
+}
+
+/** 팀 이름 글자: "샌프란시스코", FA·국내 복귀면 "전 애틀랜타". 팀을 모르면 null */
+export function teamLabel(player: Pick<PlayerSummary, "teamKo" | "freeAgent" | "returnedKo">): string | null {
+  if (!player.teamKo) return null;
+  const prefix = teamPrefix(player);
+  return prefix ? `${prefix} ${player.teamKo}` : player.teamKo;
 }
 
 /** 만 나이: 28 → "만 28세". 없으면 null (부르는 쪽에서 그 칸을 뺀다) */

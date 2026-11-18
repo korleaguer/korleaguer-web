@@ -2,6 +2,7 @@
 // 같은 기기라도 다른 브라우저·앱과는 나누지 않는다.
 // 서버 컴포넌트와 서버 함수(actions.ts)에서만 쓴다.
 import { cookies } from "next/headers";
+import { parseId } from "./ids";
 
 export const MY_PLAYERS_COOKIE = "kl_my";
 /** api가 한 번에 받는 최대 인원과 같다 */
@@ -14,8 +15,8 @@ export function parseMyPlayers(value: string | undefined): number[] {
   if (!value) return [];
   const ids = value
     .split(".")
-    .filter((part) => /^[1-9]\d{0,9}$/.test(part))
-    .map(Number);
+    .map(parseId)
+    .filter((id): id is number => id != null);
   return [...new Set(ids)].slice(0, MY_PLAYERS_MAX);
 }
 
