@@ -3,7 +3,7 @@
 import Link, { useLinkStatus } from "next/link";
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import type { NewsListPlayer } from "@/lib/api";
-import { haptic } from "@/lib/app";
+import { haptic, useInApp } from "@/lib/app";
 import { newsHref } from "@/lib/news";
 import LoadingDots from "@/components/LoadingDots";
 import PlayerAvatar from "@/components/PlayerAvatar";
@@ -13,7 +13,8 @@ import StarIcon from "@/components/my/StarIcon";
 /**
  * 뉴스 탭의 선수 고르기: '전체'와 기사가 있는 선수(사진 + 이름). 휴대폰은 위에 가로로 한 줄(넘치면 옆으로 밀어 본다),
  * PC(lg)는 왼쪽 칸에 세로 목록으로 둔다. 고른 칸은 연파랑(위 메뉴의 현재 칸과 같은 색).
- * 거르기는 주소(?player=)로 하고, 고를 때마다 기록을 쌓지 않는다(replace). 뒤로 가면 뉴스 탭에 오기 전 화면이다.
+ * 거르기는 주소(?player=)로 한다. 브라우저에서는 고를 때마다 기록을 쌓아 '뒤로'가 앞에 고른 선수로 돌아간다(쌓지 않으면 뉴스 탭
+ * 밖으로 나갔다). 앱 안에서는 쌓지 않는다(replace): 앱의 뒤로 버튼·안드로이드 뒤로 키가 알약을 한 칸씩 되돌리지 않고 앞 화면으로 간다.
  * 순서는 부르는 쪽이 정한다(★내 선수 → 새 기사 있는 선수 → 나머지, 이슈 #210). 단 이 화면에 머무는 동안은 처음 순서를 지킨다. 내 선수는 ★, 지난번에 본 뒤 새 기사가
  * 있는 선수는 사진 오른쪽 위에 파란 점(고른 칸은 지금 보고 있으니 점을 두지 않는다).
  */
@@ -34,6 +35,7 @@ export default function NewsPlayerPicker({
   fresh?: readonly string[];
 }) {
   const listRef = useRef<HTMLUListElement>(null);
+  const inApp = useInApp();
   // 뉴스 탭에 머무는 동안은 처음 순서를 지킨다. 새 기사가 있는 선수를 보면 그 선수는 '새 기사' 묶음에서 빠지는데,
   // 그때마다 다시 세우면 알약이 한 칸씩 당겨져 누르려던 자리에 다른 선수가 온다. 점·별은 바로 바뀐다
   const [firstOrder] = useState(() => players.map((p) => p.nameKo));
@@ -62,7 +64,7 @@ export default function NewsPlayerPicker({
         className="no-scrollbar -mx-3 flex gap-2 overflow-x-auto overflow-y-hidden px-3 py-[max(0.25rem,calc(22px-1.25rem))] sm:-mx-6 sm:px-6 lg:mx-0 lg:flex-col lg:gap-0.5 lg:overflow-visible lg:px-0 lg:py-0"
       >
         <li className="shrink-0">
-          <Chip href={newsHref(null, query)} current={selected === null}>
+          <Chip href={newsHref(null, query)} current={selected === null} replace={inApp}>
             <span className={`bold-reserve px-1.5 lg:px-0 ${selected === null ? "font-extrabold" : ""}`} data-text="전체">
               전체
             </span>
@@ -74,7 +76,7 @@ export default function NewsPlayerPicker({
           const star = mine.includes(p.nameKo);
           return (
             <li key={p.nameKo} className="shrink-0">
-              <Chip href={newsHref(p.nameKo, query)} current={current}>
+              <Chip href={newsHref(p.nameKo, query)} current={current} replace={inApp}>
                 <span className="relative inline-flex shrink-0">
                   {p.posting ? (
                     <KboAvatar nameKo={p.nameKo} photoUrl={p.photoUrl} size={24} />
@@ -106,11 +108,22 @@ export default function NewsPlayerPicker({
   );
 }
 
-function Chip({ href, current, children }: { href: string; current: boolean; children: ReactNode }) {
+function Chip({
+  href,
+  current,
+  replace,
+  children,
+}: {
+  href: string;
+  current: boolean;
+  /** 기록을 쌓지 않고 바꿔치기(앱 안) */
+  replace: boolean;
+  children: ReactNode;
+}) {
   return (
     <Link
       href={href}
-      replace
+      replace={replace}
       aria-current={current ? "page" : undefined}
       onClick={() => {
         if (!current) haptic("select");

@@ -270,7 +270,12 @@ export interface NewsList {
   next: string | null;
   /** 이 쪽을 거른 검색어. 없으면 null */
   query: string | null;
-  /** 지금 범위의 최근 기사에 많이 나온 말(검색창 바로가기, korleaguer-server#158). 첫 쪽이고 검색어가 없을 때만 */
+  /**
+   * 그 검색어로 나오는 줄 수(지금 범위 전체, 같은 기사는 한 줄. 알약 숫자와 같은 셈). 첫 쪽이고 검색어가 있을 때만 온다.
+   * 세어 주지 않는 api면 null이고, 화면은 알약 숫자나 받은 줄 수로 대신한다(뉴스 탭 page.tsx)
+   */
+  queryCount: number | null;
+  /** 지금 범위의 최근 기사에 많이 나온 말(검색창 바로가기, korleaguer-server#158). 첫 쪽에만(검색어가 있어도 온다, #165) */
   topics: NewsTopic[];
 }
 
@@ -1076,6 +1081,7 @@ function normalizeNewsList(raw: NewsList): NewsList {
     }),
     next: typeof raw.next === "string" && raw.next !== "" ? raw.next : null,
     query: typeof raw.query === "string" && raw.query !== "" ? raw.query : null,
+    queryCount: typeof raw.queryCount === "number" && raw.queryCount >= 0 ? raw.queryCount : null,
     topics: (raw.topics ?? []).filter((t) => typeof t.word === "string" && t.word !== "" && typeof t.count === "number"),
   };
 }

@@ -5,6 +5,7 @@ import { useEffect, useRef, type CSSProperties, type PointerEvent as ReactPointe
 import { createPortal } from "react-dom";
 import type { LinkedArticle, LinkedTeam } from "@/lib/api";
 import { formatDate, kstDayKey } from "@/lib/format";
+import { titleLang } from "@/lib/news";
 import TeamMark from "@/components/TeamMark";
 import NewsThumb from "@/components/news/NewsThumb";
 import Words, { WordGroup } from "@/components/Words";
@@ -216,7 +217,8 @@ function ArticleRow({ article: a, playerPhotoUrl }: { article: LinkedArticle; pl
       {/* 화면 낭독기는 글부터 읽고, 눈에는 출처 줄이 위에 보인다. 출처 줄이 11rem보다 좁으면(큰 글씨) 보통 글처럼 흘린다(NewsTitleList와 같다).
           글은 크기와 상관없이 네 줄까지(위 설명). 예전에는 큰 글씨에서만 네 줄이었다 */}
       <span className="@container flex min-w-0 flex-1 flex-col-reverse">
-        <span className="mt-0.5 line-clamp-4 text-summary group-hover:underline">
+        {/* 근거 한 줄·번역이 없는 영어 기사는 원제가 나와 화면 낭독기가 영어로 읽게 한다(NewsTitleList와 같다) */}
+        <span lang={titleLang(text)} className="mt-0.5 line-clamp-4 text-summary group-hover:underline">
           <Highlighted text={text} word={a.reasonName} />
         </span>
         <span className="flex min-w-0 whitespace-nowrap text-caption text-muted tabular-nums @max-[11rem]:block @max-[11rem]:whitespace-normal">
