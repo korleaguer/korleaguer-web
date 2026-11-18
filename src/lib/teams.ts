@@ -98,14 +98,26 @@ export function teamLogoUrlById(teamId: number | null | undefined): string | nul
   return typeof teamId === "number" ? `https://www.mlbstatic.com/team-logos/${teamId}.svg` : null;
 }
 
-/** 팀 색 위에 올릴 글자색. 밝은 색(피츠버그 노랑 등)이면 검정, 아니면 흰색 */
-export function textColorOn(hex: string): string {
+/** WCAG 상대 휘도(0 검정 ~ 1 흰색) */
+function luminance(hex: string): number {
   const n = parseInt(hex.slice(1), 16);
-  const r = (n >> 16) & 255;
-  const g = (n >> 8) & 255;
-  const b = n & 255;
-  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-  return brightness > 160 ? "#111111" : "#ffffff";
+  const channel = (v: number) => {
+    const c = v / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * channel((n >> 16) & 255) + 0.7152 * channel((n >> 8) & 255) + 0.0722 * channel(n & 255);
+}
+
+/**
+ * 팀 색 위에 올릴 글자색(사진이 없을 때 이니셜). 흰색과 검정(#111111) 가운데 그 색과 대비가 더 큰 쪽.
+ * 예전에는 밝기 공식(160 넘으면 검정)으로 골라 마이애미 하늘색·샌프란시스코·휴스턴 주황·볼티모어 주황의 흰 글자가
+ * 2.87~4.19:1이었다(WCAG 1.4.3, 전수조사). 이제 30색 모두 4.5:1 이상이고, 바뀌는 건 그 네 팀뿐이다.
+ */
+export function textColorOn(hex: string): string {
+  const l = luminance(hex);
+  const onWhite = 1.05 / (l + 0.05);
+  const onBlack = (l + 0.05) / (luminance("#111111") + 0.05);
+  return onBlack > onWhite ? "#111111" : "#ffffff";
 }
 
 // KBO 구단 대표 색(한글 구단 이름으로 찾는다). 포스팅 선수 원·선수 페이지 과거 소속팀 띠에 쓴다.

@@ -88,7 +88,8 @@ export default function MyHeader({ subtitle, players, selectedIds }: Props) {
             </div>
           )}
           <h2 className="sr-only">전체 선수</h2>
-          <p className="px-2 pb-1.5 pt-1 text-caption text-muted">
+          {/* 좁은 카드에서 두 줄로 감기므로 줄 간격 1.5(바닥글과 같은 이유) */}
+          <p className="px-2 pb-1.5 pt-1 text-caption leading-normal text-muted">
             누르면 내 선수에 넣거나 뺄 수 있어요. 가입 없이 이 기기에만 저장돼요.
           </p>
           {players.length === 0 ? (

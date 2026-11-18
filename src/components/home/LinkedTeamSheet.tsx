@@ -96,8 +96,9 @@ export default function LinkedTeamSheet({
         ref={panelRef}
         className="game-sheet flex max-h-[84dvh] w-full flex-col overflow-hidden rounded-t-2xl bg-surface shadow-[var(--shadow-card-hover)] sm:max-h-[80dvh] sm:max-w-lg sm:rounded-2xl"
       >
+        {/* 끌어 닫는 머리: 앱 안에서도 길게 눌러 글자가 잡히지 않게 select-none */}
         <div
-          className="shrink-0 touch-none"
+          className="shrink-0 touch-none select-none"
           onPointerDown={onDragStart}
           onPointerMove={onDragMove}
           onPointerUp={onDragEnd}
@@ -185,6 +186,8 @@ function DayBars({ articles, days }: { articles: LinkedArticle[]; days: number }
                   높이는 0부터 건수에 비례한다(가장 많은 날 52px). 예전에는 12px에서 시작해 1건과 3건이 실제(3배)보다 비슷해 보였다
                   (이슈 #277). 1건 막대는 작아질 수 있지만 위 'n건' 글자가 남는다 */}
               <span
+                // 고대비 모드에서 시스템 색으로 다시 칠할 막대(globals.css). 기사 없는 날의 바닥 줄은 흐린 색
+                data-bar={n > 0 ? "" : "dim"}
                 className={`w-7 max-w-[calc(100%-4px)] rounded-t-md ${n === 0 ? "bg-line" : isToday ? "bg-accent" : ""}`}
                 style={
                   {

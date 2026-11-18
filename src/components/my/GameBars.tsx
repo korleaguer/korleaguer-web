@@ -167,6 +167,8 @@ export default function GameBars({ slots, role, days, minors = false }: Props) {
                   <span
                     className={`bar-rise block w-[72%] max-w-7 rounded-t-md rounded-b-sm bg-accent transition-opacity duration-150 ${on ? "opacity-100" : "opacity-35 group-hover:opacity-60 dark:opacity-55 dark:group-hover:opacity-75"}`}
                     style={{ height, "--i": i } as CSSProperties}
+                    // 고대비 모드에서 시스템 색으로 다시 칠할 막대(globals.css). 고른 막대는 강조색
+                    data-bar=""
                   />
                 ) : (
                   // 뛰었지만 안타 0(또는 아웃 0·숫자 모름): 바닥에 얇은 막대

@@ -3,7 +3,7 @@ import { getHome, getRecords, type RecordNext, type RecordsResponse } from "@/li
 import { shareMeta, SITE_NAME } from "@/lib/share";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import DataBanners from "@/components/DataBanners";
-import LoadingBlock from "@/components/LoadingBlock";
+import { RecordsSkeleton } from "@/components/PageSkeleton";
 import PageSuspense from "@/components/PageSuspense";
 import PillNav from "@/components/PillNav";
 import Section from "@/components/Section";
@@ -49,7 +49,7 @@ export default function RecordsPage({ searchParams }: Props) {
   return (
     <div className="space-y-4">
       <h1 className="px-1 text-display">{TITLE}</h1>
-      <PageSuspense fallback={<LoadingBlock rows={8} />}>
+      <PageSuspense fallback={<RecordsSkeleton />}>
         <RecordsContent searchParams={searchParams} />
       </PageSuspense>
     </div>
