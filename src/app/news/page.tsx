@@ -5,7 +5,7 @@ import { getNewsList, type NewsListPlayer } from "@/lib/api";
 import { readMyPlayers } from "@/lib/myPlayers";
 import { NEWS_QUERY_MAX, newsHref } from "@/lib/news";
 import { hasNewSince, NEWS_SEEN_COOKIE, parseSeen, toSeconds } from "@/lib/newsSeen";
-import { shareMeta } from "@/lib/share";
+import { shareMeta, SITE_NAME } from "@/lib/share";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import LoadingBlock from "@/components/LoadingBlock";
 import PageSuspense from "@/components/PageSuspense";
@@ -16,12 +16,14 @@ import NewsSearch from "@/components/news/NewsSearch";
 import NewsSeenMarker from "@/components/news/NewsSeenMarker";
 
 // <title>: "뉴스 · KOR Leaguer" (뒷부분은 layout의 template이 붙인다)
+const TITLE = "뉴스";
 const DESCRIPTION = "해외파 한국 선수 기사 모아보기. 선수별로 골라 보고, 영어 기사는 한국어 요약으로 읽어요.";
 
 export const metadata: Metadata = {
-  title: "뉴스",
+  title: TITLE,
   description: DESCRIPTION,
-  ...shareMeta("뉴스 · KOR Leaguer", DESCRIPTION),
+  // 공유 주소(og:url)는 두지 않는다. 선수로 거른 링크(?player=이정후)를 많이 보내서, '/news'로 정하면 전체 목록으로 열린다
+  ...shareMeta(`${TITLE} · ${SITE_NAME}`, DESCRIPTION),
 };
 
 type Props = PageProps<"/news">;
