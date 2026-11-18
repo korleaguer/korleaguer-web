@@ -79,10 +79,11 @@ export function monthSummary(entries: LogGame[], role: Role): string {
 
 /**
  * 날짜 칸 색(뜻):
- * hr 가장 큰 활약(홈런, 투수는 2이닝 이상 무실점) · multi 2안타 이상(투수는 1이닝 이상 무실점) · hit 1안타(투수는 1이닝 못 채운 무실점) ·
- * zero 무안타·출전·실점 · off 결장(타자) · pending 경기 전·중·연기 · rest 등판 없음(투수, 칸을 칠하지 않는다)
+ * hr 가장 큰 활약(홈런, 투수는 2이닝 이상 무실점) · multi 2안타 이상(투수는 1이닝 이상 무실점, 이닝을 모르는 무실점) ·
+ * hit 1안타(투수는 1이닝 못 채운 무실점) · zero 무안타(타수 없는 출전 포함)·실점 · unknown 뛰었는데 기록을 못 받음(색 없이 '출전'·'등판') ·
+ * off 결장(타자) · pending 경기 전·중·연기 · rest 등판 없음(투수, 칸을 칠하지 않는다)
  */
-export type DayTone = "hr" | "multi" | "hit" | "zero" | "off" | "pending" | "rest";
+export type DayTone = "hr" | "multi" | "hit" | "zero" | "unknown" | "off" | "pending" | "rest";
 
 /** 달력 날짜 칸 하나(그날 경기를 모두 합친 것) */
 export interface CalendarDay {
@@ -155,8 +156,8 @@ type Look = Pick<CalendarDay, "tone" | "label" | "detail">;
 /** 타자가 뛴 경기(그날 모두)를 합친 칸 */
 function hitterLook(played: GameLine[]): Look {
   const known = played.filter((l) => l.batting);
-  // 기록을 못 받았으면(숫자 없음) 뛰었다는 것만
-  if (known.length === 0) return { tone: "zero", label: "출전", detail: "출전" };
+  // 기록을 못 받았으면(숫자 없음) 뛰었다는 것만. 회색이면 범례의 '무안타'로 읽혀서 색 없는 칸으로 둔다(PR #291 리뷰)
+  if (known.length === 0) return { tone: "unknown", label: "출전", detail: "출전" };
   const ab = known.reduce((s, l) => s + (l.batting?.atBats ?? 0), 0);
   const hits = known.reduce((s, l) => s + (l.batting?.hits ?? 0), 0);
   const hr = known.reduce((s, l) => s + (l.batting?.homeRuns ?? 0), 0);
@@ -175,10 +176,13 @@ function hitterLook(played: GameLine[]): Look {
  * 승·세이브는 칸에 쓰지 않고 아래 경기 줄(활약 배지 '승리투수'·'세이브', 한 줄 기록 '· 승')과 낭독 글(한 줄 기록)에 남긴다.
  * 넓은 칸에 '· 승'을 붙이면 바로 아래 줄 팀 결과('승 5-4')와 '승'이 한 칸에 두 번 나오고, 칸 안쪽 64px에서 '승'만 다음 줄로 떨어졌다.
  * 칸 글자는 결과다: 좁은 칸(휴대폰) '무실점'·'2실점', 넓은 칸 '1이닝 무실점'·'2이닝 2실점'.
+ * 던진 내용을 모르면 범례의 어느 색도 아니게 둔다: 투구 기록을 못 받은 등판은 색 없는 칸 '등판'(회색이면 범례의 '실점'으로 읽힌다),
+ * 아웃 수를 모르는 무실점은 파랑(범례 '무실점'. 연파랑은 1이닝 못 채운 짧은 등판으로 읽힌다). 2026 운영 데이터 등판 40번에는
+ * 둘 다 없었다(기록을 못 받았을 때 대비, PR #291 리뷰)
  */
 function pitcherLook(played: GameLine[]): Look {
   const known = played.filter((l) => l.pitching);
-  if (known.length === 0) return { tone: "zero", label: "등판", detail: "등판" };
+  if (known.length === 0) return { tone: "unknown", label: "등판", detail: "등판" };
   const outsKnown = known.every((l) => l.pitching?.outs != null);
   const outs = known.reduce((s, l) => s + (l.pitching?.outs ?? 0), 0);
   const runs = known.reduce((s, l) => s + (l.pitching?.runs ?? 0), 0);
@@ -187,7 +191,8 @@ function pitcherLook(played: GameLine[]): Look {
   const innings = formatInningsOuts(outs).replace(/^0(?=[⅓⅔])/, "");
   const detail = outsKnown ? `${innings}이닝 ${runsText}` : runsText;
   if (runs > 0) return { tone: "zero", label: runsText, detail };
-  return { tone: outs >= 6 ? "hr" : outs >= 3 ? "multi" : "hit", label: runsText, detail };
+  // 아웃 수를 모르는 경기가 끼면 아는 아웃만 더한 outs는 실제보다 작다. 그래도 2이닝을 넘었으면 주황은 맞고, 아니면 파랑
+  return { tone: outs >= 6 ? "hr" : outs >= 3 || !outsKnown ? "multi" : "hit", label: runsText, detail };
 }
 
 /** 그날 경기들로 칸 하나를 만든다. entries는 같은 한국 날짜의 경기 */

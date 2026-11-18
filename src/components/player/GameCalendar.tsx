@@ -16,12 +16,14 @@ const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 /**
  * 칸 색. 경기별 막대와 같은 뜻이다: 파랑 = 안타(투수는 무실점), 채운 주황 = 가장 큰 활약(홈런, 투수는 2이닝 이상 무실점), 점선 = 결장.
  * 채운 칸 글자는 흰색(4.5:1 이상), 연파랑·회색 칸은 진한 글자.
+ * 뛰었는데 기록을 못 받은 칸(unknown)은 범례의 어느 색도 아니게 경기 전 칸과 같은 얇은 테두리만 두고 글자('출전'·'등판')로 말한다
  */
 const TONE: Record<Exclude<DayTone, "rest">, string> = {
   hr: "bg-hot-strong text-hot-on",
   multi: "bg-accent text-accent-fg",
   hit: "bg-accent-soft text-accent-ink",
   zero: "bg-surface-2 text-muted",
+  unknown: "border border-line text-muted",
   off: "border-[1.5px] border-dashed border-muted/50 text-muted",
   pending: "border border-line text-muted",
 };
