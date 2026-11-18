@@ -4,13 +4,14 @@
 // 취소하고, 끝난 경기는 저장해 두었다가 다시 열 때 바로 쓴다.
 import type { NextRequest } from "next/server";
 import { getGameDetail } from "@/lib/api";
-import { failed, ID } from "../ids";
+import { parseId } from "@/lib/ids";
+import { failed } from "../ids";
 
 export async function GET(request: NextRequest, { params }: RouteContext<"/players/[id]/games/[gamePk]">) {
   const { id, gamePk } = await params;
-  if (!ID.test(id) || !ID.test(gamePk)) return failed(404);
-  const playerId = Number(id);
-  const game = Number(gamePk);
+  const playerId = parseId(id);
+  const game = parseId(gamePk);
+  if (playerId == null || game == null) return failed(404);
   const result = await getGameDetail(playerId, game);
   if (!result.ok) return failed(result.failure === "notFound" ? 404 : 502);
   // api가 다른 선수·경기를 돌려주면 버린다(서버 함수 때와 같은 확인)
