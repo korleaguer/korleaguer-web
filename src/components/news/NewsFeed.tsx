@@ -1,6 +1,6 @@
 "use client"; // '기사 더 보기'로 받은 기사를 이어 붙여야 해서 클라이언트 컴포넌트다.
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import type { NewsListItem } from "@/lib/api";
 import { loadMoreNews } from "@/app/news/actions";
 import { formatDate, kstDayKey } from "@/lib/format";
@@ -49,6 +49,25 @@ export default function NewsFeed({
   const [next, setNext] = useState(firstNext);
   const [failed, setFailed] = useState(false);
   const [pending, startTransition] = useTransition();
+  const listRef = useRef<HTMLDivElement>(null);
+  const moreRef = useRef<HTMLButtonElement>(null);
+  // 마지막 쪽을 받으면 '기사 더 보기'가 사라져 그 버튼에 있던 포커스가 갈 곳을 잃는다(키보드·화면 낭독기가 문서 처음으로
+  // 돌아갔다). 그때 새로 붙은 첫 기사로 옮기려고, 그 줄 자리를 적어 둔다(다음 그림 뒤에 옮긴다)
+  const focusRowAt = useRef<number | null>(null);
+  useEffect(() => {
+    const at = focusRowAt.current;
+    if (at === null) return;
+    focusRowAt.current = null;
+    // 줄마다 기사 링크가 하나다(링크가 줄 전체다). 새로 붙은 줄이 없으면(마지막 쪽이 비었으면) 마지막 줄로
+    const links = listRef.current?.querySelectorAll<HTMLElement>("li > a") ?? [];
+    const row = links[at] ?? links[links.length - 1];
+    if (!row) return;
+    // 화면은 그 줄이 다 보일 만큼만 옮긴다(이미 다 보이면 그대로). 버튼이 화면 아래 끝에 있었으면 새 첫 기사가 화면 밑으로
+    // 잘려 포커스가 어디로 갔는지 보이지 않았다. 스크롤을 포커스에 맡기면 브라우저에 따라 그 줄을 화면 가운데까지 끌어올려
+    // 읽던 자리가 크게 튄다. 부드럽게 굴리지 않고 바로 옮긴다(ShowMore와 같다). 움직이는 장면이 없어 동작 줄이기 설정과 상관없다
+    row.focus({ preventScroll: true });
+    row.scrollIntoView({ block: "nearest" });
+  }, [rows]);
 
   function load() {
     if (!next || pending) return;
@@ -59,7 +78,13 @@ export default function NewsFeed({
         return;
       }
       setFailed(false);
-      setRows((shown) => merge(shown, result.items));
+      const focusNew = result.next === null && document.activeElement === moreRef.current;
+      setRows((shown) => {
+        // 새로 붙는 첫 줄 자리는 받은 쪽을 붙일 때의 줄 수다. 받기 전에 세어 두면, 받는 사이 앱 복귀 새로 고침이 맨 위에
+        // 새 기사를 더했을 때 그만큼 앞의 옛 기사로 포커스가 갔다(리뷰 지적)
+        if (focusNew) focusRowAt.current = shown.length;
+        return merge(shown, result.items);
+      });
       setNext(result.next);
     });
   }
@@ -74,7 +99,8 @@ export default function NewsFeed({
   }));
 
   return (
-    <div className="space-y-4">
+    // 줄 링크에 아래 스크롤 여백: 포커스를 옮겨 보이게 할 때 포커스 테두리(2px + 띄움 2px)까지 화면 안에 들어오게
+    <div ref={listRef} className="space-y-4 [&_li>a]:scroll-mb-2">
       {byDay(items).map((day) => (
         <section key={day.key} aria-labelledby={`news-day-${day.key}`}>
           {/* 오늘·어제는 보는 때에 따라 달라서 서버와 브라우저가 자정 근처에 다르게 그릴 수 있다 */}
@@ -93,6 +119,7 @@ export default function NewsFeed({
       )}
       {next && (
         <button
+          ref={moreRef}
           type="button"
           onClick={load}
           aria-busy={pending}

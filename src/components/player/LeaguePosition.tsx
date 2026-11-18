@@ -4,11 +4,11 @@ import { formatInningsOuts } from "@/lib/format";
 import { cacheLife } from "next/cache";
 import { Fragment } from "react";
 
-/** 이보다 적으면 '참고용'(서버가 견주는 선수 기준과 같다: 타자 100타석, 투수 30이닝 = 90아웃) */
-const STEADY_PA = 100;
-const STEADY_OUTS = 90;
+/** 이보다 적으면 '참고용'(서버가 견주는 선수 기준과 같다: 타자 100타석, 투수 30이닝 = 90아웃). 홈 성적표 작은 판도 같은 기준이다 */
+export const STEADY_PA = 100;
+export const STEADY_OUTS = 90;
 
-interface Row {
+export interface Row {
   label: string;
   /** 1~99(높을수록 좋다). 견줄 선수가 아직 없으면 null */
   pct: number | null;
@@ -23,8 +23,8 @@ function signed(value: number | null, digits = 1): string | null {
   return `${value < 0 && Number(fixed) !== 0 ? "−" : "+"}${fixed}`;
 }
 
-/** 막대 네 줄. 표본이 적어 서버가 위치를 매기지 않았으면 null */
-function rowsOf(saber: PlayerSaber): Row[] | null {
+/** 막대 네 줄(맨 앞이 '종합'). 표본이 적어 서버가 위치를 매기지 않았으면 null. 홈 성적표 작은 판(LeaguePositionCompact)도 쓴다 */
+export function rowsOf(saber: PlayerSaber): Row[] | null {
   if (saber.kind === "hitter") {
     const p = saber.percentiles;
     if (!p) return null;

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 // Pretendard 글꼴. 글꼴 파일을 빌드 결과에 넣어 우리 서버가 주고, 한글은 화면에 쓴 글자 조각(unicode-range)만 받는다.
 import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
-import { SITE_NAME, SITE_URL, shareMeta } from "@/lib/share";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL, shareMeta } from "@/lib/share";
 import AppBridge from "@/components/AppBridge";
 import SiteFooter from "@/components/SiteFooter";
 import SiteHeader from "@/components/SiteHeader";
@@ -9,19 +9,18 @@ import SkipLink from "@/components/SkipLink";
 import Toaster from "@/components/Toaster";
 import "./globals.css";
 
-const DESCRIPTION = "해외파 한국 선수들의 최근 경기 기록과 시즌 성적을 모아 봐요.";
-
 export const metadata: Metadata = {
   title: {
     default: "KOR Leaguer",
     // 하위 페이지 제목 뒤에 붙는다. 예: "이정후 2026 기록 · KOR Leaguer"
     template: "%s · KOR Leaguer",
   },
-  description: DESCRIPTION,
+  description: SITE_DESCRIPTION,
   // 공유 미리보기 그림 주소(og:image)를 절대 주소로 만드는 기준
   metadataBase: new URL(SITE_URL),
-  // 카톡·SNS에 링크를 보내면 붙는 카드. 그림은 app/opengraph-image.tsx(화면별 그림이 있으면 그것)
-  ...shareMeta(SITE_NAME, DESCRIPTION),
+  // 카톡·SNS에 링크를 보내면 붙는 카드. 그림은 app/opengraph-image.tsx(화면별 그림이 있으면 그것).
+  // 주소(og:url)는 두지 않는다: 자기 카드가 없는 화면(없는 주소, 잠깐 못 불러온 선수·기사)까지 홈 주소를 물려받는다. 홈은 page.tsx에서
+  ...shareMeta(SITE_NAME, SITE_DESCRIPTION),
   twitter: { card: "summary_large_image" },
 };
 

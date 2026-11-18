@@ -3,6 +3,7 @@
 // (WOFF2는 못 읽는다). 운영 이미지(standalone)에 이 파일이 들어가게 next.config의 outputFileTracingIncludes에 적어 두었다.
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { ImageResponse } from "next/og";
 import sharp from "sharp";
 import { logoSvg } from "@/lib/logo";
 
@@ -54,6 +55,22 @@ export function OgBrand({ scale = 1 }: { scale?: number }) {
         KOR Leaguer
       </div>
     </div>
+  );
+}
+
+/**
+ * 그릴 선수·기사를 못 받았을 때(없는 주소, api 오류)의 그림: 로고만. 선수·기사 그림 경로가 같이 쓴다.
+ * 잠깐의 api 오류로 그린 그림이 오래 남지 않게 저장 금지(no-store)로 보낸다. 브라우저와 대개의 수집기는 다음에 다시 받아 가지만, 카카오톡 서버에 이미 저장된 썸네일은 카카오 정책을 따라 우리가 지울 수 없다
+ * (기본은 'public, max-age=0, must-revalidate'라 저장해 두고 다시 물어보기만 한다).
+ */
+export function ogFallbackImage(fonts: Awaited<ReturnType<typeof ogFonts>>) {
+  return new ImageResponse(
+    (
+      <div style={{ display: "flex", width: "100%", height: "100%", alignItems: "center", justifyContent: "center", background: OG_COLORS.page, fontFamily: "Pretendard" }}>
+        <OgBrand scale={2} />
+      </div>
+    ),
+    { ...OG_SIZE, fonts, headers: { "cache-control": "no-store" } },
   );
 }
 
