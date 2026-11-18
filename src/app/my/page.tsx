@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getHome, getMyPlayers, getPlayers } from "@/lib/api";
-import { formatDateRange } from "@/lib/format";
+import { formatAsOf, formatDateRange } from "@/lib/format";
 import { readMyPlayers } from "@/lib/myPlayers";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import DataBanners from "@/components/DataBanners";
@@ -10,6 +10,7 @@ import MyHeader from "@/components/my/MyHeader";
 import PillNav from "@/components/PillNav";
 import StateNotice from "@/components/StateNotice";
 import PageSuspense from "@/components/PageSuspense";
+import { WordGroup } from "@/components/Words";
 import { shareMeta, SITE_NAME } from "@/lib/share";
 
 // <title>: "내 선수 · KOR Leaguer". 사람마다 다른 화면이라 검색에는 올리지 않는다.
@@ -66,11 +67,18 @@ async function MyContent({ searchParams }: Pick<PageProps<"/my">, "searchParams"
   const showFallbackNote = picked.some(
     (e) => e.basis === "LAST_PLAYED" || (e.basis === "REHAB" && e.isFallback),
   );
-  const subtitle = !my
-    ? "좋아하는 선수를 넣어 두면 최근 경기를 한곳에서 볼 수 있어요"
-    : seasonView
-      ? `내 선수 ${picked.length}명 · ${my.season} 시즌 기록`
-      : `내 선수 ${picked.length}명 · ${formatDateRange(my.fromKst, my.toKst)}`;
+  // 기록을 받았으면 머리말 끝에 데이터 기준 시각(선수 목록 머리 줄과 같은 꼴, 이슈 #277). 기준 글은 한 덩어리로 줄을 넘기고
+  // '·'는 '기준'에 붙여 줄 끝에 홀로 남지 않게 한다(375px에서는 기간·시즌 다음 줄로 통째로 내려간다)
+  const subtitle = !my ? (
+    "좋아하는 선수를 넣어 두면 최근 경기를 한곳에서 볼 수 있어요"
+  ) : (
+    <>
+      {seasonView
+        ? `내 선수 ${picked.length}명 · ${my.season} 시즌 기록 `
+        : `내 선수 ${picked.length}명 · ${formatDateRange(my.fromKst, my.toKst)} `}
+      <WordGroup text={`·\u00a0${formatAsOf(my.generatedAt)}`} />
+    </>
+  );
 
   return (
     <div className="space-y-4">

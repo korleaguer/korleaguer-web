@@ -132,6 +132,13 @@ function Article({ news }: { news: NewsPage }) {
         {news.publisher} · {formatDate(news.publishedAt)} {formatTime(news.publishedAt)}
         {kind && ` · ${kind}`}
       </p>
+      {/* 같은 글을 실은 다른 언론사(전재). 목록의 '외 n곳' 이름은 PC 마우스 툴팁(title)과 화면 낭독기에만 있어 휴대폰에서는
+          볼 길이 없었다(이슈 #277). 위 '원제' 줄처럼 이름표 + 값. 서버가 주는 기사만(옛 api면 빈 목록이라 줄이 없다) */}
+      {news.alsoBy.length > 0 && (
+        <p className="mt-0.5 text-meta text-muted">
+          <span className="font-semibold">같은 기사</span> {news.alsoBy.join(", ")}
+        </p>
+      )}
 
       <NewsPhoto newsId={news.id} url={news.imageUrl} fallback={news.playerPhotoUrl} />
 

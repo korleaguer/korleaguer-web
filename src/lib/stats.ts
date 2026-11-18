@@ -72,6 +72,19 @@ export function rankedPitcher(ranking: RankingMinimums | null) {
 }
 
 /**
+ * 값 순으로 다시 세운다. "max"는 큰 값 먼저(타율), "min"은 작은 값 먼저(평균자책점). 값이 없으면 맨 뒤, 같으면 원래 순서.
+ * 시즌 기록 표가 '타율 순' 이름표와 같은 순서가 되게 묶음마다 쓴다(이슈 #277)
+ */
+export function sortByValue<T>(rows: T[], pick: (row: T) => number | null, direction: "max" | "min"): T[] {
+  return [...rows].sort((a, b) => {
+    const x = pick(a);
+    const y = pick(b);
+    if (x == null || y == null) return (x == null ? 1 : 0) - (y == null ? 1 : 0);
+    return direction === "max" ? y - x : x - y;
+  });
+}
+
+/**
  * 시즌 기록 표의 줄 묶음(이슈 #88). 메이저 선수마다 같은 선수의 마이너 기록을 짝지어 바로 밑에 두고,
  * 메이저 줄이 없는(마이너에서만 뛴) 선수는 따로 모은다. 순서는 각 목록 그대로다.
  */
