@@ -2,8 +2,8 @@
 // 선수 페이지 머리 카드(PlayerHeader)를 그림으로 옮긴 모양이다.
 import { ImageResponse } from "next/og";
 import { getPlayer } from "@/lib/api";
-import { OG_COLORS, OG_SIZE, OgBrand, mixHex, ogFonts, photoDataUrl } from "@/lib/og";
-import { mainSeasonStats } from "@/lib/seasonStats";
+import { OG_COLORS, OG_SIZE, OgBrand, mixHex, ogFallbackImage, ogFonts, photoDataUrl } from "@/lib/og";
+import { playerShareLines } from "@/lib/share";
 import { teamColor } from "@/lib/teams";
 
 // 주소: /players/[id]/og/<판 번호>. 판 번호는 배포 커밋(lib/share.ts OG_VERSION)이고 그림에는 쓰지 않는다.
@@ -14,17 +14,15 @@ export async function GET(_request: Request, { params }: RouteContext<"/players/
   const { id } = await params;
   const result = /^[1-9]\d{0,9}$/.test(id) ? await getPlayer(Number(id)) : null;
   const fonts = await ogFonts();
-  if (!result?.ok) return fallback(fonts);
+  // 없는 선수·잠깐 못 불러온 경우: 로고만 있는 그림(수집기가 저장해 두지 않게 보낸다)
+  if (!result?.ok) return ogFallbackImage(fonts);
 
   const { player, season } = result.data;
   const color = teamColor(player.teamAbbr);
   const photo = await photoDataUrl(player.photoUrl);
-  // 선수 목록 카드와 같은 기록: 올해 주로 뛴 단계 + 단계·경기 수 이름표(이슈 #184)
-  const main = mainSeasonStats(player, result.data);
+  // 팀·포지션 줄과 주 단계 기록. 페이지의 그림 대체 글(lib/share.ts playerShareImage)도 같은 함수로 만든다
+  const { subline, main } = playerShareLines(result.data);
   const stats = main?.stats ?? null;
-  // FA면 마지막 MLB 팀에 '전'(화면의 팀 알약과 같다, 문구 점검 11-13)
-  const team = player.returnedKo ? `${player.returnedKo} 복귀` : player.freeAgent && player.teamKo ? `전 ${player.teamKo}` : player.teamKo;
-  const subline = [team, player.positionKo, player.freeAgent && !player.returnedKo ? "FA" : null].filter(Boolean).join(" · ");
 
   return new ImageResponse(
     (
@@ -61,8 +59,10 @@ export async function GET(_request: Request, { params }: RouteContext<"/players/
             {subline && <div style={{ marginTop: 14, fontSize: 36, fontWeight: 700, color: OG_COLORS.muted }}>{subline}</div>}
             <div style={{ display: "flex", flex: 1, alignItems: "flex-end", justifyContent: "space-between" }}>
               {main && stats ? (
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  <div style={{ fontSize: 28, fontWeight: 700, color: OG_COLORS.muted }}>{main.label}</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  {/* 아래 숫자가 어느 단계·몇 경기 기록인지('트리플A 85경기'). 칸 이름표(28px 흐림)와 같은 모양이면 카톡 미리보기
+                      크기에서 '타율'과 같은 줄로 읽혀서, 크고 진하게 해 묶음 제목으로 둔다. 자리는 숫자 바로 위 그대로 */}
+                  <div style={{ fontSize: 36, fontWeight: 800, color: OG_COLORS.foreground }}>{main.label}</div>
                   <div style={{ display: "flex", gap: 56 }}>
                     {stats.map((s) => (
                       <div key={s.label} style={{ display: "flex", flexDirection: "column" }}>
@@ -81,18 +81,6 @@ export async function GET(_request: Request, { params }: RouteContext<"/players/
             </div>
           </div>
         </div>
-      </div>
-    ),
-    { ...OG_SIZE, fonts },
-  );
-}
-
-/** 없는 선수·잠깐 못 불러온 경우: 로고만 있는 기본 그림 */
-function fallback(fonts: Awaited<ReturnType<typeof ogFonts>>) {
-  return new ImageResponse(
-    (
-      <div style={{ display: "flex", width: "100%", height: "100%", alignItems: "center", justifyContent: "center", background: OG_COLORS.page, fontFamily: "Pretendard" }}>
-        <OgBrand scale={2} />
       </div>
     ),
     { ...OG_SIZE, fonts },

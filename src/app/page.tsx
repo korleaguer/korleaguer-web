@@ -1,5 +1,7 @@
+import type { Metadata } from "next";
 import { getHome } from "@/lib/api";
-import { formatDate, formatTime } from "@/lib/format";
+import { formatAsOf } from "@/lib/format";
+import { SITE_DESCRIPTION, SITE_NAME, shareMeta } from "@/lib/share";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import DataBanners from "@/components/DataBanners";
 import LoadingBlock from "@/components/LoadingBlock";
@@ -9,6 +11,9 @@ import SeasonFloors from "@/components/home/SeasonFloors";
 import SeasonLeaders from "@/components/home/SeasonLeaders";
 import SeasonStats from "@/components/home/SeasonStats";
 import PageSuspense from "@/components/PageSuspense";
+
+// 제목·설명은 layout 기본값. 공유 카드는 layout과 같고 주소(og:url)만 더한다(layout에 두지 않는 이유는 layout.tsx)
+export const metadata: Metadata = shareMeta(SITE_NAME, SITE_DESCRIPTION, "/");
 
 // 홈 화면. 데이터는 요청마다 api에서 새로 받는다.
 export default function HomePage() {
@@ -28,7 +33,9 @@ async function HomeContent() {
   if (!result.ok) return <ApiErrorNotice failure={result.failure} />;
 
   const home = result.data;
-  const asOf = `기준 ${formatDate(home.generatedAt)} ${formatTime(home.generatedAt)}`;
+  // 데이터 기준 시각은 화면 맨 위 묶음 제목 옆에 한 번만 둔다(시즌 중 층, 비시즌 MLB 도전 카드, 이슈 #277).
+  // 포스팅 선수가 없으면 MLB 도전 카드가 그려지지 않아(포스팅 없음·0명) 성적표가 맨 위다
+  const asOf = formatAsOf(home.generatedAt);
   return (
     <div className="space-y-7">
       <DataBanners dataMode={home.dataMode} statsAvailable={home.statsAvailable} />
@@ -36,8 +43,8 @@ async function HomeContent() {
       {home.offseason ? (
         <>
           {/* 포스팅 시즌: 이번 겨울 MLB에 도전하는 KBO 선수와 선배들의 계약 시기 */}
-          {home.posting && <MlbChallenge posting={home.posting} />}
-          <OffseasonPlayers offseason={home.offseason} />
+          {home.posting && <MlbChallenge posting={home.posting} asOf={asOf} />}
+          <OffseasonPlayers offseason={home.offseason} asOf={home.posting?.players.length ? undefined : asOf} />
         </>
       ) : (
         <>

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getHome, getPlayers } from "@/lib/api";
+import { formatAsOf } from "@/lib/format";
 import { readMyPlayers } from "@/lib/myPlayers";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import DataBanners from "@/components/DataBanners";
@@ -7,15 +8,17 @@ import LoadingBlock from "@/components/LoadingBlock";
 import PlayerCard from "@/components/players/PlayerCard";
 import StateNotice from "@/components/StateNotice";
 import PageSuspense from "@/components/PageSuspense";
-import { shareMeta } from "@/lib/share";
+import { WordGroup } from "@/components/Words";
+import { shareMeta, SITE_NAME } from "@/lib/share";
 
 // <title>: "선수 · KOR Leaguer" (뒷부분은 layout의 template이 붙인다)
+const TITLE = "선수";
 const DESCRIPTION = "해외파 한국 선수 모아보기. 선수별 시즌 기록을 한눈에 봐요.";
 
 export const metadata: Metadata = {
-  title: "선수",
+  title: TITLE,
   description: DESCRIPTION,
-  ...shareMeta("선수 · KOR Leaguer", DESCRIPTION),
+  ...shareMeta(`${TITLE} · ${SITE_NAME}`, DESCRIPTION, "/players"),
 };
 
 // 선수 목록. 데이터는 요청마다 api에서 새로 받는다.
@@ -46,7 +49,12 @@ async function PlayersContent() {
   return (
     <div className="space-y-4">
       <DataBanners dataMode={home.dataMode} statsAvailable={home.statsAvailable} />
-      <p className="px-1 text-meta text-muted">{`${players.length}명 · ${home.season} 시즌 기록`}</p>
+      {/* 시즌 기록이 언제 것인지: 기록이 홈 응답에서 오므로 그 기준 시각(홈과 같은 꼴, 이슈 #277).
+          기준 글은 한 덩어리로 줄을 넘기고 '·'는 '기준'에 붙여 줄 끝에 홀로 남지 않게 한다 */}
+      <p className="px-1 text-meta text-muted">
+        {`${players.length}명 · ${home.season} 시즌 기록 `}
+        <WordGroup text={`·\u00a0${formatAsOf(home.generatedAt)}`} />
+      </p>
       {players.length === 0 ? (
         <StateNotice emoji="⚾" title="아직 등록된 선수가 없어요" detail="선수가 등록되면 여기에 선수마다 카드가 생겨요." />
       ) : (
