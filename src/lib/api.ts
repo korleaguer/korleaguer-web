@@ -821,7 +821,7 @@ export interface PlayLine {
   daysSinceLast: number | null;
 }
 
-/** 한 줄 소식. HOT은 좋은 일(주황), COLD는 안 좋은 일(파랑) */
+/** 한 줄 소식. HOT은 좋은 일(주황), COLD는 안 좋은 일(본문 글자, 파랑은 쓰지 않는다) */
 export interface FormFact {
   tone: "HOT" | "COLD";
   text: string;

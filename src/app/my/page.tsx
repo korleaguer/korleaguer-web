@@ -7,6 +7,7 @@ import DataBanners from "@/components/DataBanners";
 import { MySkeleton } from "@/components/PageSkeleton";
 import FormCard from "@/components/my/FormCard";
 import MyHeader from "@/components/my/MyHeader";
+import { PhotoPriority } from "@/components/my/PhotoPriority";
 import PillNav from "@/components/PillNav";
 import StateNotice from "@/components/StateNotice";
 import PageSuspense from "@/components/PageSuspense";
@@ -95,9 +96,14 @@ async function MyContent({ searchParams }: Pick<PageProps<"/my">, "searchParams"
               {`최근 ${days}일에 안 뛴 선수는 마지막 경기까지 ${days}일을 보여 줘요.`}
             </p>
           )}
+          {/* 첫 줄(PC 세 칸) 카드만 무대 사진을 바로 받고, 나머지는 화면에 다가올 때 받는다(6명이면 화면 밖 사진까지 처음에 다 받았다).
+              휴대폰 한 칸이면 2·3번째도 바로 받지만(사진 한 장 약 17KB) 서버는 칸 수를 모른다. 바로 받을지는 카드 props가 아니라
+              감싸서 건넨다(카드는 "use cache"라 props가 캐시 열쇠다, PhotoPriority) */}
           <ul className="grid items-start gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {picked.map((entry) => (
-              <FormCard key={entry.player.id} entry={entry} days={my.days} statsAvailable={my.statsAvailable} />
+            {picked.map((entry, index) => (
+              <PhotoPriority key={entry.player.id} eager={index < 3}>
+                <FormCard entry={entry} days={my.days} statsAvailable={my.statsAvailable} />
+              </PhotoPriority>
             ))}
           </ul>
         </>
@@ -117,7 +123,8 @@ function PeriodTabs({ days }: { days: Period }) {
       label="기간"
       scroll={false}
       className="w-fit gap-0.5 rounded-full bg-surface p-1 shadow-[var(--shadow-card)]"
-      itemClass="px-3 py-1 text-label"
+      // 칸 높이 32px: 같은 모양이라던 경기 달력 달 알약·바로 가기 탭과 맞춘다(28px로 4px 낮았다)
+      itemClass="px-3 py-1.5 text-label"
       idleClass="text-muted hover:text-foreground"
       items={PERIODS.map((d) => ({
         href: d === 7 ? "/my" : `/my?days=${d}`,

@@ -23,11 +23,21 @@
   --avatar-bg: #e8ebef; /* 선수 사진 원 바탕(흰 유니폼이 묻히지 않을 만큼) */
   --muted: #5b6270;
 
-  /* 파랑: 브랜드·메이저·선택. 채운 파랑은 로고 상자·'승' 알약·경기별 막대, 진한 파랑 글자는 1위 숫자·현재 메뉴·링크·시즌보다 나빠짐 */
+  /* 파랑: 브랜드·메이저·선택·좋음. 채운 파랑은 로고 상자·'승' 알약·경기별 막대, 진한 파랑 글자는 1위 숫자·현재 메뉴·링크·고른 날짜.
+     '나빠짐'에는 쓰지 않는다(본문 글자, 11-17 사용자 결정) */
   --accent: #2563eb;
   --accent-fg: #ffffff; /* 채운 파랑 위 글자 */
   --accent-ink: #1d4ed8;
   --accent-soft: #e8efff; /* 현재 메뉴 알약 */
+
+  /*
+   * 내 선수 경기별 막대(이슈 #273). 안 고른 막대는 한 단계 옅은 단색(흰 카드 대비 3.31:1), 고른 막대는 파랑 + 본문색 테두리.
+   * 예전에는 파랑을 35%(다크 55%)로 흐려 흰 카드 대비 1.67:1이었고, 다크에서는 고른 막대와 거의 같았다(WCAG 1.4.11)
+   */
+  --game-bar: #5c8af0;
+  --game-bar-on: var(--accent);
+  /* 내 선수 출전 줄의 '선발·교체를 모르는 출전' 칸. 밝은 모드는 안 고른 막대 색이고, 다크 모드는 아래에서 따로 정한다 */
+  --strip-played: var(--game-bar);
 
   /* 패·무 알약 */
   --neutral-pill: #e5e7eb;
@@ -88,6 +98,12 @@
     --accent-ink: #8db1ff;
     --accent-soft: #1d2a47;
 
+    /* 어두운 카드에서는 파랑 그대로가 안 고른 막대(3.27:1), 고른 막대는 밝은 파랑 */
+    --game-bar: var(--accent);
+    --game-bar-on: var(--accent-ink);
+    /* 출전 줄 '출전' 칸: 안 고른 막대 색(accent)이면 선발 칸(accent)과 같아져서 밝은 파랑 */
+    --strip-played: var(--game-bar-on);
+
     --neutral-pill: #2e3440;
     --neutral-pill-fg: #d3d8e0;
 
@@ -143,6 +159,9 @@
   --color-accent-fg: var(--accent-fg);
   --color-accent-ink: var(--accent-ink);
   --color-accent-soft: var(--accent-soft);
+  --color-game-bar: var(--game-bar);
+  --color-game-bar-on: var(--game-bar-on);
+  --color-strip-played: var(--strip-played);
   --color-neutral-pill: var(--neutral-pill);
   --color-neutral-pill-fg: var(--neutral-pill-fg);
   --color-notice-bg: var(--notice-bg);
@@ -225,7 +244,7 @@
   --text-article-title--letter-spacing: -0.02em;
   --text-article-title--font-weight: 700;
 
-  /* 카드 숫자 칸(선수 목록·내 선수·성적표·선수 페이지 시즌 주요 기록 넷), wRC+, MLB 도전 목록 D-day */
+  /* 카드 숫자 칸(선수 목록·성적표·선수 페이지 시즌 주요 기록 넷), wRC+, MLB 도전 목록 D-day */
   --text-stat: 1.25rem;
   --text-stat--line-height: 1.25;
   --text-stat--letter-spacing: -0.02em;
@@ -237,7 +256,7 @@
   --text-score--letter-spacing: 0.02em;
   --text-score--font-weight: 800;
 
-  /* 카드·목록 선수 이름, 판정 한 줄 제목, 상태 안내 제목, 앱 머리글 제목, 워드마크, 경기 기록 날짜 */
+  /* 카드·목록 선수 이름, 판정 한 줄 제목, 상태 안내 제목, 앱 머리글 제목, 워드마크, 경기 기록 날짜, 내 선수 카드 작은 숫자 셋 */
   --text-heading: 1.0625rem;
   --text-heading--line-height: 1.3;
   --text-heading--letter-spacing: -0.02em;

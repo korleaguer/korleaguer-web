@@ -1,11 +1,12 @@
 "use client"; // '선수 고르기'를 열고 닫는 상태가 있어서 클라이언트 컴포넌트다.
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { PlayerSummary } from "@/lib/api";
 import type { ReactNode } from "react";
 import PlayerAvatar from "@/components/PlayerAvatar";
 import OrderList from "./OrderList";
 import StarIcon from "./StarIcon";
+import { useFocusAfterRemove } from "./useFocusAfterRemove";
 import { useMyPlayerToggle } from "./useMyPlayerToggle";
 
 interface Props {
@@ -38,6 +39,10 @@ export default function MyHeader({ subtitle, players, selectedIds }: Props) {
       setOpened(true);
     }
   }
+  // 카드의 별로 선수를 빼서 카드와 함께 포커스가 사라지면 다음 카드 이름(아무도 안 남으면 이 제목)으로 옮긴다.
+  // 늘 화면에 있고 고른 선수 목록을 받는 곳이 여기라서 카드 목록 대신 여기서 본다(0명이면 카드 목록 자체가 없어진다)
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  useFocusAfterRemove(selectedIds, titleRef);
   const selected = new Set(selectedIds);
   // 고른 순서대로 선수 정보. 화면 순서 목록에 쓴다
   const ordered = selectedIds
@@ -50,7 +55,10 @@ export default function MyHeader({ subtitle, players, selectedIds }: Props) {
           (버튼 옆에서 '내 선수'가 한 글자씩 세 줄로 갈렸다, 이슈 #264) */}
       <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-2 px-1">
         <div className="min-w-0 flex-1 basis-[5rem]">
-          <h1 className="text-display">내 선수</h1>
+          {/* tabIndex -1: 마지막 카드를 별로 빼면 포커스를 받는다(Tab 순서에는 넣지 않는다). 포커스 테두리가 글자에 붙게 w-fit */}
+          <h1 ref={titleRef} tabIndex={-1} className="w-fit text-display">
+            내 선수
+          </h1>
           <p className="mt-0.5 text-meta text-muted">{subtitle}</p>
         </div>
         <button
@@ -63,7 +71,8 @@ export default function MyHeader({ subtitle, players, selectedIds }: Props) {
           }}
           className="inline-flex shrink-0 items-center gap-1 rounded-full bg-surface px-3.5 py-1.5 text-label shadow-[var(--shadow-card)] transition duration-150 hover:shadow-[var(--shadow-card-hover)] press tap-target"
         >
-          선수 고르기
+          {/* 2명 이상이면 화면 순서도 이 안에서 바꾼다고 적는다(순서 목록은 2명부터 생기는데 열어 봐야 알 수 있었다, 11-17 점검) */}
+          {ordered.length >= 2 ? "선수 고르기 · 순서" : "선수 고르기"}
           <svg
             aria-hidden
             viewBox="0 0 16 16"
@@ -88,9 +97,13 @@ export default function MyHeader({ subtitle, players, selectedIds }: Props) {
             </div>
           )}
           <h2 className="sr-only">전체 선수</h2>
-          {/* 좁은 카드에서 두 줄로 감기므로 줄 간격 1.5(바닥글과 같은 이유) */}
+          {/* 쿠키라 브라우저마다, 앱이면 앱 안에만 따로 저장된다. '이 기기'라고 쓰면 같은 휴대폰의 다른 브라우저·앱에도 있는 줄 알았다
+              (11-17 점검). 앱인지는 html[data-app]로 CSS가 가른다(서버가 그린 글과 어긋나지 않게 둘 다 그려 두고 하나만 보인다).
+              좁은 카드에서 두 줄로 감기므로 줄 간격 1.5(바닥글과 같은 이유) */}
           <p className="px-2 pb-1.5 pt-1 text-caption leading-normal text-muted">
-            누르면 내 선수에 넣거나 뺄 수 있어요. 가입 없이 이 기기에만 저장돼요.
+            누르면 내 선수에 넣거나 뺄 수 있어요. 가입 없이{" "}
+            <span className="in-app:hidden">이 브라우저에만</span>
+            <span className="hidden in-app:inline">이 앱에만</span> 저장돼요.
           </p>
           {players.length === 0 ? (
             <p className="px-2 py-3 text-body text-muted">아직 등록된 선수가 없어요.</p>
@@ -124,10 +137,14 @@ function PickerRow({ player, initialOn }: { player: PlayerSummary; initialOn: bo
       >
         <PlayerAvatar size={28} nameKo={player.nameKo} photoUrl={player.photoUrl} teamAbbr={player.teamAbbr} />
         <span className="min-w-0 flex-1">
-          <span className="block text-summary">{player.nameKo}</span>
+          {/* 별은 이름 바로 뒤(뉴스 선수 고르기와 같은 '사진 이름 ★', 사용자 11-15). 줄 끝에 두면 PC 세 칸에서
+              옆 칸 선수 이름에 더 가까워 어느 선수 별인지 헷갈렸다(11-17 점검) */}
+          <span className="flex items-center gap-1 text-summary">
+            {player.nameKo}
+            <StarIcon filled={on} className={`size-4 shrink-0 ${on ? "text-accent-ink" : "text-muted"}`} />
+          </span>
           {meta && <span className="block truncate text-meta text-muted">{meta}</span>}
         </span>
-        <StarIcon filled={on} className={`size-5 shrink-0 ${on ? "text-accent-ink" : "text-muted"}`} />
         <span className="sr-only">내 선수</span>
       </button>
     </li>

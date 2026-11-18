@@ -6,6 +6,10 @@ export interface BarSlot {
   date: string;
   /** "21" */
   day: string;
+  /** 달(1~12) */
+  month: number;
+  /** 앞 칸과 달이 다르면 true(첫 칸은 false). 막대에 달 바뀜 선과 '10월'을 그린다 */
+  monthStart: boolean;
   /** 그 날짜의 몇 번째 칸인지(더블헤더면 0, 1) */
   part: number;
   /** 경기가 없는 날이면 null */
@@ -29,14 +33,19 @@ export function barSlots(fromKst: string, toKst: string, games: readonly GameLin
   }
 
   const slots: BarSlot[] = [];
+  let prevMonth: number | null = null;
   // 날짜가 이상하게 오면 멈추도록 최대 60일만 센다.
   for (let date = fromKst, n = 0; date <= toKst && n < 60; date = addDays(date, 1), n++) {
     const day = String(Number(date.slice(8, 10)));
+    const month = Number(date.slice(5, 7));
+    const monthStart = prevMonth != null && month !== prevMonth;
+    prevMonth = month;
     const dayGames = [...(byDate.get(date) ?? [])].sort((a, b) => a.startTimeKst.localeCompare(b.startTimeKst));
     if (dayGames.length === 0) {
-      slots.push({ date, day, part: 0, game: null });
+      slots.push({ date, day, month, monthStart, part: 0, game: null });
     } else {
-      dayGames.forEach((game, part) => slots.push({ date, day, part, game }));
+      // 더블헤더 두 번째 칸은 같은 날이라 달 바뀜이 아니다
+      dayGames.forEach((game, part) => slots.push({ date, day, month, monthStart: monthStart && part === 0, part, game }));
     }
   }
   return slots;
