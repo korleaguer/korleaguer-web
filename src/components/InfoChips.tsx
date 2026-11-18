@@ -1,5 +1,5 @@
 import type { PlayerSummary } from "@/lib/api";
-import { formatAge } from "@/lib/format";
+import { formatAge, teamPrefix } from "@/lib/format";
 import LevelChip from "./LevelChip";
 import TeamName from "./TeamName";
 
@@ -9,6 +9,7 @@ const CHIP =
 /**
  * 선수 기본 정보 알약: 메이저·마이너 · 팀(로고) · 포지션 · 나이. 값이 없는 칸은 뺀다. 하나도 없으면 그리지 않는다.
  * 등번호는 덜 중요한 정보라 알약 대신 영문 이름 옆(PlayerSubline)에 둔다.
+ * 선수 목록 카드에만 쓴다(카드 전체가 링크라 알약도 눌린다). 선수 머리 카드는 못 누르는 정보라 알약 없이 글자 한 줄이다(PlayerHeader).
  */
 export default function InfoChips({ player, className = "" }: { player: PlayerSummary; className?: string }) {
   const age = formatAge(player.age);
@@ -20,11 +21,7 @@ export default function InfoChips({ player, className = "" }: { player: PlayerSu
       {player.teamKo && (
         <li className={CHIP}>
           {/* FA·국내 복귀 선수의 팀 칸은 마지막 MLB 팀이라 '전'을 붙인다('FA' 옆 '애틀랜타'는 아직 소속처럼 읽혔다, 점검 11-13) */}
-          <TeamName
-            teamKo={player.teamKo}
-            teamAbbr={player.teamAbbr}
-            prefix={player.freeAgent || player.returnedKo ? "전" : undefined}
-          />
+          <TeamName teamKo={player.teamKo} teamAbbr={player.teamAbbr} prefix={teamPrefix(player)} />
         </li>
       )}
       {player.positionKo && <li className={CHIP}>{player.positionKo}</li>}

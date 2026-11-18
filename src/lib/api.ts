@@ -683,7 +683,10 @@ export interface GamePlay {
   resultKo: string;
   /** MLB 결과 종류(home_run, single, strikeout, field_out …) */
   eventType: string;
-  /** 타점(투수면 그 타석에 준 점수) */
+  /**
+   * 그 타석 타자의 타점(MLB play-by-play rbi). 투수 화면에서도 같은 값이다. 투수가 책임지는 실점과는 다르다:
+   * 앞 투수가 내보낸 주자의 득점(승계 주자)·실책·폭투 점수는 타점과 어긋난다(공식 야구 규칙 9.16)
+   */
   rbi: number;
   /** 상대(타자면 투수, 투수면 타자) 영어 이름 */
   opponentName: string | null;
@@ -791,7 +794,7 @@ export type CardStatusKind =
 
 export interface CardStatus {
   kind: CardStatusKind;
-  /** 그 상태가 시작된 미국 날짜("2026-09-20"). 모르면 null */
+  /** 그 상태가 시작된 미국 날짜("2026-09-20", 이동 기록 날짜라 시각이 없다). 모르면 null */
   since: string | null;
   /** since부터 며칠째인지. 모르면 null */
   days: number | null;
@@ -799,7 +802,10 @@ export interface CardStatus {
   level: string | null;
   /** 마이너 팀 이름(영어) */
   teamName: string | null;
-  /** FA·시즌 끝일 때 마지막 경기(미국 날짜)와 단계("MLB" 또는 마이너 약어) */
+  /**
+   * FA·시즌 끝·국내 복귀(KBO)일 때 마지막 경기의 날짜와 단계("MLB" 또는 마이너 약어). 날짜는 그 경기 시작 시각의 한국 날짜다
+   * (korleaguer-server #185부터, 선수 화면 경기 달력이 그 경기를 놓는 날과 같다. 예전에는 미국 날짜였다). since는 미국 날짜 그대로다
+   */
   lastGameDate: string | null;
   lastGameLevel: string | null;
 }
@@ -818,7 +824,7 @@ export interface PlayLine {
   daysSinceLast: number | null;
 }
 
-/** 한 줄 소식. HOT은 좋은 일(주황), COLD는 안 좋은 일(파랑) */
+/** 한 줄 소식. HOT은 좋은 일(주황), COLD는 안 좋은 일(본문 글자, 파랑은 쓰지 않는다) */
 export interface FormFact {
   tone: "HOT" | "COLD";
   text: string;
@@ -1556,9 +1562,37 @@ const getMyPlayersCached = cache(async (ids: string, days: number) => {
   return myPlayersFromApi(ids, days);
 });
 
-// cache는 인자를 값이 아니라 참조로 비교하므로, 배열을 문자열로 바꿔 넘긴다.
-export function getMyPlayers(ids: readonly number[], days: number) {
-  return getMyPlayersCached(ids.join(","), days);
+/** /api/my가 한 번에 받는 선수 수(korleaguer-server MyPlayersService.MAX_IDS, 넘으면 400) */
+const MY_IDS_PER_REQUEST = 20;
+
+/**
+ * GET /api/my. api가 한 번에 20명까지만 받아서, 넘으면 20명씩 나눠 함께 부르고 선수를 준 순서대로 이어 붙인다(전수조사 L426).
+ * 예전에는 홈 층이 명단을 20명에서 잘라 21번째부터 말없이 빠지고, 비시즌 성적표는 400으로 통째 오류였다.
+ * 하나라도 실패하면 실패로 돌려준다(몇 명만 빠진 화면은 빠진 줄 알 수 없고, 층의 'n명'도 말없이 틀린다. 층은 받지 못하면
+ * 예전 '최근 경기'를 보인다). 20명 이하면 예전과 같은 요청 한 번이라
+ * 캐시 열쇠도 같다('내 선수'는 쿠키가 20명까지라 늘 한 번). cache는 인자를 값이 아니라 참조로 비교하므로, 배열을 문자열로 바꿔 넘긴다.
+ */
+export async function getMyPlayers(ids: readonly number[], days: number): Promise<ApiResult<MyPlayersResponse>> {
+  // 묶음끼리는 api가 겹친 번호를 걸러 주지 못하니 먼저 거른다(명단·쿠키는 겹치지 않아 보통은 그대로다)
+  const unique = [...new Set(ids)];
+  if (unique.length <= MY_IDS_PER_REQUEST) return getMyPlayersCached(unique.join(","), days);
+  const chunks: number[][] = [];
+  for (let i = 0; i < unique.length; i += MY_IDS_PER_REQUEST) chunks.push(unique.slice(i, i + MY_IDS_PER_REQUEST));
+  const results = await Promise.all(chunks.map((chunk) => getMyPlayersCached(chunk.join(","), days)));
+  const pages: MyPlayersResponse[] = [];
+  for (const result of results) {
+    if (!result.ok) return result;
+    pages.push(result.data);
+  }
+  // 머리 정보(기준 시각·기간·데이터 상태)는 가장 늦게 만든 묶음 것을 통째로 쓴다(리뷰 지적). 묶음마다 따로 잠깐 재사용(use cache)해서
+  // 드물게 다른 때의 응답이 섞이고(한 묶음만 캐시에서 빠졌을 때 등), 섞어 쓰면 기준 시각과 기간이 어긋난다. 가장 늦은 것이 지금 날짜를
+  // 맞게 말한다: 층의 '오늘'·'어제'가 이 기준 시각을 따라, 이른 것을 쓰면 새로 받은 묶음의 오늘 경기에 '11월 19일'이 붙는다.
+  // 기간을 당긴 선수가 있는지는 어느 묶음이든 하나라도(응답의 기간은 당기지 않은 오늘 기준이고, 당긴 기간은 선수마다 있다)
+  const newest = pages.reduce((a, b) => (Date.parse(b.generatedAt) > Date.parse(a.generatedAt) ? b : a));
+  return {
+    ok: true,
+    data: { ...newest, isFallback: pages.some((p) => p.isFallback), players: pages.flatMap((p) => p.players) },
+  };
 }
 
 /** GET /api/records: 한국인 메이저리거 역대 기록(기록 탭). 옛 api면 notFound */

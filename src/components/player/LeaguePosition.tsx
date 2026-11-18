@@ -2,12 +2,10 @@ import type { PlayerSaber } from "@/lib/api";
 import Section from "@/components/Section";
 import PositionBar from "@/components/player/PositionBar";
 import { formatInningsOuts } from "@/lib/format";
+// 이보다 적으면 '참고용'(타자 100타석, 투수 30이닝 = 90아웃). 시즌 성적 한 줄·홈 성적표 작은 판과 같은 값을 한 곳에서 가져온다
+import { STEADY_OUTS, STEADY_PA } from "@/lib/seasonStats";
 import { cacheLife } from "next/cache";
 import { Fragment } from "react";
-
-/** 이보다 적으면 '참고용'(서버가 견주는 선수 기준과 같다: 타자 100타석, 투수 30이닝 = 90아웃). 홈 성적표 작은 판도 같은 기준이다 */
-export const STEADY_PA = 100;
-export const STEADY_OUTS = 90;
 
 export interface Row {
   label: string;

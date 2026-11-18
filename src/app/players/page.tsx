@@ -3,7 +3,7 @@ import { getHome, getPlayers } from "@/lib/api";
 import { formatAsOf } from "@/lib/format";
 import { readMyPlayers } from "@/lib/myPlayers";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
-import DataBanners from "@/components/DataBanners";
+import DataBanners, { StatsFailedBanner } from "@/components/DataBanners";
 import { PlayersSkeleton } from "@/components/PageSkeleton";
 import PlayerCard from "@/components/players/PlayerCard";
 import StateNotice from "@/components/StateNotice";
@@ -37,24 +37,35 @@ async function PlayersContent() {
   // 목록은 /api/players, 시즌 성적은 /api/home에서 받아 playerId로 합친다.
   const [playersResult, homeResult, myIds] = await Promise.all([getPlayers(), getHome(), readMyPlayers()]);
   if (!playersResult.ok) return <ApiErrorNotice failure={playersResult.failure} />;
-  if (!homeResult.ok) return <ApiErrorNotice failure={homeResult.failure} />;
-
   const players = playersResult.data;
-  const home = homeResult.data;
-  const hitters = new Map(home.hitters.map((h) => [h.playerId, h]));
-  const pitchers = new Map(home.pitchers.map((p) => [p.playerId, p]));
-  const minorHitters = new Map(home.minorHitters.map((h) => [h.playerId, h]));
-  const minorPitchers = new Map(home.minorPitchers.map((p) => [p.playerId, p]));
+  // 시즌 기록(홈 api)만 못 받았으면 오류 화면으로 카드까지 버리지 않는다. 받은 선수 카드는 그리고(기록 칸 없이) 맨 위 띠로
+  // 알린다(11-17 전수조사, 단계적 저하). 선수가 없으면 보여 줄 것이 없어 예전처럼 오류 안내다.
+  // 카드 목록은 성공·실패가 같은 경로로 그린다(맨 위 띠와 개수 줄만 다르다). 따로 두면 칸·카드 속성을 고칠 때 한쪽만 고쳐진다
+  if (!homeResult.ok && players.length === 0) return <ApiErrorNotice failure={homeResult.failure} />;
+  const home = homeResult.ok ? homeResult.data : null;
+  const hitters = new Map(home?.hitters.map((h) => [h.playerId, h]));
+  const pitchers = new Map(home?.pitchers.map((p) => [p.playerId, p]));
+  const minorHitters = new Map(home?.minorHitters.map((h) => [h.playerId, h]));
+  const minorPitchers = new Map(home?.minorPitchers.map((p) => [p.playerId, p]));
 
   return (
     <div className="space-y-4">
-      <DataBanners dataMode={home.dataMode} statsAvailable={home.statsAvailable} />
-      {/* 시즌 기록이 언제 것인지: 기록이 홈 응답에서 오므로 그 기준 시각(홈과 같은 꼴, 이슈 #277).
-          기준 글은 한 덩어리로 줄을 넘기고 '·'는 '기준'에 붙여 줄 끝에 홀로 남지 않게 한다 */}
-      <p className="px-1 text-meta text-muted">
-        {`${players.length}명 · ${home.season} 시즌 기록 `}
-        <WordGroup text={`·\u00a0${formatAsOf(home.generatedAt)}`} />
-      </p>
+      {home ? (
+        <>
+          <DataBanners dataMode={home.dataMode} statsAvailable={home.statsAvailable} />
+          {/* 시즌 기록이 언제 것인지: 기록이 홈 응답에서 오므로 그 기준 시각(홈과 같은 꼴, 이슈 #277).
+              기준 글은 한 덩어리로 줄을 넘기고 '·'는 '기준'에 붙여 줄 끝에 홀로 남지 않게 한다 */}
+          <p className="px-1 text-meta text-muted">
+            {`${players.length}명 · ${home.season} 시즌 기록 `}
+            <WordGroup text={`·\u00a0${formatAsOf(home.generatedAt)}`} />
+          </p>
+        </>
+      ) : (
+        <>
+          <StatsFailedBanner />
+          <p className="px-1 text-meta text-muted">{`${players.length}명`}</p>
+        </>
+      )}
       {players.length === 0 ? (
         <StateNotice emoji="⚾" title="아직 등록된 선수가 없어요" detail="선수가 등록되면 여기에 선수마다 카드가 생겨요." />
       ) : (
@@ -70,6 +81,7 @@ async function PlayersContent() {
               pitching={pitchers.get(player.id) ?? null}
               minorHitting={minorHitters.get(player.id) ?? null}
               minorPitching={minorPitchers.get(player.id) ?? null}
+              statsMissing={!home}
               isMine={myIds.includes(player.id)}
             />
           ))}

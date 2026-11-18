@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import type { NewsListItem } from "@/lib/api";
 import { loadMoreNews } from "@/app/news/actions";
-import { formatDate, kstDayKey } from "@/lib/format";
+import { formatDate, kstDayKey, kstPrevDayKey } from "@/lib/format";
 import { isNewArticle, type SeenMap } from "@/lib/newsSeen";
 import LoadingDots from "@/components/LoadingDots";
 import NewsTitleList from "@/components/news/NewsTitleList";
@@ -147,7 +147,7 @@ interface Day<T> {
 /** 기사를 한국 날짜별로 묶는다(서버가 준 늦은 순 그대로, 같은 날은 한 묶음) */
 function byDay<T extends { publishedAt: string }>(items: T[]): Day<T>[] {
   const today = kstDayKey(new Date());
-  const yesterday = today ? kstDayKey(new Date(Date.parse(`${today}T12:00:00+09:00`) - 86_400_000)) : null;
+  const yesterday = today ? kstPrevDayKey(today) : null;
   const days: Day<T>[] = [];
   for (const item of items) {
     const date = kstDayKey(item.publishedAt) ?? "unknown";

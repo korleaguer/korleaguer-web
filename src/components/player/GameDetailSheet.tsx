@@ -1,17 +1,18 @@
 "use client"; // 창을 열고 닫고, 고른 경기 상세를 브라우저에서 받아 와야 해서 클라이언트 컴포넌트다.
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type RefObject } from "react";
+import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 import type { GameDetail, GameLine, GamePlay, Role } from "@/lib/api";
 import { lineOf, type CalendarDay, type LogGame } from "@/lib/gameLog";
 import { formatDate, formatLineup, formatSummary, formatTime } from "@/lib/format";
 import { haptic } from "@/lib/app";
 import { toast } from "@/lib/toast";
-import { loadClip, loadGameDetail } from "@/app/players/[id]/actions";
+import { useSheetDrag } from "@/lib/useSheetDrag";
 import Highlights from "@/components/Highlights";
 import LoadingDots from "@/components/LoadingDots";
 import ResultPill from "@/components/ResultPill";
 import ScoreText from "@/components/ScoreText";
+import StepButton from "@/components/StepButton";
 import TeamName from "@/components/TeamName";
 import type { Clip } from "./ClipPlayer";
 import Words from "@/components/Words";
@@ -40,8 +41,23 @@ function remember(key: string, detail: GameDetail) {
 
 type Load = { state: "loading" } | { state: "ok"; detail: GameDetail } | { state: "error" };
 
-/** 아래로 이만큼 끌면 닫는다(px) */
-const SWIPE_CLOSE = 96;
+/**
+ * 경기 상세를 GET 주소(src/app/players/[id]/games/[gamePk]/route.ts)로 받는다. 예전 서버 함수(Server Action)는 차례로 하나씩
+ * 보내져서 ‹ ›로 빠르게 넘기면 줄을 섰다(11-17 전수조사). GET은 넘길 때 앞 요청을 취소하고(signal), 끝난 경기(final)는
+ * 브라우저가 10분 둔다. 못 받으면 null
+ */
+async function fetchDetail(playerId: number, gamePk: number, final: boolean, signal: AbortSignal): Promise<GameDetail | null> {
+  const res = await fetch(`/players/${playerId}/games/${gamePk}${final ? "?final=1" : ""}`, { signal });
+  return res.ok ? ((await res.json()) as GameDetail) : null;
+}
+
+/** 타석 ▶: 그 공 영상 주소(GET, 바뀌지 않아 브라우저가 하루 둔다). 없으면 null */
+async function fetchClip(playerId: number, gamePk: number, playId: string): Promise<string | null> {
+  const res = await fetch(`/players/${playerId}/games/${gamePk}/clips/${playId}`);
+  if (!res.ok) return null;
+  const data = (await res.json()) as { mp4Url?: string | null };
+  return data.mp4Url ?? null;
+}
 
 /** 그 경기의 MLB 번호 */
 export function gamePkOf(entry: LogGame): number {
@@ -87,31 +103,9 @@ export default function GameDetailSheet({
     };
   }, []);
 
-  // 아래로 끌어 닫기(휴대폰 손잡이·머리 줄)
-  const drag = useRef<{ y: number; dy: number } | null>(null);
-  const onDragStart = (e: ReactPointerEvent<HTMLDivElement>) => {
-    if (e.pointerType === "mouse" || (e.target as HTMLElement).closest("button")) return;
-    drag.current = { y: e.clientY, dy: 0 };
-    e.currentTarget.setPointerCapture(e.pointerId);
-  };
-  const onDragMove = (e: ReactPointerEvent<HTMLDivElement>) => {
-    const d = drag.current;
-    const panel = panelRef.current;
-    if (!d || !panel) return;
-    d.dy = Math.max(0, e.clientY - d.y);
-    panel.style.transform = `translateY(${d.dy}px)`;
-  };
-  const onDragEnd = () => {
-    const d = drag.current;
-    const panel = panelRef.current;
-    drag.current = null;
-    if (!d || !panel) return;
-    if (d.dy > SWIPE_CLOSE) {
-      onClose();
-    } else {
-      panel.style.transform = "";
-    }
-  };
+  // 아래로 끌어 닫기(휴대폰 손잡이·머리 줄). 놓으면 미끄러져 닫히거나 제자리로 돌아온다(거론 구단 창과 같은 훅).
+  // 다른 닫기도 훅의 close로 부른다: 미끄러지는 중에 닫으면 훅이 타이머를 치워 뒤로 가기가 한 번만 일어난다
+  const { onDragStart, onDragMove, onDragEnd, close } = useSheetDrag(panelRef, onClose);
 
   const titleId = `game-sheet-title-${day.key}`;
   return (
@@ -121,11 +115,11 @@ export default function GameDetailSheet({
       // Esc: 브라우저가 닫기 전에 부모가 닫게 한다(주소의 ?game도 같이 정리)
       onCancel={(e) => {
         e.preventDefault();
-        onClose();
+        close();
       }}
       // 창 바깥(어두운 곳)을 누르면 닫는다
       onClick={(e) => {
-        if (e.target === dialogRef.current) onClose();
+        if (e.target === dialogRef.current) close();
       }}
       className="fixed inset-0 m-0 h-full max-h-none w-full max-w-none border-0 bg-black/45 p-0 text-foreground open:flex open:items-end open:justify-center sm:open:items-center"
     >
@@ -153,7 +147,7 @@ export default function GameDetailSheet({
             <button
               type="button"
               aria-label="닫기"
-              onClick={onClose}
+              onClick={close}
               className="press grid size-[44px] shrink-0 place-items-center rounded-full text-muted hover:bg-surface-2"
             >
               <svg aria-hidden viewBox="0 0 16 16" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
@@ -170,30 +164,23 @@ export default function GameDetailSheet({
 }
 
 /**
- * 앞뒤 경기 버튼. 첫·끝 경기에서는 끄되 disabled 대신 aria-disabled로 둔다(내 선수 순서 버튼과 같다, 이슈 #256):
- * 누른 버튼이 disabled가 되면 포커스가 사라지고, 반대 버튼으로 옮기면 Enter를 누르고 있을 때 앞뒤로 오락가락한다.
- * 꺼진 버튼은 아이콘만 흐리게 해서 포커스 테두리는 또렷하게 남긴다
+ * 앞뒤 경기 버튼: 내 선수 카드와 같은 화살표 버튼(StepButton, 첫·끝 경기면 꺼진다) + 누르면 앱 안이면 고르기 틱.
+ * 흰 창 위라 마우스를 올리면 surface-2 원
  */
 function NavButton({ label, onClick, dir }: { label: string; onClick: (() => void) | null; dir: "prev" | "next" }) {
-  const off = !onClick;
   return (
-    <button
-      type="button"
-      aria-label={label}
-      aria-disabled={off || undefined}
-      onClick={() => {
-        if (!onClick) return;
-        haptic("select");
-        onClick();
-      }}
-      className={`grid size-[44px] shrink-0 place-items-center rounded-full text-muted ${
-        off ? "cursor-default [&>svg]:opacity-30" : "press hover:bg-surface-2"
-      }`}
-    >
-      <svg aria-hidden viewBox="0 0 16 16" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-        <path d={dir === "prev" ? "M10 3 5 8l5 5" : "m6 3 5 5-5 5"} />
-      </svg>
-    </button>
+    <StepButton
+      dir={dir}
+      label={label}
+      onClick={
+        onClick &&
+        (() => {
+          haptic("select");
+          onClick();
+        })
+      }
+      hoverClass="hover:bg-surface-2"
+    />
   );
 }
 
@@ -219,7 +206,8 @@ function SheetBody({ playerId, role, day }: { playerId: number; role: Role; day:
             <button
               key={`${gamePkOf(day.entries[i])}`}
               type="button"
-              aria-pressed={i === index}
+              // 하나만 고르는 탭이라 aria-pressed(켬·끔) 대신 '지금 보는 경기'로 알린다(11-17 전수조사)
+              aria-current={i === index ? "true" : undefined}
               onClick={() => setIndex(i)}
               className={`tap-target rounded-full px-3 py-1.5 text-label ${i === index ? "bg-accent-soft text-accent-ink" : "text-muted hover:bg-surface-2"}`}
             >
@@ -288,21 +276,23 @@ function EntryDetail({
 
   useEffect(() => {
     if (notPlayedYet || (load.state === "ok" && attempt === 0)) return;
-    let alive = true;
-    loadGameDetail(playerId, gamePk)
-      .then((result) => {
-        if (!alive) return;
-        if (result.ok && result.detail.available) {
-          if (line.gameStatus === "final") remember(cacheKey, result.detail);
-          setLoad({ state: "ok", detail: result.detail });
+    // 다른 날짜·경기로 넘기면(이 부품이 지워지며) 받던 요청을 취소한다. 빠르게 넘겨도 마지막 경기만 기다린다
+    const controller = new AbortController();
+    const final = line.gameStatus === "final";
+    fetchDetail(playerId, gamePk, final, controller.signal)
+      .then((detail) => {
+        if (controller.signal.aborted) return;
+        if (detail?.available) {
+          if (final) remember(cacheKey, detail);
+          setLoad({ state: "ok", detail });
         } else {
           setLoad({ state: "error" });
         }
       })
-      .catch(() => alive && setLoad({ state: "error" }));
-    return () => {
-      alive = false;
-    };
+      .catch(() => {
+        if (!controller.signal.aborted) setLoad({ state: "error" });
+      });
+    return () => controller.abort();
     // load는 일부러 빼고, 처음과 '다시 시도'(attempt)에만 받는다
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playerId, gamePk, attempt, notPlayedYet, cacheKey, line.gameStatus]);
@@ -322,7 +312,11 @@ function EntryDetail({
   if (load.state === "error") {
     return (
       <div className="px-4 pt-5 pb-2">
-        <p className="text-body text-muted">기록을 불러오지 못했어요. 잠시 뒤에 다시 해 주세요.</p>
+        {/* 화면 낭독기가 바로 읽게 alert(버튼은 밖에 둔다). '다시 시도'가 또 실패하면 받는 동안 뼈대로 바뀌었다가 이 문구가
+            새로 그려져 다시 읽힌다(11-17 전수조사) */}
+        <p role="alert" className="text-body text-muted">
+          기록을 불러오지 못했어요. 잠시 뒤에 다시 해 주세요.
+        </p>
         <button
           type="button"
           onClick={() => {
@@ -383,6 +377,21 @@ function DetailContent({
       : null,
   );
   const [loadingPlay, setLoadingPlay] = useState<string | null>(null);
+  /**
+   * 타석 ▶로 영상을 바꾸면 창은 맨 위 영상으로 올라가는데 포커스는 화면 밖 ▶에 남아, 키보드·낭독기 사용자는 영상을 찾아 거슬러
+   * 올라가야 했다(11-17 전수조사). 그래서 ▶로 바꾼 영상이 그려지면 영상 묶음(figure)으로 포커스를 옮긴다. 하이라이트 고르기는
+   * 포커스가 바로 아래 목록에 있어 옮기지 않는다
+   */
+  const figureRef = useRef<HTMLElement>(null);
+  const focusClipRef = useRef(false);
+  /** 창 안 낭독 한 줄: 받는 동안 '영상을 불러오는 중', 없으면 그 말. 창 밖 알림 띠는 모달이 열린 동안 낭독기가 읽지 못할 수 있다 */
+  const [clipStatus, setClipStatus] = useState("");
+
+  useEffect(() => {
+    if (!focusClipRef.current) return;
+    focusClipRef.current = false;
+    figureRef.current?.focus({ preventScroll: true });
+  }, [clip]);
 
   const showHighlight = (i: number) => {
     const h = detail.highlights[i];
@@ -395,13 +404,18 @@ function DetailContent({
       if (!play.playId || loadingPlay) return;
       haptic("select");
       setLoadingPlay(play.playId);
-      const result = await loadClip(playerId, gamePk, play.playId).catch(() => ({ ok: false as const }));
+      setClipStatus("영상을 불러오는 중");
+      const mp4Url = await fetchClip(playerId, gamePk, play.playId).catch(() => null);
       setLoadingPlay(null);
-      if (!result.ok) {
+      if (!mp4Url) {
+        setClipStatus("이 장면 영상은 아직 없어요.");
         toast("이 장면 영상은 아직 없어요.");
         return;
       }
-      setClip({ key: `p-${play.playId}`, hlsUrl: null, mp4Url: result.mp4Url, posterUrl: null, autoPlay: true, label: playTitle(play), sub: "그 타석 마지막 공" });
+      // 영상 이름은 포커스를 받은 영상 묶음이 읽는다(같은 말을 두 번 읽지 않게 낭독 줄은 비운다)
+      setClipStatus("");
+      focusClipRef.current = true;
+      setClip({ key: `p-${play.playId}`, hlsUrl: null, mp4Url, posterUrl: null, autoPlay: true, label: playTitle(play), sub: "그 타석 마지막 공" });
       // 영상이 창 맨 위에 있어 그리로 올린다
       scrollRef.current?.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
     },
@@ -411,7 +425,8 @@ function DetailContent({
   return (
     <div className="px-4 pt-4">
       {clip ? (
-        <figure>
+        // 포커스만 받고 Tab 순서에는 넣지 않는다(-1). 키보드로 왔을 때만 포커스 테두리가 보인다
+        <figure ref={figureRef} tabIndex={-1} aria-label={`${clip.label} 영상`} className="rounded-xl">
           <ClipPlayer clip={clip} />
           <figcaption className="mt-2">
             <span className="block text-summary">{clip.label}</span>
@@ -426,16 +441,18 @@ function DetailContent({
         <p className="text-meta text-muted">마이너리그 경기는 MLB 영상이 없어요.</p>
       ) : null}
 
-      {/* 하이라이트가 여럿이면 고르기 */}
+      {/* 하이라이트가 여럿이면 고르기. 휴대폰은 가로로 밀어 보고, 640px 이상 가운데 창은 3개씩 줄을 바꾼다
+          (가로로 밀면 4번째부터 창 밖으로 잘렸고, PC 마우스로는 옆으로 밀 수단이 없었다, 11-17 전수조사) */}
       {detail.highlights.length > 1 && (
-        <ul className="mt-3 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
+        <ul className="no-scrollbar mt-3 flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible">
           {detail.highlights.map((h, i) => {
             const on = clip?.key === `h-${i}`;
             return (
               <li key={`${h.title}-${i}`} className="w-36 shrink-0">
                 <button
                   type="button"
-                  aria-pressed={on}
+                  // 하나만 고르는 영상이라 aria-pressed(켬·끔) 대신 '지금 보는 영상'으로 알린다(11-17 전수조사)
+                  aria-current={on ? "true" : undefined}
                   onClick={() => showHighlight(i)}
                   className={`press-soft block w-full rounded-lg text-left ${on ? "ring-2 ring-foreground ring-offset-1 ring-offset-surface" : ""}`}
                 >
@@ -476,6 +493,9 @@ function DetailContent({
         </ol>
       )}
       <p className="mt-4 text-micro text-muted">기록·영상 출처: MLB, Baseball Savant</p>
+      <p aria-live="polite" className="sr-only">
+        {clipStatus}
+      </p>
     </div>
   );
 }
@@ -503,8 +523,9 @@ function countBefore(play: GamePlay): string | null {
 }
 /**
  * 타석 한 줄. 타자면 홈런은 채운 주황 알약(가장 큰 활약), 안타는 굵게.
- * 투수면 결과는 상대 타자 쪽 말이라, 맞은 홈런·안타는 주황 없이 '피홈런'·보통 글자로, 잡은 삼진만 굵게, 점수는 'N실점'으로 쓴다
- * (주황은 좋은 활약에만: DESIGN.md The Hot Is Earned Rule).
+ * 투수면 결과는 상대 타자 쪽 말이라, 맞은 홈런·안타는 주황 없이 '피홈런'·보통 글자로, 잡은 삼진만 굵게 쓴다
+ * (주황은 좋은 활약에만: DESIGN.md The Hot Is Earned Rule). 점수는 그 타석 타자의 타점이라 투수도 'N타점 허용'이다.
+ * 예전에는 'N실점'이라 썼는데, 승계 주자·실책·폭투 점수는 투수 책임 실점과 타점이 달라 숫자가 틀렸다(11-17 전수조사).
  */
 function PlayRow({
   play,
@@ -551,7 +572,7 @@ function PlayRow({
           ) : (
             <span className={`text-summary ${strong ? "font-bold" : ""}`}>{result}</span>
           )}
-          {play.rbi > 0 && <span className="text-meta text-muted">{pitcher ? `${play.rbi}실점` : `${play.rbi}타점`}</span>}
+          {play.rbi > 0 && <span className="text-meta text-muted">{pitcher ? `${play.rbi}타점 허용` : `${play.rbi}타점`}</span>}
         </p>
         {meta && <p className="mt-0.5 text-meta text-muted tabular-nums">{meta}</p>}
         {batted && <p className={`text-meta tabular-nums ${homeRun ? "font-bold text-hot-ink" : "text-muted"}`}>{batted}</p>}
@@ -559,7 +580,10 @@ function PlayRow({
       {canClip && (
         <button
           type="button"
-          aria-label={`${playTitle(play)} 영상 보기`}
+          // 재생 중인 타석은 채운 파랑(눈)만으로 알렸다. 화면 낭독기에도 '지금 보는 영상'과 이름으로 알린다(11-17 전수조사)
+          aria-current={playing ? "true" : undefined}
+          aria-busy={loading || undefined}
+          aria-label={playing ? `${playTitle(play)} 영상 보는 중` : `${playTitle(play)} 영상 보기`}
           onClick={onPlay}
           className={`press tap-target grid size-9 shrink-0 place-items-center rounded-full ${playing ? "bg-accent text-accent-fg" : "bg-surface-2 text-foreground"}`}
         >
