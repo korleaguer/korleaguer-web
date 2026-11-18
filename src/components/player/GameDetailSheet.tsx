@@ -125,9 +125,9 @@ export default function GameDetailSheet({
         ref={panelRef}
         className="game-sheet flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-2xl bg-surface shadow-[var(--shadow-card-hover)] sm:max-h-[88dvh] sm:max-w-xl sm:rounded-2xl"
       >
-        {/* 머리: 손잡이(휴대폰) + 앞뒤 경기 + 날짜 + 닫기 */}
+        {/* 머리: 손잡이(휴대폰) + 앞뒤 경기 + 날짜 + 닫기. 끌어 닫는 자리라 글자가 잡히지 않게 select-none */}
         <div
-          className="shrink-0 touch-none border-b border-line"
+          className="shrink-0 touch-none select-none border-b border-line"
           onPointerDown={onDragStart}
           onPointerMove={onDragMove}
           onPointerUp={onDragEnd}

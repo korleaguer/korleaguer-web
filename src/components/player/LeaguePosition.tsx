@@ -4,11 +4,11 @@ import { formatInningsOuts } from "@/lib/format";
 import { cacheLife } from "next/cache";
 import { Fragment } from "react";
 
-/** 이보다 적으면 '참고용'(서버가 견주는 선수 기준과 같다: 타자 100타석, 투수 30이닝 = 90아웃) */
-const STEADY_PA = 100;
-const STEADY_OUTS = 90;
+/** 이보다 적으면 '참고용'(서버가 견주는 선수 기준과 같다: 타자 100타석, 투수 30이닝 = 90아웃). 홈 성적표 작은 판도 같은 기준이다 */
+export const STEADY_PA = 100;
+export const STEADY_OUTS = 90;
 
-interface Row {
+export interface Row {
   label: string;
   /** 1~99(높을수록 좋다). 견줄 선수가 아직 없으면 null */
   pct: number | null;
@@ -23,8 +23,8 @@ function signed(value: number | null, digits = 1): string | null {
   return `${value < 0 && Number(fixed) !== 0 ? "−" : "+"}${fixed}`;
 }
 
-/** 막대 네 줄. 표본이 적어 서버가 위치를 매기지 않았으면 null */
-function rowsOf(saber: PlayerSaber): Row[] | null {
+/** 막대 네 줄(맨 앞이 '종합'). 표본이 적어 서버가 위치를 매기지 않았으면 null. 홈 성적표 작은 판(LeaguePositionCompact)도 쓴다 */
+export function rowsOf(saber: PlayerSaber): Row[] | null {
   if (saber.kind === "hitter") {
     const p = saber.percentiles;
     if (!p) return null;
@@ -83,7 +83,8 @@ export default async function LeaguePosition({ saber }: { saber: PlayerSaber }) 
     >
       <div className="card px-4 py-4">
         {!steady && (
-          <p className="mb-3 text-caption text-muted">
+          // 휴대폰에서 두 줄로 감기므로 줄 간격 1.5(바닥글과 같은 이유)
+          <p className="mb-3 text-caption leading-normal text-muted">
             <span className="mr-1.5 rounded-md bg-surface-2 px-1.5 py-0.5 text-badge">참고용</span>
             {hitter ? `${sample}뿐이라 더 뛰면 크게 바뀔 수 있어요` : `${sample}뿐이라 더 던지면 크게 바뀔 수 있어요`}
           </p>
@@ -123,12 +124,18 @@ function PositionRow({ row, who, labelCol }: { row: Row; who: string; labelCol: 
       style={{ gridTemplateColumns: `${labelCol} minmax(0, 1fr) 4.5rem` }}
     >
       <span className="text-summary">{label}</span>
-      <div aria-hidden className="relative h-2 rounded-full bg-surface-2">
-        <span className="absolute inset-y-[-3px] left-1/2 w-px bg-line" />
+      {/* data-bar·data-bar-track: 고대비 모드(Windows)에서는 바탕색이 지워져 막대가 사라져서 시스템 색으로 다시 칠한다(globals.css) */}
+      <div aria-hidden data-bar-track className="relative h-2 rounded-full bg-surface-2">
+        <span data-bar="dim" className="absolute inset-y-[-3px] left-1/2 w-px bg-line" />
         {pct != null && (
           <>
-            <span className={`absolute inset-y-0 left-0 rounded-full ${top ? "bg-accent" : "bg-muted/40"}`} style={{ width: `${pct}%` }} />
             <span
+              data-bar={top ? "" : "dim"}
+              className={`absolute inset-y-0 left-0 rounded-full ${top ? "bg-accent" : "bg-muted/40"}`}
+              style={{ width: `${pct}%` }}
+            />
+            <span
+              data-bar={top ? "" : "dim"}
               className={`absolute top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-surface ${top ? "bg-accent" : "bg-muted"}`}
               style={{ left: `${pct}%` }}
             />

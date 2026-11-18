@@ -4,6 +4,8 @@
 // 다시 올리면 로고로 돌아간다. 머리글은 앱 안에서 위에 붙어 있다(SiteHeader의 in-app:sticky).
 // h1은 데이터가 온 뒤(스트리밍) 생기기도 하고 화면 안에서 주소가 바뀌기도 해서, 스크롤할 때와 본문이 바뀔 때마다 그 자리를 다시 본다.
 // 스트리밍 중에는 아직 숨겨진 h1(크기 0)이 함께 있어서, 화면에 보이는 h1만 본다.
+// 낭독기에만 읽히는 h1(.sr-only, 홈의 긴 페이지 제목)도 뺀다. 1px 크기라 잡혀서 홈을 조금만 내려도 로고 대신
+// 'KOR Leaguer — 해외파 한국 선수…'가 잘려 떴다(전수조사). 보이는 제목이 없는 홈은 로고 그대로다.
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -19,7 +21,7 @@ export default function HeaderTitle() {
     let frame = 0;
     const check = () => {
       frame = 0;
-      const h1 = [...document.querySelectorAll("main h1")].find((el) => el.getBoundingClientRect().height > 0);
+      const h1 = [...document.querySelectorAll("main h1:not(.sr-only)")].find((el) => el.getBoundingClientRect().height > 0);
       const passed = h1 !== undefined && h1.getBoundingClientRect().bottom <= header.getBoundingClientRect().bottom;
       setTitle(passed ? (h1.textContent?.trim() ?? null) : null);
     };

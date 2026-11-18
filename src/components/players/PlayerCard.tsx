@@ -34,12 +34,16 @@ export default function PlayerCard({ player, hitting, pitching, minorHitting, mi
       <div className="flex items-center gap-3">
         <PlayerAvatar size={56} nameKo={player.nameKo} photoUrl={player.photoUrl} teamAbbr={player.teamAbbr} />
         <div className="min-w-0 flex-1">
-          <Link
-            href={`/players/${player.id}`}
-            className="text-heading after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none"
-          >
-            {player.nameKo}
-          </Link>
+          {/* 이름은 카드의 제목(h2, 페이지 제목 '선수' h1 아래)이라 화면 낭독기가 제목 목록으로 선수를 건너뛸 수 있다(이슈 #277).
+              h2는 글꼴을 물려받기만 해서 줄 높이·모양은 그대로이고, 글자 역할은 링크가 그대로 맡는다 */}
+          <h2>
+            <Link
+              href={`/players/${player.id}`}
+              className="text-heading after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none"
+            >
+              {player.nameKo}
+            </Link>
+          </h2>
           <PlayerSubline player={player} />
         </div>
         {/* 카드 전체 링크(after) 위에 올려야 눌린다 */}

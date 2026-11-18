@@ -2,14 +2,18 @@
 
 import { useState } from "react";
 import type { PlayerSummary } from "@/lib/api";
+import type { ReactNode } from "react";
 import PlayerAvatar from "@/components/PlayerAvatar";
 import OrderList from "./OrderList";
 import StarIcon from "./StarIcon";
 import { useMyPlayerToggle } from "./useMyPlayerToggle";
 
 interface Props {
-  /** 제목 아래 작은 글씨. 예: "내 선수 3명 · 9월 21일(월) ~ 27일(일)" */
-  subtitle: string;
+  /**
+   * 제목 아래 작은 글씨. 예: "내 선수 3명 · 9월 21일(월) ~ 27일(일) · 기준 11월 17일(화) 09:00".
+   * 기준 시각은 한 덩어리로 다음 줄에 넘기게 요소(WordGroup)로 감싸 오므로 글자가 아니라 ReactNode다
+   */
+  subtitle: ReactNode;
   /** 고를 수 있는 선수 전원 */
   players: PlayerSummary[];
   selectedIds: number[];
@@ -84,7 +88,8 @@ export default function MyHeader({ subtitle, players, selectedIds }: Props) {
             </div>
           )}
           <h2 className="sr-only">전체 선수</h2>
-          <p className="px-2 pb-1.5 pt-1 text-caption text-muted">
+          {/* 좁은 카드에서 두 줄로 감기므로 줄 간격 1.5(바닥글과 같은 이유) */}
+          <p className="px-2 pb-1.5 pt-1 text-caption leading-normal text-muted">
             누르면 내 선수에 넣거나 뺄 수 있어요. 가입 없이 이 기기에만 저장돼요.
           </p>
           {players.length === 0 ? (

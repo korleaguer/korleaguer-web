@@ -14,6 +14,8 @@ interface Props {
   /** 같은 시즌 마이너 기록. 없거나 오래된 api면 null */
   minorHitting: HitterSeason | null;
   minorPitching: PitcherSeason | null;
+  /** 제목 옆 데이터 기준 시각("기준 11월 17일(화) 09:00", 홈과 같은 꼴, 이슈 #277). 옛 api면 없다 */
+  asOf?: string;
 }
 
 type Stat = [label: string, value: string | number];
@@ -34,6 +36,7 @@ export default async function SeasonSummary({
   pitching,
   minorHitting,
   minorPitching,
+  asOf,
 }: Props) {
   // 잠깐 재사용: 같은 데이터면 30초 동안 그려 둔 것을 다시 쓴다(쿠키와 상관없는 부품이라 모두에게 같다).
   // 운영 서버(라즈베리파이 4)는 화면 그리기가 느려서 큰 부품을 매번 그리지 않는다.
@@ -42,7 +45,7 @@ export default async function SeasonSummary({
   const hitterSeasons = levelSeasons(hitting, minorHitting);
   const pitcherSeasons = levelSeasons(pitching, minorPitching);
   return (
-    <Section id="season-title" title={`${season} 시즌 성적`}>
+    <Section id="season-title" title={`${season} 시즌 성적`} aside={asOf}>
       {/* 묶음 사이 28px: 20px이면 앞 묶음 세부 카드와 다음 묶음 이름표가 붙어 이름표가 어느 숫자의 것인지 흐렸다(11-17 전수조사) */}
       <div className="space-y-7">
         {hitterSeasons.map((s) => {
