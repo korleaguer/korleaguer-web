@@ -117,7 +117,7 @@ export default async function LeaguePosition({ saber }: { saber: PlayerSaber }) 
             ))}
           </p>
         )}
-        {/* WAR 풀이는 이 각주 한 곳에만 둔다(시즌별 기록 표의 'WAR' 머리는 낭독기에만 풀이를 붙인다) */}
+        {/* WAR 풀이는 이 각주 한 곳에만 둔다(시즌별 기록 표는 낭독기에만 보이지 않는 표 설명으로 붙인다) */}
         <p className="mt-3 border-t border-line pt-2.5 text-micro text-muted">
           가운데 선 = MLB 중간 · WAR는 대체 선수보다 더 번 승수(0이 평균 아님) ·{" "}
           {hitter ? "득점은 리그 평균 대비(수비는 포지션 난도 포함)" : "ERA-는 100이 평균, 낮을수록 좋아요"} · MLB 공식 세이버 지표 · {sample}
