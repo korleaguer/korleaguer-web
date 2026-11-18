@@ -95,7 +95,8 @@ export default function NewsFeed({
   }));
 
   return (
-    <div ref={listRef} className="space-y-4">
+    // 줄 링크에 아래 스크롤 여백: 포커스를 옮겨 보이게 할 때 포커스 테두리(2px + 띄움 2px)까지 화면 안에 들어오게
+    <div ref={listRef} className="space-y-4 [&_li>a]:scroll-mb-2">
       {byDay(items).map((day) => (
         <section key={day.key} aria-labelledby={`news-day-${day.key}`}>
           {/* 오늘·어제는 보는 때에 따라 달라서 서버와 브라우저가 자정 근처에 다르게 그릴 수 있다 */}

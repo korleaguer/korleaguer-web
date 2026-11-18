@@ -349,6 +349,11 @@
     -webkit-user-select: none;
     user-select: none;
   }
+  /* 아이폰 앱은 아래 탭 막대(84px)가 웹 위에 떠 있다. 포커스를 옮기며 스크롤할 때(뉴스 '기사 더 보기' 뒤 새 기사 등)
+     그 밑으로 숨지 않게 아래도 띄운다 */
+  html[data-app="ios"] {
+    scroll-padding-bottom: 84px;
+  }
 
   html[data-app] :is(input, textarea, [contenteditable="true"]) {
     -webkit-user-select: text;
