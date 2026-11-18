@@ -311,7 +311,7 @@ export default async function MlbChallenge({
             </div>
           )}
           <div className="lg:hidden">
-            <PostingNews items={news} shown={NEWS_SHOWN} player={newsPlayer} />
+            <PostingNews items={news} shown={NEWS_SHOWN} player={newsPlayer} heading={single ? "h4" : "h3"} />
           </div>
         </div>
         {twoColumns && (
@@ -319,7 +319,7 @@ export default async function MlbChallenge({
             {historyOnRight ? (
               <SigningList signings={signings} />
             ) : (
-              <PostingNews items={news} shown={NEWS_SHOWN} player={newsPlayer} flush />
+              <PostingNews items={news} shown={NEWS_SHOWN} player={newsPlayer} heading={single ? "h4" : "h3"} flush />
             )}
           </div>
         )}

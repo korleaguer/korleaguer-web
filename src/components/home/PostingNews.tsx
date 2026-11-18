@@ -17,26 +17,31 @@ export interface PostingNewsItem extends NewsHeadline {
  *
  * @param player '전체 기사 보기'가 거를 선수(여러 명이면 null: 전체)
  * @param flush 위 선·여백 없이 그린다(PC 카드 오른쪽 칸 맨 위)
+ * @param heading '관련 기사' 제목 태그. 한 명이면 그 선수 이름(h3) 아래라 h4, 여러 명이면 모든 선수의 기사를 모은 목록이라
+ *                선수 이름들과 같은 h3이다(h4면 마지막 선수의 하위 제목으로 읽힌다)
  */
 export default function PostingNews({
   items,
   shown,
   player,
   flush = false,
+  heading: Heading = "h4",
 }: {
   items: PostingNewsItem[];
   shown: number;
   player: string | null;
   flush?: boolean;
+  heading?: "h3" | "h4";
 }) {
   if (items.length === 0) return null;
   const first = items.slice(0, shown);
   return (
     <div className={flush ? undefined : "mt-4 border-t border-line pt-3"}>
       {/* 큰 글씨에서 둘이 한 줄에 못 들어가면 안내를 다음 줄로(제목이 '관련/기사'로 갈리지 않게, 이슈 #264).
-          카드 안 작은 제목은 h4다(섹션 제목 h2 → 선수 이름 h3 아래, '행선지로 거론된 구단'과 같다, 이슈 #277) */}
+          카드 안 작은 제목은 h4다(섹션 제목 h2 → 선수 이름 h3 아래, '행선지로 거론된 구단'과 같다, 이슈 #277).
+          여러 명이면 h3(heading) */}
       <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-        <h4 className="text-label">관련 기사</h4>
+        <Heading className="text-label">관련 기사</Heading>
         {items.some((n) => n.id != null) && (
           <span className="text-caption text-muted">누르면 사진과 AI 요약을 볼 수 있어요</span>
         )}
