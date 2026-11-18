@@ -475,6 +475,15 @@
       background: GrayText !important;
     }
 
+    /*
+     * 달별 막대가 200을 넘어 잘린 끝의 꺾임 띠(MonthBars): 막대 안에 있어 막대의 forced-color-adjust: none을 물려받아
+     * 카드 색(--surface) 그대로 남는다. 그러면 다시 칠한 막대(CanvasText)와 같은 색이 될 수 있어(흰 카드 + 어두운 고대비면
+     * 둘 다 흰색) 늘 막대와 대비되는 바탕색(Canvas)으로 끊는다
+     */
+    [data-bar-break] {
+      border-color: Canvas !important;
+    }
+
     /* 내 선수 경기별 막대: 고른 막대는 강조색. 안 고른 막대를 흐리게 둔 투명도는 걷는다(색이 고른 것을 알린다) */
     [aria-pressed] [data-bar] {
       opacity: 1 !important;
