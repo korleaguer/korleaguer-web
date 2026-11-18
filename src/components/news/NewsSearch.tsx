@@ -13,18 +13,24 @@ import LoadingDots from "@/components/LoadingDots";
 const TYPING_PAUSE_MS = 350;
 /** 한글 글자로 끝나면 이만큼 기다린다. 마지막 글자는 받침이 붙거나('계야' → '계약') 받침이 다음 글자로 넘어가며('툿' → '투수') 아직 바뀐다 */
 const HANGUL_PAUSE_MS = 700;
+/**
+ * 낱자모(ㄱ·ㅏ, 천지인 ㆍ)로 끝나면 이만큼 기다린다. 보통은 다음 키로 글자가 되지만, 지우다 멈추거나('김하성' → '김하ㅅ')
+ * 천지인 'ㆍ'에서 손을 뗀 채로 두면 결국 친 그대로 찾는다. 찾지 않고 기다리기만 했더니 입력칸 글과 목록(앞 검색어 결과)이
+ * 어긋난 채 남고, 바깥을 눌러도 입력칸이 닫히지 않았다(리뷰 지적)
+ */
+const JAMO_PAUSE_MS = 1500;
 
 /**
  * 친 말로 찾기까지 기다릴 시간. 한글을 치는 도중의 중간 글자('ㄱ'·'김ㅎ'·'계야'·'툿')로 찾으면 '기사가 없어요'가 잠깐 보였다.
- * - 낱자모(ㄱ·ㅏ, 천지인 ㆍ)로 끝나면 아직 글자를 만드는 중이라 찾지 않는다(null: 다음 입력이나 엔터를 기다린다)
+ * - 낱자모(ㄱ·ㅏ, 천지인 ㆍ)로 끝나면 아직 글자를 만드는 중이라 오래 기다린다(JAMO_PAUSE_MS, 엔터는 바로)
  * - 한글 글자로 끝나면 조금 더 기다린다. 받침 유무로 나누면 '계야'(받침 없음)처럼 다음 키에 받침이 붙을 글자로 찾았다
  * - 나머지('FA', 띄어쓰기로 끝남)는 그대로
  * 조합 중 표시(isComposing)는 쓰지 않는다: 아이폰 한글 자판은 조합 이벤트를 믿기 어렵고, PC 한글 입력기는 다 친 마지막
  * 글자도 다음 키를 누를 때까지 조합 중이라 그것을 기다리면 멈춰도 찾지 않는다
  */
-function typingPause(text: string): number | null {
+function typingPause(text: string): number {
   const code = text.charCodeAt(text.length - 1);
-  if ((code >= 0x3131 && code <= 0x318e) || (code >= 0x1100 && code <= 0x11ff)) return null;
+  if ((code >= 0x3131 && code <= 0x318e) || (code >= 0x1100 && code <= 0x11ff)) return JAMO_PAUSE_MS;
   if (code >= 0xac00 && code <= 0xd7a3) return HANGUL_PAUSE_MS;
   return TYPING_PAUSE_MS;
 }
@@ -138,8 +144,7 @@ export default function NewsSearch({
     setValue(next);
     if (timer.current) clearTimeout(timer.current);
     // 한글을 치는 도중에는 서둘러 찾지 않는다(typingPause). 엔터는 언제나 바로 찾는다(onSubmit)
-    const wait = typingPause(next);
-    timer.current = wait === null ? null : setTimeout(() => go(next), wait);
+    timer.current = setTimeout(() => go(next), typingPause(next));
   }
 
   /** '검색' 버튼: 입력칸을 열고 바로 입력(키보드). iOS는 누른 순간에 포커스해야 키보드가 올라와서 먼저 화면에 그린 뒤 포커스한다 */
