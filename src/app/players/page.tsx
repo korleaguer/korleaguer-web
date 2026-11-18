@@ -21,6 +21,14 @@ export const metadata: Metadata = {
   ...shareMeta(`${TITLE} · ${SITE_NAME}`, DESCRIPTION, "/players"),
 };
 
+/**
+ * 사진을 바로 받을(eager) 앞 카드 수: PC 3칸 × 2줄. 실측(사진 윗변): PC 1280×720 3칸 178·446px, 태블릿 768×1024 2칸
+ * 178·412·646px라 둘 다 6장이 첫 화면이다. 휴대폰(375×812, 1칸)은 3장만 첫 화면이고 4~6번째(872~1374px)는 일찍 받는 셈이지만,
+ * 56px 원 사진(2배 화면 장당 3~4KB)이고, lazy여도 크롬은 화면 아래 1250px 안의 사진을 화면 배치 직후 받아서 비용이 거의 없다.
+ * 나머지는 lazy 그대로(전수조사 L270: 첫 화면 사진을 lazy로 두면 화면 배치를 마친 뒤에야 받기 시작한다)
+ */
+const EAGER_CARDS = 6;
+
 // 선수 목록. 데이터는 요청마다 api에서 새로 받는다.
 export default function PlayersPage() {
   return (
@@ -73,7 +81,7 @@ async function PlayersContent() {
           // grid-cols-1: 칸 폭을 화면에 묶는다(기본 auto 칸은 큰 글씨에서 카드 내용만큼 넓어져 화면 밖으로 나간다)
           className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3"
         >
-          {players.map((player) => (
+          {players.map((player, i) => (
             <PlayerCard
               key={player.id}
               player={player}
@@ -83,6 +91,7 @@ async function PlayersContent() {
               minorPitching={minorPitchers.get(player.id) ?? null}
               statsMissing={!home}
               isMine={myIds.includes(player.id)}
+              eagerPhoto={i < EAGER_CARDS}
             />
           ))}
         </ul>

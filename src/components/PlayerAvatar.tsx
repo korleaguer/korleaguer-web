@@ -30,6 +30,11 @@ interface Props {
   decorative?: boolean;
   /** 선수 페이지 머리 카드처럼 색 띠 위에 걸칠 때 흰 테두리를 두른다 */
   ring?: boolean;
+  /**
+   * 첫 화면 안 사진이면 true: 바로 받는다(eager). lazy면 화면 배치를 마친 뒤에야 받기 시작해 첫 화면 사진이 늦게 뜬다
+   * (web.dev 'lazy loading', 전수조사 L270, KboAvatar와 같다). 기본은 lazy(화면 밖 사진은 다가올 때 받는다)
+   */
+  eager?: boolean;
 }
 
 /**
@@ -44,9 +49,10 @@ export default function PlayerAvatar({
   size,
   decorative = size < 96,
   ring = false,
+  eager = false,
 }: Props) {
   const { failed, ref, onError } = useImageFailed(photoUrl);
-  // 56px 이하 원은 화면 배율에 맞춰 줄인 사진(lib/photo). 96px 선수 페이지 사진은 원본
+  // 화면 배율에 맞춰 줄인 사진(lib/photo, 56px 이하 원과 96px 원)
   const small = smallPhoto(photoUrl, size);
   // 크기를 고정해 두면 사진이 늦게 떠도 레이아웃이 흔들리지 않는다.
   const box = { width: size, height: size };
@@ -79,7 +85,7 @@ export default function PlayerAvatar({
         alt={decorative ? "" : `${nameKo} 사진`}
         width={size}
         height={size}
-        loading="lazy"
+        loading={eager ? "eager" : "lazy"}
         referrerPolicy="no-referrer"
         onError={onError}
         className="block size-full object-contain object-bottom pl-[8%] pr-[8%] pt-[12%]"

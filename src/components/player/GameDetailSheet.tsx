@@ -1,12 +1,11 @@
 "use client"; // 창을 열고 닫고, 고른 경기 상세를 브라우저에서 받아 와야 해서 클라이언트 컴포넌트다.
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
+import { useCallback, useEffect, useId, useRef, useState, type RefObject } from "react";
 import type { GameDetail, GameLine, GamePlay, Role } from "@/lib/api";
 import { lineOf, type CalendarDay, type LogGame } from "@/lib/gameLog";
 import { formatDate, formatLineup, formatSummary, formatTime } from "@/lib/format";
 import { haptic } from "@/lib/app";
-import { toast } from "@/lib/toast";
 import { useSheetDrag } from "@/lib/useSheetDrag";
 import Highlights from "@/components/Highlights";
 import LoadingDots from "@/components/LoadingDots";
@@ -51,13 +50,35 @@ async function fetchDetail(playerId: number, gamePk: number, final: boolean, sig
   return res.ok ? ((await res.json()) as GameDetail) : null;
 }
 
-/** 타석 ▶: 그 공 영상 주소(GET, 바뀌지 않아 브라우저가 하루 둔다). 없으면 null */
-async function fetchClip(playerId: number, gamePk: number, playId: string): Promise<string | null> {
-  const res = await fetch(`/players/${playerId}/games/${gamePk}/clips/${playId}`);
-  if (!res.ok) return null;
-  const data = (await res.json()) as { mp4Url?: string | null };
-  return data.mp4Url ?? null;
+/**
+ * 공 영상 주소를 받은 결과. 실패는 둘로 나눈다(11-17 전수조사 L405: 예전에는 연결이 끊겨도 '영상이 아직 없어요'라고 했다).
+ * none: 그 장면 영상이 없거나 찾지 못함(라우트 404). error: 연결이 끊겼거나 서버가 이상한 응답을 줌(다시 누르면 다시 받는다)
+ */
+type ClipResult = { mp4Url: string } | { failure: "none" | "error" };
+
+/** 타석 ▶: 그 공 영상 주소(GET, 바뀌지 않아 브라우저가 하루 둔다). 실패는 저장하지 않는다(no-store) */
+async function fetchClip(playerId: number, gamePk: number, playId: string): Promise<ClipResult> {
+  let res: Response;
+  try {
+    res = await fetch(`/players/${playerId}/games/${gamePk}/clips/${playId}`);
+  } catch {
+    return { failure: "error" };
+  }
+  if (res.status === 404) return { failure: "none" };
+  if (!res.ok) return { failure: "error" };
+  try {
+    const data = (await res.json()) as { mp4Url?: unknown } | null;
+    return typeof data?.mp4Url === "string" && data.mp4Url ? { mp4Url: data.mp4Url } : { failure: "error" };
+  } catch {
+    return { failure: "error" };
+  }
 }
+
+/** 공 영상을 못 받았을 때 누른 타석 줄 안에 보일 문구. 오류는 다시 눌러 보라고 한다 */
+const CLIP_FAILURE: Record<"none" | "error", string> = {
+  none: "이 장면 영상은 아직 없어요.",
+  error: "영상을 불러오지 못했어요. 잠시 뒤 다시 눌러 주세요.",
+};
 
 /** 그 경기의 MLB 번호 */
 export function gamePkOf(entry: LogGame): number {
@@ -384,8 +405,14 @@ function DetailContent({
    */
   const figureRef = useRef<HTMLElement>(null);
   const focusClipRef = useRef(false);
-  /** 창 안 낭독 한 줄: 받는 동안 '영상을 불러오는 중', 없으면 그 말. 창 밖 알림 띠는 모달이 열린 동안 낭독기가 읽지 못할 수 있다 */
+  /** 창 안 낭독 한 줄: 받는 동안 '영상을 불러오는 중', 못 받으면 그 까닭(없음·오류). 모달이 열린 동안 창 밖은 낭독기가 읽지 못할 수 있다 */
   const [clipStatus, setClipStatus] = useState("");
+  /**
+   * 영상을 못 받은 타석(공 번호)과 까닭. 그 줄 안에 문구를 보인다(없음·오류 모두). 알림 띠는 모달 창(최상위 층) 뒤라 창이 높으면
+   * (하이라이트가 있는 경기 등, 휴대폰에서 위 77px까지) 창 뒤에 가려져 아무 반응이 없어 보였다.
+   * 다른 영상으로 바꾸면(▶·하이라이트) 지운다
+   */
+  const [clipNotice, setClipNotice] = useState<{ playId: string; failure: "none" | "error" } | null>(null);
 
   useEffect(() => {
     if (!focusClipRef.current) return;
@@ -396,6 +423,9 @@ function DetailContent({
   const showHighlight = (i: number) => {
     const h = detail.highlights[i];
     haptic("select");
+    // 앞서 못 받은 타석 안내·낭독 줄은 지난 일이라 지운다(▶를 새로 누를 때와 같다)
+    setClipNotice(null);
+    setClipStatus("");
     setClip({ key: `h-${i}`, hlsUrl: h.hlsUrl, mp4Url: h.mp4Url, posterUrl: h.imageUrl, autoPlay: true, label: h.title, sub: highlightSub(h.durationSec) });
   };
 
@@ -404,14 +434,17 @@ function DetailContent({
       if (!play.playId || loadingPlay) return;
       haptic("select");
       setLoadingPlay(play.playId);
+      setClipNotice(null);
       setClipStatus("영상을 불러오는 중");
-      const mp4Url = await fetchClip(playerId, gamePk, play.playId).catch(() => null);
+      const result = await fetchClip(playerId, gamePk, play.playId);
       setLoadingPlay(null);
-      if (!mp4Url) {
-        setClipStatus("이 장면 영상은 아직 없어요.");
-        toast("이 장면 영상은 아직 없어요.");
+      if ("failure" in result) {
+        // 누른 줄 안에 알린다(오류면 다시 누르면 다시 받는다)
+        setClipStatus(CLIP_FAILURE[result.failure]);
+        setClipNotice({ playId: play.playId, failure: result.failure });
         return;
       }
+      const { mp4Url } = result;
       // 영상 이름은 포커스를 받은 영상 묶음이 읽는다(같은 말을 두 번 읽지 않게 낭독 줄은 비운다)
       setClipStatus("");
       focusClipRef.current = true;
@@ -487,6 +520,7 @@ function DetailContent({
               canClip={detail.clips && play.playId != null}
               playing={clip?.key === `p-${play.playId}`}
               loading={loadingPlay === play.playId}
+              notice={play.playId != null && clipNotice?.playId === play.playId ? CLIP_FAILURE[clipNotice.failure] : null}
               onPlay={() => showPlay(play)}
             />
           ))}
@@ -533,6 +567,7 @@ function PlayRow({
   canClip,
   playing,
   loading,
+  notice,
   onPlay,
 }: {
   play: GamePlay;
@@ -540,8 +575,11 @@ function PlayRow({
   canClip: boolean;
   playing: boolean;
   loading: boolean;
+  /** 이 타석 영상을 못 받았을 때(없음·오류) 줄 안에 보일 한 줄. 없으면 null */
+  notice: string | null;
   onPlay: () => void;
 }) {
+  const noticeId = useId();
   const homeRun = !pitcher && play.eventType === "home_run";
   const strong = pitcher ? STRIKEOUTS.has(play.eventType) : HITS.has(play.eventType);
   const result = pitcher && play.eventType === "home_run" ? "피홈런" : play.resultKo;
@@ -576,6 +614,12 @@ function PlayRow({
         </p>
         {meta && <p className="mt-0.5 text-meta text-muted tabular-nums">{meta}</p>}
         {batted && <p className={`text-meta tabular-nums ${homeRun ? "font-bold text-hot-ink" : "text-muted"}`}>{batted}</p>}
+        {/* 영상을 못 받았을 때(없음·오류): 누른 ▶ 바로 옆에서 알린다. 흐린 기록 줄과 구분되게 본문색(빨간 글자는 쓰지 않는다, DESIGN.md) */}
+        {notice && (
+          <p id={noticeId} className="mt-1 text-meta text-pretty text-foreground">
+            {notice}
+          </p>
+        )}
       </div>
       {canClip && (
         <button
@@ -584,6 +628,7 @@ function PlayRow({
           aria-current={playing ? "true" : undefined}
           aria-busy={loading || undefined}
           aria-label={playing ? `${playTitle(play)} 영상 보는 중` : `${playTitle(play)} 영상 보기`}
+          aria-describedby={notice ? noticeId : undefined}
           onClick={onPlay}
           className={`press tap-target grid size-9 shrink-0 place-items-center rounded-full ${playing ? "bg-accent text-accent-fg" : "bg-surface-2 text-foreground"}`}
         >

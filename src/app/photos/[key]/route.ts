@@ -1,7 +1,7 @@
 // 우리가 호스팅하는 선수 사진. api(GET /api/photos/{이름})가 원본을 처음 한 번만 받아 저장해 두고, 여기서는 그 사진을 그대로 전달한다.
 // api는 바깥에 열려 있지 않아서 웹이 이 주소(/photos/mlb-808982, /photos/kbo-si-hwan-roh)로 내보낸다.
 // 브라우저는 하루 동안 저장해 두고, 그 뒤에는 ETag로 바뀌었는지만 묻는다(바뀌지 않았으면 304).
-// 작은 사진 원(24~56px)은 줄인 사진(/photos/{이름}/{폭}, [w]/route.ts)을 받는다.
+// 작은 사진 원(24~56px)과 선수 페이지 사진 무대(96px)는 줄인 사진(/photos/{이름}/{폭}, [w]/route.ts)을 받는다.
 import type { NextRequest } from "next/server";
 import { PHOTO_KEY as KEY } from "@/lib/photo";
 
