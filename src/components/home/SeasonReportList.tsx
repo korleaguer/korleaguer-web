@@ -4,7 +4,6 @@ import type { CardStatus, CardStatusKind, MyPlayer, NewsHeadline, SeasonReport, 
 import { formatEra, formatRate, kstDayKey } from "@/lib/format";
 import { newsHref } from "@/lib/news";
 import ExternalLinkIcon from "@/components/ExternalLinkIcon";
-import PlayerAvatar from "@/components/PlayerAvatar";
 import MyPlayerToggle from "@/components/my/MyPlayerToggle";
 import StarIcon from "@/components/my/StarIcon";
 import { type BadgeTone, levelKo, statusBadge } from "@/components/my/formLabels";
@@ -233,7 +232,7 @@ function buildRow(entry: MyPlayer, report: SeasonReport | null, isMine: boolean)
 
   return {
     id: player.id,
-    photo: <PlayerAvatar size={44} nameKo={player.nameKo} photoUrl={player.photoUrl} teamAbbr={player.teamAbbr} />,
+    photo: { nameKo: player.nameKo, photoUrl: player.photoUrl, teamAbbr: player.teamAbbr },
     head,
     spark: months.length > 0 ? <MonthSpark months={months} pitcher={pitcher} /> : null,
     second,
