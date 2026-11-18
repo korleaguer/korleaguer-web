@@ -19,7 +19,8 @@ export interface ReportRow {
   /** 선수 번호 */
   id: number;
   /** 버튼 왼쪽 44px 사진에 쓸 값(요소가 아닌 까닭은 위 칸 규칙) */
-  photo: { nameKo: string; photoUrl: string | null; teamAbbr: string | null };
+  /** eager: 첫 화면 안 줄이면 사진을 바로 받는다(성적표가 홈 맨 위일 때 앞 줄들, SeasonReportList) */
+  photo: { nameKo: string; photoUrl: string | null; teamAbbr: string | null; eager: boolean };
   /** 버튼 가운데: 이름·판정·상태와 숫자 한 줄(버튼 안이라 span만) */
   head: ReactNode;
   /** 접혀 있을 때 버튼 오른쪽 작은 달별 막대. 달별 기록이 없으면 null */
@@ -112,7 +113,7 @@ function Row({ row, defaultOpen }: { row: ReportRow; defaultOpen: boolean }) {
           className={`press-soft -mx-2 grid w-[calc(100%+1rem)] cursor-pointer grid-cols-[44px_minmax(0,1fr)_84px] items-center gap-x-3 rounded-xl px-2 pt-3 text-left hover:bg-surface-2 @max-[16rem]:grid-cols-[44px_minmax(0,1fr)] @max-[16rem]:items-start ${second ? "pb-1" : open ? "pb-3" : "pb-3 lg:pb-1"}`}
         >
           {/* 서버 요소 칸(head·spark)은 감싸개 안에 혼자 둔다(ReportRow 칸 규칙: 다른 자식과 나란히 두면 key 경고) */}
-          <PlayerAvatar size={44} nameKo={row.photo.nameKo} photoUrl={row.photo.photoUrl} teamAbbr={row.photo.teamAbbr} />
+          <PlayerAvatar size={44} nameKo={row.photo.nameKo} photoUrl={row.photo.photoUrl} teamAbbr={row.photo.teamAbbr} eager={row.photo.eager} />
           <span className="min-w-0">{row.head}</span>
           {open ? (
             // 펼치면 막대 자리에 '접기'(펼친 곳에 큰 막대가 있다). 상태는 aria-expanded가 읽어 주므로 글자는 숨긴다
