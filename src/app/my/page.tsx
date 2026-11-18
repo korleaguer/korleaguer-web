@@ -3,7 +3,7 @@ import { getHome, getMyPlayers, getPlayers } from "@/lib/api";
 import { formatAsOf, formatDateRange } from "@/lib/format";
 import { readMyPlayers } from "@/lib/myPlayers";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
-import DataBanners from "@/components/DataBanners";
+import DataBanners, { StatsFailedBanner } from "@/components/DataBanners";
 import { MySkeleton } from "@/components/PageSkeleton";
 import FormCard from "@/components/my/FormCard";
 import MyHeader from "@/components/my/MyHeader";
@@ -54,13 +54,16 @@ async function MyContent({ searchParams }: Pick<PageProps<"/my">, "searchParams"
   ]);
   // 제목 '내 선수'(MyHeader의 h1)를 그리기 전에 실패하면 안내 제목이 이 화면의 h1이다
   if (!playersResult.ok) return <ApiErrorNotice failure={playersResult.failure} level={1} />;
-  if (myResult && !myResult.ok) {
-    // /api/my는 404를 주지 않는다. 404면 api가 이 기능보다 오래된 것이다.
-    return <ApiErrorNotice failure={myResult.failure === "notFound" ? "badResponse" : myResult.failure} level={1} />;
-  }
 
-  const my = myResult?.data ?? null;
+  // 카드 기록(/api/my)만 못 받았으면 화면 전체를 오류로 덮지 않는다. 제목과 '선수 고르기'(넣기·빼기·순서)는 쓸 수 있게 그리고
+  // 카드 자리에 안내 한 줄(전수조사 L324, 선수 목록의 '시즌 기록을 불러오지 못했어요'와 같은 단계적 저하).
+  // 그때 고른 선수는 쿠키 번호 중 명단에 있는 선수다(받았으면 api가 같은 기준으로 거른 카드 순서를 쓴다)
+  const myFailed = myResult != null && !myResult.ok;
+  const my = myResult?.ok ? myResult.data : null;
   const picked = my?.players ?? [];
+  const selectedIds = myFailed
+    ? ids.filter((id) => playersResult.data.some((p) => p.id === id))
+    : picked.map((e) => e.player.id);
   const status = my ?? (homeResult?.ok ? homeResult.data : null);
   // 고른 선수가 모두 시즌 합계 카드(시즌 끝·FA)면 기간이 뜻이 없다: 기간 알약·안내를 빼고 머리말을 시즌 합계로.
   // 머리말에 '비시즌이라' 같은 이유는 붙이지 않는다(문구 점검 11-13: 머리 줄에 이유 구절이 끼어 어색했다)
@@ -71,7 +74,9 @@ async function MyContent({ searchParams }: Pick<PageProps<"/my">, "searchParams"
   );
   // 기록을 받았으면 머리말 끝에 데이터 기준 시각(선수 목록 머리 줄과 같은 꼴, 이슈 #277). 기준 글은 한 덩어리로 줄을 넘기고
   // '·'는 '기준'에 붙여 줄 끝에 홀로 남지 않게 한다(375px에서는 기간·시즌 다음 줄로 통째로 내려간다)
-  const subtitle = !my ? (
+  const subtitle = myFailed ? (
+    `내 선수 ${selectedIds.length}명`
+  ) : !my ? (
     "좋아하는 선수를 넣어 두면 최근 경기를 한곳에서 볼 수 있어요"
   ) : (
     <>
@@ -85,10 +90,13 @@ async function MyContent({ searchParams }: Pick<PageProps<"/my">, "searchParams"
   return (
     <div className="space-y-4">
       {status && <DataBanners dataMode={status.dataMode} statsAvailable={status.statsAvailable} />}
-      {/* 쿠키에 남은 없는 선수 id는 빼고 넘긴다 */}
-      <MyHeader subtitle={subtitle} players={playersResult.data} selectedIds={picked.map((e) => e.player.id)} />
+      {/* 쿠키에 남은 없는 선수 id는 빼고 넘긴다. 기록을 못 받았을 때도 같은 자리에 둔다(다시 받아도 새로 만들지 않아,
+          별로 빼고 되돌린 뒤 포커스를 옮길 때 앞 선수 목록을 이어 본다: useFocusAfterRemove) */}
+      <MyHeader subtitle={subtitle} players={playersResult.data} selectedIds={selectedIds} />
 
-      {my && picked.length > 0 ? (
+      {myFailed ? (
+        <StatsFailedBanner title="내 선수 기록을 불러오지 못했어요" detail={null} />
+      ) : my && picked.length > 0 ? (
         <>
           {!seasonView && <PeriodTabs days={days} />}
           {!seasonView && showFallbackNote && (
