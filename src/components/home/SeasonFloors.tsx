@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { GameLine, HomeResponse, MyPlayer } from "@/lib/api";
 import { getMyPlayers, getPlayers } from "@/lib/api";
-import { formatLineup, formatScore, formatSummary, formatTime, kstDayKey, kstPrevDayKey } from "@/lib/format";
+import { formatLineup, formatScore, formatSummary, formatTime, kstDayKey, kstPrevDayKey, teamLabel } from "@/lib/format";
 import { readMyPlayers } from "@/lib/myPlayers";
 import { teamColor, teamLogoUrl } from "@/lib/teams";
 import { levelKo, statusBadge } from "@/components/my/formLabels";
@@ -147,11 +147,15 @@ function lineOf(entry: MyPlayer): { text: string; game: GameLine | null } {
   return { text: formatSummary(game.summary), game };
 }
 
-/** 이름 옆 소속: 메이저는 팀, 마이너는 '다저스 산하' */
+/**
+ * 이름 옆 소속: 메이저는 팀, 마이너는 '다저스 산하'. FA·국내 복귀 선수의 팀은 마지막 MLB 팀이라 '전 애틀랜타'처럼
+ * '전'을 붙인다(선수 화면·선수 목록과 같은 teamLabel). 그냥 '애틀랜타'면 아직 그 팀 소속처럼 읽혔다(#289에서 남긴 일).
+ * 시즌 끝 선수는 아직 그 팀 소속이라 그대로다
+ */
 function teamText(entry: MyPlayer): string | null {
   const team = entry.player.teamKo;
   if (entry.status?.kind === "MINORS" && team) return `${team} 산하`;
-  return team;
+  return teamLabel(entry.player);
 }
 
 /**
