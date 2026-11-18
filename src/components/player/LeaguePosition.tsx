@@ -1,5 +1,6 @@
 import type { PlayerSaber } from "@/lib/api";
 import Section from "@/components/Section";
+import PositionBar from "@/components/player/PositionBar";
 import { formatInningsOuts } from "@/lib/format";
 import { cacheLife } from "next/cache";
 import { Fragment } from "react";
@@ -127,7 +128,7 @@ export default async function LeaguePosition({ saber }: { saber: PlayerSaber }) 
 }
 
 /**
- * 한 줄: 이름 | 막대(가운데 선 = MLB 중간) | 순위. 이름 칸 폭을 줄마다 같게 해 막대 시작점을 맞춘다.
+ * 한 줄: 이름 | 막대(가운데 선 = MLB 중간, PositionBar) | 순위. 이름 칸 폭을 줄마다 같게 해 막대 시작점을 맞춘다.
  * 칸이 15rem보다 좁으면(앱 큰 글씨 1.5배 이상, 휴대폰) 이름·순위 한 줄 아래에 막대를 칸 폭 그대로 둔다.
  * 한 줄로 두면 이름·순위 칸(rem)이 커져 막대 칸이 0이 되고 점만 남았다(2배 375px)
  */
@@ -138,33 +139,7 @@ function PositionRow({ row, who, cols }: { row: Row; who: string; cols: string }
   return (
     <li className={`grid items-center gap-x-3 ${cols} @max-[15rem]:grid-cols-[minmax(0,1fr)_auto] @max-[15rem]:gap-y-1.5`}>
       <span className="text-summary">{label}</span>
-      {/* 바탕은 옅은 안쪽 테두리로 0~100 양 끝을 보인다(흰 카드 위 surface-2만으로는 막대 끝이 거의 안 보였다).
-          data-bar·data-bar-track: 고대비 모드(Windows)에서는 바탕색이 지워져 막대가 사라져서 시스템 색으로 다시 칠한다(globals.css) */}
-      <div
-        aria-hidden
-        data-bar-track
-        className="relative h-2 rounded-full bg-surface-2 ring-1 ring-muted/30 ring-inset @max-[15rem]:order-last @max-[15rem]:col-span-2"
-      >
-        {pct != null && (
-          <span
-            data-bar={top ? "" : "dim"}
-            className={`absolute inset-y-0 left-0 rounded-full ${top ? "bg-accent" : "bg-muted/40"}`}
-            style={{ width: `${pct}%` }}
-          />
-        )}
-        {/* 가운데 선(MLB 중간): 각주가 읽으라고 하는 기준선이라 바탕 대비 3:1이 되게 muted 70%로, 파랑 채움 위에서도 보이게
-            채움 위에 카드색 1px 테두리를 둘러 그린다. 점보다는 아래라 점이 가운데 근처면 점이 선을 덮는다.
-            선 폭(w-0.5)이 rem이라 큰 글씨에서 굵어져도 막대 가운데에 오게 제 폭의 반만큼 당긴다(-ml-px로 1px만 당기면 2배에서 4px 선이
-            가운데보다 1px 오른쪽이었다) */}
-        <span data-bar="dim" className="absolute inset-y-[-3px] left-1/2 w-0.5 -translate-x-1/2 bg-muted/70 ring-1 ring-surface" />
-        {pct != null && (
-          <span
-            data-bar={top ? "" : "dim"}
-            className={`absolute top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-surface ${top ? "bg-accent" : "bg-muted"}`}
-            style={{ left: `${pct}%` }}
-          />
-        )}
-      </div>
+      <PositionBar pct={pct} size="md" className="@max-[15rem]:order-last @max-[15rem]:col-span-2" />
       <span className={`whitespace-nowrap text-right text-summary font-extrabold tabular-nums ${top ? "text-accent-ink" : "text-muted"}`}>
         <span className="sr-only">{`MLB ${who} 중 `}</span>
         {verdict}
