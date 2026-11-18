@@ -96,7 +96,8 @@ export default function PillNav({ items, label, className = "", itemClass, idleC
               haptic("select");
               setPicked({ index: i, base: currentIndex });
             }}
-            className={`press tap-target relative rounded-full ${itemClass} ${on ? "text-accent-ink" : idleClass} ${on && !rect ? "bg-accent-soft" : ""}`}
+            // 고대비 모드(Windows)에서는 바탕(파란 알약)이 지워지므로 칸마다 1px 테두리로 알약 모양을 남기고, 고른 칸은 강조색 테두리
+            className={`press tap-target relative rounded-full ${itemClass} ${on ? "text-accent-ink" : idleClass} ${on && !rect ? "bg-accent-soft" : ""} forced-colors:border forced-colors:aria-[current]:border-[Highlight]`}
           >
             <PendingLabel on={on}>{item.label}</PendingLabel>
           </Link>

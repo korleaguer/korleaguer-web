@@ -1,5 +1,6 @@
 "use client"; // 사진이 안 뜰 때(onError) 대신 보여 줄 모양으로 바꿔야 해서 클라이언트 컴포넌트다.
 
+import { smallPhoto } from "@/lib/photo";
 import { teamColor, textColorOn } from "@/lib/teams";
 import { useImageFailed } from "@/lib/useImageFailed";
 
@@ -45,6 +46,8 @@ export default function PlayerAvatar({
   ring = false,
 }: Props) {
   const { failed, ref, onError } = useImageFailed(photoUrl);
+  // 56px 이하 원은 화면 배율에 맞춰 줄인 사진(lib/photo). 96px 선수 페이지 사진은 원본
+  const small = smallPhoto(photoUrl, size);
   // 크기를 고정해 두면 사진이 늦게 떠도 레이아웃이 흔들리지 않는다.
   const box = { width: size, height: size };
   const ringClass = ring ? "border-4 border-surface shadow-[0_1px_4px_rgb(0_0_0/0.14)]" : "";
@@ -71,7 +74,8 @@ export default function PlayerAvatar({
       {/* eslint-disable-next-line @next/next/no-img-element -- 우리가 호스팅하는 작은 사진 */}
       <img
         ref={ref}
-        src={photoUrl}
+        src={small?.src ?? photoUrl}
+        srcSet={small?.srcSet}
         alt={decorative ? "" : `${nameKo} 사진`}
         width={size}
         height={size}

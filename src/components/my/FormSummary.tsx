@@ -1,5 +1,5 @@
 // '내 선수' 카드의 최근 폼 요약 조각(이슈 #13): 상태 배지, 출전 줄·상태 줄, 한 줄 소식, 시즌 합계.
-// 판정('좋음'·'주춤')은 없고 사실만 보인다. 색은 DESIGN.md 신호색(위기 빨강·복귀 초록·이적 보라·활약 주황).
+// 판정('좋음'·'주춤')은 없고 사실만 보인다. 색은 DESIGN.md 신호색(위기 빨간 점·복귀 초록·이적 보라·활약 주황).
 import type { ReactNode } from "react";
 import type { CardStatus, FormFact, MyPlayer, PlayCode, SeasonTotals } from "@/lib/api";
 import { formatEra, formatRate } from "@/lib/format";
@@ -14,16 +14,30 @@ import {
   statusLine,
 } from "./formLabels";
 
+/**
+ * 배지 글자색. 위기(부상자 명단·출장 정지·지명 할당)는 본문 글자이고 빨강은 앞 점(DOT_TONE)에만 쓴다.
+ * 빨간 글자는 '좋은 활약' 주황(한 줄 소식·성적표 '좋은 시즌')과 거의 같은 색이라(색차 9.1) 색만으로 헷갈렸다
+ * (전수조사, 사용자 11-17 '추천대로'). 복귀 초록·콜업 파랑·FA 보라는 주황과 멀어 글자도 그 색이다.
+ */
 const BADGE_TONE: Record<BadgeTone, string> = {
-  danger: "text-danger-fg",
+  danger: "text-foreground",
   success: "text-success-fg",
   accent: "text-accent-ink",
   fa: "text-fa-fg",
   neutral: "text-foreground",
 };
 
+/** 배지 앞 점: 위기는 빨강, 회색 상태(마이너·시즌 끝·국내 복귀)는 흐린 회색, 나머지는 글자와 같은 색 */
+const DOT_TONE: Record<BadgeTone, string> = {
+  danger: "bg-danger-fg",
+  success: "bg-current",
+  accent: "bg-current",
+  fa: "bg-current",
+  neutral: "bg-muted",
+};
+
 /**
- * 무대 왼쪽 위 상태 배지: 흰 알약 + 신호색 점·글자. 메이저에서 평소대로면 그리지 않는다.
+ * 무대 왼쪽 위 상태 배지: 흰 알약 + 신호색 점(위기는 점만 빨강). 메이저에서 평소대로면 그리지 않는다.
  * 보통은 오른쪽 사진(112px + 여백) 자리를 비워 둔다. 무대가 18rem보다 좁으면(큰 글씨) 사진 왼쪽 끝에 조금 걸치더라도
  * 글을 다 보인다(2배에서 'LG 트윈스 복…'처럼 잘렸다, 이슈 #264)
  */
@@ -34,8 +48,33 @@ export function StatusBadge({ status }: { status: CardStatus }) {
     <span
       className={`absolute left-[14px] top-[12px] z-10 inline-flex max-w-[calc(100%-136px)] items-center @max-[18rem]:max-w-[calc(100%-28px)] gap-1.5 rounded-full bg-surface px-2.5 py-0.5 text-badge shadow-[var(--shadow-card)] ${BADGE_TONE[badge.tone]}`}
     >
-      <span aria-hidden className={`size-[7px] shrink-0 rounded-full ${badge.tone === "neutral" ? "bg-muted" : "bg-current"}`} />
+      <span aria-hidden className={`size-[7px] shrink-0 rounded-full ${DOT_TONE[badge.tone]}`} />
       <span className="truncate">{badge.text}</span>
+    </span>
+  );
+}
+
+/**
+ * 무대가 없는 카드의 이름 옆 상태 알약(홈 시즌 성적표). 무대 위 배지(StatusBadge)와 같은 글·점이고, 흰 카드 위라 바탕을 칠한다.
+ * 위기는 빨간 바탕 대신 회색 바탕 + 빨간 점 + 본문 글자다(회색 바탕은 '좋은 시즌' 주황 바탕과 색차 9.7, 빨간 바탕은 5.6)
+ */
+const PILL_TONE: Record<BadgeTone, string> = {
+  danger: "bg-neutral-pill text-foreground",
+  success: "bg-success-bg text-success-fg",
+  accent: "bg-accent-soft text-accent-ink",
+  fa: "bg-fa-bg text-fa-fg",
+  neutral: "bg-neutral-pill text-neutral-pill-fg",
+};
+
+export function StatusPill({ status }: { status: CardStatus }) {
+  const badge = statusBadge(status);
+  if (!badge) return null;
+  return (
+    <span
+      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-0.5 text-badge ${PILL_TONE[badge.tone]}`}
+    >
+      <span aria-hidden className={`size-[7px] shrink-0 rounded-full ${DOT_TONE[badge.tone]}`} />
+      {badge.text}
     </span>
   );
 }
@@ -63,7 +102,12 @@ export function SummaryLines({ entry }: { entry: MyPlayer }) {
         <p className="mt-2 flex items-center gap-2">
           <span aria-hidden className="inline-flex shrink-0 gap-[3px]">
             {play.recent.map((code, i) => (
-              <span key={i} className={`size-[9px] rounded-[2.5px] ${STRIP[code]}`} />
+              <span
+                key={i}
+                // 고대비 모드에서 바탕색이 지워지는 칸(선발·출전)만 시스템 색으로 다시 칠한다(globals.css)
+                data-bar={code === "STARTER" ? "" : code === "PLAYED" ? "dim" : undefined}
+                className={`size-[9px] rounded-[2.5px] ${STRIP[code]}`}
+              />
             ))}
           </span>
           <span className="flex min-w-0 flex-col">
