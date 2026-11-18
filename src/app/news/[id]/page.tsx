@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getNews, type NewsPage } from "@/lib/api";
 import { formatDate, formatTime } from "@/lib/format";
-import { readableLead, splitSentences } from "@/lib/news";
+import { readableLead, splitSentences, titleLang } from "@/lib/news";
 import { newsShareImage, shareMeta } from "@/lib/share";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import ExternalLinkIcon from "@/components/ExternalLinkIcon";
@@ -119,12 +119,13 @@ function Article({ news }: { news: NewsPage }) {
   const kind = summary.length > 0 ? "AI 요약" : body.length > 0 ? "기사 앞부분" : null;
   return (
     <article className="card min-w-0 p-4 sm:p-6">
-      <h1 className="text-article-title">
+      {/* 영어 제목은 화면 낭독기가 영어로 읽게 lang을 단다(번역 전 영어 기사 제목, 원제 줄). 보이는 모양은 그대로다 */}
+      <h1 lang={titleLang(news.titleKo ?? news.title)} className="text-article-title">
         {news.titleKo ?? news.title}
       </h1>
       {news.titleKo && (
         <p className="mt-1.5 text-meta text-muted">
-          <span className="font-semibold">원제</span> {news.title}
+          <span className="font-semibold">원제</span> <span lang={titleLang(news.title)}>{news.title}</span>
         </p>
       )}
       <p className="mt-2 text-meta text-muted tabular-nums">
