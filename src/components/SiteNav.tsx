@@ -7,7 +7,6 @@ const LINKS = [
   { href: "/", label: "홈" },
   { href: "/players", label: "선수" },
   { href: "/news", label: "뉴스" },
-  { href: "/records", label: "기록" },
 ];
 
 /**
@@ -23,7 +22,7 @@ function currentOf(href: string, pathname: string | null) {
 /** 상단 메뉴. pathname이 null이면 현재 메뉴 표시 없이 그린다(주소를 알기 전 자리 표시). 현재 메뉴는 연파랑 알약이 미끄러져 표시한다. */
 export function NavLinks({ pathname }: { pathname: string | null }) {
   return (
-    // 앱 안에서는 숨긴다. 앱 아래 탭(홈·선수·뉴스·기록)이 같은 일을 한다.
+    // 앱 안에서는 숨긴다. 앱 아래 탭(홈·선수·뉴스)이 같은 일을 한다.
     <PillNav
       label="주요 메뉴"
       className="gap-0.5 in-app:hidden sm:gap-1"

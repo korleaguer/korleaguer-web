@@ -13,8 +13,8 @@ import StateNotice from "@/components/StateNotice";
 import { BestRow, groupPassed, LeaderRow, NextRow, PassedRow } from "@/components/records/RecordRows";
 
 /**
- * 화면 제목. 메뉴·아래 탭 이름은 짧게 '기록' 그대로 두고, 화면 제목에서 무슨 기록인지 밝힌다. 사이트 곳곳의 '기록'은
- * 선수 성적(선수별 기록·경기 기록)을 뜻해서 메뉴 이름만으로는 역대 순위 화면인 줄 몰랐다(11-17 UI/UX 전수조사, 사용자 결정 '추천대로')
+ * 화면 제목. 무슨 기록인지 제목에서 밝힌다. 사이트 곳곳의 '기록'은 선수 성적(선수별 기록·경기 기록)을 뜻해서
+ * '기록'이라는 이름만으로는 역대 순위 화면인 줄 몰랐다(11-17 UI/UX 전수조사, 사용자 결정 '추천대로')
  */
 const TITLE = "한국인 메이저리거 역대 기록";
 // <title>: "한국인 메이저리거 역대 기록 · KOR Leaguer" (뒷부분은 layout의 template이 붙인다)
@@ -43,7 +43,8 @@ const PASSED_MIN = 10;
 const NEXT_PLAYERS = 4;
 
 /**
- * 기록 탭(이슈 #244). 아래 탭 '내 선수' 자리에 둔다(11-16·17 개편 결정): 한국인 메이저리거 역대 순위와 지금 선수가
+ * 기록 화면(이슈 #244). 11-19에 위 메뉴·앱 아래 탭에서 뺐다(이슈 #323: 매일 올 화면이 아니라는 판단). 검색 유입과
+ * 옛 앱(4번째 칸이 이 주소를 연다)을 위해 페이지와 주소는 그대로 둔다. 한국인 메이저리거 역대 순위와 지금 선수가
  * 넘은·넘을 기록. 시즌 중엔 '다음에 넘을 기록'이 맨 위(경기마다 줄어든다), 비시즌엔 이번 시즌 결산(넘은 기록)이 맨 위다.
  */
 export default function RecordsPage({ searchParams }: Props) {

@@ -1338,7 +1338,7 @@ function normalizeMy(raw: MyPlayersResponse): MyPlayersResponse {
 
 // ---- 호출 ----
 
-/** 한국인 메이저리거 역대 기록(GET /api/records, 기록 탭). 모두 MLB 정규시즌 기록 */
+/** 한국인 메이저리거 역대 기록(GET /api/records, 기록 화면). 모두 MLB 정규시즌 기록 */
 export interface RecordsResponse {
   dataMode: DataMode;
   season: number;
@@ -1611,7 +1611,7 @@ export async function getMyPlayers(ids: readonly number[], days: number): Promis
   };
 }
 
-/** GET /api/records: 한국인 메이저리거 역대 기록(기록 탭). 옛 api면 notFound */
+/** GET /api/records: 한국인 메이저리거 역대 기록(기록 화면). 옛 api면 notFound */
 export const getRecords = cache(async () => {
   await connection();
   return recordsFromApi();
