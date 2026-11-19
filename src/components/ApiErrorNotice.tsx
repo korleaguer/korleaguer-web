@@ -3,16 +3,14 @@ import type { ApiFailure } from "@/lib/api";
 import ReloadButton from "./ReloadButton";
 import StateNotice, { stateActionClass } from "./StateNotice";
 
-const MESSAGES: Record<ApiFailure, { emoji: string; title: string; detail: string }> = {
+const MESSAGES: Record<ApiFailure, { emoji: string; title: string; detail?: string }> = {
   unreachable: {
     emoji: "📡",
     title: "정보를 불러오지 못했어요",
-    detail: "잠시 뒤 다시 불러와 주세요.",
   },
   badResponse: {
     emoji: "📡",
     title: "정보를 제대로 받지 못했어요",
-    detail: "잠시 뒤 다시 불러와 주세요.",
   },
   notFound: {
     emoji: "🔍",

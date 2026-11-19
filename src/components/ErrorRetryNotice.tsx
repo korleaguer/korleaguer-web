@@ -17,7 +17,6 @@ export default function ErrorRetryNotice({ retry }: { retry: () => void }) {
       level={1}
       emoji="😵"
       title="화면을 보여 주다가 문제가 생겼어요"
-      detail="다시 불러오면 대부분 괜찮아져요."
       action={
         <button
           type="button"
