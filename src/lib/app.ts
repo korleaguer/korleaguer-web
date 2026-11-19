@@ -1,7 +1,7 @@
 // 앱(korleaguer-app, 웹뷰)과 주고받는 도우미. 일반 브라우저에서는 모두 아무 일도 하지 않는다.
 // 앱이 문서를 그리기 전에 넣어 두는 값과 받는 메시지는 앱 저장소 src/lib/site.ts(APP_BOOT_SCRIPT, WebMessage)와 같아야 한다.
 
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore, type RefObject } from "react";
 
 type AppWindow = Window & {
   /** 옛 앱(0.1.x)에는 features가 없다 */
@@ -79,20 +79,38 @@ export function postToApp(message: { type: string } & Record<string, unknown>): 
 let openModals = 0;
 
 /**
- * 이 부품이 그려져 있는 동안 웹 안 창(화면을 덮는 모달: 경기 상세·거론 구단 창)이 열려 있다고 앱에 알린다({type:"modal", open}).
+ * 이 창(<dialog>, 화면을 덮는 모달: 경기 상세·거론 구단 창)이 모달로 열려 있는 동안 앱에 알린다({type:"modal", open}).
+ * 부품이 그려졌는지가 아니라 실제 창에 묶는다(#302 리뷰): 창이 열려 있을 때만 '열림'을 보내고, 창이 닫히거나(close) 지워지면 '닫힘'.
+ * 창을 여는 훅(lib/useModalDialog.ts)이 showModal 다음에 부른다. 창마다 따로 부르지 않는다.
  * 앱은 그동안 아이폰 왼쪽 끝 밀어 닫기와 아래 탭 누름을 막는다. 창이 떠 있는데 뒤 화면이 통째로 닫히거나 탭이 넘어가지 않게
- * (Apple HIG Modality, 11-17 전수조사). 창이 닫히거나 지워지면 닫혔다고 알린다. 창이 겹쳐 열려도 마지막 창이 닫힐 때 한 번만.
- * 앱 밖에서는 아무 일도 하지 않고, 이 메시지를 모르는 옛 앱은 버린다(korleaguer-app src/lib/site.ts의 WebMessage)
+ * (Apple HIG Modality, 11-17 전수조사). 창이 겹쳐 열려도 첫 창이 열릴 때와 마지막 창이 닫힐 때 한 번씩만 보낸다.
+ * 앱 밖에서는 아무 일도 하지 않고, 이 메시지를 모르는 옛 앱은 버린다(korleaguer-app src/lib/site.ts의 WebMessage).
+ * 앱 시작 스크립트도 새 문서마다 dialog[open]으로 한 번 보내고 안드로이드는 열고 닫힘도 지켜보지만, 앱은 받은 값을 그대로 쓰고
+ * 둘 다 같은 창 상태를 따라가서 겹쳐 와도 같다
  */
-export function useAppModal(): void {
+export function useAppModal(dialogRef: RefObject<HTMLDialogElement | null>): void {
   useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog?.open) return;
     openModals += 1;
     if (openModals === 1) postToApp({ type: "modal", open: true });
-    return () => {
+    let closed = false;
+    const release = () => {
+      if (closed) return;
+      closed = true;
       openModals -= 1;
       if (openModals === 0) postToApp({ type: "modal", open: false });
     };
-  }, []);
+    // 지워지기 전에 창이 먼저 닫혀도 그때 알린다. 닫았다 다시 연 창(개발 모드 StrictMode)에 늦게 도착한 close는 창이 열려 있어 거른다
+    const onClose = () => {
+      if (!dialog.open) release();
+    };
+    dialog.addEventListener("close", onClose);
+    return () => {
+      dialog.removeEventListener("close", onClose);
+      release();
+    };
+  }, [dialogRef]);
 }
 
 /**

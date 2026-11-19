@@ -5,7 +5,8 @@ import { useCallback, useEffect, useId, useRef, useState, type RefObject } from 
 import type { GameDetail, GameLine, GamePlay, Role } from "@/lib/api";
 import { lineOf, type CalendarDay, type LogGame } from "@/lib/gameLog";
 import { formatDate, formatLineup, formatSummary, formatTime } from "@/lib/format";
-import { haptic, useAppModal } from "@/lib/app";
+import { haptic } from "@/lib/app";
+import { useModalDialog } from "@/lib/useModalDialog";
 import { useSheetDrag } from "@/lib/useSheetDrag";
 import Highlights from "@/components/Highlights";
 import LoadingDots from "@/components/LoadingDots";
@@ -110,21 +111,9 @@ export default function GameDetailSheet({
   const panelRef = useRef<HTMLDivElement>(null);
 
 
-  // 열린 동안 뒤 페이지가 스크롤되지 않게 하고, 모달로 연다(포커스가 창 안에 머문다)
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-    if (!dialog.open) dialog.showModal();
-    const root = document.documentElement;
-    const before = root.style.overflow;
-    root.style.overflow = "hidden";
-    return () => {
-      root.style.overflow = before;
-      if (dialog.open) dialog.close();
-    };
-  }, []);
-  // 앱 안이면 창이 떠 있는 동안 앱이 아이폰 왼쪽 끝 밀어 닫기와 아래 탭 누름을 막는다(창 대신 선수 화면이 닫히지 않게)
-  useAppModal();
+  // 모달로 열고(포커스가 창 안에 머문다) 열린 동안 뒤 페이지 스크롤을 잠근다. 앱 안이면 창이 떠 있는 동안 앱이 아이폰 왼쪽 끝
+  // 밀어 닫기와 아래 탭 누름을 막는다(창 대신 선수 화면이 닫히지 않게, 거론 구단 창과 같은 훅)
+  useModalDialog(dialogRef);
 
   // 아래로 끌어 닫기(휴대폰 손잡이·머리 줄). 놓으면 미끄러져 닫히거나 제자리로 돌아온다(거론 구단 창과 같은 훅).
   // 다른 닫기도 훅의 close로 부른다: 미끄러지는 중에 닫으면 훅이 타이머를 치워 뒤로 가기가 한 번만 일어난다

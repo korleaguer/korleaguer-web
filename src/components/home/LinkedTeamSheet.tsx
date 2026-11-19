@@ -1,7 +1,7 @@
 "use client"; // 창을 열고 닫고(모달), 아래로 끌어 닫아야 해서 클라이언트 컴포넌트다.
 
 import Link from "next/link";
-import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
+import { useRef, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import type { LinkedArticle, LinkedTeam } from "@/lib/api";
 import { formatDate, kstDayKey } from "@/lib/format";
@@ -9,8 +9,8 @@ import { titleLang } from "@/lib/news";
 import TeamMark from "@/components/TeamMark";
 import NewsThumb from "@/components/news/NewsThumb";
 import Words, { WordGroup } from "@/components/Words";
-import { useAppModal } from "@/lib/app";
 import { teamColor, teamLogoUrl } from "@/lib/teams";
+import { useModalDialog } from "@/lib/useModalDialog";
 import { useSheetDrag } from "@/lib/useSheetDrag";
 
 /** 날짜 막대는 기사가 이만큼 이상일 때만(1~2건은 막대가 정보를 더하지 않는다) */
@@ -41,21 +41,9 @@ export default function LinkedTeamSheet({
   const panelRef = useRef<HTMLDivElement>(null);
   const articles = team.articles ?? [];
 
-  // 열린 동안 뒤 페이지가 스크롤되지 않게 하고, 모달로 연다(포커스가 창 안에 머문다)
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-    if (!dialog.open) dialog.showModal();
-    const root = document.documentElement;
-    const before = root.style.overflow;
-    root.style.overflow = "hidden";
-    return () => {
-      root.style.overflow = before;
-      if (dialog.open) dialog.close();
-    };
-  }, []);
-  // 앱 안이면 창이 떠 있는 동안 앱이 아이폰 왼쪽 끝 밀어 닫기와 아래 탭 누름을 막는다(경기 상세 창과 같다)
-  useAppModal();
+  // 모달로 열고(포커스가 창 안에 머문다) 열린 동안 뒤 페이지 스크롤을 잠근다. 앱 안이면 창이 떠 있는 동안 앱이 아이폰 왼쪽 끝
+  // 밀어 닫기와 아래 탭 누름을 막는다(경기 상세 창과 같은 훅)
+  useModalDialog(dialogRef);
 
   // 아래로 끌어 닫기(휴대폰 손잡이·머리 줄). 놓으면 미끄러져 닫히거나 제자리로 돌아온다(경기 상세 창과 같은 훅).
   // 다른 닫기도 훅의 close로 부른다: 미끄러지는 중에 닫으면 훅이 타이머를 치워 뒤로 가기가 한 번만 일어난다
