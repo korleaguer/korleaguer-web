@@ -3,9 +3,11 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import type { NewsListItem } from "@/lib/api";
 import { loadMoreNews } from "@/app/news/actions";
+import { callAction, type ActionFailure } from "@/lib/callAction";
 import { formatDate, kstDayKey, kstPrevDayKey } from "@/lib/format";
 import { isNewArticle, type SeenMap } from "@/lib/newsSeen";
 import LoadingDots from "@/components/LoadingDots";
+import { useReload } from "@/components/ReloadButton";
 import NewsTitleList from "@/components/news/NewsTitleList";
 
 /**
@@ -47,20 +49,24 @@ export default function NewsFeed({
   // 다시 받으면(router.refresh) 새 값이 오는데, 그대로 쓰면 보던 줄의 '새'가 한꺼번에 꺼진다
   const [seenAtOpen] = useState(seen);
   const [next, setNext] = useState(firstNext);
-  const [failed, setFailed] = useState(false);
+  // 마지막으로 받지 못한 까닭. stale(이 화면이 옛 배포)이면 다시 해도 같아서 같은 버튼이 '다시 불러오기'(페이지를 새로 받기)가 된다
+  const [failure, setFailure] = useState<ActionFailure | null>(null);
+  const [reloading, reload] = useReload();
   const [pending, startTransition] = useTransition();
   const listRef = useRef<HTMLDivElement>(null);
   const moreRef = useRef<HTMLButtonElement>(null);
-  // 마지막 쪽을 받으면 '기사 더 보기'가 사라져 그 버튼에 있던 포커스가 갈 곳을 잃는다(키보드·화면 낭독기가 문서 처음으로
-  // 돌아갔다). 그때 새로 붙은 첫 기사로 옮기려고, 그 줄 자리를 적어 둔다(다음 그림 뒤에 옮긴다)
+  // '기사 더 보기'로 받은 기사는 버튼 위(앞)에 붙는다. 포커스가 버튼에 남으면 키보드·화면 낭독기는 다음으로 가면서 새 기사를
+  // 건너뛰었고(전수조사), 마지막 쪽이면 버튼이 사라져 문서 처음으로 돌아갔다. 그래서 받을 때마다 새로 붙은 첫 기사로 옮긴다
+  // (ShowMore가 펼친 뒤 첫 링크로 옮기는 것과 같은 규칙). 그 줄 자리를 적어 두고 다음 그림 뒤에 옮긴다
   const focusRowAt = useRef<number | null>(null);
   useEffect(() => {
     const at = focusRowAt.current;
     if (at === null) return;
     focusRowAt.current = null;
-    // 줄마다 기사 링크가 하나다(링크가 줄 전체다). 새로 붙은 줄이 없으면(마지막 쪽이 비었으면) 마지막 줄로
+    // 줄마다 기사 링크가 하나다(링크가 줄 전체다). 새로 붙은 줄이 없으면(받은 기사가 모두 이미 보이던 것이면) 버튼이 남았으면
+    // 포커스도 버튼에 그대로 두고, 마지막 쪽이라 버튼이 사라졌으면 마지막 줄로
     const links = listRef.current?.querySelectorAll<HTMLElement>("li > a") ?? [];
-    const row = links[at] ?? links[links.length - 1];
+    const row = links[at] ?? (moreRef.current ? null : links[links.length - 1]);
     if (!row) return;
     // 화면은 그 줄이 다 보일 만큼만 옮긴다(이미 다 보이면 그대로). 버튼이 화면 아래 끝에 있었으면 새 첫 기사가 화면 밑으로
     // 잘려 포커스가 어디로 갔는지 보이지 않았다. 스크롤을 포커스에 맡기면 브라우저에 따라 그 줄을 화면 가운데까지 끌어올려
@@ -72,13 +78,17 @@ export default function NewsFeed({
   function load() {
     if (!next || pending) return;
     startTransition(async () => {
-      const result = await loadMoreNews(player, next, query);
-      if (!result.ok) {
-        setFailed(true);
+      // 서버까지 닿지 못하면(연결 끊김) 서버 함수가 오류를 던진다. 그대로 두면 화면 전체가 오류 화면으로 바뀌어서 값으로 받고
+      // (callAction), api 실패와 같이 '기사를 더 불러오지 못했어요' + '다시 시도'로 둔다(전수조사 L324와 같은 단계적 저하)
+      const called = await callAction(() => loadMoreNews(player, next, query));
+      if (!called.ok || !called.value.ok) {
+        setFailure(called.ok ? "failed" : called.failure);
         return;
       }
-      setFailed(false);
-      const focusNew = result.next === null && document.activeElement === moreRef.current;
+      const result = called.value;
+      setFailure(null);
+      // 마우스로 누른 사파리처럼 버튼에 포커스가 없었으면 옮기지 않는다(그동안 다른 곳으로 옮겼어도 그대로 둔다)
+      const focusNew = document.activeElement === moreRef.current;
       setRows((shown) => {
         // 새로 붙는 첫 줄 자리는 받은 쪽을 붙일 때의 줄 수다. 받기 전에 세어 두면, 받는 사이 앱 복귀 새로 고침이 맨 위에
         // 새 기사를 더했을 때 그만큼 앞의 옛 기사로 포커스가 갔다(리뷰 지적)
@@ -112,21 +122,24 @@ export default function NewsFeed({
           </div>
         </section>
       ))}
-      {failed && (
+      {failure && (
         <p role="alert" className="text-center text-meta text-muted">
-          기사를 더 불러오지 못했어요
+          {failure === "stale" ? "새 버전이 나와 기사를 더 불러오지 못했어요" : "기사를 더 불러오지 못했어요"}
         </p>
       )}
+      {/* 옛 배포면 버튼을 바꿔 끼우지 않고 같은 버튼의 할 일만 바꾼다(바꿔 끼우면 누른 버튼에 있던 포커스가 사라진다) */}
       {next && (
         <button
           ref={moreRef}
           type="button"
-          onClick={load}
-          aria-busy={pending}
+          onClick={failure === "stale" ? reload : load}
+          aria-busy={pending || reloading}
           className="card press-soft flex min-h-12 w-full cursor-pointer items-center justify-center gap-1 text-label text-accent-ink"
         >
-          <LoadingDots loading={pending}>{failed ? "다시 시도" : "기사 더 보기"}</LoadingDots>
-          {pending && <span className="sr-only"> 불러오는 중</span>}
+          <LoadingDots loading={pending || reloading}>
+            {failure === "stale" ? "다시 불러오기" : failure ? "다시 시도" : "기사 더 보기"}
+          </LoadingDots>
+          {(pending || reloading) && <span className="sr-only"> 불러오는 중</span>}
         </button>
       )}
     </div>
