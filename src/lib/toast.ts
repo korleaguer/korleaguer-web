@@ -5,7 +5,19 @@ export interface ToastAction {
   label: string;
   /** 누르면 갈 주소(우리 사이트 안). 앱 안에서는 앱이 그 탭·화면을 연다 */
   href?: string;
-  onClick?: () => void;
+  /**
+   * 누르면 할 일. 알림은 누르면 사라져서 그 버튼에 있던 포커스도 사라진다(문서 처음으로 돌아간 셈이라 키보드·화면 낭독기가
+   * 자리를 잃었다). press.focused면 할 일이 닿는 곳(되돌린 별 등)으로 포커스를 옮겨 준다
+   */
+  onClick?: (press: ToastPress) => void;
+}
+
+/** 알림 버튼을 누른 방식 */
+export interface ToastPress {
+  /** 버튼이 포커스를 가진 채 눌렸다(키보드, 크롬의 마우스 누름). 사파리·iOS는 마우스·손가락으로 누른 버튼에 포커스를 주지 않는다 */
+  focused: boolean;
+  /** 키보드로 눌렀다(click의 detail 0). 그때만 포커스를 옮긴 곳이 보이게 화면을 움직인다 */
+  keyboard: boolean;
 }
 
 export interface ToastItem {
@@ -14,6 +26,11 @@ export interface ToastItem {
   /** success: 초록 체크, error: 빨간 느낌표, info: 아이콘 없음 */
   tone: "success" | "error" | "info";
   action?: ToastAction;
+  /**
+   * 이 알림을 띄운 곳(예: 'my-order', 'my-player:12'). 그곳이 다시 저장하거나 사라지면 이 알림을 내린다(dismissToastOf).
+   * '다시 시도'는 실패한 때의 할 일을 들고 있어서, 그사이 다시 하고 나서 누르면 방금 한 것을 덮었다(PR #301 리뷰)
+   */
+  owner?: string;
 }
 
 let current: ToastItem | null = null;
@@ -24,15 +41,27 @@ function emit() {
   for (const listener of listeners) listener();
 }
 
-/** 알림 띠를 띄운다. 이미 떠 있으면 바꾼다 */
-export function toast(message: string, options: { tone?: ToastItem["tone"]; action?: ToastAction } = {}): void {
-  current = { id: nextId++, message, tone: options.tone ?? "info", action: options.action };
+/** 알림 띠를 띄운다. 이미 떠 있으면 바꾼다. 띄운 알림 번호를 돌려준다(dismissToast로 그 알림만 내릴 때 쓴다) */
+export function toast(
+  message: string,
+  options: { tone?: ToastItem["tone"]; action?: ToastAction; owner?: string } = {},
+): number {
+  const id = nextId++;
+  current = { id, message, tone: options.tone ?? "info", action: options.action, owner: options.owner };
   emit();
+  return id;
 }
 
 /** 이 알림이 아직 떠 있으면 내린다(시간이 다 됐거나 밀어 치웠을 때) */
 export function dismissToast(id: number): void {
   if (current?.id !== id) return;
+  current = null;
+  emit();
+}
+
+/** owner가 띄운 알림이 아직 떠 있으면 내린다. 다른 곳의 새 알림이 이미 바꿨으면 그대로 둔다 */
+export function dismissToastOf(owner: string): void {
+  if (current?.owner !== owner) return;
   current = null;
   emit();
 }

@@ -35,15 +35,23 @@ const bannerActionClass =
   "press tap-target inline-flex items-center rounded-full bg-surface px-3.5 py-1.5 text-label text-foreground shadow-[var(--shadow-card)] transition duration-150 hover:shadow-[var(--shadow-card-hover)]";
 
 /**
- * 시즌 기록(홈 api)을 받지 못했을 때 맨 위 띠. 선수 목록은 오류 화면 대신 이 띠와 함께 카드를 먼저 그린다(11-17 전수조사).
- * 카드의 기록 칸은 비워 두므로 왜 비었는지 여기서 한 번만 말한다.
+ * 기록만 받지 못했을 때 띠. 받은 것은 오류 화면으로 덮지 않고 그리고, 빈 자리가 왜 비었는지 여기서 한 번만 말한다(11-17 전수조사).
+ * - 선수 목록(기본값): 시즌 기록(홈 api)을 못 받으면 맨 위에 이 띠, 그 아래 기록 칸 없는 카드
+ * - 내 선수: 카드 기록(/api/my)을 못 받으면 제목·'선수 고르기' 아래 카드 자리에 '내 선수 기록을 불러오지 못했어요' 한 줄(설명 없음)
  * 예전 오류 화면처럼 '다시 불러오기'를 둔다. 앱(웹뷰)에는 주소창·새로고침 버튼이 없어서(아이폰만 당겨서 새로고침) 글로만
  * '다시 불러와 주세요'라고 하면 할 방법이 없었다(리뷰 지적). 버튼이 그 말을 하므로 설명 줄에서는 뺀다(같은 말 두 번 금지)
  */
-export function StatsFailedBanner() {
+export function StatsFailedBanner({
+  title = "시즌 기록을 불러오지 못했어요",
+  detail = "선수 카드만 먼저 보여 드려요.",
+}: {
+  title?: string;
+  /** 제목 아래 설명. null이면 제목 한 줄만 */
+  detail?: string | null;
+}) {
   return (
-    <Banner mark="안내" title="시즌 기록을 불러오지 못했어요" action={<ReloadButton className={bannerActionClass} />}>
-      선수 카드만 먼저 보여 드려요.
+    <Banner mark="안내" title={title} action={<ReloadButton className={bannerActionClass} />}>
+      {detail}
     </Banner>
   );
 }
@@ -59,7 +67,8 @@ function Banner({
 }: {
   mark: string;
   title: string;
-  children: ReactNode;
+  /** 설명 한 줄. 없으면 제목만 */
+  children?: ReactNode;
   action?: ReactNode;
 }) {
   return (
@@ -75,7 +84,7 @@ function Banner({
       </span>
       <div className="min-w-0 flex-1 basis-[11rem]">
         <p className="text-summary">{title}</p>
-        <p className="mt-0.5 text-meta opacity-90">{children}</p>
+        {children != null && <p className="mt-0.5 text-meta opacity-90">{children}</p>}
         {action && <div className="mt-2.5">{action}</div>}
       </div>
     </div>
