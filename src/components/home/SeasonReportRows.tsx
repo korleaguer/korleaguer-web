@@ -386,7 +386,7 @@ function ReportSheet({
       onClick={(e) => {
         if (e.target === dialogRef.current) close();
       }}
-      className="fixed inset-0 m-0 h-full max-h-none w-full max-w-none border-0 bg-black/45 p-0 text-foreground open:flex open:items-end open:justify-center sm:open:items-center"
+      className="fixed inset-0 m-0 h-full max-h-none w-full max-w-none border-0 bg-black/40 p-0 text-foreground open:flex open:items-end open:justify-center sm:open:items-center"
     >
       <div
         ref={panelRef}
