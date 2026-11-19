@@ -4,7 +4,9 @@ import { formatEra } from "@/lib/format";
 
 /** 그 달 리그 평균 대비 값(100 = 평균, 높을수록 잘함). 타자 wRC+, 투수 ERA+ */
 function plus(m: SeasonMonth, pitcher: boolean): number | null {
-  return (pitcher ? m.eraPlus : m.wrcPlus) ?? null;
+  const v = pitcher ? m.eraPlus : m.wrcPlus;
+  // 서버가 소수로 줘도 이름표·낭독은 정수로(이름표 폭 계산이 정수 세 자리를 기준으로 한다)
+  return v == null ? null : Math.round(v);
 }
 
 /** 선에 올리는 달: 메이저·마이너에서 뛰어 값이 있는 달 */
@@ -84,7 +86,7 @@ const SMALL: Frame = { w: 84, h: 30, padT: 3, padB: 3, padL: 2, padR: 2 };
  * 고대비 모드에서는 globals.css가 data-line·data-area로 시스템 색으로 다시 칠한다
  */
 const UP = "var(--accent)";
-const DOWN = "color-mix(in srgb, var(--muted) 62%, var(--surface))";
+const DOWN = "color-mix(in srgb, var(--muted) 70%, var(--surface))";
 /** 평균(100) 점선: 흐린 글자색 그대로(라이트 대비 6:1) */
 const AVERAGE = "var(--muted)";
 
@@ -170,8 +172,12 @@ function Runs({
                 <path data-area d={area} fill={`url(#${id}h)`} clipPath={`url(#${id}b)`} />
               </>
             )}
-            <path data-line d={line} stroke={UP} clipPath={`url(#${id}a)`} {...common} />
-            <path data-line="dim" d={line} stroke={DOWN} clipPath={`url(#${id}b)`} {...common} />
+            {r.length > 1 && (
+              <>
+                <path data-line d={line} stroke={UP} clipPath={`url(#${id}a)`} {...common} />
+                <path data-line="dim" d={line} stroke={DOWN} clipPath={`url(#${id}b)`} {...common} />
+              </>
+            )}
           </g>
         );
       })}
@@ -344,20 +350,20 @@ export default function MonthLine({ months, pitcher }: { months: SeasonMonth[]; 
             />
           </>
         )}
-        {/* 기록 없는 달: '부상'(본문 글자색 + 빨간 짧은 줄) · 'FA' */}
+        {/* 기록 없는 달: '부상'(본문 글자색 + 빨간 짧은 줄) · 'FA'. 표본이 모자라 값이 없는 달·기록 없는 달은 흐린 '–'(이유 없이 빈칸으로 두지 않는다).
+            글자 폭(em)만큼 양 끝에서 조여 첫 달·마지막 달에서도 그림 밖으로 나가지 않게 한다 */}
         {months.map((m, i) => {
           if (played(m, pitcher)) return null;
-          const t = m.kind === "INJURED" ? "부상" : m.kind === "FREE_AGENT" ? "FA" : null;
+          const t = m.kind === "INJURED" ? "부상" : m.kind === "FREE_AGENT" ? "FA" : "–";
+          const w = t === "부상" ? 2.1 : t === "FA" ? 1.6 : 0.8;
           return (
             <span key={m.month}>
-              {t && (
-                <span
-                  className="month-line-label absolute -translate-x-1/2 -translate-y-full text-foreground"
-                  style={{ left: px(x(i)), top: `calc(${py(bottom - 8 + 6)})` }}
-                >
-                  {t}
-                </span>
-              )}
+              <span
+                className={`month-line-label absolute -translate-y-full ${t === "–" ? "text-muted" : "text-foreground"}`}
+                style={{ left: `clamp(0px, calc(${px(x(i))} - ${w / 2}em), calc(100% - ${w}em))`, top: py(bottom - 2) }}
+              >
+                {t}
+              </span>
               {m.kind === "INJURED" && (
                 <span
                   data-injury

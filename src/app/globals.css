@@ -549,6 +549,7 @@
     [data-dot] {
       forced-color-adjust: none;
       background: CanvasText !important;
+      border-color: Canvas !important;
       fill: CanvasText !important;
     }
 
