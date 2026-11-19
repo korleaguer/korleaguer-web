@@ -103,9 +103,11 @@ export default function LinkedTeams({
       setOpenTeam(team);
     };
     sync();
-    window.addEventListener("popstate", sync);
+    // 캡처 단계: Next의 popstate 처리가 먼저 돌며 이 칸을 다시 그리면, 아래 '표시 다시 붙이기' 효과가 ownsEntryRef가 켜진 채로
+    // 돌아온 앞 기록에 창 표시를 붙일 수 있다(성적표 창 #325에서 실제로 겪음). window에서는 캡처 listener가 먼저 불린다
+    window.addEventListener("popstate", sync, { capture: true });
     return () => {
-      window.removeEventListener("popstate", sync);
+      window.removeEventListener("popstate", sync, { capture: true });
       // 다른 화면으로 가며 이 칸이 지워지거나 숨겨지면(Next는 떠난 화면을 숨겨 두었다가 되살린다) 창을 닫아 둔다.
       // 뒤로 가기로 돌아오면 위 sync가 기록대로 다시 연다. 이때 닫히는 창은 포커스를 돌려주지 않는다
       // ('홈' 메뉴로 돌아왔는데 창이 깜빡이거나 페이지가 알약 쪽으로 스크롤되지 않게, 이슈 #256)

@@ -111,6 +111,8 @@ const RowList = memo(function RowList({ rows }: { rows: ReportRow[] }) {
   const shownIdRef = useRef<number | null>(null);
   /** 효과 안 listener가 늘 최신 줄·폭으로 맞추게 하는 함수(효과를 줄이 바뀔 때마다 다시 달면 창이 닫혔다 열린다) */
   const syncRef = useRef<() => void>(() => {});
+  /** 닫으려고 뒤로 가기를 불렀고 아직 popstate가 오지 않았다 */
+  const closingRef = useRef(false);
 
   const selectedId = picked ?? firstOrder[0];
   const selected = shown.find((r) => r.id === selectedId) ?? shown[0];
@@ -122,6 +124,7 @@ const RowList = memo(function RowList({ rows }: { rows: ReportRow[] }) {
   // 창을 닫을 때 포커스를 돌려줄 알약이 숨어 있지 않게 하는 일이다(LinkedTeams)
   useEffect(() => {
     syncRef.current = () => {
+      closingRef.current = false;
       const marked = reportInHistory(window.history.state);
       const linkedRow = marked === null ? shown.find((r) => r.sheetKey && linkedSheetOpen(r.sheetKey)) : undefined;
       const id = marked ?? linkedRow?.id ?? null;
@@ -148,8 +151,20 @@ const RowList = memo(function RowList({ rows }: { rows: ReportRow[] }) {
       setSheetId(null);
     };
   }, []);
-  // 폭이 바뀌면(휴대폰 ↔ PC) 기록에 맞춰 다시 맞춘다
+  // 폭이 바뀌면(휴대폰 ↔ PC) 기록에 맞춰 다시 맞춘다. 창이 열린 채 넓어지면(태블릿 돌리기) 창은 사라지는데 쌓은 기록이 남아
+  // 뒤로 가기를 두 번 눌러야 했다(리뷰 지적). 그 선수를 오른쪽 칸에 두고 창을 닫고 기록을 거둔다. 창이 열려 있는지는
+  // shownIdRef(열린 동안 그 선수, 닫히면 null)로 본다
   useEffect(() => {
+    const openId = shownIdRef.current;
+    if (wide && openId !== null) {
+      setPicked(openId);
+      setSheetId(null);
+      if (ownsEntryRef.current) {
+        ownsEntryRef.current = false;
+        window.history.back();
+      }
+      return;
+    }
     syncRef.current();
   }, [wide]);
 
@@ -189,9 +204,13 @@ const RowList = memo(function RowList({ rows }: { rows: ReportRow[] }) {
     setSheetId(id);
   };
   // 닫기·바깥 누르기·Esc·끌어 내리기: 쌓은 기록이면 뒤로 가기로 지우고(popstate가 창을 닫는다), 아니면 바로 닫는다
+  // 닫기 버튼과 바깥 누르기·Esc가 popstate 전에 겹쳐 들어와도 뒤로 가기는 한 번만(두 번이면 홈을 떠난다). popstate가 오면 푼다
   const closeSheet = () => {
-    if (ownsEntryRef.current) window.history.back();
-    else setSheetId(null);
+    if (closingRef.current) return;
+    if (ownsEntryRef.current) {
+      closingRef.current = true;
+      window.history.back();
+    } else setSheetId(null);
   };
 
   return (
@@ -323,6 +342,14 @@ function ReportSheet({
 
   useModalDialog(dialogRef);
   const { onDragStart, onDragMove, onDragEnd, close } = useSheetDrag(panelRef, onClose);
+  const navRef = useRef<HTMLElement>(null);
+
+  // 끝 선수로 넘기면 방금 누른 '다음'(첫 선수면 '이전') 버튼이 없어져 포커스가 창 밖(body)으로 떨어진다. 남은 넘기기 버튼으로 옮긴다
+  useEffect(() => {
+    const focused = document.activeElement;
+    if (focused && focused !== document.body) return;
+    navRef.current?.querySelector<HTMLElement>("button")?.focus();
+  }, [index]);
 
   const onTouchStart = (e: ReactTouchEvent) => {
     const t = e.touches[0];
@@ -368,7 +395,8 @@ function ReportSheet({
           <div aria-hidden className="mx-auto mt-2 h-1.5 w-10 rounded-full bg-line sm:hidden" />
           <div className="flex items-center gap-3 pb-1 pl-4 pr-2 pt-3 sm:pt-4">
             <PlayerAvatar size={44} nameKo={row.photo.nameKo} photoUrl={row.photo.photoUrl} teamAbbr={row.photo.teamAbbr} eager />
-            <div id={titleId} className="min-w-0 flex-1">
+            {/* 창 안에서 다른 선수로 넘기면 화면 낭독기가 새 선수를 읽게 한다(제목만 바뀌고 알림이 없었다) */}
+            <div id={titleId} aria-live="polite" className="min-w-0 flex-1">
               {row.head}
             </div>
             <button
@@ -389,6 +417,7 @@ function ReportSheet({
         </div>
         {/* 바닥: 목록 순서대로 이전·다음. 끝에서는 그쪽 버튼을 비워 둔다. 아이폰 앱은 아래 탭 막대가 창 위에 떠 있어 그 높이만큼 더 띄운다(globals.css) */}
         <nav
+          ref={navRef}
           aria-label="선수 넘기기"
           className="grid shrink-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-2 border-t border-line px-2 pb-[calc(env(safe-area-inset-bottom)+0.25rem)] pt-1 in-ios-app:pb-[calc(var(--app-tab-bar)+0.25rem)]"
         >
