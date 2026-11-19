@@ -25,6 +25,10 @@ interface Pt {
   x: number;
   y: number;
   v: number;
+  /** 경기 적은 달(서버 few): 값이 흔들리기 쉬워 곡선을 점선으로 그리고 세로 범위·최고·최저에서 뺀다 */
+  few: boolean;
+  /** 값이 세로 범위를 넘어 점을 위(-1)·아래(1) 끝에 붙였나(0 = 안 넘음) */
+  edge: -1 | 0 | 1;
 }
 
 /**
@@ -65,6 +69,23 @@ function smoothPath(p: Pt[]): string {
 }
 
 /**
+ * 같은 곡선을 달 사이 구간마다 나눠 경기 적은 달로 들어가고 나오는 구간(dashed)과 아닌 구간으로 묶는다.
+ * 접선은 구간 전체로 한 번 구하니 모양은 smoothPath와 같다
+ */
+function smoothGroups(p: Pt[]): { d: string; dashed: boolean }[] {
+  const segs = smoothPath(p).split(" C").slice(1);
+  const f = (n: number) => n.toFixed(1);
+  const groups: { d: string; dashed: boolean }[] = [];
+  segs.forEach((c, i) => {
+    const dashed = p[i].few || p[i + 1].few;
+    const last = groups[groups.length - 1];
+    if (last && last.dashed === dashed) last.d += ` C${c}`;
+    else groups.push({ d: `M${f(p[i].x)},${f(p[i].y)} C${c}`, dashed });
+  });
+  return groups;
+}
+
+/**
  * 그래프 둘레 여백(viewBox 단위). 큰 그래프는 위에 단계 이름 줄(14) + '최고' 이름표, 아래에 '최저'·달 이름 자리.
  * 첫 달이 마이너이고 최고 달이면 두 글자가 같은 자리라, 단계 이름은 맨 윗줄에 따로 둔다(시안은 26이었다)
  */
@@ -96,7 +117,11 @@ const AVERAGE = "var(--muted)";
  */
 function layout(months: SeasonMonth[], pitcher: boolean, f: Frame) {
   const n = months.length;
-  const vals = months.filter((m) => played(m, pitcher)).map((m) => plus(m, pitcher) as number);
+  // 세로 범위는 경기 적은 달을 빼고 정한다(4경기 wRC+ 249 하나가 범위를 늘려 나머지 달이 납작해지지 않게).
+  // 경기 적지 않은 달이 하나도 없으면 모든 달로 정한다
+  const playedMonths = months.filter((m) => played(m, pitcher));
+  const solid = playedMonths.filter((m) => !m.few);
+  const vals = (solid.length > 0 ? solid : playedMonths).map((m) => plus(m, pitcher) as number);
   let lo = Math.min(...vals, 100);
   let hi = Math.max(...vals, 100);
   const span = hi - lo || 40;
@@ -114,7 +139,10 @@ function layout(months: SeasonMonth[], pitcher: boolean, f: Frame) {
       run = [];
       return;
     }
-    run.push({ i, x: x(i), y: y(v), v });
+    // 범위를 넘는 경기 적은 달은 점을 그래프 위·아래 끝에 붙인다(곡선도 그 점까지)
+    const raw = y(v);
+    const yy = Math.min(bottom, Math.max(f.padT, raw));
+    run.push({ i, x: x(i), y: yy, v, few: m.few === true, edge: raw < f.padT ? -1 : raw > bottom ? 1 : 0 });
   });
   if (run.length) runs.push(run);
   return { runs, x, y, y100: y(100), bottom };
@@ -172,12 +200,17 @@ function Runs({
                 <path data-area d={area} fill={`url(#${id}h)`} clipPath={`url(#${id}b)`} />
               </>
             )}
-            {r.length > 1 && (
-              <>
-                <path data-line d={line} stroke={UP} clipPath={`url(#${id}a)`} {...common} />
-                <path data-line="dim" d={line} stroke={DOWN} clipPath={`url(#${id}b)`} {...common} />
-              </>
-            )}
+            {r.length > 1 &&
+              smoothGroups(r).map((g, gi) => {
+                // 점선: 둥근 끝 + 아주 짧은 선이라 점이 된다. 굵기는 그대로, 간격만 짧게
+                const dash = g.dashed ? { strokeDasharray: `0.1 ${(lineWidth * 1.8).toFixed(1)}` } : {};
+                return (
+                  <g key={gi}>
+                    <path data-line d={g.d} stroke={UP} clipPath={`url(#${id}a)`} {...common} {...dash} />
+                    <path data-line="dim" d={g.d} stroke={DOWN} clipPath={`url(#${id}b)`} {...common} {...dash} />
+                  </g>
+                );
+              })}
           </g>
         );
       })}
@@ -233,7 +266,9 @@ function minorBands(months: SeasonMonth[]): { from: number; to: number; level: s
  *   세로 범위는 선수마다 자동이라 점선 위아래 어디에 몰려도 달끼리 구분된다. 기록 없는 달(부상·FA·없음)에서는 선을 끊고,
  *   앞뒤가 끊긴 외딴 한 달은 점 하나로 둔다.
  * - 숫자는 달마다 쓰지 않고 가장 높은 달·낮은 달에 '최고 N'·'최저 N'만, 마지막 달 점만 강조한다(토스증권 차트 방식).
- *   경기 적은 달(few)을 옅게 하던 표시와 200 넘는 달의 꺾임 표시는 곡선에서는 뜻이 없어 없앴다.
+ *   200 넘는 달의 꺾임 표시는 곡선에서는 뜻이 없어 없앴다. 경기 적은 달(서버 few)은 세로 범위·최고·최저에서 빼고
+ *   곡선을 점선으로 그린다(4경기 wRC+ 249가 '최고'가 되고 범위를 늘려 나머지 달이 납작해지지 않게, 이슈 #349). 범위를 넘으면
+ *   점을 끝에 붙이고 ▲▼ + 'N경기' 글자.
  * - 마이너 달은 옅은 둥근 띠와 단계 이름('트리플A')으로 어디서 뛰었는지 보이고(색 대신 띠라 메이저 선과 한 선으로 이어진다),
  *   부상 달은 바닥에 본문 글자색 '부상' + 빨간 짧은 줄(빨간 글자는 주황과 헷갈려 줄에만, 사용자 11-17), FA 달은 'FA'.
  * - 폭이 휴대폰 창(~343px)부터 PC 오른쪽 칸까지 바뀌어, 선수 화면 타격 흐름(WrcTrend)처럼 SVG를 가로로 늘이고(preserveAspectRatio="none",
@@ -263,8 +298,10 @@ export default function MonthLine({ months, pitcher }: { months: SeasonMonth[]; 
   const farFirst = first && first.i === 0 ? Math.abs(first.y - y100) : 99;
   const farLast = last && last.i === lastIdx ? Math.abs(last.y - y100) : 99;
   const avgRight = farLast >= farFirst;
-  const mx = all.length > 0 ? all.reduce((a, b) => (b.v > a.v ? b : a)) : null;
-  const mn = all.length > 0 ? all.reduce((a, b) => (b.v < a.v ? b : a)) : null;
+  // 최고·최저 후보에서 경기 적은 달은 뺀다(후보가 없으면 이름표 없음)
+  const cand = all.filter((q) => !q.few);
+  const mx = cand.length > 0 ? cand.reduce((a, b) => (b.v > a.v ? b : a)) : null;
+  const mn = cand.length > 0 ? cand.reduce((a, b) => (b.v < a.v ? b : a)) : null;
 
   /** 점 바로 위·아래 이름표 자리: 양 끝 달은 글자를 안쪽으로 붙이고, 가운데는 점 위에 가운데 맞춘다 */
   const labelStyle = (q: Pt, above: boolean) => {
@@ -335,6 +372,42 @@ export default function MonthLine({ months, pitcher }: { months: SeasonMonth[]; 
             <b>{plusText(mn.v)}</b>
           </span>
         )}
+        {/* 경기 적은 달: 속 빈 작은 점 + 흐린 'N경기'(투수 'N등판')로 점선의 뜻을 알린다. 범위를 넘어 끝에 붙인 점은 옆에 ▲▼.
+            글자는 점 아래에 두고, 위 끝에 붙은 점은 선이 아래에서 올라오니 위에 둔다 */}
+        {all
+          .filter((q) => q.few)
+          .map((q) => {
+            const m = months[q.i];
+            const above = q.edge === -1;
+            const side = q.i === lastIdx ? { right: `calc(${100 - (q.x / f.w) * 100}% + 7px)` } : { left: `calc(${px(q.x)} + 7px)` };
+            return (
+              <span key={q.i}>
+                <span
+                  data-dot
+                  className="absolute size-[7px] -translate-x-1/2 -translate-y-1/2 rounded-full border-[1.5px]"
+                  style={{ left: px(q.x), top: py(q.y), background: "var(--surface)", borderColor: dotColor(q.v), boxSizing: "border-box" }}
+                />
+                {q.edge !== 0 && (
+                  <span className="month-line-label absolute -translate-y-1/2 text-muted" style={{ ...side, top: py(q.y) }}>
+                    {q.edge === -1 ? "▲" : "▼"}
+                  </span>
+                )}
+                <span
+                  className="month-line-label absolute whitespace-nowrap text-muted opacity-80"
+                  style={{
+                    ...(q.i === 0
+                      ? { left: px(q.x) }
+                      : q.i === lastIdx
+                        ? { right: `${100 - (q.x / f.w) * 100}%` }
+                        : { left: px(q.x), transform: "translateX(-50%)" }),
+                    ...(above ? { bottom: `calc(${100 - (q.y / f.h) * 100}% + 6px)` } : { top: `calc(${py(q.y)} + 6px)` }),
+                  }}
+                >
+                  {`${m.games}${pitcher ? "등판" : "경기"}`}
+                </span>
+              </span>
+            );
+          })}
         {/* 마지막 달 점만 강조: 옅은 원 + 테두리 점. 색은 그 값이 평균 위면 파랑·아래면 회색 */}
         {last && (
           <>
@@ -345,8 +418,13 @@ export default function MonthLine({ months, pitcher }: { months: SeasonMonth[]; 
             />
             <span
               data-dot
-              className="absolute size-2 -translate-x-1/2 -translate-y-1/2 rounded-full border-[1.5px] border-surface"
-              style={{ left: px(last.x), top: py(last.y), background: dotColor(last.v), boxSizing: "content-box" }}
+              className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full ${last.few ? "size-2.5 border-2" : "size-2 border-[1.5px] border-surface"}`}
+              // 마지막 달이 경기 적은 달이면 속 빈 점
+              style={
+                last.few
+                  ? { left: px(last.x), top: py(last.y), background: "var(--surface)", borderColor: dotColor(last.v), boxSizing: "content-box" }
+                  : { left: px(last.x), top: py(last.y), background: dotColor(last.v), boxSizing: "content-box" }
+              }
             />
           </>
         )}
@@ -408,8 +486,8 @@ function spoken(m: SeasonMonth, pitcher: boolean): string {
   const v = plus(m, pitcher) as number;
   const where = m.kind === "MLB" ? "메이저" : (m.levelKo ?? "마이너");
   return pitcher
-    ? `${m.month}월 ${where} ${m.games}등판 ERA+ ${v}, 평균자책점 ${formatEra(m.era)}`
-    : `${m.month}월 ${where} ${m.games}경기 wRC+ ${v}`;
+    ? `${m.month}월 ${where} ${m.games}등판 ERA+ ${v}, 평균자책점 ${formatEra(m.era)}${m.few ? ", 등판 적은 달" : ""}`
+    : `${m.month}월 ${where} ${m.games}경기 wRC+ ${v}${m.few ? ", 경기 적은 달" : ""}`;
 }
 
 /**
