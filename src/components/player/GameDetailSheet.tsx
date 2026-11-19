@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useId, useRef, useState, type RefObject } from "react";
 import type { GameDetail, GameLine, GamePlay, Role } from "@/lib/api";
-import { isPostseason, lineOf, type CalendarDay, type LogGame } from "@/lib/gameLog";
+import { lineOf, type CalendarDay, type LogGame } from "@/lib/gameLog";
 import { formatDate, formatLineup, formatSummary, formatTime } from "@/lib/format";
 import { haptic } from "@/lib/app";
 import { useModalDialog } from "@/lib/useModalDialog";
@@ -15,6 +15,7 @@ import ScoreText from "@/components/ScoreText";
 import StepButton from "@/components/StepButton";
 import TeamName from "@/components/TeamName";
 import type { Clip } from "./ClipPlayer";
+import { PostseasonLine } from "./GameRow";
 import Words from "@/components/Words";
 
 // 영상 플레이어(Video.js 10, hls.js 포함 약 270KB)는 창이 열릴 때 받아 온다. 선수 페이지 첫 로딩에는 넣지 않는다
@@ -239,8 +240,8 @@ function SheetBody({ playerId, role, day }: { playerId: number; role: Role; day:
 
 /**
  * 그 경기 한 줄: (포스트시즌 한 줄)·상대·홈원정·선발·점수·결과, 한 줄 기록, 활약 배지(경기 기록 줄과 같은 부품).
- * '포스트시즌'은 날짜 머리가 아니라 여기 경기 정보 줄 위에 둔다: 머리는 날짜 단위라 그날 경기마다 다를 수 있는 종류를 가를 수 없고,
- * 앞뒤 경기로 넘길 때 머리 높이가 바뀌며, 경기 기록 줄(GameRow)과 같은 자리여야 같은 것이 같은 곳에 보인다
+ * '포스트시즌'은 날짜 머리가 아니라 여기 경기 정보 줄 위에 둔다(GameRow의 PostseasonLine): 머리는 날짜 단위라 그날 경기마다
+ * 다를 수 있는 종류를 가를 수 없고, 경기 기록 줄과 같은 자리여야 같은 것이 같은 곳에 보인다
  */
 function EntrySummary({ entry }: { entry: LogGame }) {
   const g = lineOf(entry);
@@ -248,7 +249,7 @@ function EntrySummary({ entry }: { entry: LogGame }) {
   const hideVenue = entry.kind === "minor" && entry.game.home == null;
   return (
     <div className="px-4 pt-3">
-      {isPostseason(g) && <p className="text-meta font-semibold text-foreground">포스트시즌</p>}
+      <PostseasonLine game={g} />
       <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-meta text-muted">
         {entry.kind === "minor" && (
           <span className="rounded-md bg-surface-2 px-1.5 py-0.5 text-badge text-foreground/70">{entry.game.levelKo}</span>
