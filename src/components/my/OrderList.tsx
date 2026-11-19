@@ -4,6 +4,7 @@ import { useLayoutEffect, useOptimistic, useRef, useState, useTransition, type K
 import { setMyPlayersOrder } from "@/app/my/actions";
 import type { PlayerSummary } from "@/lib/api";
 import { haptic } from "@/lib/app";
+import { moveFocus } from "@/lib/focus";
 import { toast, type ToastPress } from "@/lib/toast";
 import PlayerAvatar from "@/components/PlayerAvatar";
 
@@ -60,7 +61,7 @@ export default function OrderList({ players }: { players: PlayerSummary[] }) {
     if (!target) return;
     refocusRef.current = null;
     const el = listRef.current?.querySelector<HTMLElement>(`[data-move="${target.key}"]`);
-    if (el && document.activeElement !== el) el.focus(target.scroll ? undefined : { preventScroll: true });
+    if (el && document.activeElement !== el) moveFocus(el, target.scroll);
   }, [order]);
 
   const rowHeight = () => (listRef.current?.firstElementChild as HTMLElement | null)?.offsetHeight ?? 48;
@@ -113,7 +114,7 @@ export default function OrderList({ players }: { players: PlayerSummary[] }) {
     const next = move(now, from, Math.min(to, now.length - 1));
     if (press.focused) {
       const key = `${id}-${control}`;
-      listRef.current?.querySelector<HTMLElement>(`[data-move="${key}"]`)?.focus(press.keyboard ? undefined : { preventScroll: true });
+      moveFocus(listRef.current?.querySelector<HTMLElement>(`[data-move="${key}"]`), press.keyboard);
       // 순서가 바뀌면 줄이 옮겨지며 포커스가 사라질 수 있어 그린 뒤 다시 둔다(이미 그 자리면 그대로라 남기지 않는다)
       if (next.join() !== now.join()) refocusRef.current = { key, scroll: press.keyboard };
     }

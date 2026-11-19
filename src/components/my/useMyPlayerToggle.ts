@@ -1,6 +1,7 @@
 import { useOptimistic, useRef, useTransition } from "react";
 import { setMyPlayer } from "@/app/my/actions";
 import { haptic } from "@/lib/app";
+import { moveFocus } from "@/lib/focus";
 import { withObjectParticle } from "@/lib/format";
 import { toast, type ToastPress } from "@/lib/toast";
 import { noteStarPress } from "./useFocusAfterRemove";
@@ -30,7 +31,7 @@ export function useMyPlayerToggle(playerId: number, initialOn: boolean, nameKo: 
   function refocus(press: ToastPress) {
     if (!press.focused) return;
     const button = ref.current;
-    if (button?.isConnected) button.focus(press.keyboard ? undefined : { preventScroll: true });
+    if (button?.isConnected) moveFocus(button, press.keyboard);
     if (!button?.isConnected || button.closest("[data-player-id]")) noteStarPress(playerId, press.keyboard);
   }
 

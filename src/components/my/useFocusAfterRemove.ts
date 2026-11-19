@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, type RefObject } from "react";
+import { moveFocus } from "@/lib/focus";
 
 /**
  * 마지막으로 누른 것이 포커스를 가진 카드 별이면 그 선수 번호와 키보드로 눌렀는지. 다른 것을 누르면 지운다.
@@ -64,15 +65,14 @@ export function useFocusAfterRemove(ids: readonly number[], title: RefObject<HTM
     // 잃은 포커스가 없으면 옮기지 않는다. 알림 버튼으로 되돌렸으면, 서버가 빨리 답할 때 포커스가 아직 사라지는 중인 알림에 남아 있다
     const focused = document.activeElement;
     if (focused && focused !== document.body && !focused.closest("[data-toast]")) return;
-    const options = press.keyboard ? undefined : { preventScroll: true };
     if (restored) {
-      document.querySelector<HTMLElement>(`[data-player-id="${press.id}"] [data-my-toggle]`)?.focus(options);
+      moveFocus(document.querySelector<HTMLElement>(`[data-player-id="${press.id}"] [data-my-toggle]`), press.keyboard);
       return;
     }
     // 뺀 카드 뒤 카드부터, 없으면 바로 앞 카드부터(남아 있는 것 중 가장 가까운 카드)
     const at = before.indexOf(press.id);
     const near = [...before.slice(at + 1), ...before.slice(0, at).reverse()].find((id) => ids.includes(id));
     const link = near == null ? null : document.querySelector<HTMLElement>(`[data-player-id="${near}"] :is(h2, h3) a`);
-    (link ?? title.current)?.focus(options);
+    moveFocus(link ?? title.current, press.keyboard);
   }, [ids, title]);
 }
