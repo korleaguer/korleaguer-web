@@ -178,7 +178,16 @@ function PitcherNumbers({ period, pitching, minors }: { period: string; pitching
     <Numbers
       label={`${period} 평균자책점`}
       value={formatEra(pitching.era)}
-      note={<EraDelta value={pitching.era} season={pitching.seasonEra} played={pitching.games > 0} minors={minors} />}
+      note={
+        <EraDelta
+          value={pitching.era}
+          season={pitching.seasonEra}
+          outs={pitching.outs}
+          inningsText={pitching.inningsText}
+          played={pitching.games > 0}
+          minors={minors}
+        />
+      }
       small={[
         ["등판", pitching.games],
         ["이닝", pitching.inningsText],
@@ -234,11 +243,32 @@ function RateDelta({
   );
 }
 
-/** "시즌 3.12보다 ▼0.85". 평균자책점은 낮을수록 좋다. 등판이 없거나 시즌 기록이 없으면 그 사실만 */
-function EraDelta({ value, season, played, minors }: { value: number | null; season: number | null; played: boolean; minors: boolean }) {
+/**
+ * 기간 평균자책점을 시즌과 견줘도 되는 가장 적은 아웃 수(9아웃 = 3이닝). 이보다 적으면 색·화살표 없이 '참고용'이라고만 쓴다.
+ * 3이닝 평균자책점은 실점 한 점에 4.5점이 움직이고, 불펜 투수의 한 주 등판이 대개 3이닝 안팎이라 한 번 던진 투수와 갈린다
+ */
+const MIN_OUTS_FOR_DELTA = 9;
+
+/** "시즌 3.12보다 ▼0.85". 평균자책점은 낮을수록 좋다. 등판이 없거나 시즌 기록이 없으면 그 사실만. 이닝이 적으면 "시즌 3.12 · 2⅓이닝이라 참고용" */
+function EraDelta({
+  value,
+  season,
+  outs,
+  inningsText,
+  played,
+  minors,
+}: {
+  value: number | null;
+  season: number | null;
+  outs: number;
+  inningsText: string;
+  played: boolean;
+  minors: boolean;
+}) {
   if (!played) return <>이 기간 등판 없음</>;
   if (season == null) return null;
   if (value == null) return <>{`${seasonName(minors)} ${formatEra(season)}`}</>;
+  if (outs < MIN_OUTS_FOR_DELTA) return <>{`${seasonName(minors)} ${formatEra(season)} · ${inningsText}이닝이라 참고용`}</>;
   // 소수 둘째 자리(화면 숫자)에서 비교한다
   const diff = Math.round(value * 100) - Math.round(season * 100);
   return (
