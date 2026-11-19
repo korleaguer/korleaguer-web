@@ -80,22 +80,30 @@ function showsDay(slot: BarSlot, index: number, count: number, days: number): bo
 /**
  * 날짜 글씨마다 오른쪽 이웃 날짜까지 비워 둘 자리(칸 수). 칸 간격 × 자리가 날짜 폭보다 좁으면 그 글씨를 접는다(globals.css .bar-day).
  * 앱 큰 글씨에서는 글자와 칸 사이(rem)가 함께 커져 칸이 좁아지고 날짜가 '8910111213'처럼 붙었다(2배 360px 14일 칸 10px, 이슈 #303).
- * 자리가 없으면(undefined) 늘 보인다: 가장 오른쪽(최근) 날짜와 30일의 5칸마다 날짜.
+ * 자리가 없으면(undefined) 늘 보인다: 고른 경기 날짜(진한 파랑), 가장 오른쪽(최근) 날짜, 30일의 5칸마다 날짜.
  * 7·14일(날마다 쓴다)은 오른쪽부터 센 순번 j를 나누는 가장 큰 2의 거듭제곱(1·2·4·8)이라, 칸이 좁아지면 같은 자리끼리 함께 접혀
- * 하루 걸러 → 나흘마다 → 여드레마다로 고르게 남는다(가장 최근 날짜는 늘 남는다). 더블헤더 둘째 칸은 날짜가 없어 순번을 날짜끼리 센다
- * (그 칸만큼 실제 간격은 더 넓다). 30일은 5칸마다라 넉넉하고, 마지막 날짜 바로 앞 날짜만 마지막 날짜와 5칸보다 가까우면 그 칸 수다
+ * 하루 걸러 → 나흘마다 → 여드레마다로 고르게 남는다. 더블헤더 둘째 칸은 날짜가 없어 순번을 날짜끼리 센다(그 칸만큼 실제 간격은 더 넓다).
+ * 30일은 5칸마다라 넉넉하고(앱 2배·320px에서도 틈 4px 이상), 마지막 날짜 바로 앞 날짜만 마지막 날짜와 5칸보다 가까우면 그 칸 수다.
+ * 고른 경기 날짜는 접지 않는다: 접히는 자리의 경기를 고르면 진한 파랑 날짜가 사라져 어느 경기인지 날짜로 볼 수 없었다(PR #305 리뷰).
+ * 대신 다른 날짜는 고른 날짜까지의 거리(7·14일은 날짜 수, 30일은 칸 수)도 자리로 쳐서, 고른 날짜와 붙을 이웃만 함께 접는다
  */
-function dayRooms(slots: BarSlot[], days: number): (number | undefined)[] {
+function dayRooms(slots: BarSlot[], days: number, selected: number): (number | undefined)[] {
   const labeled = slots.flatMap((slot, i) => (showsDay(slot, i, slots.length, days) ? [i] : []));
+  const sel = labeled.indexOf(selected);
   const rooms: (number | undefined)[] = slots.map(() => undefined);
   labeled.forEach((i, k) => {
+    if (k === sel) return;
     const j = labeled.length - 1 - k;
-    if (j === 0) return;
+    let room: number | undefined;
+    let near: number | undefined;
     if (days < 30) {
-      rooms[i] = Math.min(8, j & -j);
-    } else if (j === 1 && labeled[k + 1] - i < 5) {
-      rooms[i] = labeled[k + 1] - i;
+      room = j === 0 ? undefined : Math.min(8, j & -j);
+      if (sel >= 0) near = Math.abs(k - sel);
+    } else {
+      if (j === 1 && labeled[k + 1] - i < 5) room = labeled[k + 1] - i;
+      if (sel >= 0 && Math.abs(i - selected) < 5) near = Math.abs(i - selected);
     }
+    rooms[i] = near == null ? room : Math.min(room ?? near, near);
   });
   return rooms;
 }
@@ -120,7 +128,7 @@ export default function GameBars({ slots, role, days, minors = false, name }: Pr
     "--bar-n": slots.length,
     "--bar-gap": `${gapRem}rem`,
   } as CSSProperties;
-  const rooms = dayRooms(slots, days);
+  const rooms = dayRooms(slots, days, selected);
   const gameCount = slots.filter((slot) => slot.game).length;
   const current = slots[selected]?.game ?? null;
   // 고른 경기 앞뒤 경기 칸(경기 없는 날은 건너뛴다). 없으면 -1
