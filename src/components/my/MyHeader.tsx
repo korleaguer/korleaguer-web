@@ -142,18 +142,17 @@ function PickerBody({
     <>
       {ordered.length >= 2 && (
         <div className="mb-2 border-b border-line pb-2">
-          <Heading className="px-2 pb-1 pt-1 text-label text-muted">화면 순서 · 끌거나 버튼으로 바꾸기</Heading>
+          <Heading className="px-2 pb-1 pt-1 text-label text-muted">화면 순서</Heading>
           <OrderList players={ordered} />
         </div>
       )}
       <Heading className="sr-only">전체 선수</Heading>
-      {/* 쿠키라 브라우저마다, 앱이면 앱 안에만 따로 저장된다. '이 기기'라고 쓰면 같은 휴대폰의 다른 브라우저·앱에도 있는 줄 알았다
+      {/* 쿠키라 브라우저마다, 앱이면 앱 안에만 따로 저장된다(이름표 '가입 없이 이 브라우저에 저장', 앱 '이 앱에 저장'). '이 기기'라고 쓰면 같은 휴대폰의 다른 브라우저·앱에도 있는 줄 알았다
           (11-17 점검). 앱인지는 html[data-app]로 CSS가 가른다(서버가 그린 글과 어긋나지 않게 둘 다 그려 두고 하나만 보인다).
           좁은 카드에서 두 줄로 감기므로 줄 간격 1.5(바닥글과 같은 이유) */}
       <p className="px-2 pb-1.5 pt-1 text-caption leading-normal text-muted">
-        누르면 내 선수에 넣거나 뺄 수 있어요. 가입 없이{" "}
-        <span className="in-app:hidden">이 브라우저에만</span>
-        <span className="hidden in-app:inline">이 앱에만</span> 저장돼요.
+        가입 없이 <span className="in-app:hidden">이 브라우저에</span>
+        <span className="hidden in-app:inline">이 앱에</span> 저장
       </p>
       {players.length === 0 ? (
         <p className="px-2 py-3 text-body text-muted">아직 등록된 선수가 없어요.</p>
