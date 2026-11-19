@@ -36,6 +36,7 @@ export function minorAsLine(m: MinorGameLine, base: Pick<GameLine, "playerId" | 
     batting: m.batting,
     pitching: m.pitching,
     lineup: null,
+    seasonType: m.seasonType,
   };
 }
 
