@@ -717,6 +717,8 @@ export interface GamePlay {
 export interface GameHighlight {
   /** 영어 제목("Jung Hoo Lee's solo home run (10)") */
   title: string;
+  /** 서버가 AI로 한 번 옮긴 한국어 제목("솔로 홈런 (시즌 10호)"). 아직 없거나 못 옮겼으면 null */
+  titleKo: string | null;
   durationSec: number | null;
   /** MLB 서버 mp4 주소 */
   mp4Url: string | null;
@@ -1103,6 +1105,7 @@ function normalizeGameDetail(raw: GameDetail): GameDetail {
       return [
         {
           title: typeof h.title === "string" ? h.title : "",
+          titleKo: typeof h.titleKo === "string" && h.titleKo.trim() !== "" ? h.titleKo.trim() : null,
           durationSec: num(h.durationSec),
           mp4Url,
           hlsUrl,
