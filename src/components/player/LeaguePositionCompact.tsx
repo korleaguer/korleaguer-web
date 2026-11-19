@@ -45,7 +45,8 @@ export default function LeaguePositionCompact({
     if (count >= (hitter ? MIN_PA : MIN_OUTS) || (count > 0 && sampleSaid)) return null;
     return (
       <p className="mt-3 text-meta text-muted">
-        {count > 0 ? `메이저 ${sample}뿐이라 MLB ${who} 중 위치는 없어요` : `메이저 기록이 없어 MLB ${who} 중 위치는 없어요`}
+        <span className="sr-only">{`MLB ${who} 중 위치: `}</span>
+        {count > 0 ? `메이저 ${sample} · ${hitter ? "50타석" : "10이닝"}부터 비교` : `${hitter ? "50타석" : "10이닝"}부터 비교`}
       </p>
     );
   }
@@ -53,7 +54,7 @@ export default function LeaguePositionCompact({
   const steady = count >= (hitter ? STEADY_PA : STEADY_OUTS);
   const head = [
     saber.poolSize > 0 ? `MLB ${who} ${saber.poolSize}명 중` : `MLB ${who} 중`,
-    minorNumbers || !steady ? `메이저 ${sample}${steady ? "" : "뿐이라 참고용"}` : null,
+    minorNumbers || !steady ? `메이저 ${sample}${steady ? "" : " · 참고용"}` : null,
   ]
     .filter(Boolean)
     .join(" · ");

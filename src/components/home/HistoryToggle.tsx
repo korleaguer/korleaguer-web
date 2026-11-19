@@ -3,9 +3,9 @@
 import { useId, useState, type ReactNode } from "react";
 
 /**
- * MLB 도전 카드의 '역대 포스팅 계약'을 접어 두는 머리 줄(사용자 11-12 결정: 매일 같은 목록이 늘 펼쳐져 있지 않게).
- * 누르면 줄 아래로 목록이 펼쳐진다. 접혀 있어도 둘째 줄(최고 계약)로 무엇이 들어 있는지 보인다.
- * 비시즌 홈의 '시즌 기록' 표도 같은 줄로 접는다(이슈 #191). 그때는 className·buttonClassName으로 카드 모양을 준다.
+ * 비시즌 홈의 '시즌 기록' 표를 접어 두는 머리 줄(이슈 #191). 누르면 줄 아래로 목록이 펼쳐진다(밑에 밀 내용이 없는 자리).
+ * 접혀 있어도 둘째 줄로 무엇이 들어 있는지 보인다. className·buttonClassName으로 카드 모양을 준다.
+ * MLB 도전 카드의 '역대 포스팅 계약'은 카드를 밀지 않게 아래 창으로 바꿨다(HistorySheetRow, 이슈 #326).
  */
 export default function HistoryToggle({
   title,

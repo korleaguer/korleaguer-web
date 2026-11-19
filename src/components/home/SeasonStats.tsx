@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { HitterSeason, PitcherSeason, RankingMinimums } from "@/lib/api";
+import InfoTip from "@/components/InfoTip";
 import Section from "@/components/Section";
 import HitterTable from "./HitterTable";
 import PitcherTable from "./PitcherTable";
@@ -52,6 +53,15 @@ export default async function SeasonStats({
   // 마이너 경기 수는 아는데 경기별 기록을 아직 못 받은 경우(받기 전)
   const minorsPending = !hasMinors && [...hitters, ...pitchers].some((row) => row.minorGames > 0);
 
+  // 표 아래 각주는 제목 옆 ⓘ 하나로, '마이너 기록 받는 중'은 제목 오른쪽 이름표로(이슈 #329). 1위 표시 기준이 없으면 ⓘ도 없다
+  const tips = [
+    ranking && majorHitters.length > 0 && `타율·OPS 1위는 ${ranking.minPlateAppearances}타석 이상인 선수 중에서 골라요`,
+    ranking && majorPitchers.length > 0 && `평균자책점 1위는 ${ranking.minInningsText}이닝 이상인 투수 중에서 골라요`,
+    hasMinors && "마이너 기록은 모든 단계를 더한 것이라 1위를 표시하지 않아요",
+    minorsPending && "마이너 경기 기록은 하루 한 번 새로 받아요",
+  ].filter((line): line is string => typeof line === "string" && line.length > 0);
+  const info = tips.length > 0 ? <InfoTip title="선수별 기록" lines={tips} /> : undefined;
+  const aside = minorsPending ? "마이너 기록 받는 중" : undefined;
   // 제목은 '선수별 기록': 비시즌 홈의 '시즌 성적표'(카드)와 한 화면에 있어 이름이 거의 같았다(문구 점검 11-13)
   const tables = (
     <div className="space-y-5">
@@ -64,13 +74,6 @@ export default async function SeasonStats({
           )}
         </TableCard>
         {/* '타석이 적거나 주로 마이너에서 뛴 선수는 아래에 있어요'는 표 안 띠가 같은 말을 해서 뺐다(이슈 #277) */}
-        <Notes
-          lines={[
-            ranking &&
-              majorHitters.length > 0 &&
-              `타율·OPS 1위는 ${ranking.minPlateAppearances}타석 이상인 선수 중에서 골라요.`,
-          ]}
-        />
       </Group>
       <Group title="투수" aside="평균자책점 순">
         <TableCard>
@@ -80,25 +83,12 @@ export default async function SeasonStats({
             <Empty />
           )}
         </TableCard>
-        <Notes
-          lines={[
-            ranking &&
-              majorPitchers.length > 0 &&
-              `평균자책점 1위는 ${ranking.minInningsText}이닝 이상인 투수 중에서 골라요.`,
-          ]}
-        />
       </Group>
-      <Notes
-        lines={[
-          hasMinors && "마이너 기록은 모든 단계를 더한 것이라 1위를 표시하지 않아요.",
-          minorsPending && "마이너 경기 기록을 받는 중이에요. 하루 한 번 새로 받아요.",
-        ]}
-      />
     </div>
   );
   if (!folded) {
     return (
-      <Section id="stats-title" title={`${season} 선수별 기록`}>
+      <Section id="stats-title" title={`${season} 선수별 기록`} info={info} aside={aside}>
         {tables}
       </Section>
     );
@@ -107,10 +97,10 @@ export default async function SeasonStats({
   const hitterCount = new Set([...majorHitters, ...minorHitters].map((h) => h.playerId)).size;
   const pitcherCount = new Set([...majorPitchers, ...minorPitchers].map((p) => p.playerId)).size;
   return (
-    <Section id="stats-title" title={`${season} 선수별 기록`}>
+    <Section id="stats-title" title={`${season} 선수별 기록`} info={info} aside={aside}>
       <HistoryToggle
         title="타자·투수 기록 표"
-        hint={`타자 ${hitterCount}명 · 투수 ${pitcherCount}명 · 메이저·마이너 합계와 순위`}
+        hint={`타자 ${hitterCount}명 · 투수 ${pitcherCount}명`}
         className=""
         buttonClassName="card px-4 py-3.5"
       >
@@ -135,19 +125,6 @@ function Group({ title, aside, children }: { title: string; aside: string; child
 
 function TableCard({ children }: { children: ReactNode }) {
   return <div className="card overflow-hidden py-1.5">{children}</div>;
-}
-
-/** 표 아래 작은 설명. 해당하는 줄만 보여 주고, 하나도 없으면 그리지 않는다 */
-function Notes({ lines }: { lines: (string | false | null)[] }) {
-  const shown = lines.filter((line): line is string => typeof line === "string" && line.length > 0);
-  if (shown.length === 0) return null;
-  return (
-    <div className="mt-2 space-y-0.5 px-1 text-caption text-muted">
-      {shown.map((line) => (
-        <p key={line}>{line}</p>
-      ))}
-    </div>
-  );
 }
 
 function Empty() {
