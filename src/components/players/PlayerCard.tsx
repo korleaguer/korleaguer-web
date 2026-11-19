@@ -21,10 +21,21 @@ interface Props {
    * 읽혀서, 이유는 목록 맨 위 띠(StatsFailedBanner)가 한 번만 말한다(11-17 전수조사)
    */
   statsMissing?: boolean;
+  /** 첫 화면 안 카드면 true: 사진을 바로 받는다(PlayerAvatar eager). 그 밖은 화면에 다가올 때 받는다 */
+  eagerPhoto?: boolean;
 }
 
 /** 선수 목록의 카드 한 장. 카드 어디를 눌러도 선수 페이지로 가고, 오른쪽 위 별은 '내 선수' 넣기·빼기다. */
-export default function PlayerCard({ player, hitting, pitching, minorHitting, minorPitching, isMine, statsMissing = false }: Props) {
+export default function PlayerCard({
+  player,
+  hitting,
+  pitching,
+  minorHitting,
+  minorPitching,
+  isMine,
+  statsMissing = false,
+  eagerPhoto = false,
+}: Props) {
   // 올해 주로 뛴 단계의 기록. 메이저 4타석 .500 같은 작은 표본이 시즌 기록처럼 서지 않게 단계·경기 수를 함께 적는다(이슈 #184)
   const main = mainSeasonStats(player, { hitting, pitching, minorHitting, minorPitching });
 
@@ -32,7 +43,7 @@ export default function PlayerCard({ player, hitting, pitching, minorHitting, mi
     // 이름 링크를 카드 전체로 넓혀서(after:absolute) 카드 전체가 링크가 된다. 화면 낭독기는 이름만 읽는다.
     <li className="card card-link relative flex flex-col p-4 has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-accent">
       <div className="flex items-center gap-3">
-        <PlayerAvatar size={56} nameKo={player.nameKo} photoUrl={player.photoUrl} teamAbbr={player.teamAbbr} />
+        <PlayerAvatar size={56} nameKo={player.nameKo} photoUrl={player.photoUrl} teamAbbr={player.teamAbbr} eager={eagerPhoto} />
         <div className="min-w-0 flex-1">
           {/* 이름은 카드의 제목(h2, 페이지 제목 '선수' h1 아래)이라 화면 낭독기가 제목 목록으로 선수를 건너뛸 수 있다(이슈 #277).
               h2는 글꼴을 물려받기만 해서 줄 높이·모양은 그대로이고, 글자 역할은 링크가 그대로 맡는다 */}

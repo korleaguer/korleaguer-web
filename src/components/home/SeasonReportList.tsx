@@ -4,7 +4,6 @@ import type { CardStatus, CardStatusKind, MyPlayer, NewsHeadline, SeasonReport, 
 import { formatEra, formatRate, kstDayKey } from "@/lib/format";
 import { newsHref } from "@/lib/news";
 import ExternalLinkIcon from "@/components/ExternalLinkIcon";
-import PlayerAvatar from "@/components/PlayerAvatar";
 import MyPlayerToggle from "@/components/my/MyPlayerToggle";
 import StarIcon from "@/components/my/StarIcon";
 import { type BadgeTone, levelKo, statusBadge } from "@/components/my/formLabels";
@@ -64,14 +63,20 @@ export default function SeasonReportList({
   entries,
   reports,
   myIds,
+  eagerPhotos = 0,
 }: {
   entries: MyPlayer[];
   reports: SeasonReport[];
   myIds: number[];
+  /**
+   * 사진을 바로 받을(eager) 앞 줄 수. 이 목록이 홈 맨 위일 때(MLB 도전 카드가 없을 때) 첫 화면 안 줄만(전수조사 L270).
+   * 기본 0: 모두 화면에 다가올 때 받는다(lazy)
+   */
+  eagerPhotos?: number;
 }) {
   const byId = new Map(reports.map((r) => [r.playerId, r]));
-  const rows = entries.map((entry) =>
-    buildRow(entry, byId.get(entry.player.id) ?? null, myIds.includes(entry.player.id)),
+  const rows = entries.map((entry, i) =>
+    buildRow(entry, byId.get(entry.player.id) ?? null, myIds.includes(entry.player.id), i < eagerPhotos),
   );
   const bars = barsGuide(entries, byId);
   return (
@@ -100,7 +105,7 @@ function barsGuide(entries: MyPlayer[], byId: Map<number, SeasonReport>): string
   return `막대 = ${Math.min(...months)}~${Math.max(...months)}월 달마다 ${stat}`;
 }
 
-function buildRow(entry: MyPlayer, report: SeasonReport | null, isMine: boolean): ReportRow {
+function buildRow(entry: MyPlayer, report: SeasonReport | null, isMine: boolean, eagerPhoto: boolean): ReportRow {
   const { player } = entry;
   const pitcher = player.role === "PITCHER";
   // 성적표는 모두 끝난 시즌이라 '시즌 끝'은 쓰지 않는다(사용자 11-13 시안 C). FA·국내 복귀 등은 그대로
@@ -201,15 +206,18 @@ function buildRow(entry: MyPlayer, report: SeasonReport | null, isMine: boolean)
       {linked && (
         <LinkedTeams counts={linked} sheetKey={`player-${player.id}`} className="mt-4" playerPhotoUrl={player.photoUrl} />
       )}
-      {/* 상태가 말하지 않는 겨울 이동(트레이드·계약 등). 'FA 선언'은 'FA n일째'가 이미 말한다 */}
+      {/* 상태가 말하지 않는 겨울 이동(트레이드·계약 등). 'FA 선언'은 'FA n일째'가 이미 말한다.
+          이동 기록은 시각 없이 미국 날짜만 와서 '미국'을 붙인다(DESIGN.md 날짜 규칙, 전수조사 L255): 한 건이면
+          '11월 3일(미국) 계약', 여러 건이면 날짜마다 붙이지 않고 이름표 뒤에 한 번 '(미국 날짜)' */}
       {moves.length > 0 && (
         <p className="mt-3 text-meta text-muted tabular-nums">
-          이번 겨울 이동{" "}
+          {moves.length > 1 ? "이번 겨울 이동(미국 날짜)" : "이번 겨울 이동"}{" "}
           {moves.map((m, i) => (
             <Fragment key={`${m.date}-${m.label}`}>
               {i > 0 && " · "}
               <span className="whitespace-nowrap">
-                {monthDay(m.date)} <span className="font-semibold text-foreground">{m.label}</span>
+                {monthDay(m.date)}
+                {moves.length > 1 ? "" : "(미국)"} <span className="font-semibold text-foreground">{m.label}</span>
               </span>
             </Fragment>
           ))}
@@ -233,7 +241,7 @@ function buildRow(entry: MyPlayer, report: SeasonReport | null, isMine: boolean)
 
   return {
     id: player.id,
-    photo: <PlayerAvatar size={44} nameKo={player.nameKo} photoUrl={player.photoUrl} teamAbbr={player.teamAbbr} />,
+    photo: { nameKo: player.nameKo, photoUrl: player.photoUrl, teamAbbr: player.teamAbbr, eager: eagerPhoto },
     head,
     spark: months.length > 0 ? <MonthSpark months={months} pitcher={pitcher} /> : null,
     second,

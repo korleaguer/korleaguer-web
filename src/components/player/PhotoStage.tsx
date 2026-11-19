@@ -2,6 +2,7 @@
 
 import { useState, type CSSProperties, type ReactNode } from "react";
 import { haptic } from "@/lib/app";
+import { smallPhoto, STAGE_DIAMETER } from "@/lib/photo";
 
 /** 머리 카드에 넘겨 볼 사진 한 장(소속팀 하나) */
 export interface Shot {
@@ -79,15 +80,21 @@ export default function PhotoStage({
             </span>
           );
         }
+        // 원(96px)의 2배·3배로 줄인 webp(192·288px). 원본은 MLB 사진 360px, 과거 소속팀 편집본 288px PNG(약 88KB)였다(전수조사 L341)
+        const small = smallPhoto(s.photoUrl, STAGE_DIAMETER);
         return (
           // eslint-disable-next-line @next/next/no-img-element -- 우리가 호스팅하는 작은 사진(/photos/…)
           <img
             key={s.key}
-            src={s.photoUrl}
+            src={small?.src ?? s.photoUrl}
+            srcSet={small?.srcSet}
             alt={active ? `${nameKo} ${s.label}${s.years ? ` ${s.years}` : ""} 사진` : ""}
-            width={96}
-            height={96}
+            width={STAGE_DIAMETER}
+            height={STAGE_DIAMETER}
             loading={active ? "eager" : "lazy"}
+            // 안 보이는 소속팀 사진도 같은 원 안에 겹쳐 있어 화면 안으로 쳐서 lazy가 미루지 못한다. 넘길 때 바로 보이게 받아 두되,
+            // 보이는 사진·다른 첫 화면 요청보다 뒤에 받는다
+            fetchPriority={active ? undefined : "low"}
             onError={() => setFailed((f) => new Set(f).add(s.key))}
             className={`absolute inset-0 block size-full ${PHOTO_CLASS[s.frame]} ${motion} ${visibility}`}
           />
