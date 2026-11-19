@@ -3,8 +3,6 @@ import Link from "next/link";
 import type { HitterPeriod, MyPlayer, PitcherPeriod } from "@/lib/api";
 import { formatEra, formatRate } from "@/lib/format";
 import { teamColor } from "@/lib/teams";
-import { GameRow } from "@/components/player/GameLog";
-import ShowMore from "@/components/ShowMore";
 import BandPhoto from "./BandPhoto";
 import { Notice, Numbers, SeasonNumbers, StatusBadge, StatusSrText, SummaryLines } from "./FormSummary";
 import GameBars from "./GameBars";
@@ -25,7 +23,7 @@ interface Props {
 
 /**
  * 내 선수 한 명의 카드: 팀 색 무대(상태 배지 + 사진) → 이름 → 출전 줄·한 줄 소식 → 큰 숫자와 작은 숫자 셋 →
- * 경기별 막대 → 경기 기록 모두 보기. 마이너에 있으면 숫자·막대가 마이너 기록이고(이름표에 단계),
+ * 경기별 막대 → 경기 기록 링크(선수 페이지 경기 기록 칸). 마이너에 있으면 숫자·막대가 마이너 기록이고(이름표에 단계),
  * 비시즌·FA면 기간 대신 시즌 합계를 보인다(이슈 #13). 비시즌 홈도 같은 카드로 선수 6명을 보인다.
  */
 export default async function FormCard({
@@ -51,7 +49,7 @@ export default async function FormCard({
 
   return (
     // 이름 링크를 카드 전체로 넓혀서(after:absolute) 카드 어디를 눌러도 선수 페이지로 간다(이슈 #155, 선수 목록 카드와 같은 방식).
-    // 화면 낭독기는 이름만 읽는다. 별·막대·펼치기는 링크 위(relative z-10)에 올려 제 동작만 한다.
+    // 화면 낭독기는 이름만 읽는다. 별·막대·경기 기록 링크는 링크 위(relative z-10)에 올려 제 동작만 한다.
     // data-player-id: 별로 이 카드를 빼서 포커스가 사라지면 옆 카드 이름으로, 알림의 '되돌리기'로 되살리면 이 카드 별로
     // 옮길 때 찾는다(useFocusAfterRemove)
     <li
@@ -65,7 +63,7 @@ export default async function FormCard({
         <BandPhoto nameKo={player.nameKo} photoUrl={player.photoUrl} teamAbbr={player.teamAbbr} />
       </div>
 
-      {/* 아래 여백: '경기 기록 모두 보기' 버튼으로 끝나면 버튼이 제 위아래 여백을 가져 8px, 숫자 칸·안내로 끝나면 좌우와 같은 16px
+      {/* 아래 여백: '경기 기록' 링크로 끝나면 링크가 제 위아래 여백을 가져 8px, 숫자 칸·안내로 끝나면 좌우와 같은 16px
           (8px이면 비시즌 카드 6장 모두 숫자 칸 아래가 좌우 여백의 절반이라 답답했다, 11-17 점검) */}
       <div className={`flex flex-1 flex-col px-4 pt-3 ${showsGames ? "pb-2" : "pb-4"}`}>
         <div className="flex items-start gap-2">
@@ -131,17 +129,20 @@ export default async function FormCard({
           <Notice>아직 이 선수 기록이 없어요.</Notice>
         )}
 
-        {/* 펼치면 경기별 기록이 버튼 위에 붙고, 버튼은 카드 맨 아래에서 '접기'가 된다 */}
+        {/* 경기별 기록은 카드 안에서 펼치지 않고(아래 카드가 밀렸다, 이슈 #326) 선수 페이지 '경기 기록' 칸으로 보낸다.
+            카드 전체가 선수 페이지 링크(after:absolute)라 이 링크는 그 위(relative z-10)에 올려 제 주소로 간다 */}
         {showsGames && (
-          // 펼친 경기 목록도 읽는 곳이라 링크 위에 둔다
           <div data-no-press className="relative z-10 mt-auto pt-3">
-            <ShowMore moreLabel="경기 기록 모두 보기" buttonClassName="rounded-lg py-2" srContext={player.nameKo}>
-              <ul className="-mx-4 border-y border-line divide-y divide-line">
-                {games.map((game) => (
-                  <GameRow key={game.gameId} game={game} />
-                ))}
-              </ul>
-            </ShowMore>
+            <Link
+              href={`/players/${player.id}#games-title`}
+              className="press-soft flex min-h-11 w-full items-center justify-center gap-0.5 rounded-lg py-2 text-label text-accent-ink hover:underline"
+            >
+              <span className="sr-only">{`${player.nameKo} `}</span>
+              경기 기록
+              <svg aria-hidden viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="size-3.5">
+                <path d="m6 4 4 4-4 4" />
+              </svg>
+            </Link>
           </div>
         )}
       </div>

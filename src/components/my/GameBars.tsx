@@ -208,13 +208,10 @@ export default function GameBars({ slots, role, days, minors = false, name }: Pr
 
   return (
     <div className="mt-4">
-      <div className="flex items-baseline justify-between gap-2 text-muted">
-        <h3 className="text-label">
-          {name && <span className="sr-only">{`${name} `}</span>}
-          {title}
-        </h3>
-        {gameCount > 1 && <span className="text-caption">막대를 누르면 그 경기를 보여 줘요</span>}
-      </div>
+      <h3 className="text-label text-muted">
+        {name && <span className="sr-only">{`${name} `}</span>}
+        {title}
+      </h3>
 
       <div
         ref={groupRef}

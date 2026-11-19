@@ -87,9 +87,9 @@ function Line({ h, bone }: { h: string; bone: string }) {
 
 /**
  * 성적표 목록 한 줄(SeasonReportList): 사진 44px | 이름·판정·상태·숫자 줄(lines: 둘째 줄부터 막대 폭) | 작은 달별 막대 84×30.
- * second가 있으면 사진만큼 들인 둘째 줄(거론 구단·이번 겨울 기사), open이면 막대 자리에 '접기'와 아래 펼친 곳
+ * second가 있으면 사진만큼 들인 둘째 줄(거론 구단·이번 겨울 기사). 막대는 늘 보인다(이슈 #325: 펼침 없이 아래 창·PC 오른쪽 칸으로 본다)
  */
-function ReportRowSkeleton({ lines, second = false, open = false }: { lines: string[]; second?: boolean; open?: boolean }) {
+function ReportRowSkeleton({ lines, second = false }: { lines: string[]; second?: boolean }) {
   return (
     <div>
       <div className={`grid grid-cols-[44px_minmax(0,1fr)_84px] items-center gap-x-3 pt-3 ${second ? "pb-1" : "pb-3"}`}>
@@ -100,31 +100,26 @@ function ReportRowSkeleton({ lines, second = false, open = false }: { lines: str
             <Line key={i} h="h-5" bone={`h-3 ${w}`} />
           ))}
         </div>
-        {open ? (
-          <Bone className="h-4 w-10 self-start justify-self-end" />
-        ) : (
-          // 작은 달별 막대: 칸 가운데(평균) 위아래로 높이가 다른 여섯 막대
-          <div className="flex h-[30px] w-[84px] items-end gap-1 px-0.5">
-            {["h-[18px]", "h-[13px]", "h-[22px]", "h-[11px]", "h-[16px]", "h-[8px]"].map((h, i) => (
-              <div key={i} className={`flex-1 rounded-t-[3px] bg-surface-2 ${h}`} />
-            ))}
-          </div>
-        )}
+        {/* 작은 달별 막대: 칸 가운데(평균) 위아래로 높이가 다른 여섯 막대 */}
+        <div className="flex h-[30px] w-[84px] items-end gap-1 px-0.5">
+          {["h-[18px]", "h-[13px]", "h-[22px]", "h-[11px]", "h-[16px]", "h-[8px]"].map((h, i) => (
+            <div key={i} className={`flex-1 rounded-t-[3px] bg-surface-2 ${h}`} />
+          ))}
+        </div>
       </div>
       {second && (
         <div className="pb-2 pl-14">
           <Line h="h-6" bone="h-3 w-[85%]" />
         </div>
       )}
-      {open && <ReportPanelSkeleton />}
     </div>
   );
 }
 
-/** 펼친 곳(375px에서 잰 359px): 한 줄 흐름 → 달별 막대(범례·여섯 칸·안내) → MLB 안 위치 세 줄 → 선 아래 별·링크 */
+/** PC 오른쪽 칸 안(자세히, 375px에서 잰 359px 폭 기준): 한 줄 흐름 → 달별 막대(범례·여섯 칸·안내) → MLB 안 위치 세 줄 → 선 아래 별·링크 */
 function ReportPanelSkeleton() {
   return (
-    <div className="pb-4">
+    <div>
       <Line h="h-[1.375rem]" bone="h-4 w-60" />
       <div className="mt-3 flex h-4 items-center justify-between">
         <Bone className="h-3 w-16" />
@@ -244,15 +239,29 @@ export function HomeSkeleton() {
           <Bone onPage className="h-3.5 w-20" />
         </div>
         <div className="card px-4 pb-1">
-          {/* 목록 맨 위 흐린 안내('막대 = 4~9월 달마다 wRC+ · 줄을 누르면 펼쳐져요') */}
-          <Line h="h-7 pt-2" bone="h-3 w-64" />
+          <div className="pt-1" />
+          {/* 휴대폰은 펼친 줄 없는 목록, PC는 왼쪽 목록 + 오른쪽 고른 선수 칸(SeasonReportRows) */}
+          <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:items-start lg:gap-x-6">
           <div className="divide-y divide-line">
-            <ReportRowSkeleton lines={["w-40"]} second open />
+            <ReportRowSkeleton lines={["w-40"]} second />
             <ReportRowSkeleton lines={["w-28", "w-40"]} second />
             <ReportRowSkeleton lines={["w-32", "w-24", "w-36"]} />
             <ReportRowSkeleton lines={["w-28", "w-20", "w-40"]} />
             <ReportRowSkeleton lines={["w-36"]} second />
             <ReportRowSkeleton lines={["w-24", "w-40"]} second />
+          </div>
+          <div className="mb-4 mt-3 hidden rounded-2xl border border-line p-4 lg:block">
+            <div className="flex items-start gap-3">
+              <Circle className="size-11" />
+              <div className="flex-1">
+                <Line h="h-[1.375rem]" bone="h-4 w-[4.5rem]" />
+                <Line h="h-5" bone="h-3 w-40" />
+              </div>
+            </div>
+            <div className="mt-3">
+              <ReportPanelSkeleton />
+            </div>
+          </div>
           </div>
         </div>
       </section>
