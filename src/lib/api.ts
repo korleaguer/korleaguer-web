@@ -42,9 +42,12 @@ export interface GameLine {
   pitching: GamePitching | null;
   /** 선발(STARTER)인지 교체(SUB)로 나왔는지. 안 뛰었거나 모르면 null (MLB 공식 박스스코어 기준) */
   lineup: Lineup | null;
+  /** 그 경기가 정규시즌인지 포스트시즌인지(결장 줄도, korleaguer-server#192). 옛 api면 없고, 모르는 값이면 null */
+  seasonType?: SeasonType | null;
 }
 
 export type Lineup = "STARTER" | "SUB";
+export type SeasonType = "REGULAR" | "POSTSEASON";
 
 export interface GameBatting {
   atBats: number;
@@ -656,6 +659,8 @@ export interface MinorGameLine {
   summary: string;
   batting: GameBatting | null;
   pitching: GamePitching | null;
+  /** GameLine.seasonType과 같은 칸. 서버가 정규시즌 줄만 저장해 늘 REGULAR다. 옛 api면 없고, 모르는 값이면 null */
+  seasonType?: SeasonType | null;
 }
 
 /**
@@ -915,7 +920,13 @@ function normalizeLine(line: GameLine): GameLine {
       : null,
     pitching: line.pitching ?? null,
     lineup: line.lineup === "STARTER" || line.lineup === "SUB" ? line.lineup : null,
+    seasonType: seasonTypeOf(line.seasonType),
   };
+}
+
+/** 경기 종류. 두 값이 아니면(옛 api라 칸이 없을 때 포함) null */
+function seasonTypeOf(value: unknown): SeasonType | null {
+  return value === "REGULAR" || value === "POSTSEASON" ? value : null;
 }
 
 /** 시즌 성적 한 줄(타자·투수 공통) */
@@ -1213,6 +1224,7 @@ function normalizeMinorGame(m: MinorGameLine): MinorGameLine | null {
         }
       : null,
     pitching: m.pitching ?? null,
+    seasonType: seasonTypeOf(m.seasonType),
   };
 }
 
