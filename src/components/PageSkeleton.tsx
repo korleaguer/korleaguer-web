@@ -269,28 +269,42 @@ export function HomeSkeleton() {
   );
 }
 
-/** 선수 목록(제목 '선수' 아래): 한 줄 안내 + 시즌 알약 + 범례 + 카드 한 장 안의 선수 줄 여섯(사진·이름, 띠, 사실 한 줄) */
+/**
+ * 선수 목록(제목 '선수' 아래, PlayerTimeline): 한 줄 안내 + 범례 + 카드 한 장(안내 줄·달 눈금 + 선수 줄 여섯: 사진·이름, 띠, 사실 한 줄).
+ * 시즌 알약은 시즌이 둘 이상일 때만 보여 뼈대에는 두지 않는다(2026 시즌만 있는 지금 넣으면 카드가 47px 아래에서 시작해 뜰 때 튄다).
+ * 줄 높이는 실제 줄과 같다(위아래 12 + 사진 28 + 6 + 띠 칸 18 + 4 + 사실 줄 16 = 96). 앱 뼈대(korleaguer-app LoadingSkeleton
+ * PlayersShape)와 같은 모양이라 앱 뼈대가 걷힌 뒤 이 뼈대가 잠깐 보여도 이어진다(이슈 #345)
+ */
 export function PlayersSkeleton() {
   return (
     <Frame className="space-y-3">
-      <Bone onPage className="mx-1 h-5 w-32" />
-      <div className="flex gap-2 px-1">
-        <Bone onPage className="h-[34px] w-[3.75rem]" />
-        <Bone onPage className="h-[34px] w-[3.75rem]" />
+      <div className="flex h-[1.21875rem] items-center px-1">
+        <Bone onPage className="h-3.5 w-36" />
       </div>
-      <Bone onPage className="mx-1 h-4 w-60" />
-      <div className="card px-4 pt-3">
-        <div className="h-4" />
+      <div className="flex h-4 items-center px-1">
+        <Bone onPage className="h-3 w-56" />
+      </div>
+      <div className="card px-4 pb-1">
+        <div className="flex h-4 items-center pb-0.5 pt-2.5 box-content">
+          <Bone className="h-3 w-36" />
+        </div>
+        <div className="mt-1 flex h-4 items-center">
+          <Bone className="h-2.5 w-full" />
+        </div>
         <div className="divide-y divide-line">
           {[0, 1, 2, 3, 4, 5].map((i) => (
             <div key={i} className="py-3">
-              <div className="flex items-center gap-2">
+              <div className="flex h-7 items-center gap-2">
                 <Circle className="size-7" />
-                <Bone className="h-[1.375rem] w-14" />
+                <Bone className="h-4 w-14" />
                 <Bone className="h-3 w-20" />
               </div>
-              <Bone className="mt-1.5 h-3 w-full" />
-              <Bone className="mt-1.5 h-3 w-40" />
+              <div className="mt-1.5 h-[18px] pt-[3px]">
+                <Bone className="h-3 w-full" />
+              </div>
+              <div className="mt-1 flex h-4 items-center">
+                <Bone className="h-3 w-40" />
+              </div>
             </div>
           ))}
         </div>
