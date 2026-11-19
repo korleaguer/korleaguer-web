@@ -55,7 +55,7 @@ interface Stat {
 
 /**
  * 홈 '2026 시즌 성적표'(사용자 11-17 '목록 + 누르면 펼치기', 이슈 #276). 카드 6장(휴대폰 3,705px)을 흰 카드 한 장 안 한 줄 목록으로
- * 바꿔 선수끼리 판정·같은 숫자·한 해 모양(작은 달별 막대)을 한눈에 견주고, 줄을 누르면 그 자리에서 줄에 없는 것만 펼친다
+ * 바꿔 선수끼리 판정·같은 숫자·한 해 모양(작은 달별 막대)을 한눈에 견주고, 줄을 누르면 줄에 없는 것만 아래 창(PC는 오른쪽 칸)으로 보인다(이슈 #325)
  * (한 줄 흐름·달별 막대·MLB 안 위치·거론 구단·별·기사 모두 보기·선수 페이지).
  * entries는 보일 순서(내 선수 먼저 → 시즌 판정 순)이고, 성적표가 없는 선수도 이름·상태·숫자로 한 줄을 둔다.
  */
@@ -85,7 +85,7 @@ export default function SeasonReportList({
           줄 머리에 오지 않게(375px는 한 줄에 들어간다) */}
       <p className="pb-0.5 pt-2.5 text-caption text-muted">
         {bars && `${bars}\u00a0· `}
-        <span className="whitespace-nowrap">줄을 누르면 펼쳐져요</span>
+        <span className="whitespace-nowrap">줄을 누르면 자세히 보여요</span>
       </p>
       <SeasonReportRows rows={rows} />
     </div>
@@ -93,8 +93,8 @@ export default function SeasonReportList({
 }
 
 /**
- * 목록 맨 위 흐린 안내의 앞 덩어리: '막대 = 4~9월 달마다 wRC+(투수는 ERA+)'(뒤에 '줄을 누르면 펼쳐져요').
- * 막대 이름은 목록에 있는 선수만큼만(타자만 있으면 wRC+, 투수만 있으면 ERA+). 달별 기록이 없으면(옛 api) null(펼치기 안내만)
+ * 목록 맨 위 흐린 안내의 앞 덩어리: '막대 = 4~9월 달마다 wRC+(투수는 ERA+)'(뒤에 '줄을 누르면 자세히 보여요').
+ * 막대 이름은 목록에 있는 선수만큼만(타자만 있으면 wRC+, 투수만 있으면 ERA+). 달별 기록이 없으면(옛 api) null(누르기 안내만)
  */
 function barsGuide(entries: MyPlayer[], byId: Map<number, SeasonReport>): string | null {
   const withMonths = entries.filter((e) => (byId.get(e.player.id)?.months?.length ?? 0) > 0);
@@ -195,9 +195,9 @@ function buildRow(entry: MyPlayer, report: SeasonReport | null, isMine: boolean,
   const panel = (
     <>
       {flow && <p className="text-heading">{flow}</p>}
-      {/* 달별 막대와 MLB 안 위치: 휴대폰은 위아래, 넓은 화면은 두 칸 */}
+      {/* 달별 막대와 MLB 안 위치: 아래 창·오른쪽 칸 안이라 늘 위아래로 쌓는다(화면 폭 기준 두 칸은 좁은 칸에서 찌그러진다, 이슈 #325) */}
       {(months.length > 0 || position) && (
-        <div className={months.length > 0 && position ? "md:grid md:grid-cols-2 md:gap-x-8" : undefined}>
+        <div>
           {months.length > 0 && <MonthBars months={months} pitcher={pitcher} />}
           {position}
         </div>
@@ -277,7 +277,7 @@ function statsOf(entry: MyPlayer, report: SeasonReport | null, pitcher: boolean)
 }
 
 /**
- * 펼친 곳 맨 위 한 줄 흐름: 이유(서버가 전·후반 흐름을 wRC+로 쓴다, '6월까지 wRC+ 123 → 7월부터 76'), 없으면 한 줄 제목.
+ * 자세히 맨 위 한 줄 흐름: 이유(서버가 전·후반 흐름을 wRC+로 쓴다, '6월까지 wRC+ 123 → 7월부터 76'), 없으면 한 줄 제목.
  * 예전 카드는 제목과 이유를 둘 다 써서 같은 말을 되풀이했다. 제목이 줄에 이미 있는 숫자를 되풀이하면 쓰지 않는다.
  * 견주는 글: '143경기'·'36등판', 'wRC+ 102'·'ERA+ 105', '.276'·'3.91'(이름표를 붙이거나 소수점이 있어 '7월'의 7 같은 다른 숫자와 헷갈리지 않는다)
  */
@@ -340,7 +340,7 @@ function StatusText({ status }: { status: CardStatus }) {
   );
 }
 
-/** 펼친 곳 맨 아래 글자 링크('전체 기사 보기'와 같은 진한 파랑 글자 + ›) */
+/** 자세히 맨 아래 글자 링크('전체 기사 보기'와 같은 진한 파랑 글자 + ›) */
 function TextLink({ href, children }: { href: string; children: ReactNode }) {
   return (
     <Link
