@@ -54,6 +54,15 @@ function Band({
   const last = segments[segments.length - 1];
   const h = tall ? 22 : 18;
 
+  // 그 시즌 기록이 없는 선수(서버가 구간을 비워 준다): 띠 자리에 흐린 글자 한 줄
+  if (segments.length === 0) {
+    return (
+      <span className="flex items-center text-caption text-muted" style={{ height: h }}>
+        기록 없음
+      </span>
+    );
+  }
+
   return (
     <span className="block">
       {tall && (
