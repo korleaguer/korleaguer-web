@@ -9,6 +9,7 @@
 import { cacheLife } from "next/cache";
 import sharp from "sharp";
 import { getNews } from "@/lib/api";
+import { NEWS_ID } from "@/lib/ids";
 
 /**
  * 크기 이름 → 줄이는 방법. 주소에 크기를 그대로 써서, 방법을 바꾸면 이름도 바꾼다(브라우저가 7일 저장한 옛 사진을 쓰지 않게).
@@ -31,7 +32,7 @@ const USER_AGENT = "korleaguer/0.1 (news thumbnails; personal, non-commercial)";
 export async function GET(_request: Request, { params }: RouteContext<"/news/[id]/photo/[w]">) {
   const { id, w } = await params;
   const size = Object.hasOwn(SIZES, w) ? SIZES[w] : null;
-  if (!/^[1-9]\d{0,14}$/.test(id) || !size) return notFound();
+  if (!NEWS_ID.test(id) || !size) return notFound();
 
   const news = await getNews(Number(id));
   const source = news.ok ? news.data.imageUrl : null;
