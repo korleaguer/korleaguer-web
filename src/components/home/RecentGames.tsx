@@ -6,6 +6,7 @@ import { teamColor, teamLogoUrl } from "@/lib/teams";
 import PlayerAvatar from "@/components/PlayerAvatar";
 import ResultPill from "@/components/ResultPill";
 import Highlights from "@/components/Highlights";
+import { PostseasonLine } from "@/components/player/GameRow";
 import ScoreText from "@/components/ScoreText";
 import Section from "@/components/Section";
 import TeamMark from "@/components/TeamMark";
@@ -129,6 +130,8 @@ function GameCard({ line, index }: { line: GameLine; index: number }) {
             {sideNote(line) && <span className="text-caption text-muted">{sideNote(line)}</span>}
             <ResultPill result={line.result} className="ml-auto" />
           </div>
+          {/* 포스트시즌 경기면 선수 화면 경기 줄과 같은 '포스트시즌' 한 줄(이슈 #309) */}
+          <PostseasonLine game={line} />
           {/* 한 줄 기록이 이 서비스의 핵심이라 카드 안에서 가장 굵게 둔다. 안 뛰었으면 흐리게 */}
           <p
             className={`mt-0.5 text-summary text-pretty ${line.played ? "" : "font-medium text-muted"}`}
