@@ -5,23 +5,28 @@ import LoadingDots from "./LoadingDots";
 import { stateActionClass } from "./StateNotice";
 
 /**
+ * 페이지를 새로 연다(서버에서 다시 받는다). 새 화면이 올 때까지 loading이 참이라 버튼에 점 3개를 보인다.
+ * 이 버튼 말고도 쓴다: 뉴스 '기사 더 보기'가 옛 배포라 실패하면 같은 버튼이 '다시 불러오기'가 된다(NewsFeed)
+ */
+export function useReload(): [loading: boolean, reload: () => void] {
+  const [loading, setLoading] = useState(false);
+  function reload() {
+    setLoading(true);
+    window.location.reload();
+    // 새로고침이 막혀 이 화면에 그대로 있으면 점을 멈춘다
+    setTimeout(() => setLoading(false), 10_000);
+  }
+  return [loading, reload];
+}
+
+/**
  * 데이터를 못 받았을 때 '다시 불러오기'. 서버에서 다시 받도록 페이지를 새로 연다. 새 화면이 올 때까지 점 3개.
  * 모양은 놓이는 자리에 맞춘다(기본은 오류 화면의 회색 알약, 호박색 안내 띠 안에서는 흰 알약)
  */
 export default function ReloadButton({ className = stateActionClass }: { className?: string }) {
-  const [loading, setLoading] = useState(false);
+  const [loading, reload] = useReload();
   return (
-    <button
-      type="button"
-      aria-busy={loading}
-      onClick={() => {
-        setLoading(true);
-        window.location.reload();
-        // 새로고침이 막혀 이 화면에 그대로 있으면 점을 멈춘다
-        setTimeout(() => setLoading(false), 10_000);
-      }}
-      className={className}
-    >
+    <button type="button" aria-busy={loading} onClick={reload} className={className}>
       <LoadingDots loading={loading}>다시 불러오기</LoadingDots>
     </button>
   );
