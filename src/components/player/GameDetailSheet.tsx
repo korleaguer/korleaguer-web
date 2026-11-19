@@ -466,11 +466,10 @@ function DetailContent({
           </figcaption>
         </figure>
       ) : detail.clips && detail.plays.some((p) => p.playId) ? (
-        <p className="rounded-xl bg-surface-2 px-3 py-2.5 text-meta text-muted">
-          이 경기엔 하이라이트 영상이 없어요. 타석 오른쪽 ▶를 누르면 그 공 영상을 볼 수 있어요.
-        </p>
+        // 영상 자리가 없으면 없는 것이고 타석 ▶가 스스로 말한다(이슈 #327). 화면에는 글을 두지 않고 낭독기에만 남긴다
+        <p className="sr-only">이 경기엔 하이라이트 영상이 없어요. 타석 오른쪽 ▶를 누르면 그 공 영상을 볼 수 있어요.</p>
       ) : !detail.clips ? (
-        <p className="text-meta text-muted">마이너리그 경기는 MLB 영상이 없어요.</p>
+        <p className="text-meta text-muted">마이너 경기 · 영상 없음</p>
       ) : null}
 
       {/* 하이라이트가 여럿이면 고르기. 휴대폰은 가로로 밀어 보고, 640px 이상 가운데 창은 3개씩 줄을 바꾼다

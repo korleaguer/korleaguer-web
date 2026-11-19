@@ -8,6 +8,7 @@ import ApiErrorNotice from "@/components/ApiErrorNotice";
 import DataBanners from "@/components/DataBanners";
 import { PlayerSkeleton } from "@/components/PageSkeleton";
 import NotFoundNotice from "@/components/NotFoundNotice";
+import InfoTip from "@/components/InfoTip";
 import CareerSeasons from "@/components/player/CareerSeasons";
 import GameLog from "@/components/player/GameLog";
 import JumpNav, { type JumpTarget } from "@/components/player/JumpNav";
@@ -125,7 +126,23 @@ async function PlayerContent({ params }: Pick<Props, "params">) {
           />
           {saber && <LeaguePosition saber={saber} />}
           {trend && (
-            <Section id="trend-title" title="타격 흐름" aside="누적 wRC+">
+            <Section
+              id="trend-title"
+              title="타격 흐름"
+              aside="누적 wRC+"
+              // 그래프 아래 설명 줄을 대신한다(이슈 #327). 중간 값은 표준 가중치로 어림해 마지막 점(MLB 공식)에 맞춰 옮긴 값이라 공식 값처럼 읽히지 않게 밝힌다(lib/wrcTrend)
+              info={
+                <InfoTip
+                  title="타격 흐름"
+                  lines={[
+                    "점선은 리그 평균(100)",
+                    "50타석부터 그려요",
+                    "중간 값은 어림, 마지막 값만 MLB 공식이에요",
+                    "옆으로 훑으면(마우스는 올리면) 그날까지 값이 보여요",
+                  ]}
+                />
+              }
+            >
               <WrcTrend points={trend} moves={moves ?? []} />
             </Section>
           )}
