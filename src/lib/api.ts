@@ -492,6 +492,57 @@ export interface RosterMove {
   toLevel: Level | null;
 }
 
+/** 이동 연표 띠 구간 종류: 메이저 · 마이너 · 부상(재활 경기만 뛰었거나 경기 없이 부상자 명단) · 팀 없음(방출·FA) */
+export type TimelineKind = "MLB" | "MINORS" | "INJURED" | "NO_TEAM";
+
+/** 띠 한 구간(양 끝 날짜 포함). 같은 종류가 이어지면 서버가 합쳐 준다 */
+export interface TimelineSegment {
+  /** "2026-03-01" */
+  from: string;
+  to: string;
+  kind: TimelineKind;
+  /** 마이너면 단계("트리플A"), 아니면 null */
+  levelKo: string | null;
+  teamKo: string | null;
+}
+
+/** 그 시즌 선수 숫자(경기 수·wRC+·타율, 투수는 ERA+·평균자책점). 보이는 단계(level)의 합계 */
+export interface TimelineStat {
+  level: Level;
+  /** 마이너면 단계("트리플A", 섞였으면 "마이너") */
+  levelKo: string | null;
+  games: number;
+  wrcPlus: number | null;
+  avg: number | null;
+  eraPlus: number | null;
+  era: number | null;
+}
+
+export interface TimelinePlayer {
+  playerId: number;
+  segments: TimelineSegment[];
+  /** 그 시즌 이동(날짜 오름차순) */
+  moves: RosterMove[];
+  /** 가장 최근 이동 날짜. 이동이 없으면 null */
+  lastMoveOn: string | null;
+  stat: TimelineStat | null;
+}
+
+/** GET /api/players/timeline?season=: 선수 탭 '어디서 뛰었나' 연표. 옛 api면 notFound */
+export interface Timeline {
+  season: number;
+  /** 고를 수 있는 시즌(오래된 순) */
+  seasons: number[];
+  /** 띠가 덮는 날짜(양 끝 포함) */
+  from: string;
+  to: string;
+  /** 오늘(미국 날짜) */
+  today: string;
+  /** 지금이 이 시즌 중인가(그러면 띠에 '오늘' 표시) */
+  inSeason: boolean;
+  players: TimelinePlayer[];
+}
+
 export interface PlayerDetail extends PlayerSummary {
   teamEn: string | null;
   birthPlace: string | null;
@@ -1468,6 +1519,42 @@ async function homeFromApi() {
   return result;
 }
 
+function normalizeTimeline(raw: Timeline): Timeline {
+  const num = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) ? v : null);
+  return {
+    season: raw.season,
+    seasons: (raw.seasons ?? []).filter((y) => Number.isInteger(y)),
+    from: raw.from,
+    to: raw.to,
+    today: raw.today,
+    inSeason: raw.inSeason === true,
+    players: (raw.players ?? []).map((p) => ({
+      playerId: p.playerId,
+      segments: (p.segments ?? []).map((g) => ({ ...g, levelKo: g.levelKo ?? null, teamKo: g.teamKo ?? null })),
+      moves: p.moves ?? [],
+      lastMoveOn: p.lastMoveOn ?? null,
+      stat: p.stat
+        ? {
+            level: p.stat.level,
+            levelKo: p.stat.levelKo ?? null,
+            games: p.stat.games,
+            wrcPlus: num(p.stat.wrcPlus),
+            avg: num(p.stat.avg),
+            eraPlus: num(p.stat.eraPlus),
+            era: num(p.stat.era),
+          }
+        : null,
+    })),
+  };
+}
+
+async function timelineFromApi(season: number) {
+  "use cache";
+  const result = await requestApi(`/api/players/timeline${season > 0 ? `?season=${season}` : ""}`, normalizeTimeline);
+  cacheLife(result.ok ? { stale: 30, revalidate: 30, expire: 300 } : { stale: 0, revalidate: 1, expire: 2 });
+  return result;
+}
+
 async function playersFromApi() {
   "use cache";
   const result = await requestApi("/api/players", normalizePlayers);
@@ -1550,6 +1637,12 @@ export const getHome = cache(async () => {
 export const getPlayers = cache(async () => {
   await connection();
   return playersFromApi();
+});
+
+/** GET /api/players/timeline: 선수 탭 연표. season 0이면 서버가 지금 시즌을 고른다. 옛 api면 notFound(선수 목록으로 대신 그린다) */
+export const getTimeline = cache(async (season: number = 0) => {
+  await connection();
+  return timelineFromApi(season);
 });
 
 export const getPlayer = cache(async (id: number) => {
