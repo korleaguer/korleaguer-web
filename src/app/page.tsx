@@ -3,6 +3,7 @@ import { getHome } from "@/lib/api";
 import { formatAsOf } from "@/lib/format";
 import { SITE_DESCRIPTION, SITE_NAME, shareMeta } from "@/lib/share";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
+import AppShape from "@/components/AppShape";
 import DataBanners from "@/components/DataBanners";
 import { HomeSkeleton } from "@/components/PageSkeleton";
 import MlbChallenge from "@/components/home/MlbChallenge";
@@ -41,6 +42,8 @@ async function HomeContent() {
   const reportOnTop = !home.posting?.players.length;
   return (
     <div className="space-y-7">
+      {/* 앱 로딩 뼈대가 다음 실행 때 이 모양으로 그려지게 앱에 알린다(앱 밖에서는 아무 일도 없다, korleaguer-app#54) */}
+      <AppShape home={home.offseason ? (reportOnTop ? "report" : "posting") : "season"} />
       <DataBanners dataMode={home.dataMode} statsAvailable={home.statsAvailable} />
       {/* 비시즌: 층과 '한국 선수 중 1위' 카드 대신 선수 전원의 시즌 카드 */}
       {home.offseason ? (

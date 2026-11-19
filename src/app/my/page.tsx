@@ -3,6 +3,7 @@ import { getHome, getMyPlayers, getPlayers } from "@/lib/api";
 import { formatAsOf, formatDateRange } from "@/lib/format";
 import { readMyPlayers } from "@/lib/myPlayers";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
+import AppShape from "@/components/AppShape";
 import DataBanners, { StatsFailedBanner } from "@/components/DataBanners";
 import { MySkeleton } from "@/components/PageSkeleton";
 import FormCard from "@/components/my/FormCard";
@@ -90,6 +91,8 @@ async function MyContent({ searchParams }: Pick<PageProps<"/my">, "searchParams"
 
   return (
     <div className="space-y-4">
+      {/* 앱 로딩 뼈대가 다음 실행 때 같은 선수 수로 그려지게 앱에 알린다. 기록을 못 받았을 때는 알리지 않는다(korleaguer-app#54) */}
+      {!myFailed && <AppShape my={picked.length} />}
       {status && <DataBanners dataMode={status.dataMode} statsAvailable={status.statsAvailable} />}
       {/* 쿠키에 남은 없는 선수 id는 빼고 넘긴다. 기록을 못 받았을 때도 같은 자리에 둔다(다시 받아도 새로 만들지 않아,
           별로 빼고 되돌린 뒤 포커스를 옮길 때 앞 선수 목록을 이어 본다: useFocusAfterRemove) */}
