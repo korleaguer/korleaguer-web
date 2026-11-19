@@ -435,7 +435,7 @@ export function MySkeleton() {
   );
 }
 
-/** 기록 탭(제목 '기록' 아래): 한 줄 설명 + 섹션마다 제목과 선수 줄 카드(PC 두 칸) */
+/** 기록 화면(제목 '기록' 아래): 한 줄 설명 + 섹션마다 제목과 선수 줄 카드(PC 두 칸) */
 export function RecordsSkeleton() {
   return (
     <Frame className="space-y-4">

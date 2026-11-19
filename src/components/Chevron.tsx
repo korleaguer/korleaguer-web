@@ -1,6 +1,6 @@
 /**
  * 누르면 다른 화면이나 창이 열린다는 줄 끝 표시(›). 옆 글자가 뜻을 말하므로 화면 낭독기는 건너뛴다.
- * 거론 구단 알약·막대 줄(home/LinkedTeams)과 기록 탭 순위 줄(records/RecordRows)이 같이 쓴다. 크기가 rem이라 앱 큰 글씨를 따른다.
+ * 거론 구단 알약·막대 줄(home/LinkedTeams)과 기록 화면 순위 줄(records/RecordRows)이 같이 쓴다. 크기가 rem이라 앱 큰 글씨를 따른다.
  */
 export default function Chevron({ small = false }: { small?: boolean }) {
   return (
