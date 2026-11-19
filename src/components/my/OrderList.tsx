@@ -1,17 +1,20 @@
 "use client"; // 끌어서 옮기기(pointer 이벤트)와 버튼·키보드 옮기기가 있어서 클라이언트 컴포넌트다.
 
-import { useLayoutEffect, useOptimistic, useRef, useState, useTransition, type KeyboardEvent, type PointerEvent } from "react";
+import { useEffect, useLayoutEffect, useOptimistic, useRef, useState, useTransition, type KeyboardEvent, type PointerEvent } from "react";
 import { setMyPlayersOrder } from "@/app/my/actions";
 import type { PlayerSummary } from "@/lib/api";
 import { haptic } from "@/lib/app";
 import { callAction } from "@/lib/callAction";
 import { moveFocus } from "@/lib/focus";
-import type { ToastPress } from "@/lib/toast";
+import { dismissToastOf, type ToastPress } from "@/lib/toast";
 import PlayerAvatar from "@/components/PlayerAvatar";
 import { toastSaveFailed } from "./toastSaveFailed";
 
 /** 줄을 옮기는 버튼: 위로·아래로·손잡이(끌기·화살표) */
 type Control = "up" | "down" | "handle";
+
+/** 이 목록이 띄우는 저장 실패 알림의 표시(알림 owner). 목록은 내 선수 화면 '선수 고르기' 안에 하나뿐이다 */
+const SAVE_FAILED_OWNER = "my-order";
 
 interface Drag {
   id: number;
@@ -37,7 +40,8 @@ function move<T>(list: readonly T[], from: number, to: number): T[] {
  * 키보드는 손잡이에 초점을 두고 위·아래 화살표도 된다. 옮기면 쿠키 순서를 바꾸고 카드 순서가 바로 바뀐다.
  * 옮긴 뒤에도 포커스는 옮긴 줄의 같은 버튼에 남는다(줄 순서를 바꾸면 React가 DOM을 옮겨 포커스가 사라질 수 있다).
  * 줄 높이가 모두 같다고 보고(한 줄 48px) 포인터 위치로 들어갈 자리를 정한다.
- * 저장하지 못하면 원래 순서로 돌아가고, 별 저장과 같은 알림 '저장하지 못했어요' + '다시 시도'를 띄운다(save).
+ * 저장하지 못하면 원래 순서로 돌아가고, 별 저장과 같은 알림 '저장하지 못했어요' + '다시 시도'를 띄운다(save). 그 알림은 다시
+ * 옮기거나 이 목록이 사라지면 내린다.
  */
 export default function OrderList({ players }: { players: PlayerSummary[] }) {
   const byId = new Map(players.map((p) => [p.id, p]));
@@ -51,11 +55,25 @@ export default function OrderList({ players }: { players: PlayerSummary[] }) {
   const refocusRef = useRef<{ key: string; scroll: boolean } | null>(null);
   // 마지막으로 그린 순서. 알림의 '다시 시도'는 저장에 실패한 때 만든 함수라 그때 값을 들고 있어서, 누르는 때의 순서는 여기서 본다
   const savedRef = useRef(saved);
+  // 마지막으로 시작한 저장의 번호. 저장이 겹치면 결과는 뒤 저장이 정한다(save)
+  const saveSeqRef = useRef(0);
+  // 이 목록이 화면에 있나. 저장하는 사이 '선수 고르기'를 닫았으면 실패 알림에 '다시 시도'를 달지 않는다
+  const mountedRef = useRef(false);
   const order = live ?? saved;
 
   useLayoutEffect(() => {
     savedRef.current = saved;
   });
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      // 목록이 사라지면(고르기를 닫음, 2명 미만) 이 목록의 실패 알림을 내린다. 그 '다시 시도'는 사라진 목록의 함수라서, 고르기를
+      // 다시 열어 바꾼 순서를 모르고 옛 순서로 덮었다(PR #301 리뷰)
+      dismissToastOf(SAVE_FAILED_OWNER);
+    };
+  }, []);
 
   // 줄을 옮기면 React가 DOM 줄을 다시 꽂으며 그 안의 포커스가 사라질 수 있다. 옮긴 버튼에 다시 포커스를 둔다
   useLayoutEffect(() => {
@@ -77,16 +95,21 @@ export default function OrderList({ players }: { players: PlayerSummary[] }) {
   }
 
   /**
-   * 순서를 쿠키에 저장한다. 서버까지 닿지 못하거나(연결 끊김) 서버가 실패하면 서버 함수가 오류를 던진다. 잡지 않으면 화면 전체가
-   * 오류 화면(error.tsx)으로 바뀌었다(전수조사 L324). 쿠키 순서는 그대로라 이 전환이 끝나며 목록이 원래 순서로 돌아간다
-   * (useOptimistic). 별 저장과 같은 알림을 띄우고, 화면 낭독기에는 그 선수가 원래 자리로 돌아갔다고 알린다
-   * (알림 띠도 읽히지만 두 알림이 한꺼번에 오면 낭독기가 하나를 건너뛸 수 있어 목록 알림에도 실패를 넣는다)
+   * 순서를 쿠키에 저장한다. 서버까지 닿지 못하거나(연결 끊김) 서버가 실패하면 쿠키 순서는 그대로라 이 전환이 끝나며 목록이
+   * 원래 순서로 돌아간다(useOptimistic). 별 저장과 같은 알림을 띄우고, 화면 낭독기에는 그 선수가 원래 자리로 돌아갔다고 알린다
+   * (알림 띠도 읽히지만 두 알림이 한꺼번에 오면 낭독기가 하나를 건너뛸 수 있어 목록 알림에도 실패를 넣는다).
+   * 새로 저장하면 앞 실패 알림을 내린다: 그 '다시 시도'는 실패한 때의 순서를 들고 있어서, 그사이 다시 옮긴 뒤 누르면 방금 옮긴
+   * 것을 되돌렸다(PR #301 리뷰).
+   * 저장이 겹쳐(빠르게 두 번 옮김) 앞 저장만 실패하면 알리지 않는다: 뒤 저장은 앞 이동까지 담은 순서(낙관적 순서)를 보내서 그 저장이
+   * 되면 앞 이동도 저장되고, 안 되면 그 저장이 알린다(실제로는 저장됐는데 '원래 자리로 돌아갔어요'라고 했다, PR #301 리뷰)
    */
   function save(next: number[], movedId: number, control: Control) {
+    const seq = ++saveSeqRef.current;
+    dismissToastOf(SAVE_FAILED_OWNER);
     startTransition(async () => {
       setSaved(next);
       const result = await callAction(() => setMyPlayersOrder(next));
-      if (result.ok) return;
+      if (result.ok || seq !== saveSeqRef.current) return;
       haptic("error");
       // 원래 순서로 돌아가며 줄이 옮겨질 때 그 안의 포커스가 사라지지 않게, 지금 포커스가 있는 이 목록 버튼에 다시 둔다
       const active = document.activeElement;
@@ -94,20 +117,22 @@ export default function OrderList({ players }: { players: PlayerSummary[] }) {
         refocusRef.current = { key: active.dataset.move, scroll: true };
       }
       setMessage(`${byId.get(movedId)?.nameKo ?? ""}, 저장하지 못해 원래 자리로 돌아갔어요`);
-      toastSaveFailed(result.failure, (press) => retry(movedId, next.indexOf(movedId), control, press));
+      // 그사이 목록이 사라졌으면('선수 고르기'를 닫음) 알리기만 한다
+      const retryNow = mountedRef.current ? (press: ToastPress) => retry(next, movedId, control, press) : null;
+      toastSaveFailed(result.failure, retryNow, SAVE_FAILED_OWNER);
     });
   }
 
   /**
-   * 알림 '다시 시도': 못 옮긴 선수를 누르는 때의 순서에서 그 자리(to)로 다시 옮긴다. 실패한 때의 순서를 통째로 다시 보내면
-   * 그사이 옮긴 다른 줄이 되돌아간다. 그사이 내 선수에서 빠졌으면 그대로 둔다.
+   * 알림 '다시 시도': 저장하지 못한 순서(failed)를 다시 보낸다. 그사이 이 목록에서 다시 옮기면 이 알림은 내려가서(save) 누르는 때의
+   * 순서는 실패한 뒤 돌아간 그대로다. 그사이 다른 곳에서 넣거나 뺀 선수만 맞춘다: 빠진 선수는 빼고, 새로 넣은 선수는 맨 뒤에 둔다
+   * (서버 setMyPlayersOrder와 같은 규칙). 겹친 저장이 둘 다 실패했으면 두 이동을 함께 다시 보낸다. 옮긴 선수가 빠졌으면 그대로 둔다.
    * 알림 버튼에 포커스가 있었으면(알림과 함께 사라진다) 그 줄의 같은 버튼으로 돌려준다. 키보드로 눌렀을 때만 화면을 움직인다
    */
-  function retry(id: number, to: number, control: Control, press: ToastPress) {
+  function retry(failed: number[], id: number, control: Control, press: ToastPress) {
     const now = savedRef.current;
-    const from = now.indexOf(id);
-    if (from < 0) return;
-    const next = move(now, from, Math.min(to, now.length - 1));
+    if (!now.includes(id)) return;
+    const next = [...failed.filter((x) => now.includes(x)), ...now.filter((x) => !failed.includes(x))];
     if (press.focused) {
       const key = `${id}-${control}`;
       moveFocus(listRef.current?.querySelector<HTMLElement>(`[data-move="${key}"]`), press.keyboard);

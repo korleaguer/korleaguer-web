@@ -26,6 +26,11 @@ export interface ToastItem {
   /** success: 초록 체크, error: 빨간 느낌표, info: 아이콘 없음 */
   tone: "success" | "error" | "info";
   action?: ToastAction;
+  /**
+   * 이 알림을 띄운 곳(예: 'my-order', 'my-player:12'). 그곳이 다시 저장하거나 사라지면 이 알림을 내린다(dismissToastOf).
+   * '다시 시도'는 실패한 때의 할 일을 들고 있어서, 그사이 다시 하고 나서 누르면 방금 한 것을 덮었다(PR #301 리뷰)
+   */
+  owner?: string;
 }
 
 let current: ToastItem | null = null;
@@ -36,15 +41,27 @@ function emit() {
   for (const listener of listeners) listener();
 }
 
-/** 알림 띠를 띄운다. 이미 떠 있으면 바꾼다 */
-export function toast(message: string, options: { tone?: ToastItem["tone"]; action?: ToastAction } = {}): void {
-  current = { id: nextId++, message, tone: options.tone ?? "info", action: options.action };
+/** 알림 띠를 띄운다. 이미 떠 있으면 바꾼다. 띄운 알림 번호를 돌려준다(dismissToast로 그 알림만 내릴 때 쓴다) */
+export function toast(
+  message: string,
+  options: { tone?: ToastItem["tone"]; action?: ToastAction; owner?: string } = {},
+): number {
+  const id = nextId++;
+  current = { id, message, tone: options.tone ?? "info", action: options.action, owner: options.owner };
   emit();
+  return id;
 }
 
 /** 이 알림이 아직 떠 있으면 내린다(시간이 다 됐거나 밀어 치웠을 때) */
 export function dismissToast(id: number): void {
   if (current?.id !== id) return;
+  current = null;
+  emit();
+}
+
+/** owner가 띄운 알림이 아직 떠 있으면 내린다. 다른 곳의 새 알림이 이미 바꿨으면 그대로 둔다 */
+export function dismissToastOf(owner: string): void {
+  if (current?.owner !== owner) return;
   current = null;
   emit();
 }

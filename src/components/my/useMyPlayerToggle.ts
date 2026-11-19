@@ -54,10 +54,14 @@ export function useMyPlayerToggle(playerId: number, initialOn: boolean, nameKo: 
         // 쿠키는 그대로라 별은 이 전환이 끝나며 원래 모양으로 돌아간다(useOptimistic).
         // 같은 일(되돌리기였으면 그 자리로 다시 넣기)을 한 번 더 하는 버튼을 둔다(옛 배포면 '다시 불러오기')
         haptic("error");
-        toastSaveFailed(result.failure, (press) => {
-          refocus(press);
-          set(next, undoAt);
-        });
+        toastSaveFailed(
+          result.failure,
+          (press) => {
+            refocus(press);
+            set(next, undoAt);
+          },
+          `my-player:${playerId}`,
+        );
         return;
       }
       // 넣었으면 들어간 자리, 뺐으면 빠지기 전 자리. 20명이 차서 못 넣었으면 null
