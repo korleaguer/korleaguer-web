@@ -71,13 +71,12 @@ export default function LeaguePositionCompact({
   );
 }
 
-/** 작은 판 한 줄: 이름 | 막대(가운데 선 = MLB 중간, PositionBar) | 순위(선수 화면 줄보다 글자·막대가 한 단계 작다) */
+/** 작은 판 한 줄: 이름 | 막대(PositionBar) | 순위(선수 화면 줄보다 글자·막대가 한 단계 작다) */
 function CompactRow({ row, who, labelCol }: { row: Row; who: string; labelCol: string }) {
   const { label, pct } = row;
   const top = pct != null && pct >= 50;
-  // 가운데 선은 MLB 중간(중앙값)이라 그 아래는 '평균 아래'가 아니라 '중간 아래'다(사용자가 고른 그림, 전수조사 '중간 아래로 맞추기').
-  // 순위 대신 회색 글자로 둬서 혹평처럼 읽히지 않게 한다
-  const verdict = pct == null ? "비교 전" : top ? `상위 ${100 - pct}%` : "중간 아래";
+  // 위아래 모두 '상위 N%'로 쓴다(얼마나 아래인지 보이게, 이슈 #337). 중간보다 낮으면 회색 글자로 둬서 혹평처럼 읽히지 않게 한다
+  const verdict = pct == null ? "비교 전" : `상위 ${100 - pct}%`;
   return (
     <li
       className="grid grid-cols-[var(--label-col)_minmax(0,1fr)_4.25rem] items-center gap-x-2.5 @max-[13rem]:grid-cols-[minmax(0,1fr)_auto] @max-[13rem]:gap-y-1"
