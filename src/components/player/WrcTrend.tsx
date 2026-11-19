@@ -153,7 +153,7 @@ export default function WrcTrend({ points, moves }: { points: TrendPoint[]; move
         aria-valuemin={0}
         aria-valuemax={last}
         aria-valuenow={active}
-        // 마지막 점만 MLB 공식 값이고 중간은 어림값이다(아래 설명 줄과 같은 뜻)
+        // 마지막 점만 MLB 공식 값이고 중간은 어림값이다(제목 옆 ⓘ 안 설명과 같은 뜻)
         aria-valuetext={`${date}까지 wRC+ ${value}${active === last ? "" : "(어림)"}${afterGap ? `, ${afterGap}` : ""}`}
         onPointerDown={(e) => {
           e.currentTarget.setPointerCapture(e.pointerId);
@@ -207,7 +207,7 @@ export default function WrcTrend({ points, moves }: { points: TrendPoint[]; move
                 vectorEffect="non-scaling-stroke"
               />
             ))}
-            {/* 점선 = 리그 평균 100(숫자는 오른쪽 눈금 자리, 뜻은 그래프 아래 설명) */}
+            {/* 점선 = 리그 평균 100(숫자는 오른쪽 눈금 자리, 뜻은 점선 왼쪽 끝 '평균' 이름표) */}
             <line x1="0" x2={W} y1={y(100)} y2={y(100)} stroke="var(--muted)" strokeDasharray="3 4" vectorEffect="non-scaling-stroke" />
             <path
               d={path}
@@ -233,6 +233,14 @@ export default function WrcTrend({ points, moves }: { points: TrendPoint[]; move
               {v}
             </span>
           ))}
+          {/* 점선 이름표 '평균': 점선 왼쪽 끝 바로 위. SVG 안 글자는 그래프와 함께 가로로 늘어나 찌그러지므로(위 눈금 숫자와 같은 이유)
+              % 자리의 글자로 둔다. 눈금 숫자처럼 마우스가 지나가도 그래프를 떠난 것으로 치지 않게 pointer-events-none */}
+          <span
+            className="pointer-events-none absolute left-0.5 -translate-y-full pb-px text-micro text-muted"
+            style={{ top: `${(y(100) / H) * 100}%` }}
+          >
+            평균
+          </span>
           {/* 끊긴 곳 이유: 끊긴 자리(두 점 사이) 가운데, 두 끝 점 중 낮은 쪽 바로 아래. 아래가 좁으면(선이 바닥 가까이,
               김하성은 12px 남짓) 선에 겹치지 않게 높은 쪽 바로 위에 둔다. 모르면 글자 없이 끊기만 한다.
               글자 폭(em)만큼 양 끝에서 조여 그래프 밖으로 나가지 않게 한다(달 눈금과 같은 방식) */}
@@ -260,6 +268,13 @@ export default function WrcTrend({ points, moves }: { points: TrendPoint[]; move
             className="absolute size-[13px] -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-surface bg-accent"
             style={{ left: `${(x(active) / W) * 100}%`, top: `${(y(p.value) / H) * 100}%` }}
           />
+          {/* 훑을 수 있다는 표시: 세로선 아래 끝의 ‹ › 손잡이(글로 '옆으로 훑으면…'을 쓰던 자리, 이슈 #327) */}
+          <span
+            className="pointer-events-none absolute bottom-1 inline-flex h-5 -translate-x-1/2 items-center rounded-full border border-accent bg-surface px-1.5 text-micro leading-none text-accent"
+            style={{ left: `${(x(active) / W) * 100}%` }}
+          >
+            ‹ ›
+          </span>
         </div>
       </div>
       {/* 달 눈금: 그 달 첫 경기 자리 가운데에 둔다. 양 끝 글자는 카드 밖으로 나가지 않게 글자 폭(em, 숫자 0.65 + '월' 1)만큼
@@ -280,17 +295,6 @@ export default function WrcTrend({ points, moves }: { points: TrendPoint[]; move
           );
         })}
       </div>
-      {/* '100'은 점선 끝 눈금에 있어 되풀이하지 않고 점선의 뜻만 쓴다. 중간 값은 표준 가중치로 어림해 마지막 점(MLB 공식)에 맞춰
-          옮긴 값이라 공식 값처럼 읽히지 않게 밝힌다(lib/wrcTrend). 훑을 수 있다는 표시가 없어 손가락 기기·마우스 기기에 맞는 말을
-          하나만 보인다. 낭독기는 slider 역할과 값 글로 다루므로 이 안내는 읽지 않는다.
-          휴대폰 두 줄(손가락 문구는 칸 264~319px, 마우스 문구는 287px부터), PC 한 줄에 들게 줄였다. 문장을 더하면서 그대로 이어
-          붙였더니 글이 두 배(약 735px)가 되어 휴대폰 세 줄·PC 두 줄이었다. '시즌 처음부터 그날까지의 타격'은 제목 옆
-          '누적 wRC+'와 같은 말이라 뺐고, 바로 위가 그래프라 '그래프를'·'그래프에'도 붙이지 않는다 */}
-      <p className="mt-2 text-micro text-muted">
-        점선은 리그 평균, 50타석부터 그려요. 중간 값은 어림, 마지막 값만 MLB 공식이에요.
-        <span aria-hidden className="hidden pointer-coarse:inline"> 옆으로 훑으면 그날까지 값이 보여요.</span>
-        <span aria-hidden className="hidden pointer-fine:inline"> 마우스를 올리면 그날까지 값이 보여요.</span>
-      </p>
     </div>
   );
 }
