@@ -1,8 +1,9 @@
 "use client"; // 소속팀 사진을 고르는 상태가 있어서 클라이언트 컴포넌트다.
 
-import { useState, type CSSProperties, type ReactNode } from "react";
+import { useId, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import { haptic } from "@/lib/app";
 import { smallPhoto, STAGE_DIAMETER } from "@/lib/photo";
+import { radioKeyIndex } from "@/lib/radioKeys";
 
 /** 머리 카드에 넘겨 볼 사진 한 장(소속팀 하나) */
 export interface Shot {
@@ -48,6 +49,13 @@ export default function PhotoStage({
 }) {
   const [index, setIndex] = useState(initial);
   const [failed, setFailed] = useState<ReadonlySet<string>>(new Set());
+  /**
+   * 사진 원을 눌러 넘겼을 때만 낭독기에 알릴 말('키움 히어로즈 2017–2023 사진'). 원은 눌러도 포커스가 원에 남아 무엇으로 바뀌었는지
+   * 들을 수 없다. 알약(라디오)은 고르면 낭독기가 그 알약 이름과 '선택됨'을 읽으므로 또 알리지 않는다(같은 말 두 번)
+   */
+  const [spoken, setSpoken] = useState("");
+  const labelId = useId();
+  const pillsRef = useRef<HTMLSpanElement>(null);
   const shot = shots[index] ?? shots[0];
   const many = shots.length > 1;
   // 사진을 바꿀 때마다 앱 안이면 고르기 틱
@@ -56,7 +64,27 @@ export default function PhotoStage({
     haptic("select");
     setIndex(i);
   };
-  const next = () => pick((index + 1) % shots.length);
+  const next = () => {
+    const i = (index + 1) % shots.length;
+    const s = shots[i];
+    pick(i);
+    setSpoken(`${s.label}${s.years ? ` ${s.years}` : ""} 사진`);
+  };
+  /** 알약(라디오)으로 고른다. 낭독기는 고른 알약을 읽으니 원으로 넘길 때의 알림은 지운다 */
+  const choose = (i: number) => {
+    pick(i);
+    setSpoken("");
+  };
+  /** 고른 알약에서 ←↑ 앞, →↓ 다음(끝에서는 반대쪽 끝으로), Home·End 처음·끝. 옮기면 바로 고른다(경기별 막대와 같은 라디오 묶음) */
+  function onPillKey(e: KeyboardEvent<HTMLSpanElement>) {
+    // 키를 꾹 누르면 다시 그리기 전에 또 와서 state(index)는 한 칸 늦다. 포커스는 바로 옮겨 두므로 포커스가 있는 알약에서 센다
+    const at = Number((e.target as HTMLElement).closest("[data-shot]")?.getAttribute("data-shot") ?? index);
+    const to = radioKeyIndex(e.key, at, shots.length);
+    if (to == null) return;
+    e.preventDefault();
+    choose(to);
+    pillsRef.current?.querySelector<HTMLElement>(`[data-shot="${to}"]`)?.focus();
+  }
 
   const circle = (
     <span
@@ -126,19 +154,32 @@ export default function PhotoStage({
         </div>
         {children}
         {many && (
-          <div role="group" aria-label="소속팀별 사진" className="mt-3 flex flex-wrap items-center gap-1.5">
+          <div className="mt-3 flex flex-wrap items-center gap-1.5">
             {/* 휴대폰에서는 이름표를 윗줄에 둔다. 한 줄에 두면 알약이 갈려 지금 팀 알약만 혼자 다음 줄로 떨어졌다(이슈 #200) */}
-            <span className="mr-0.5 w-full text-caption text-muted sm:w-auto">소속팀 사진</span>
-            {/* 알약끼리만 묶어 여러 줄로 감길 때 줄 사이를 넓힌다(넓힌 누름 영역 44px가 겹치지 않게, 이슈 #257). 이름표와의 간격은 그대로 */}
-            <span className="flex flex-wrap items-center gap-x-1.5 gap-y-[max(0.75rem,calc(44px-2rem))]">
+            <span id={labelId} className="mr-0.5 w-full text-caption text-muted sm:w-auto">
+              소속팀 사진
+            </span>
+            {/* 알약끼리만 묶어 여러 줄로 감길 때 줄 사이를 넓힌다(넓힌 누름 영역 44px가 겹치지 않게, 이슈 #257). 이름표와의 간격은 그대로.
+                사진은 늘 하나만 보이니 알약은 켜고 끄는 버튼(aria-pressed)이 아니라 라디오 묶음이다(WAI-ARIA APG Radio Group, 전수조사 L328,
+                경기별 막대와 같다). Tab 한 번에 고른 알약으로 들어와 화살표로 바로 고르고, 다음 Tab은 묶음 밖으로. 이름은 보이는 이름표 */}
+            <span
+              ref={pillsRef}
+              role="radiogroup"
+              aria-labelledby={labelId}
+              onKeyDown={onPillKey}
+              className="flex flex-wrap items-center gap-x-1.5 gap-y-[max(0.75rem,calc(44px-2rem))]"
+            >
             {shots.map((s, i) => {
               const active = i === index;
               return (
                 <button
                   key={s.key}
                   type="button"
-                  aria-pressed={active}
-                  onClick={() => pick(i)}
+                  role="radio"
+                  aria-checked={active}
+                  tabIndex={active ? 0 : -1}
+                  data-shot={i}
+                  onClick={() => choose(i)}
                   // 큰 글씨에서 한 줄에 못 들어가면 팀 이름은 그대로 두고 연도만 알약 안 다음 줄로('키움/히어로즈'로 갈리지 않게, 이슈 #264)
                   className={`press tap-target inline-flex min-h-8 flex-wrap items-center gap-x-1.5 rounded-full px-2.5 text-label transition duration-150 motion-reduce:transition-none ${
                     active ? "bg-accent-soft text-accent-ink" : "bg-surface-2 text-muted hover:text-foreground"
@@ -157,7 +198,7 @@ export default function PhotoStage({
           </div>
         )}
         <p className="sr-only" aria-live="polite">
-          {many ? `${shot.label}${shot.years ? ` ${shot.years}` : ""} 사진` : ""}
+          {spoken}
         </p>
       </div>
     </>

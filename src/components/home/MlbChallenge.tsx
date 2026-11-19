@@ -53,7 +53,7 @@ const STATUS: Record<PostingStatus, { label: string; tone: StatusTone }> = {
   CLOSED: { label: "결과 확인 중", tone: "neutral" },
 };
 
-/** 이름 옆·여러 명 줄의 알약: 옅은 신호색 바탕 + 진한 글자(성적표 상태 알약과 같다) */
+/** 이름 옆·여러 명 줄의 알약: 옅은 신호색 바탕 + 진한 글자 */
 const PILL_TONE: Record<StatusTone, string> = {
   fa: "bg-fa-bg text-fa-fg",
   success: "bg-success-bg text-success-fg",
@@ -68,7 +68,7 @@ const BADGE_TONE: Record<StatusTone, string> = {
 };
 
 /**
- * 상태 알약 앞 7px 점. 성적표 상태 알약·'내 선수' 무대 배지는 점이 있는데 이 카드만 없어서 같은 '상태'가 달라 보였다
+ * 상태 알약 앞 7px 점. 성적표 줄의 상태·'내 선수' 무대 배지는 점이 있는데 이 카드만 없어서 같은 '상태'가 달라 보였다
  * (이슈 #277). 점은 글자색을 따르고, 회색 상태는 흐린 점이다(다른 상태 표시와 같다)
  */
 function StatusDot({ tone }: { tone: StatusTone }) {
