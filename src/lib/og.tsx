@@ -22,18 +22,24 @@ export const OG_COLORS = {
 };
 
 const FONT_DIR = join(process.cwd(), "node_modules/pretendard/dist/public/static");
+// Pretendard에는 한자가 없어서 기사 제목의 '美' 같은 글자만 가는 대체 글꼴로 그려졌다. 같은 집안의 일본어판(한자 포함)을 한글 글꼴 뒤 대체로 둔다
+const FONT_DIR_JP = join(process.cwd(), "assets/fonts/pretendard-jp");
 
 let fonts: Promise<{ name: string; data: Buffer; weight: 700 | 800; style: "normal" }[]> | null = null;
 
-/** Pretendard 굵게(700)·더 굵게(800). 처음 한 번만 읽고 서버가 켜져 있는 동안 다시 쓴다 */
+/** Pretendard 굵게(700)·더 굵게(800)와 한자용 Pretendard JP(같은 굵기, 뒤쪽이라 한글에 없는 글자만 여기서). 처음 한 번만 읽고 서버가 켜져 있는 동안 다시 쓴다 */
 export function ogFonts() {
   fonts ??= Promise.all([
     readFile(join(FONT_DIR, "Pretendard-Bold.otf")),
     readFile(join(FONT_DIR, "Pretendard-ExtraBold.otf")),
+    readFile(join(FONT_DIR_JP, "PretendardJP-Bold.otf")),
+    readFile(join(FONT_DIR_JP, "PretendardJP-ExtraBold.otf")),
   ])
-    .then(([bold, extraBold]) => [
+    .then(([bold, extraBold, boldJp, extraBoldJp]) => [
       { name: "Pretendard", data: bold, weight: 700 as const, style: "normal" as const },
       { name: "Pretendard", data: extraBold, weight: 800 as const, style: "normal" as const },
+      { name: "Pretendard JP", data: boldJp, weight: 700 as const, style: "normal" as const },
+      { name: "Pretendard JP", data: extraBoldJp, weight: 800 as const, style: "normal" as const },
     ])
     .catch((error: unknown) => {
       // 한 번 실패한 것을 붙들고 있으면 서버를 다시 켤 때까지 모든 그림이 실패한다. 다음 요청에서 다시 읽는다
