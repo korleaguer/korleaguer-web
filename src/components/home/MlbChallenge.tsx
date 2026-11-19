@@ -4,7 +4,7 @@ import { formatDate, withAndParticle } from "@/lib/format";
 import { uniqueByUrl } from "@/lib/news";
 import Section from "@/components/Section";
 import { kboTeamColor } from "@/lib/teams";
-import HistoryToggle from "@/components/home/HistoryToggle";
+import HistorySheetRow from "@/components/home/HistorySheetRow";
 import LinkedTeams from "@/components/home/LinkedTeams";
 import KboAvatar from "@/components/home/KboAvatar";
 import { PostingDot } from "@/components/home/PostingDot";
@@ -305,12 +305,12 @@ export default async function MlbChallenge({
           )}
           {showHistory && (
             <div className={historyOnRight ? "lg:hidden" : undefined}>
-              <HistoryToggle
+              <HistorySheetRow
                 title={`역대 포스팅 계약 ${signings.length}건`}
                 hint={<Words text={`1위 ${signings[0].nameKo} ${signings[0].years}년 ${signings[0].usd} · 보장액 순`} />}
               >
                 <SigningList signings={signings} head={false} flush />
-              </HistoryToggle>
+              </HistorySheetRow>
             </div>
           )}
           <div className="lg:hidden">
@@ -603,8 +603,8 @@ function SigningList({
           <span className="shrink-0 text-caption text-muted">보장액 순</span>
         </p>
       )}
-      {/* 원화가 있으면 번갈아 보이기를 멈추는 '달러·원화' 고르기를 목록 위에 둔다(이슈 #263). 접기 안(flush)에서는 바로 위가
-          '펼치기/접기' 버튼이라, 버튼(높이 20px)의 44px 누름 영역이 그 버튼 아래쪽을 덮지 않게 12px 띄운다(리뷰 지적).
+      {/* 원화가 있으면 번갈아 보이기를 멈추는 '달러·원화' 고르기를 목록 위에 둔다(이슈 #263). 접는 줄 안(flush)에서는 바로 위가
+          버튼이라, 버튼(높이 20px)의 44px 누름 영역이 그 버튼 아래쪽을 덮지 않게 12px 띄운다(리뷰 지적).
           환율이 없는 계약은 원화를 골라도 달러로 남는다(번갈아 보이지도 않는다) */}
       {signings.some((s) => s.krw) ? <MoneyUnitScope className={flush ? "pt-3" : ""}>{list}</MoneyUnitScope> : list}
       {foot && (
