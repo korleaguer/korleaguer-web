@@ -7,6 +7,7 @@ import { teamColor, teamLogoUrl } from "@/lib/teams";
 import { levelKo, statusBadge } from "@/components/my/formLabels";
 import PlayerAvatar from "@/components/PlayerAvatar";
 import ResultPill from "@/components/ResultPill";
+import { PostseasonLine } from "@/components/player/GameRow";
 import ScoreText from "@/components/ScoreText";
 import Section from "@/components/Section";
 import TeamMark from "@/components/TeamMark";
@@ -336,6 +337,8 @@ function FloorRow({ entry, starred, today }: { entry: MyPlayer; starred: boolean
             <TeamMark logoUrl={teamLogoUrl(entry.player.teamAbbr)} color={teamColor(entry.player.teamAbbr)} size="sm" />
             {team && <span className="min-w-0 flex-1 truncate text-caption text-muted">{team}</span>}
           </span>
+          {/* 포스트시즌 경기면 이름 아래 기록 위에 '포스트시즌' 한 줄(선수 화면 경기 줄과 같은 부품, 이슈 #309) */}
+          {game && <PostseasonLine game={game} />}
           {/* 경기 한 줄 기록은 카드에서 가장 굵은 본문(Summary 600, 안 뛰었으면 500 + 흐림, DESIGN.md·전수조사 L307).
               '부상자 명단'·'마지막 경기 …' 같은 상태 줄은 기록이 아니라 보통 본문 글자로 둔다 */}
           <span
