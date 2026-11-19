@@ -1,0 +1,438 @@
+import { useId } from "react";
+import type { SeasonMonth } from "@/lib/api";
+import { formatEra } from "@/lib/format";
+
+/** 그 달 리그 평균 대비 값(100 = 평균, 높을수록 잘함). 타자 wRC+, 투수 ERA+ */
+function plus(m: SeasonMonth, pitcher: boolean): number | null {
+  const v = pitcher ? m.eraPlus : m.wrcPlus;
+  // 서버가 소수로 줘도 이름표·낭독은 정수로(이름표 폭 계산이 정수 세 자리를 기준으로 한다)
+  return v == null ? null : Math.round(v);
+}
+
+/** 선에 올리는 달: 메이저·마이너에서 뛰어 값이 있는 달 */
+function played(m: SeasonMonth, pitcher: boolean): boolean {
+  return (m.kind === "MLB" || m.kind === "MINORS") && plus(m, pitcher) != null;
+}
+
+/** 값 글자(음수는 긴 빼기표) */
+function plusText(v: number): string {
+  return v < 0 ? `−${Math.abs(v)}` : String(v);
+}
+
+/** 점 하나: i는 달 칸 번호, x·y는 그래프 좌표(viewBox 단위) */
+interface Pt {
+  i: number;
+  x: number;
+  y: number;
+  v: number;
+}
+
+/**
+ * 단조 3차 곡선(Fritsch–Carlson): 점과 점 사이에서 값보다 위아래로 넘치지 않는다. 보통의 부드러운 곡선은 한 달 반짝한 값 옆에서
+ * 점보다 위로 부풀어 '그 달에 없던 값'을 그리고, 평균 점선을 넘나드는 색 갈림도 어긋난다
+ */
+function smoothPath(p: Pt[]): string {
+  const f = (n: number) => n.toFixed(1);
+  if (p.length === 1) return `M${f(p[0].x)},${f(p[0].y)}`;
+  const n = p.length;
+  const d: number[] = [];
+  const m: number[] = [];
+  for (let i = 0; i < n - 1; i++) d.push((p[i + 1].y - p[i].y) / (p[i + 1].x - p[i].x));
+  m[0] = d[0];
+  m[n - 1] = d[n - 2];
+  for (let i = 1; i < n - 1; i++) m[i] = d[i - 1] * d[i] <= 0 ? 0 : (d[i - 1] + d[i]) / 2;
+  for (let i = 0; i < n - 1; i++) {
+    if (d[i] === 0) {
+      m[i] = 0;
+      m[i + 1] = 0;
+      continue;
+    }
+    const a = m[i] / d[i];
+    const b = m[i + 1] / d[i];
+    const s = a * a + b * b;
+    if (s > 9) {
+      const t = 3 / Math.sqrt(s);
+      m[i] = t * a * d[i];
+      m[i + 1] = t * b * d[i];
+    }
+  }
+  let s = `M${f(p[0].x)},${f(p[0].y)}`;
+  for (let i = 0; i < n - 1; i++) {
+    const h = (p[i + 1].x - p[i].x) / 3;
+    s += ` C${f(p[i].x + h)},${f(p[i].y + m[i] * h)} ${f(p[i + 1].x - h)},${f(p[i + 1].y - m[i + 1] * h)} ${f(p[i + 1].x)},${f(p[i + 1].y)}`;
+  }
+  return s;
+}
+
+/**
+ * 그래프 둘레 여백(viewBox 단위). 큰 그래프는 위에 단계 이름 줄(14) + '최고' 이름표, 아래에 '최저'·달 이름 자리.
+ * 첫 달이 마이너이고 최고 달이면 두 글자가 같은 자리라, 단계 이름은 맨 윗줄에 따로 둔다(시안은 26이었다)
+ */
+interface Frame {
+  w: number;
+  h: number;
+  padT: number;
+  padB: number;
+  padL: number;
+  padR: number;
+}
+
+/** 큰 그래프 틀. 높이 164는 10.25rem이라 큰 글씨에서는 글자와 함께 커진다 */
+const BIG: Frame = { w: 340, h: 164, padT: 40, padB: 40, padL: 6, padR: 6 };
+const SMALL: Frame = { w: 84, h: 30, padT: 3, padB: 3, padL: 2, padR: 2 };
+
+/**
+ * 선 색. 평균 위는 파랑(accent), 아래는 회색: 글자색(muted)을 카드 색과 섞어 옅게 만든다(라이트·다크 모두 따라간다).
+ * 고대비 모드에서는 globals.css가 data-line·data-area로 시스템 색으로 다시 칠한다
+ */
+const UP = "var(--accent)";
+const DOWN = "color-mix(in srgb, var(--muted) 70%, var(--surface))";
+/** 평균(100) 점선: 흐린 글자색 그대로(라이트 대비 6:1) */
+const AVERAGE = "var(--muted)";
+
+/**
+ * 그래프 좌표 계산: 달 칸 → 점, 세로 범위는 선수마다 자동(100을 늘 포함, 위아래 8% 여유라 음수 달끼리도 갈린다).
+ * 기록 있는 달이 이어진 구간(runs)마다 선 하나이고 기록 없는 달에서 끊는다
+ */
+function layout(months: SeasonMonth[], pitcher: boolean, f: Frame) {
+  const n = months.length;
+  const vals = months.filter((m) => played(m, pitcher)).map((m) => plus(m, pitcher) as number);
+  let lo = Math.min(...vals, 100);
+  let hi = Math.max(...vals, 100);
+  const span = hi - lo || 40;
+  lo -= span * 0.08;
+  hi += span * 0.08;
+  const bottom = f.h - f.padB;
+  const y = (v: number) => f.padT + (1 - (v - lo) / (hi - lo)) * (bottom - f.padT);
+  const x = (i: number) => (n === 1 ? f.w / 2 : f.padL + (i * (f.w - f.padL - f.padR)) / (n - 1));
+  const runs: Pt[][] = [];
+  let run: Pt[] = [];
+  months.forEach((m, i) => {
+    const v = plus(m, pitcher);
+    if (!played(m, pitcher) || v == null) {
+      if (run.length) runs.push(run);
+      run = [];
+      return;
+    }
+    run.push({ i, x: x(i), y: y(v), v });
+  });
+  if (run.length) runs.push(run);
+  return { runs, x, y, y100: y(100), bottom };
+}
+
+/** 평균 위 구간만 / 아래 구간만 보이게 가르는 clipPath 둘과 칠 기울기(선 아래로 옅어진다) */
+function Defs({ id, f, y100, bottom, alpha }: { id: string; f: Frame; y100: number; bottom: number; alpha: number }) {
+  return (
+    <defs>
+      <linearGradient id={`${id}g`} x1="0" y1={f.padT} x2="0" y2={bottom} gradientUnits="userSpaceOnUse">
+        <stop offset="0" style={{ stopColor: UP, stopOpacity: alpha }} />
+        <stop offset="1" style={{ stopColor: UP, stopOpacity: 0 }} />
+      </linearGradient>
+      <linearGradient id={`${id}h`} x1="0" y1={f.padT} x2="0" y2={bottom} gradientUnits="userSpaceOnUse">
+        <stop offset="0" style={{ stopColor: DOWN, stopOpacity: 0.18 }} />
+        <stop offset="1" style={{ stopColor: DOWN, stopOpacity: 0 }} />
+      </linearGradient>
+      <clipPath id={`${id}a`}>
+        <rect x="-10" y="-10" width={f.w + 20} height={y100 + 10} />
+      </clipPath>
+      <clipPath id={`${id}b`}>
+        <rect x="-10" y={y100} width={f.w + 20} height={f.h} />
+      </clipPath>
+    </defs>
+  );
+}
+
+/** 구간마다 선 + 아래 칠. 한 달뿐인 구간은 선이 없어 칠도 없다(점은 호출한 쪽이 그린다) */
+function Runs({
+  id,
+  runs,
+  bottom,
+  lineWidth,
+  scaled,
+}: {
+  id: string;
+  runs: Pt[][];
+  bottom: number;
+  lineWidth: number;
+  /** true면 가로로 늘어나는 그림이라 선 굵기를 화면 픽셀로 고정한다 */
+  scaled: boolean;
+}) {
+  const ve = scaled ? ("non-scaling-stroke" as const) : undefined;
+  return (
+    <>
+      {runs.map((r) => {
+        const line = smoothPath(r);
+        const area = `${line} L${r[r.length - 1].x.toFixed(1)},${bottom} L${r[0].x.toFixed(1)},${bottom} Z`;
+        const common = { fill: "none", strokeWidth: lineWidth, strokeLinecap: "round" as const, vectorEffect: ve };
+        return (
+          <g key={r[0].i}>
+            {r.length > 1 && (
+              <>
+                <path data-area d={area} fill={`url(#${id}g)`} clipPath={`url(#${id}a)`} />
+                <path data-area d={area} fill={`url(#${id}h)`} clipPath={`url(#${id}b)`} />
+              </>
+            )}
+            {r.length > 1 && (
+              <>
+                <path data-line d={line} stroke={UP} clipPath={`url(#${id}a)`} {...common} />
+                <path data-line="dim" d={line} stroke={DOWN} clipPath={`url(#${id}b)`} {...common} />
+              </>
+            )}
+          </g>
+        );
+      })}
+    </>
+  );
+}
+
+/** 평균 점선(가로로 늘어나도 점선 간격은 그대로) */
+function AverageLine({ f, y100, opacity, scaled }: { f: Frame; y100: number; opacity: number; scaled: boolean }) {
+  return (
+    <line
+      data-avg
+      x1="0"
+      x2={f.w}
+      y1={y100}
+      y2={y100}
+      stroke={AVERAGE}
+      strokeOpacity={opacity}
+      strokeDasharray="2 3"
+      strokeWidth="1"
+      vectorEffect={scaled ? "non-scaling-stroke" : undefined}
+    />
+  );
+}
+
+/** 점 색: 그 값이 평균 위면 파랑, 아래면 회색 */
+function dotColor(v: number): string {
+  return v < 100 ? DOWN : UP;
+}
+
+/** SVG id에 쓸 수 없는 글자를 걷는다(useId는 «r0»·:r0: 모양이다) */
+function useSvgId(): string {
+  return useId().replace(/[^a-zA-Z0-9]/g, "");
+}
+
+/** 마이너 달 구간(단계가 바뀌면 나눈다): 옅은 배경 띠 + 왼쪽 위 단계 이름 */
+function minorBands(months: SeasonMonth[]): { from: number; to: number; level: string }[] {
+  const bands: { from: number; to: number; level: string }[] = [];
+  months.forEach((m, i) => {
+    if (m.kind !== "MINORS") return;
+    const level = m.levelKo ?? "마이너";
+    const prev = bands[bands.length - 1];
+    if (prev && prev.to === i - 1 && prev.level === level) prev.to = i;
+    else bands.push({ from: i, to: i, level });
+  });
+  return bands;
+}
+
+/**
+ * 성적표 아래 창·PC 오른쪽 칸의 달별 꺾은선(사용자 11-20 '토스형 꺾은선 T2', 이슈 #347). 예전 막대 여섯 개(이슈 #239·#242·#261)를 바꿨다.
+ * 그리는 값은 그대로다: 그 리그 평균 대비(타자 wRC+, 투수 ERA+, 100 = 평균). 마이너는 그 단계 리그 평균과 비교한다(서버).
+ * - 선: 단조 3차 곡선 하나, 아래로 옅어지는 칠. 평균(100) 점선 위 구간은 파랑, 아래 구간은 회색(clipPath로 가른다).
+ *   세로 범위는 선수마다 자동이라 점선 위아래 어디에 몰려도 달끼리 구분된다. 기록 없는 달(부상·FA·없음)에서는 선을 끊고,
+ *   앞뒤가 끊긴 외딴 한 달은 점 하나로 둔다.
+ * - 숫자는 달마다 쓰지 않고 가장 높은 달·낮은 달에 '최고 N'·'최저 N'만, 마지막 달 점만 강조한다(토스증권 차트 방식).
+ *   경기 적은 달(few)을 옅게 하던 표시와 200 넘는 달의 꺾임 표시는 곡선에서는 뜻이 없어 없앴다.
+ * - 마이너 달은 옅은 둥근 띠와 단계 이름('트리플A')으로 어디서 뛰었는지 보이고(색 대신 띠라 메이저 선과 한 선으로 이어진다),
+ *   부상 달은 바닥에 본문 글자색 '부상' + 빨간 짧은 줄(빨간 글자는 주황과 헷갈려 줄에만, 사용자 11-17), FA 달은 'FA'.
+ * - 폭이 휴대폰 창(~343px)부터 PC 오른쪽 칸까지 바뀌어, 선수 화면 타격 흐름(WrcTrend)처럼 SVG를 가로로 늘이고(preserveAspectRatio="none",
+ *   선은 non-scaling-stroke) 글자·점은 SVG 밖의 % 자리 HTML로 둔다(SVG 안 글자는 같이 찌그러진다). 높이는 rem이라 큰 글씨에서 같이 커진다.
+ *   글자 크기는 칸 폭이 허락하는 만큼만 키운다(globals.css .month-line, 이슈 #264).
+ * 화면 읽기 프로그램에는 달마다 '4월 메이저 31경기 wRC+ 118' 한 줄씩 읽힌다(그림은 숨긴다).
+ */
+export default function MonthLine({ months, pitcher }: { months: SeasonMonth[]; pitcher: boolean }) {
+  const id = useSvgId();
+  if (months.length === 0) return null;
+  const stat = pitcher ? "ERA+" : "wRC+";
+  const f = BIG;
+  const { runs, x, y100, bottom } = layout(months, pitcher, f);
+  const all = runs.flat();
+  const playedMonths = months.filter((m) => played(m, pitcher));
+  const hasMajors = playedMonths.some((m) => m.kind === "MLB");
+  const minorLevels = new Set(playedMonths.filter((m) => m.kind === "MINORS").map((m) => m.levelKo ?? "마이너"));
+  // 비교한 리그가 둘 이상이면(메이저 + 트리플A, 트리플A + 더블A) 달마다 평균이 다르다
+  const average = (hasMajors ? 1 : 0) + minorLevels.size > 1 ? "각 리그 평균" : "리그 평균";
+
+  const px = (v: number) => `${((v / f.w) * 100).toFixed(2)}%`;
+  const py = (v: number) => `${((v / f.h) * 100).toFixed(2)}%`;
+  const last = all.length > 0 ? all[all.length - 1] : null;
+  const lastIdx = months.length - 1;
+  // '평균' 이름표: 양 끝 중 선이 점선에서 더 먼 쪽(최고·최저 이름표와 겹치지 않게). 선이 끝 달에 닿지 않으면 먼 것으로 친다
+  const first = all.length > 0 ? all[0] : null;
+  const farFirst = first && first.i === 0 ? Math.abs(first.y - y100) : 99;
+  const farLast = last && last.i === lastIdx ? Math.abs(last.y - y100) : 99;
+  const avgRight = farLast >= farFirst;
+  const mx = all.length > 0 ? all.reduce((a, b) => (b.v > a.v ? b : a)) : null;
+  const mn = all.length > 0 ? all.reduce((a, b) => (b.v < a.v ? b : a)) : null;
+
+  /** 점 바로 위·아래 이름표 자리: 양 끝 달은 글자를 안쪽으로 붙이고, 가운데는 점 위에 가운데 맞춘다 */
+  const labelStyle = (q: Pt, above: boolean) => {
+    const vert = above ? { bottom: `calc(${100 - (q.y / f.h) * 100}% + 7px)` } : { top: `calc(${py(q.y)} + 7px)` };
+    if (q.i === 0) return { ...vert, left: `calc(${px(q.x)} - 4px)` };
+    if (q.i === lastIdx) return { ...vert, right: `calc(${100 - (q.x / f.w) * 100}% - 4px)` };
+    return { ...vert, left: px(q.x), transform: "translateX(-50%)" };
+  };
+
+  return (
+    <div className="mt-3">
+      <p className="mb-1.5 text-caption text-muted">{`달마다 ${stat}`}</p>
+      {/* 화면 읽기: 그림은 숨기고 달마다 한 줄씩 */}
+      <ol className="sr-only" aria-label={`달마다 ${stat}, 100이 ${average}`}>
+        {months.map((m) => (
+          <li key={m.month}>{spoken(m, pitcher)}</li>
+        ))}
+      </ol>
+      {/* month-line: 글자는 칸 폭이 허락하는 만큼만 키운다(globals.css, 이슈 #264) */}
+      <div aria-hidden className="month-line relative h-[10.25rem]">
+        {minorBands(months).map((b) => {
+          const step = (f.w - f.padL - f.padR) / Math.max(1, months.length - 1);
+          const x0 = Math.max(0, x(b.from) - step / 2);
+          const x1 = Math.min(f.w, x(b.to) + step / 2);
+          return (
+            <div
+              key={b.from}
+              className="absolute rounded-md bg-surface-2"
+              style={{ left: px(x0), width: px(x1 - x0), top: 0, bottom: py(f.padB) }}
+            >
+              <span className="month-line-label absolute left-1.5 top-0.5 text-muted">{b.level}</span>
+            </div>
+          );
+        })}
+        <svg viewBox={`0 0 ${f.w} ${f.h}`} preserveAspectRatio="none" className="absolute inset-0 h-full w-full overflow-visible">
+          <Defs id={id} f={f} y100={y100} bottom={bottom} alpha={0.22} />
+          <AverageLine f={f} y100={y100} opacity={0.7} scaled />
+          <Runs id={id} runs={runs} bottom={bottom} lineWidth={2.5} scaled />
+        </svg>
+        {all.length > 0 && (
+          <span
+            className="month-line-label pointer-events-none absolute -translate-y-full pb-px text-muted"
+            style={avgRight ? { right: 0, top: py(y100) } : { left: 0, top: py(y100) }}
+          >
+            평균
+          </span>
+        )}
+        {/* 앞뒤가 끊긴 외딴 달은 선이 없으니 점 하나 */}
+        {runs
+          .filter((r) => r.length === 1)
+          .map((r) => (
+            <span
+              key={r[0].i}
+              className="absolute size-[7px] -translate-x-1/2 -translate-y-1/2 rounded-full"
+              data-dot
+              style={{ left: px(r[0].x), top: py(r[0].y), background: dotColor(r[0].v) }}
+            />
+          ))}
+        {mx && (
+          <span className="month-line-label absolute whitespace-nowrap text-foreground" style={labelStyle(mx, true)}>
+            <span className="text-muted">최고 </span>
+            <b>{plusText(mx.v)}</b>
+          </span>
+        )}
+        {mx && mn && mn !== mx && (
+          <span className="month-line-label absolute whitespace-nowrap text-foreground" style={labelStyle(mn, false)}>
+            <span className="text-muted">최저 </span>
+            <b>{plusText(mn.v)}</b>
+          </span>
+        )}
+        {/* 마지막 달 점만 강조: 옅은 원 + 테두리 점. 색은 그 값이 평균 위면 파랑·아래면 회색 */}
+        {last && (
+          <>
+            <span
+              data-dot
+              className="absolute size-4 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-[0.18]"
+              style={{ left: px(last.x), top: py(last.y), background: dotColor(last.v) }}
+            />
+            <span
+              data-dot
+              className="absolute size-2 -translate-x-1/2 -translate-y-1/2 rounded-full border-[1.5px] border-surface"
+              style={{ left: px(last.x), top: py(last.y), background: dotColor(last.v), boxSizing: "content-box" }}
+            />
+          </>
+        )}
+        {/* 기록 없는 달: '부상'(본문 글자색 + 빨간 짧은 줄) · 'FA'. 표본이 모자라 값이 없는 달·기록 없는 달은 흐린 '–'(이유 없이 빈칸으로 두지 않는다).
+            글자 폭(em)만큼 양 끝에서 조여 첫 달·마지막 달에서도 그림 밖으로 나가지 않게 한다 */}
+        {months.map((m, i) => {
+          if (played(m, pitcher)) return null;
+          const t = m.kind === "INJURED" ? "부상" : m.kind === "FREE_AGENT" ? "FA" : "–";
+          const w = t === "부상" ? 2.1 : t === "FA" ? 1.6 : 0.8;
+          return (
+            <span key={m.month}>
+              <span
+                className={`month-line-label absolute -translate-y-full ${t === "–" ? "text-muted" : "text-foreground"}`}
+                style={{ left: `clamp(0px, calc(${px(x(i))} - ${w / 2}em), calc(100% - ${w}em))`, top: py(bottom - 2) }}
+              >
+                {t}
+              </span>
+              {m.kind === "INJURED" && (
+                <span
+                  data-injury
+                  className="absolute h-[3px] w-[18px] -translate-x-1/2 -translate-y-1/2 rounded-full"
+                  style={{
+                    left: px(x(i)),
+                    top: py(bottom - 1),
+                    background: "color-mix(in srgb, var(--danger-fg) 80%, transparent)",
+                  }}
+                />
+              )}
+            </span>
+          );
+        })}
+        {/* 달 이름 줄: 양 끝은 안쪽으로 붙여 카드 밖으로 나가지 않게 */}
+        {months.map((m, i) => (
+          <span
+            key={m.month}
+            className="month-line-small absolute bottom-0 whitespace-nowrap tabular-nums text-muted"
+            style={
+              i === 0
+                ? { left: px(x(i)) }
+                : i === lastIdx
+                  ? { right: `${100 - (x(i) / f.w) * 100}%` }
+                  : { left: px(x(i)), transform: "translateX(-50%)" }
+            }
+          >
+            {`${m.month}월`}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** 화면 읽기 한 줄: '4월 메이저 31경기 wRC+ 118'(투수는 평균자책점도), 기록 없는 달은 '9월 부상' */
+function spoken(m: SeasonMonth, pitcher: boolean): string {
+  if (!played(m, pitcher)) {
+    const rest = m.kind === "INJURED" ? "부상" : m.kind === "FREE_AGENT" ? "FA" : "기록 없음";
+    return `${m.month}월 ${rest}`;
+  }
+  const v = plus(m, pitcher) as number;
+  const where = m.kind === "MLB" ? "메이저" : (m.levelKo ?? "마이너");
+  return pitcher
+    ? `${m.month}월 ${where} ${m.games}등판 ERA+ ${v}, 평균자책점 ${formatEra(m.era)}`
+    : `${m.month}월 ${where} ${m.games}경기 wRC+ ${v}`;
+}
+
+/**
+ * 성적표 목록 한 줄 오른쪽의 작은 달별 꺾은선(이슈 #276 → #347). 펼치지 않아도 선수마다 한 해 모양(언제 잘했고 언제 빠졌나)을
+ * 나란히 견주게 한다. 큰 그래프(MonthLine)와 같은 곡선·색 규칙이고 점·글자·띠 없이 평균 점선 + 선·칠만 둔다.
+ * 펼치기 버튼 안에 놓이고 버튼 이름에 섞이지 않게 화면 읽기 프로그램에는 숨긴다(같은 값은 펼친 곳이 달마다 읽어 준다).
+ * 크기는 px로 고정해 큰 글씨에서도 찌그러지지 않는다.
+ */
+export function MonthSpark({ months, pitcher }: { months: SeasonMonth[]; pitcher: boolean }) {
+  const id = useSvgId();
+  if (months.length === 0) return null;
+  const f = SMALL;
+  const { runs, y100, bottom } = layout(months, pitcher, f);
+  return (
+    <svg aria-hidden viewBox={`0 0 ${f.w} ${f.h}`} width={f.w} height={f.h} className="block h-[30px] w-[84px] overflow-visible">
+      <Defs id={id} f={f} y100={y100} bottom={bottom} alpha={0.28} />
+      <AverageLine f={f} y100={y100} opacity={0.6} scaled={false} />
+      <Runs id={id} runs={runs} bottom={bottom} lineWidth={1.75} scaled={false} />
+      {runs
+        .filter((r) => r.length === 1)
+        .map((r) => (
+          <circle key={r[0].i} data-dot cx={r[0].x} cy={r[0].y} r={2} fill={dotColor(r[0].v)} />
+        ))}
+    </svg>
+  );
+}
