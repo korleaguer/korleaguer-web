@@ -27,7 +27,7 @@ export interface ReportRow {
   photo: { nameKo: string; photoUrl: string | null; teamAbbr: string | null; eager: boolean };
   /** 버튼 가운데: 이름·판정·상태와 숫자 한 줄(버튼 안이라 span만) */
   head: ReactNode;
-  /** 버튼 오른쪽 작은 달별 막대(늘 보인다). 달별 기록이 없으면 null */
+  /** 버튼 오른쪽 작은 달별 꺾은선(늘 보인다). 달별 기록이 없으면 null */
   spark: ReactNode;
   /** 버튼 밖 둘째 줄(거론 구단 또는 이번 겨울 기사). 없으면 null */
   second: ReactNode;

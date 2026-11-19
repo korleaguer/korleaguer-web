@@ -8,7 +8,7 @@ import MyPlayerToggle from "@/components/my/MyPlayerToggle";
 import StarIcon from "@/components/my/StarIcon";
 import { type BadgeTone, levelKo, statusBadge } from "@/components/my/formLabels";
 import LinkedTeams from "@/components/home/LinkedTeams";
-import MonthBars, { MonthSpark } from "@/components/home/MonthBars";
+import MonthLine, { MonthSpark } from "@/components/home/MonthLine";
 import SeasonReportRows, { type ReportRow } from "@/components/home/SeasonReportRows";
 import LeaguePositionCompact from "@/components/player/LeaguePositionCompact";
 
@@ -55,8 +55,8 @@ interface Stat {
 
 /**
  * 홈 '2026 시즌 성적표'(사용자 11-17 '목록 + 누르면 펼치기', 이슈 #276). 카드 6장(휴대폰 3,705px)을 흰 카드 한 장 안 한 줄 목록으로
- * 바꿔 선수끼리 판정·같은 숫자·한 해 모양(작은 달별 막대)을 한눈에 견주고, 줄을 누르면 줄에 없는 것만 아래 창(PC는 오른쪽 칸)으로 보인다(이슈 #325)
- * (한 줄 흐름·달별 막대·MLB 안 위치·거론 구단·별·기사 모두 보기·선수 페이지).
+ * 바꿔 선수끼리 판정·같은 숫자·한 해 모양(작은 달별 꺾은선)을 한눈에 견주고, 줄을 누르면 줄에 없는 것만 아래 창(PC는 오른쪽 칸)으로 보인다(이슈 #325)
+ * (한 줄 흐름·달별 꺾은선·MLB 안 위치·거론 구단·별·기사 모두 보기·선수 페이지).
  * entries는 보일 순서(내 선수 먼저 → 시즌 판정 순)이고, 성적표가 없는 선수도 이름·상태·숫자로 한 줄을 둔다.
  */
 export default function SeasonReportList({
@@ -175,10 +175,10 @@ function buildRow(entry: MyPlayer, report: SeasonReport | null, isMine: boolean,
   const panel = (
     <>
       {flow && <p className="text-heading">{flow}</p>}
-      {/* 달별 막대와 MLB 안 위치: 아래 창·오른쪽 칸 안이라 늘 위아래로 쌓는다(화면 폭 기준 두 칸은 좁은 칸에서 찌그러진다, 이슈 #325) */}
+      {/* 달별 꺾은선과 MLB 안 위치: 아래 창·오른쪽 칸 안이라 늘 위아래로 쌓는다(화면 폭 기준 두 칸은 좁은 칸에서 찌그러진다, 이슈 #325) */}
       {(months.length > 0 || position) && (
         <div>
-          {months.length > 0 && <MonthBars months={months} pitcher={pitcher} />}
+          {months.length > 0 && <MonthLine months={months} pitcher={pitcher} />}
           {position}
         </div>
       )}
