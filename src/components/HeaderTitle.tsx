@@ -8,6 +8,7 @@
 // 'KOR Leaguer — 해외파 한국 선수…'가 잘려 떴다(전수조사). 보이는 제목이 없는 홈은 로고 그대로다.
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { isInApp } from "@/lib/app";
 
 export default function HeaderTitle() {
   const pathname = usePathname();
@@ -15,7 +16,7 @@ export default function HeaderTitle() {
 
   useEffect(() => {
     // 앱 안에서만 머리글이 붙어 있으므로 브라우저에서는 아무것도 하지 않는다
-    if (!document.documentElement.hasAttribute("data-app")) return;
+    if (!isInApp()) return;
     const header = document.querySelector("header");
     if (!header) return;
     let frame = 0;

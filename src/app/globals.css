@@ -400,10 +400,18 @@
     -webkit-user-select: none;
     user-select: none;
   }
-  /* 아이폰 앱은 아래 탭 막대(84px)와 그 밑 홈 표시줄(safe area)이 웹 위에 떠 있다. 포커스를 옮기며 스크롤할 때(뉴스 '기사
-     더 보기' 뒤 새 기사 등) 그 밑으로 숨지 않게 아래도 띄운다(거론 구단 창·경기 창과 같은 셈) */
+  /*
+   * 아이폰 앱은 아래 탭 막대와 그 밑 홈 표시줄이 웹 위에 떠 있다. 그 높이(화면 아래 끝부터)는 --app-tab-bar 하나로 쓴다:
+   * 경기 창·거론 구단 창 아래 여백(in-ios-app:), '외 n개 구단' 목록 자리(lib/app.ts iosTabBarHeight가 이 높이를 잰다), 아래 scroll-padding-bottom.
+   * 앱이 실제 높이를 <html> style에 넣는다(korleaguer-app#55, iPhone 18 Pro 83px). 넣지 않은 옛 앱은 84px.
+   * 앱 웹뷰 안에서는 env(safe-area-inset-bottom)이 0이라(시뮬레이터 실측) 84px이 홈 표시줄까지 덮는다(전에 쓰던 '안전 영역 + 84px'과 같은 값).
+   * 안전 영역을 더하지 않는다: 더하면 안전 영역이 0이 아닌 곳(사파리에 data-app="ios"를 붙인 시험 페이지 등)에서만 34px이 늘어
+   * 같은 기기에서 값이 둘로 갈린다(#302 리뷰).
+   * 포커스를 옮기며 스크롤할 때(뉴스 '기사 더 보기' 뒤 새 기사 등) 그 밑으로 숨지 않게 아래도 띄운다
+   */
   html[data-app="ios"] {
-    scroll-padding-bottom: calc(env(safe-area-inset-bottom) + 84px);
+    --app-tab-bar: 84px;
+    scroll-padding-bottom: var(--app-tab-bar);
   }
 
   /* 링크·사진을 길게 눌러 뜨는 미리보기·저장 메뉴는 앱 안에서 계속 막는다(글자 선택 메뉴는 뜬다) */
