@@ -172,12 +172,12 @@ export default function LinkedTeams({
   const sheetTeam = linked.find((t) => t.abbreviation === openTeam && canOpen(t));
   return (
     <div ref={rootRef} className={className}>
-      {/* 큰 글씨에서 둘이 한 줄에 못 들어가면 '최근 n일 기사 수'를 다음 줄로(제목이 세 줄로 찌그러지지 않게, 이슈 #264).
+      {/* 큰 글씨에서 둘이 한 줄에 못 들어가면 '최근 n일'을 다음 줄로(제목이 세 줄로 찌그러지지 않게, 이슈 #264).
           '행선지로 거론된 구단'은 카드 안 작은 제목이라 h4다(선수 이름 h3 아래, '관련 기사'와 같다, 이슈 #277).
           h4는 글꼴을 물려받기만 해서 글자는 바깥 text-label 그대로다 */}
       <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-2 text-label">
         <h4>행선지로 거론된 구단</h4>
-        <span className="shrink-0 text-caption text-muted tabular-nums">최근 {counts.days}일 기사 수</span>
+        <span className="shrink-0 text-caption text-muted tabular-nums">최근 {counts.days}일</span>
       </div>
       {pcBars && (
         <ul className="hidden space-y-1 lg:block">
@@ -194,7 +194,12 @@ export default function LinkedTeams({
                     style={{ "--share": Math.max(0.04, t.linked / top).toFixed(4) } as CSSProperties}
                   />
                   <span className="shrink-0 font-bold tabular-nums">{t.linked}건</span>
-                  {t.today && <span className="shrink-0 text-caption font-bold text-accent-ink">오늘 새 기사</span>}
+                  {t.today && (
+                    <>
+                      <span aria-hidden className="shrink-0 text-caption font-bold text-accent-ink">새</span>
+                      <span className="sr-only">오늘 새 기사</span>
+                    </>
+                  )}
                 </span>
               </>
             );
@@ -233,7 +238,12 @@ export default function LinkedTeams({
               <TeamMark logoUrl={teamLogoUrl(t.abbreviation)} color={teamColor(t.abbreviation)} size="sm" />
               {t.nameKo}
               <span className="font-bold tabular-nums">{t.linked}건</span>
-              {t.today && <span className="text-caption font-bold text-accent-ink">오늘 새 기사</span>}
+              {t.today && (
+                <>
+                  <span aria-hidden className="text-caption font-bold text-accent-ink">새</span>
+                  <span className="sr-only">오늘 새 기사</span>
+                </>
+              )}
             </>
           );
           return (
