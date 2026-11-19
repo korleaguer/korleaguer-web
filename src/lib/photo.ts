@@ -8,6 +8,23 @@
 export const PHOTO_KEY = /^(mlb-\d{1,10}(-\d{4})?|kbo-[a-z0-9-]{1,40}|posting-\d{1,10}-\d{4}|career-\d{1,10}-\d{4})$/;
 
 /**
+ * 우리 사진 주소: /photos/{이름} 또는 api가 내용 버전을 붙인 /photos/{이름}?v={sha256 앞 8자}. 버전은 사진 내용이 바뀌면 달라져서
+ * 버전이 붙은 요청은 오래(immutable) 저장해도 옛 사진이 남지 않는다. 옛 api는 버전 없는 주소를 준다.
+ */
+export const PHOTO_PATH = /^\/photos\/([a-z0-9-]{1,60})(?:\?v=([0-9a-f]{8}))?$/;
+
+/** 우리 사진 주소를 이름과 버전(없으면 null)으로 나눈다. 우리 사진 주소가 아니면 null */
+export function parsePhotoPath(url: string | null | undefined): { key: string; version: string | null } | null {
+  const match = url ? PHOTO_PATH.exec(url) : null;
+  return match ? { key: match[1], version: match[2] ?? null } : null;
+}
+
+/** 요청의 v 값이 내용 버전 모양(16진수 8자)이면 그 값, 아니면 null(그 밖의 값은 api로 넘기지 않는다) */
+export function photoVersion(value: string | null): string | null {
+  return value && /^[0-9a-f]{8}$/.test(value) ? value : null;
+}
+
+/**
  * 줄인 사진의 폭(px). 아무 폭이나 받지 않고 이 사다리만 만든다(서버가 줄이는 일과 저장해 둘 사진 수를 묶어 둔다).
  * 원 지름 24~56px의 2배·3배 화면을 덮는다(그 배율 이상인 가장 작은 폭): 24 → 48·72, 28·30 → 72·96, 40 → 96·120, 44 → 96·168, 56 → 120·168.
  * 192·288은 선수 페이지 머리 사진 무대(96px 원)의 2배·3배다
@@ -37,9 +54,11 @@ function ladder(px: number): number {
  */
 export function smallPhoto(url: string | null, diameter: number): { src: string; srcSet: string } | null {
   if (!url || (diameter > SMALL_MAX && diameter !== STAGE_DIAMETER)) return null;
-  const key = url.startsWith("/photos/") ? url.slice("/photos/".length) : null;
-  if (!key || !PHOTO_KEY.test(key)) return null;
+  const parsed = parsePhotoPath(url);
+  if (!parsed || !PHOTO_KEY.test(parsed.key)) return null;
+  const base = `/photos/${parsed.key}`;
+  const query = parsed.version ? `?v=${parsed.version}` : ""; // 버전을 줄인 사진 주소에도 그대로 유지한다
   const x2 = ladder(diameter * 2);
   const x3 = ladder(diameter * 3);
-  return { src: `${url}/${x2}`, srcSet: `${url}/${x2} 2x, ${url}/${x3} 3x` };
+  return { src: `${base}/${x2}${query}`, srcSet: `${base}/${x2}${query} 2x, ${base}/${x3}${query} 3x` };
 }
