@@ -516,8 +516,8 @@
 
     /*
      * 막대 그래프(data-bar, 역대 계약·거론 구단 기사 수 .ink-bar)는 사용자 색으로 다시 칠한다: 보통 막대는 글자색,
-     * 흐린 막대(마이너·MLB 중 위치의 아래 절반·기록 없는 날 바닥 줄)는 흐린 글자색, 고른 막대는 강조색. 막대의 색은 style 속성으로도
-     * 들어와서(달별 막대) !important로 덮는다. 막대 안에는 글자가 없어 forced-color-adjust: none이 글자를 건드리지 않는다
+     * 흐린 막대(MLB 중 위치의 아래 절반·기록 없는 날 바닥 줄)는 흐린 글자색, 고른 막대는 강조색. 막대의 색은 style 속성으로도
+     * 들어와서 !important로 덮는다. 막대 안에는 글자가 없어 forced-color-adjust: none이 글자를 건드리지 않는다
      */
     :is([data-bar], .ink-bar) {
       forced-color-adjust: none;
@@ -529,13 +529,33 @@
     }
 
     /*
-     * 달별 막대가 200을 넘어 잘린 끝의 꺾임 표시(MonthBars: 카드 색 틈 + 위아래 흐린 글자색 선): 막대 안에 있어 막대의
-     * forced-color-adjust: none을 물려받아 평소 색 그대로 남는다. 그러면 다시 칠한 막대(CanvasText)와 같은 색이 될 수 있어
-     * (흰 카드 + 어두운 고대비면 둘 다 흰색) 틈·선 모두 늘 막대와 대비되는 바탕색(Canvas)으로 끊는다
+     * 달별 꺾은선(MonthLine, 이슈 #347): SVG 선·칠·점은 forced-color-adjust: none으로 두고 시스템 색으로 다시 칠한다.
+     * 평균 위 선은 글자색, 아래 선(data-line="dim")·평균 점선은 흐린 글자색, 선 아래 옅은 칠(data-area)은 뺀다(옅은 색은 이 모드에서
+     * 비치지 않고 선만 있어도 읽힌다). 점(data-dot)은 글자색, 부상 달 빨간 줄(data-injury)은 흐린 글자색 줄로 남긴다
      */
-    [data-bar-break] {
-      background: Canvas !important;
+    :is([data-line], [data-avg]) {
+      forced-color-adjust: none;
+      stroke: CanvasText !important;
+    }
+
+    :is([data-line="dim"], [data-avg]) {
+      stroke: GrayText !important;
+    }
+
+    [data-area] {
+      display: none;
+    }
+
+    [data-dot] {
+      forced-color-adjust: none;
+      background: CanvasText !important;
       border-color: Canvas !important;
+      fill: CanvasText !important;
+    }
+
+    [data-injury] {
+      forced-color-adjust: none;
+      background: GrayText !important;
     }
 
     /*
@@ -964,20 +984,21 @@
   }
 
   /*
-   * 홈 성적표 달별 막대(MonthBars, 이슈 #264). 여섯 칸이 카드 폭에 묶여 있어 글자만 키우면 막대 위 '118'·둘째 줄 '12.54'·
-   * 아래 '10월'이 칸 밖으로 넘친다(2배에서 '11454 67101'처럼 붙어 읽혔다). 칸 폭(100cqi / 6)이 허락하는 만큼만 키운다.
-   * 나누는 수는 글자 폭(em): 위 숫자 세 자리 굵게 약 1.8em, '12.54' 약 2.7em. 보통 크기에서는 그대로다.
+   * 홈 성적표 달별 꺾은선(MonthLine, 이슈 #264 → #347). 그래프 폭은 카드에 묶여 있어 글자만 키우면 '최고 118'·'최저 −37'·
+   * 달 이름('10월')이 서로 겹치거나 카드 밖으로 넘친다. 칸 폭(100cqi)이 허락하는 만큼만 키운다.
+   * 이름표: '최고 118'은 약 4.5em이라 폭의 1/20(휴대폰 343px에서 17px)까지. 달 이름: 여섯 칸 하나('10월' 약 2.6em)에 들어가는 만큼.
+   * 보통 크기에서는 그대로다.
    */
-  .month-bars {
+  .month-line {
     container-type: inline-size;
   }
 
-  .month-bars-num {
-    font-size: min(var(--text-label), calc(100cqi / 6 / 1.9));
-    line-height: var(--text-label--line-height);
+  .month-line-label {
+    font-size: min(var(--text-micro), calc(100cqi / 20));
+    line-height: var(--text-micro--line-height);
   }
 
-  .month-bars-small {
+  .month-line-small {
     font-size: min(var(--text-micro), calc(100cqi / 6 / 2.9));
     line-height: var(--text-micro--line-height);
   }
