@@ -55,17 +55,33 @@ function rate(lines: GameLine[], role: Role): string {
   return ab > 0 ? formatRate(hits / ab) : "";
 }
 
+/** 포스트시즌 경기인지(korleaguer-server#192). 경기 종류가 없는 옛 api면 false라 지금처럼 표시하지 않는다 */
+export function isPostseason(line: GameLine): boolean {
+  return line.seasonType === "POSTSEASON";
+}
+
 /**
- * 그달 성적 글: 단계마다 뛴 경기 수와 성적. 최근에 뛴 단계부터.
+ * 그달 성적 묶음 이름: 메이저는 '메이저', 마이너는 단계('트리플A'). 포스트시즌 경기는 정규시즌 묶음에 섞지 않고 '포스트시즌'으로
+ * 따로 묶는다(11-17 전수조사 L350, 마이너 줄은 서버가 정규시즌만 줘서 '트리플A 포스트시즌'은 대비일 뿐이다)
+ */
+function groupName(e: LogGame): string {
+  const level = e.kind === "mlb" ? "메이저" : e.game.levelKo;
+  if (!isPostseason(lineOf(e))) return level;
+  return e.kind === "mlb" ? "포스트시즌" : `${level} 포스트시즌`;
+}
+
+/**
+ * 그달 성적 글: 묶음(단계, 포스트시즌은 따로)마다 뛴 경기 수와 성적. 그달 먼저 뛴 묶음부터(경기가 날짜순이라).
  * 예: "트리플A 10경기 .195 · 메이저 1경기", 투수는 "트리플A 8번 등판 평균자책점 12.54"(투수 출전 수는 '등판'으로 부른다,
- * 시즌 성적 이름표 '메이저 4번 등판'과 같은 말). 그달에 뛴 경기가 없으면 '뛴 경기 없음'(투수는 '등판 없음')
+ * 시즌 성적 이름표 '메이저 4번 등판'과 같은 말). 정규시즌이 끝나는 달은 "메이저 16경기 .186 · 포스트시즌 1경기 .000"이다(김하성 2026년 9월).
+ * 그달에 뛴 경기가 없으면 '뛴 경기 없음'(투수는 '등판 없음')
  */
 export function monthSummary(entries: LogGame[], role: Role): string {
   const byLevel = new Map<string, GameLine[]>();
   for (const e of entries) {
     const line = lineOf(e);
     if (!line.played) continue;
-    const level = e.kind === "mlb" ? "메이저" : e.game.levelKo;
+    const level = groupName(e);
     const list = byLevel.get(level);
     if (list) list.push(line);
     else byLevel.set(level, [line]);
@@ -224,9 +240,10 @@ function buildDay(key: string, entries: LogGame[], role: Role): CalendarDay {
     look = { tone: "pending", label, detail: label === formatTime(next.startTimeKst) ? `${label} 시작` : label };
   }
 
+  // 칸 모양은 그대로 두고 포스트시즌은 낭독 이름에만 붙인다('10월 7일(수) 포스트시즌 1타수 무안타')
   const speechLines = sorted
     .filter((e) => played.length === 0 || lineOf(e).played)
-    .map((e) => `${e.kind === "minor" ? `${e.game.levelKo} ` : ""}${lineOf(e).summary}`);
+    .map((e) => `${e.kind === "minor" ? `${e.game.levelKo} ` : ""}${isPostseason(lineOf(e)) ? "포스트시즌 " : ""}${lineOf(e).summary}`);
   const speech = `${formatDate(key)}${count > 1 ? ` 더블헤더 ${count}경기` : ""} ${
     look.tone === "rest" ? "등판 없음" : speechLines.join(", ")
   }`;
