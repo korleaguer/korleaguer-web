@@ -112,7 +112,7 @@ function dayRooms(slots: BarSlot[], days: number, selected: number): (number | u
 
 /**
  * 경기별 막대 + 고른 경기 한 줄. 왼쪽이 오래된 날이다.
- * 결장은 점선 막대, 경기가 없는 날은 빈칸, 홈런 친 경기는 막대 위에 주황 점(좋은 활약 색).
+ * 결장은 막대 없이 바닥선 아래 짧은 점선, 경기가 없는 날은 빈칸, 홈런 친 경기는 막대 위에 주황 점(좋은 활약 색).
  */
 export default function GameBars({ slots, role, days, minors = false, name }: Props) {
   const [selected, setSelected] = useState(() => defaultIndex(slots));
@@ -282,7 +282,7 @@ export default function GameBars({ slots, role, days, minors = false, name }: Pr
 
           if (!slot.game) {
             return (
-              <span key={`${slot.date}-${slot.part}`} className="flex min-w-0 flex-col gap-1">
+              <span key={`${slot.date}-${slot.part}`} className="flex min-w-0 flex-col gap-2">
                 <span aria-hidden className="relative block h-[4.5rem] border-b border-line">
                   {monthLine}
                 </span>
@@ -313,13 +313,18 @@ export default function GameBars({ slots, role, days, minors = false, name }: Pr
               onClick={(e) => {
                 if (e.detail === 0) pick(i);
               }}
-              className="group flex min-w-0 cursor-pointer flex-col gap-1 rounded-md"
+              className="group flex min-w-0 cursor-pointer flex-col gap-2 rounded-md"
             >
               <span className="relative flex h-[4.5rem] w-full items-end justify-center border-b border-line">
                 {monthLine}
                 {!game.played ? (
-                  // 결장(투수는 등판 없음)·경기 전: 점선 막대. 흐린 글자색 그대로(60%로 흐리면 흰 카드 대비 2.6:1이었다)
-                  <span className={`block h-3.5 w-[72%] max-w-7 rounded-t-md border-[1.5px] border-dashed ${on ? "border-foreground" : "border-muted"}`} />
+                  // 결장(투수는 등판 없음)·경기 전: 막대 없이 바닥선 바로 아래 짧은 점선(칸 폭 42%). 막대 높이 0이라 1아웃 등판·무안타
+                  // 막대(4px)보다 높아 '뛰었다'로 읽히지 않는다(11-17 전수조사, 사용자 11-19). 날짜 글씨와는 칸 사이(gap-2)로 뗀다.
+                  // 흐린 글자색 그대로(60%로 흐리면 흰 카드 대비 2.6:1이었다)
+                  <span
+                    aria-hidden
+                    className={`absolute left-1/2 top-full mt-[3px] block w-[42%] -translate-x-1/2 border-t-2 border-dashed ${on ? "border-foreground" : "border-muted"}`}
+                  />
                 ) : height ? (
                   // 흐리게(투명도) 두지 않고 단색: 안 고른 막대도 카드 대비 3:1을 넘는다. 마우스를 올리면 고른 색 쪽으로 반쯤
                   <span
@@ -387,7 +392,7 @@ export default function GameBars({ slots, role, days, minors = false, name }: Pr
         </span>
         {!minors && (
           <span className="inline-flex items-center gap-1">
-            <span aria-hidden className="h-2 w-2.5 rounded-[2px] border-[1.5px] border-dashed border-muted" />
+            <span aria-hidden className="w-2.5 border-t-2 border-dashed border-muted" />
             {pitcher ? "등판 없음" : "결장"}
           </span>
         )}

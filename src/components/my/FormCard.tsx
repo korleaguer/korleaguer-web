@@ -154,11 +154,20 @@ function HitterNumbers({ period, hitting, minors }: { period: string; hitting: H
     <Numbers
       label={`${period} 타율`}
       value={formatRate(hitting.avg)}
-      note={<RateDelta value={hitting.avg} season={hitting.seasonAvg} played={hitting.games > 0} minors={minors} />}
+      note={
+        <RateDelta
+          value={hitting.avg}
+          season={hitting.seasonAvg}
+          atBats={hitting.atBats}
+          played={hitting.games > 0}
+          minors={minors}
+        />
+      }
+      // 경기를 먼저 쓴다: '안타·홈런·타점'만으로는 몇 경기 기록인지 몰랐다(11-17 점검, 비시즌 시즌 합계 카드와 같은 순서). 투수는 등판 먼저
       small={[
+        ["경기", hitting.games],
         ["안타", hitting.hits],
         ["홈런", hitting.homeRuns],
-        ["타점", hitting.rbi],
       ]}
     />
   );
@@ -169,7 +178,16 @@ function PitcherNumbers({ period, pitching, minors }: { period: string; pitching
     <Numbers
       label={`${period} 평균자책점`}
       value={formatEra(pitching.era)}
-      note={<EraDelta value={pitching.era} season={pitching.seasonEra} played={pitching.games > 0} minors={minors} />}
+      note={
+        <EraDelta
+          value={pitching.era}
+          season={pitching.seasonEra}
+          outs={pitching.outs}
+          inningsText={pitching.inningsText}
+          played={pitching.games > 0}
+          minors={minors}
+        />
+      }
       small={[
         ["등판", pitching.games],
         ["이닝", pitching.inningsText],
@@ -187,11 +205,32 @@ function seasonName(minors: boolean): string {
   return minors ? "마이너 시즌" : "시즌";
 }
 
-/** "시즌 .301보다 ▲.047"(마이너 카드는 "마이너 시즌 .262보다"). 타수가 없거나 시즌 기록이 없으면 그 사실만 */
-function RateDelta({ value, season, played, minors }: { value: number | null; season: number | null; played: boolean; minors: boolean }) {
+/**
+ * 기간 타율을 시즌과 견줘도 되는 가장 적은 타수. 이보다 적으면 차이를 색·화살표로 보이지 않고 '참고용'이라고만 쓴다.
+ * 타율의 표본 흔들림(표준편차)이 20타수에서 약 .10(√(.25×.75÷20))이라, 그 안쪽 차이(▲.142 같은 값)는 실력 차이로 읽으면 안 된다.
+ * 타자 기간 카드에는 타석 기준(STEADY)이 따로 없어 이 카드에 맞게 정했다. 한 주(7일) 정규 타자가 대개 20타수 안팎이라,
+ * 한 주를 거의 다 뛴 선수는 비교하고 반 주만 뛴 선수(6타수 등)는 참고용으로 갈린다(운영 데이터 11-19: 이정후 7일 21타수, 송성문 7일 6·14일 9타수)
+ */
+const MIN_AT_BATS_FOR_DELTA = 20;
+
+/** "시즌 .301보다 ▲.047"(마이너 카드는 "마이너 시즌 .262보다"). 타수가 없거나 시즌 기록이 없으면 그 사실만. 타수가 적으면 "시즌 .191 · 6타수라 참고용" */
+function RateDelta({
+  value,
+  season,
+  atBats,
+  played,
+  minors,
+}: {
+  value: number | null;
+  season: number | null;
+  atBats: number;
+  played: boolean;
+  minors: boolean;
+}) {
   if (!played) return <>이 기간 출전 없음</>;
   if (value == null) return <>이 기간 타수 없음</>;
   if (season == null) return null;
+  if (atBats < MIN_AT_BATS_FOR_DELTA) return <>{`${seasonName(minors)} ${formatRate(season)} · ${atBats}타수라 참고용`}</>;
   // 소수 셋째 자리에서 비교해 화면 숫자와 어긋나지 않게 한다. 타율은 높을수록 좋다
   const diff = Math.round(value * 1000) - Math.round(season * 1000);
   return (
@@ -204,11 +243,32 @@ function RateDelta({ value, season, played, minors }: { value: number | null; se
   );
 }
 
-/** "시즌 3.12보다 ▼0.85". 평균자책점은 낮을수록 좋다. 등판이 없거나 시즌 기록이 없으면 그 사실만 */
-function EraDelta({ value, season, played, minors }: { value: number | null; season: number | null; played: boolean; minors: boolean }) {
+/**
+ * 기간 평균자책점을 시즌과 견줘도 되는 가장 적은 아웃 수(9아웃 = 3이닝). 이보다 적으면 색·화살표 없이 '참고용'이라고만 쓴다.
+ * 3이닝 평균자책점은 실점 한 점에 4.5점이 움직이고, 불펜 투수의 한 주 등판이 대개 3이닝 안팎이라 한 번 던진 투수와 갈린다
+ */
+const MIN_OUTS_FOR_DELTA = 9;
+
+/** "시즌 3.12보다 ▼0.85". 평균자책점은 낮을수록 좋다. 등판이 없거나 시즌 기록이 없으면 그 사실만. 이닝이 적으면 "시즌 3.12 · 2⅓이닝이라 참고용" */
+function EraDelta({
+  value,
+  season,
+  outs,
+  inningsText,
+  played,
+  minors,
+}: {
+  value: number | null;
+  season: number | null;
+  outs: number;
+  inningsText: string;
+  played: boolean;
+  minors: boolean;
+}) {
   if (!played) return <>이 기간 등판 없음</>;
   if (season == null) return null;
   if (value == null) return <>{`${seasonName(minors)} ${formatEra(season)}`}</>;
+  if (outs < MIN_OUTS_FOR_DELTA) return <>{`${seasonName(minors)} ${formatEra(season)} · ${inningsText}이닝이라 참고용`}</>;
   // 소수 둘째 자리(화면 숫자)에서 비교한다
   const diff = Math.round(value * 100) - Math.round(season * 100);
   return (

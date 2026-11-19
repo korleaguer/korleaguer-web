@@ -9,7 +9,6 @@ import FormCard from "@/components/my/FormCard";
 import MyHeader from "@/components/my/MyHeader";
 import { PhotoPriority } from "@/components/my/PhotoPriority";
 import PillNav from "@/components/PillNav";
-import StateNotice from "@/components/StateNotice";
 import PageSuspense from "@/components/PageSuspense";
 import { WordGroup } from "@/components/Words";
 import { shareMeta, SITE_NAME } from "@/lib/share";
@@ -79,7 +78,7 @@ async function MyContent({ searchParams }: Pick<PageProps<"/my">, "searchParams"
   const subtitle = myFailed ? (
     `내 선수 ${selectedIds.length}명`
   ) : !my ? (
-    "좋아하는 선수를 넣어 두면 최근 경기를 한곳에서 볼 수 있어요"
+    "좋아하는 선수를 넣으면 기록을 한곳에서 볼 수 있어요"
   ) : (
     <>
       {seasonView
@@ -96,6 +95,7 @@ async function MyContent({ searchParams }: Pick<PageProps<"/my">, "searchParams"
           별로 빼고 되돌린 뒤 포커스를 옮길 때 앞 선수 목록을 이어 본다: useFocusAfterRemove) */}
       <MyHeader subtitle={subtitle} players={playersResult.data} selectedIds={selectedIds} />
 
+      {/* 아무도 안 골랐으면 위 '선수 고르기' 목록이 열려 있고 부제가 안내한다: 아래에 빈 카드를 또 두지 않는다(사용자 11-19, 전수조사 L399) */}
       {myFailed ? (
         <StatsFailedBanner title="내 선수 기록을 불러오지 못했어요" detail={null} />
       ) : my && picked.length > 0 ? (
@@ -117,11 +117,7 @@ async function MyContent({ searchParams }: Pick<PageProps<"/my">, "searchParams"
             ))}
           </ul>
         </>
-      ) : (
-        // 아무도 안 골랐으면 위 '선수 고르기' 목록이 열려 있어서 따로 버튼을 두지 않는다.
-        // 누르는 법은 목록 안내가 이미 말하니 여기서는 제목만(같은 안내를 한 화면에서 되풀이하지 않는다)
-        <StateNotice emoji="⭐" title="아직 내 선수가 없어요" />
-      )}
+      ) : null}
     </div>
   );
 }
