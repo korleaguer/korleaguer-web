@@ -66,7 +66,7 @@ export default function CareerSeasons({ seasons: all }: { seasons: CareerSeason[
                 s.kind === "hitter"
                   ? [whole(s.games), formatRate(s.avg), whole(s.homeRuns), formatRate(s.ops), whole(s.wrcPlus), formatWar(s.war)]
                   : [whole(s.games), formatInningsOuts(s.inningsOuts), formatEra(s.era), whole(s.strikeouts), whole(s.eraMinus), formatWar(s.war)];
-              const dim = small.includes(s.season) ? "text-muted" : "";
+              const dim = smallSample(s) ? "text-muted" : "";
               return (
                 <tr key={s.season}>
                   <th scope="row" className="py-2.5 pl-4 pr-2 text-left font-normal">
