@@ -609,7 +609,7 @@ function SigningList({
       {signings.some((s) => s.krw) ? <MoneyUnitScope className={flush ? "pt-3" : ""}>{list}</MoneyUnitScope> : list}
       {foot && (
         <p className="mt-1.5 pb-1 text-micro text-muted">
-          옵션 제외 · 원화는 계약 당시 환율 · 출처 MLB Trade Rumors 등
+          보장액(옵션 제외) · 원화는 계약 당시 환율 · 출처 MLB Trade Rumors 등
         </p>
       )}
     </div>
