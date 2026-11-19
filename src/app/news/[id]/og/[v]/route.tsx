@@ -1,6 +1,7 @@
 // 기사 페이지를 공유하면 붙는 미리보기 그림: 언론사·날짜와 제목. 기사 사진은 언론사 것이라 그림에 넣지 않는다.
 import { ImageResponse } from "next/og";
 import { getNews } from "@/lib/api";
+import { NEWS_ID } from "@/lib/ids";
 import { OG_COLORS, OG_SIZE, OgBrand, ogFallbackImage, ogFonts } from "@/lib/og";
 import { NEWS_SUMMARY_CUE, newsShareLines } from "@/lib/share";
 
@@ -13,7 +14,7 @@ const MAX_TITLE = 66;
 
 export async function GET(_request: Request, { params }: RouteContext<"/news/[id]/og/[v]">) {
   const { id } = await params;
-  const result = /^[1-9]\d{0,14}$/.test(id) ? await getNews(Number(id)) : null;
+  const result = NEWS_ID.test(id) ? await getNews(Number(id)) : null;
   const fonts = await ogFonts();
   // 없는 기사·잠깐 못 불러온 경우: 로고만 있는 그림. 예전에는 제목 자리에 '관련 기사'를 그려 아무 기사인 것처럼 보였다
   if (!result?.ok) return ogFallbackImage(fonts);

@@ -5,6 +5,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import sharp from "sharp";
+import { apiUrl } from "@/lib/apiUrl";
 import { logoSvg } from "@/lib/logo";
 
 /** 카톡·페이스북·X가 권하는 큰 카드 크기(1.91:1) */
@@ -94,7 +95,7 @@ export async function photoDataUrl(photoUrl: string | null): Promise<string | nu
   if (!photoUrl) return null;
   const key = /^\/photos\/([a-z0-9-]{1,60})$/.exec(photoUrl)?.[1];
   const url = key
-    ? new URL(`/api/photos/${key}`, process.env.API_BASE_URL ?? "http://localhost:8080")
+    ? apiUrl(`/api/photos/${key}`)
     : /^https?:\/\//i.test(photoUrl)
       ? new URL(photoUrl)
       : null;

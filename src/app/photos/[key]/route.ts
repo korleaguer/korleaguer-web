@@ -3,6 +3,7 @@
 // 브라우저는 하루 동안 저장해 두고, 그 뒤에는 ETag로 바뀌었는지만 묻는다(바뀌지 않았으면 304).
 // 작은 사진 원(24~56px)과 선수 페이지 사진 무대(96px)는 줄인 사진(/photos/{이름}/{폭}, [w]/route.ts)을 받는다.
 import type { NextRequest } from "next/server";
+import { apiUrl } from "@/lib/apiUrl";
 import { PHOTO_KEY as KEY } from "@/lib/photo";
 
 // 이름 규칙(KEY)은 lib/photo에 둔다: mlb-…, kbo-…, posting-…, career-…
@@ -16,7 +17,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   let res: Response;
   try {
-    const url = new URL(`/api/photos/${key}`, process.env.API_BASE_URL ?? "http://localhost:8080");
+    const url = apiUrl(`/api/photos/${key}`);
     const ifNoneMatch = request.headers.get("if-none-match");
     res = await fetch(url, {
       cache: "no-store",
