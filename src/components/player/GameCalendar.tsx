@@ -493,7 +493,6 @@ function CalendarLegend({ pitcher }: { pitcher: boolean }) {
           {label}
         </span>
       ))}
-      {pitcher && <span>승·세이브는 아래 경기 줄에</span>}
     </p>
   );
 }

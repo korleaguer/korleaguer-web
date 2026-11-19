@@ -1,6 +1,7 @@
 import type { CareerSeason } from "@/lib/api";
 import { formatEra, formatInningsOuts, formatRate, formatWar } from "@/lib/format";
 import { STEADY_OUTS, STEADY_PA } from "@/lib/seasonStats";
+import InfoTip from "@/components/InfoTip";
 import ScrollBox from "@/components/ScrollBox";
 import Section from "@/components/Section";
 
@@ -35,13 +36,19 @@ export default function CareerSeasons({ seasons: all }: { seasons: CareerSeason[
   // '100타석이 안 돼', '30이닝이 안 돼'(문턱은 seasonStats 한 곳)
   const need = hitter ? `${STEADY_PA}타석` : `${STEADY_OUTS / 3}이닝`;
   return (
-    <Section id="seasons-title" title="시즌별 기록" aside="MLB 정규시즌">
+    <Section
+      id="seasons-title"
+      title="시즌별 기록"
+      aside="MLB 정규시즌"
+      // 흐린 까닭은 표 아래 문장 대신 제목 옆 ⓘ 안에(이슈 #327). 낭독기는 아래 표 설명(caption)에서 시즌까지 붙여 읽는다
+      info={small.length > 0 ? <InfoTip title="시즌별 기록" lines={[`숫자가 흐린 시즌은 ${need}이 안 돼 참고용이에요`]} /> : undefined}
+    >
       {/* 좁은 폰·앱 큰 글씨에서는 표가 카드보다 넓어 이 상자 안에서 가로로 민다. 칸에 링크가 없어 키보드로 밀 수 있게 넘칠 때만
           Tab이 머문다(ScrollBox). 바깥 section이 이미 '시즌별 기록' 영역이라 같은 이름의 영역(region)을 또 만들지 않고, 넘칠 때
           이름 붙은 묶음(group)이 된다 */}
       <ScrollBox labelledBy="seasons-title" className="card">
         <table className="w-full min-w-[20rem] text-meta tabular-nums">
-          {/* 보이는 WAR 풀이는 위 'MLB 타자 중에서' 각주 한 곳에만 둔다(같은 안내 두 번 금지). 낭독기에는 표에 들어올 때 한 번
+          {/* 보이는 WAR 풀이는 위 'MLB 타자 중에서' 제목 옆 ⓘ 한 곳에만 둔다(같은 안내 두 번 금지). 낭독기에는 표에 들어올 때 한 번
               읽는 표 설명으로 붙인다. 'WAR' 열 머리에 넣으면 낭독기가 칸을 옮길 때마다 열 머리를 함께 읽어 시즌 줄마다 되풀이했다.
               흐린 줄도 같다: 낭독기는 흐림을 못 보니 어느 시즌이 참고용인지 여기서 한 번 읽고, 줄(행 머리)마다 붙이지 않는다 */}
           <caption className="sr-only">
@@ -84,13 +91,6 @@ export default function CareerSeasons({ seasons: all }: { seasons: CareerSeason[
           </tbody>
         </table>
       </ScrollBox>
-      {small.length > 0 && (
-        // 흐린 까닭은 표 아래 한 번만(줄마다 '참고용'을 쓰면 같은 말이 되풀이된다). 표 상자 밖에 둬서 표를 가로로 밀어도 따라가지 않는다.
-        // 낭독기는 위 표 설명(caption)에서 시즌까지 붙여 읽으므로 여기서는 읽지 않는다
-        <p aria-hidden className="mt-2 px-1 text-micro text-muted">
-          숫자가 흐린 시즌은 {need}이 안 돼 참고용이에요.
-        </p>
-      )}
     </Section>
   );
 }

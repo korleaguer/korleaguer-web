@@ -14,11 +14,14 @@ export default function PositionBar({
   pct,
   size,
   className = "",
+  midLabel = false,
 }: {
   /** 1~99(높을수록 좋다). 견줄 선수가 아직 없으면 null(바탕과 가운데 선만) */
   pct: number | null;
   size: keyof typeof SIZE;
   className?: string;
+  /** 가운데 선 위에 작은 'MLB 중간' 이름표(첫 막대에만, 범례 글 대신, 이슈 #327) */
+  midLabel?: boolean;
 }) {
   const top = pct != null && pct >= 50;
   const { track, dot } = SIZE[size];
@@ -38,6 +41,9 @@ export default function PositionBar({
           선 폭(w-0.5)이 rem이라 큰 글씨에서 굵어져도 막대 가운데에 오게 제 폭의 반만큼 당긴다(-ml-px로 1px만 당기면 2배에서 4px 선이
           가운데보다 1px 오른쪽이었다) */}
       <span data-bar="dim" className="absolute inset-y-[-3px] left-1/2 w-0.5 -translate-x-1/2 bg-muted/70 ring-1 ring-surface" />
+      {midLabel && (
+        <span className="absolute bottom-[calc(100%+4px)] left-1/2 -translate-x-1/2 whitespace-nowrap text-micro text-muted">MLB 중간</span>
+      )}
       {pct != null && (
         <span
           data-bar={top ? "" : "dim"}

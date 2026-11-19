@@ -1,4 +1,5 @@
 import type { PlayerSaber } from "@/lib/api";
+import InfoTip from "@/components/InfoTip";
 import Section from "@/components/Section";
 import PositionBar from "@/components/player/PositionBar";
 import { formatInningsOuts } from "@/lib/format";
@@ -70,34 +71,47 @@ export default async function LeaguePosition({ saber }: { saber: PlayerSaber }) 
   const rows = rowsOf(saber);
 
   if (!rows) {
-    // 서버는 타자 50타석·투수 10이닝 미만이면 위치를 매기지 않는다. -mt-4: 위 칸(시즌 성적)과의 간격 28px을 12px로 줄여 그 칸의 각주처럼 붙인다
+    // 서버는 타자 50타석·투수 10이닝 미만이면 위치를 매기지 않는다. -mt-4: 위 칸(시즌 성적)과의 간격 28px을 12px로 줄여 그 칸의 각주처럼 붙인다.
+    // 이름표만 보인다('메이저 4타석 · 50타석부터 비교', 이슈 #327). 낭독기는 앞에 무엇의 위치인지 붙여 읽는다
+    const from = hitter ? "50타석" : "10이닝";
     return (
       <p className="-mt-4 px-1 text-meta text-muted">
-        {`MLB ${who} 중 위치는 메이저 ${hitter ? "50타석" : "10이닝"}부터 보여요${count > 0 ? `(지금 ${sample})` : ""}.`}
+        <span className="sr-only">{`MLB ${who} 중 위치: `}</span>
+        {count > 0 ? `메이저 ${sample} · ${from}부터 비교` : `${from}부터 비교`}
       </p>
     );
   }
 
+  // ⓘ 안 줄(이슈 #327): 예전 카드 아래 각주와 '참고용' 문장. WAR 풀이는 시즌별 기록 표 설명(낭독)과 달리 보이는 곳은 여기 한 곳뿐이다
+  const tips = [
+    "가운데 선은 MLB 중간",
+    "WAR는 대체 선수보다 더 번 승수(0이 평균 아님)",
+    hitter ? "득점은 리그 평균 대비(수비는 포지션 난도 포함)" : "ERA-는 100이 평균, 낮을수록 좋아요",
+    `MLB 공식 세이버 지표 · ${sample}`,
+    ...(steady ? [] : [`${sample}뿐이라 더 ${hitter ? "뛰면" : "던지면"} 크게 바뀔 수 있어요`]),
+  ];
   const raws = rows.map((r) => r.raw).filter((raw): raw is string => raw != null);
   return (
     <Section
       id="position-title"
       title={`MLB ${who} 중에서`}
+      info={<InfoTip title={`MLB ${who} 중에서`} lines={tips} />}
       aside={saber.poolSize > 0 ? `${saber.season} · ${saber.poolSize}명과 비교` : undefined}
     >
       <div className="card px-4 py-4">
         {!steady && (
-          // 휴대폰에서 두 줄로 감기므로 줄 간격 1.5(바닥글과 같은 이유)
-          <p className="mb-3 text-caption leading-normal text-muted">
+          // 이름표만(나머지 말은 ⓘ 안)
+          <p className="mb-3 text-caption text-muted">
             <span className="mr-1.5 rounded-md bg-surface-2 px-1.5 py-0.5 text-badge">참고용</span>
-            {hitter ? `${sample}뿐이라 더 뛰면 크게 바뀔 수 있어요` : `${sample}뿐이라 더 던지면 크게 바뀔 수 있어요`}
+            {sample}
           </p>
         )}
         {/* @container: 칸이 좁으면(앱 큰 글씨 등) 줄 모양을 바꾼다(PositionRow) */}
         <ul className="@container space-y-3">
-          {rows.map((r) => (
+          {rows.map((r, i) => (
             <PositionRow
               key={r.label}
+              midLabel={i === 0}
               row={r}
               who={who}
               // 이름 칸: 타자 2.5rem(두 글자), 투수 4.25rem('실점 억제'·'볼넷 억제'). Tailwind가 읽게 클래스를 통째로 적는다
@@ -115,11 +129,6 @@ export default async function LeaguePosition({ saber }: { saber: PlayerSaber }) 
             ))}
           </p>
         )}
-        {/* WAR 풀이는 이 각주 한 곳에만 둔다(시즌별 기록 표는 낭독기에만 보이지 않는 표 설명으로 붙인다) */}
-        <p className="mt-3 border-t border-line pt-2.5 text-micro text-muted">
-          가운데 선 = MLB 중간 · WAR는 대체 선수보다 더 번 승수(0이 평균 아님) ·{" "}
-          {hitter ? "득점은 리그 평균 대비(수비는 포지션 난도 포함)" : "ERA-는 100이 평균, 낮을수록 좋아요"} · MLB 공식 세이버 지표 · {sample}
-        </p>
       </div>
     </Section>
   );
@@ -130,14 +139,14 @@ export default async function LeaguePosition({ saber }: { saber: PlayerSaber }) 
  * 칸이 15rem보다 좁으면(앱 큰 글씨 1.5배 이상, 휴대폰) 이름·순위 한 줄 아래에 막대를 칸 폭 그대로 둔다.
  * 한 줄로 두면 이름·순위 칸(rem)이 커져 막대 칸이 0이 되고 점만 남았다(2배 375px)
  */
-function PositionRow({ row, who, cols }: { row: Row; who: string; cols: string }) {
+function PositionRow({ row, who, cols, midLabel }: { row: Row; who: string; cols: string; midLabel: boolean }) {
   const { label, pct } = row;
   const top = pct != null && pct >= 50;
   const verdict = pct == null ? "비교 전" : top ? `상위 ${100 - pct}%` : "중간 아래";
   return (
     <li className={`grid items-center gap-x-3 ${cols} @max-[15rem]:grid-cols-[minmax(0,1fr)_auto] @max-[15rem]:gap-y-1.5`}>
       <span className="text-summary">{label}</span>
-      <PositionBar pct={pct} size="md" className="@max-[15rem]:order-last @max-[15rem]:col-span-2" />
+      <PositionBar pct={pct} size="md" midLabel={midLabel} className="@max-[15rem]:order-last @max-[15rem]:col-span-2" />
       <span className={`whitespace-nowrap text-right text-summary font-extrabold tabular-nums ${top ? "text-accent-ink" : "text-muted"}`}>
         <span className="sr-only">{`MLB ${who} 중 `}</span>
         {verdict}
