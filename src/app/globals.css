@@ -191,14 +191,16 @@
 }
 
 /*
- * 움직임 이름표(토스 Rally처럼 곡선을 두 가지로 묶는다). Tailwind 클래스로도 쓴다: ease-out-expo, ease-spring.
+ * 움직임 이름표(토스 Rally처럼 곡선을 두 가지로 묶는다). Tailwind 클래스로도 쓴다: ease-out-expo, ease-spring, ease-sheet.
  * - out-expo: 빠르게 출발해 부드럽게 멈춘다. 눌림·나타나기·접고 펴기 등 거의 모든 곳.
+ * - sheet: 출발이 완만하고 끝에서 천천히 멈추는 iOS 시트 곡선. 아래 창(경기 상세·거론 구단)의 열기·닫기·끌기 되돌림만(이슈 #338).
  * - spring: 살짝(약 4%) 넘쳤다가 제자리로. 손으로 옮긴 것(고른 표시가 미끄러질 때)처럼 '물건'이 움직이는 곳.
  *   감쇠비 0.72 스프링을 linear()로 옮긴 값이다. linear()를 모르는 옛 브라우저는 움직임 없이 바로 바뀐다.
  * Tailwind 기본 transition 곡선도 out-expo로 바꿔, 클래스로 쓴 전환과 CSS로 쓴 전환이 같은 느낌이 되게 한다.
  */
 @theme {
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-sheet: cubic-bezier(0.32, 0.72, 0, 1);
   --ease-spring: linear(
     0, 0.033, 0.115, 0.226, 0.348, 0.471, 0.586, 0.689, 0.778, 0.852, 0.911, 0.956, 0.989, 1.012, 1.026, 1.035,
     1.038, 1.038, 1.036, 1.032, 1.027, 1.022, 1.018, 1.014, 1.01, 1.007, 1.004, 1.002, 1.001 70%, 1
@@ -762,16 +764,31 @@
   }
 
   /*
-   * 경기 상세 창(GameDetailSheet). 휴대폰은 아래에서 올라오고, 640px 이상은 가운데에서 살짝 커지며 나타난다.
-   * 끌어 닫는 동안에는 손가락을 따라 움직인다(인라인 transform이 이 움직임을 덮는다).
+   * 아래 창(경기 상세·거론 구단). 휴대폰은 아래에서 올라오고, 640px 이상은 가운데에서 살짝 커지며 나타난다. 사용자 11-19 A안 시트형(이슈 #338).
+   * 곡선 하나(--ease-sheet)로 창과 덮개가 같이 움직인다. 덮개는 dialog 배경색(bg-black/40)이 투명에서 짙어지는 것으로 하고,
+   * 기본 ::backdrop(0.1)은 한 프레임에 켜져 '툭' 보여서 없앤다. 기본 열기를 expo로 하면 첫 50ms에 71%가 올라와 튀어 보였다.
+   * 닫기·끌기는 값이 지금 위치에서 시작해야 해서 CSS가 아니라 useSheetDrag의 Web Animations가 한다(숫자는 그 파일 상단).
+   * 끌어 닫는 동안에는 손가락을 따라 움직인다(끌기를 시작할 때 이 열기 애니메이션을 취소해 인라인 transform이 이기게 한다).
    */
   .game-sheet {
-    animation: sheet-up 280ms var(--ease-out-expo);
+    animation: sheet-up 340ms var(--ease-sheet);
+  }
+
+  dialog:has(> .game-sheet) {
+    animation: sheet-scrim-in 340ms var(--ease-sheet);
+  }
+
+  dialog:has(> .game-sheet)::backdrop {
+    background: transparent;
   }
 
   @media (min-width: 40rem) {
     .game-sheet {
-      animation: sheet-pop 200ms var(--ease-out-expo);
+      animation: sheet-pop 200ms var(--ease-sheet);
+    }
+
+    dialog:has(> .game-sheet) {
+      animation-duration: 200ms;
     }
   }
 
@@ -790,9 +807,14 @@
   @media (prefers-reduced-motion: reduce) {
     .card-rise,
     .bar-rise,
-    .reveal,
-    .game-sheet {
+    .reveal {
       animation: none;
+    }
+
+    /* 아래 창은 미끄러지지 않고 창·덮개가 150ms 흐려졌다 나타난다 */
+    .game-sheet,
+    dialog:has(> .game-sheet) {
+      animation: sheet-fade 150ms linear;
     }
 
     .card-link,
@@ -1036,6 +1058,19 @@
   }
   to {
     transform: none;
+  }
+}
+
+/* 덮개: 끝(to)은 생략해 dialog의 배경색(bg-black/40) 계산값으로 간다 */
+@keyframes sheet-scrim-in {
+  from {
+    background-color: transparent;
+  }
+}
+
+@keyframes sheet-fade {
+  from {
+    opacity: 0;
   }
 }
 
