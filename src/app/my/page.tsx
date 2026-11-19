@@ -70,10 +70,6 @@ async function MyContent({ searchParams }: Pick<PageProps<"/my">, "searchParams"
   // 고른 선수가 모두 시즌 합계 카드(시즌 끝·FA)면 기간이 뜻이 없다: 기간 알약·안내를 빼고 머리말을 시즌 합계로.
   // 머리말에 '비시즌이라' 같은 이유는 붙이지 않는다(문구 점검 11-13: 머리 줄에 이유 구절이 끼어 어색했다)
   const seasonView = picked.length > 0 && picked.every((e) => e.basis === "SEASON");
-  // '마지막으로 뛴 날까지' 안내는 실제로 그 기간을 보이는 카드가 있을 때만(마이너·부상자 명단 카드는 제 기간을 따로 적는다)
-  const showFallbackNote = picked.some(
-    (e) => e.basis === "LAST_PLAYED" || (e.basis === "REHAB" && e.isFallback),
-  );
   // 기록을 받았으면 머리말 끝에 데이터 기준 시각(선수 목록 머리 줄과 같은 꼴, 이슈 #277). 기준 글은 한 덩어리로 줄을 넘기고
   // '·'는 '기준'에 붙여 줄 끝에 홀로 남지 않게 한다(375px에서는 기간·시즌 다음 줄로 통째로 내려간다)
   const subtitle = myFailed ? (
@@ -104,11 +100,6 @@ async function MyContent({ searchParams }: Pick<PageProps<"/my">, "searchParams"
       ) : my && picked.length > 0 ? (
         <>
           {!seasonView && <PeriodTabs days={days} />}
-          {!seasonView && showFallbackNote && (
-            <p className="px-1 text-meta text-muted">
-              {`최근 ${days}일에 안 뛴 선수는 마지막 경기까지 ${days}일을 보여 줘요.`}
-            </p>
-          )}
           {/* 첫 줄(PC 세 칸) 카드만 무대 사진을 바로 받고, 나머지는 화면에 다가올 때 받는다(6명이면 화면 밖 사진까지 처음에 다 받았다).
               휴대폰 한 칸이면 2·3번째도 바로 받지만(사진 한 장 약 17KB) 서버는 칸 수를 모른다. 바로 받을지는 카드 props가 아니라
               감싸서 건넨다(카드는 "use cache"라 props가 캐시 열쇠다, PhotoPriority) */}
