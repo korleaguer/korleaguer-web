@@ -77,6 +77,29 @@ function showsDay(slot: BarSlot, index: number, count: number, days: number): bo
 }
 
 /**
+ * 날짜 글씨마다 오른쪽 이웃 날짜까지 비워 둘 자리(칸 수). 칸 간격 × 자리가 날짜 폭보다 좁으면 그 글씨를 접는다(globals.css .bar-day).
+ * 앱 큰 글씨에서는 글자와 칸 사이(rem)가 함께 커져 칸이 좁아지고 날짜가 '8910111213'처럼 붙었다(2배 360px 14일 칸 10px, 이슈 #303).
+ * 자리가 없으면(undefined) 늘 보인다: 가장 오른쪽(최근) 날짜와 30일의 5칸마다 날짜.
+ * 7·14일(날마다 쓴다)은 오른쪽부터 센 순번 j를 나누는 가장 큰 2의 거듭제곱(1·2·4·8)이라, 칸이 좁아지면 같은 자리끼리 함께 접혀
+ * 하루 걸러 → 나흘마다 → 여드레마다로 고르게 남는다(가장 최근 날짜는 늘 남는다). 더블헤더 둘째 칸은 날짜가 없어 순번을 날짜끼리 센다
+ * (그 칸만큼 실제 간격은 더 넓다). 30일은 5칸마다라 넉넉하고, 마지막 날짜 바로 앞 날짜만 마지막 날짜와 5칸보다 가까우면 그 칸 수다
+ */
+function dayRooms(slots: BarSlot[], days: number): (number | undefined)[] {
+  const labeled = slots.flatMap((slot, i) => (showsDay(slot, i, slots.length, days) ? [i] : []));
+  const rooms: (number | undefined)[] = slots.map(() => undefined);
+  labeled.forEach((i, k) => {
+    const j = labeled.length - 1 - k;
+    if (j === 0) return;
+    if (days < 30) {
+      rooms[i] = Math.min(8, j & -j);
+    } else if (j === 1 && labeled[k + 1] - i < 5) {
+      rooms[i] = labeled[k + 1] - i;
+    }
+  });
+  return rooms;
+}
+
+/**
  * 경기별 막대 + 고른 경기 한 줄. 왼쪽이 오래된 날이다.
  * 결장은 점선 막대, 경기가 없는 날은 빈칸, 홈런 친 경기는 막대 위에 주황 점(좋은 활약 색).
  */
@@ -89,7 +112,14 @@ export default function GameBars({ slots, role, days, minors = false, name }: Pr
   const top = pitcher ? pitcherTop(slots) : Math.max(4, ...values.map((v) => v ?? 0));
   // 칸 사이(rem): 7일 6px · 14일 4px · 30일 2px. 달 바뀜 세로선과 '10월' 자리도 이 값으로 잰다
   const gapRem = days >= 30 ? 0.125 : days >= 14 ? 0.25 : 0.375;
-  const grid = { gridTemplateColumns: `repeat(${slots.length}, minmax(0, 1fr))`, gap: `${gapRem}rem` } as CSSProperties;
+  // 칸 수와 칸 사이는 날짜 글씨를 접을지 재는 데도 쓴다(globals.css .bar-day)
+  const grid = {
+    gridTemplateColumns: `repeat(${slots.length}, minmax(0, 1fr))`,
+    gap: `${gapRem}rem`,
+    "--bar-n": slots.length,
+    "--bar-gap": `${gapRem}rem`,
+  } as CSSProperties;
+  const rooms = dayRooms(slots, days);
   const gameCount = slots.filter((slot) => slot.game).length;
   const current = slots[selected]?.game ?? null;
   // 고른 경기 앞뒤 경기 칸(경기 없는 날은 건너뛴다). 없으면 -1
@@ -184,8 +214,9 @@ export default function GameBars({ slots, role, days, minors = false, name }: Pr
         role="radiogroup"
         aria-label={name ? `${name} ${title}` : title}
         onKeyDown={onBarKey}
-        // 세로로 밀면 화면이 스크롤되고, 두 손가락으로 벌리면 화면이 커진다(확대를 막지 않는다). 가로 훑기만 이 묶음이 맡는다
-        className="mt-2 grid touch-pan-y touch-pinch-zoom select-none"
+        // 세로로 밀면 화면이 스크롤되고, 두 손가락으로 벌리면 화면이 커진다(확대를 막지 않는다). 가로 훑기만 이 묶음이 맡는다.
+        // bar-days: 이 묶음 폭으로 날짜 글씨를 접을지 잰다(컨테이너)
+        className="bar-days mt-2 grid touch-pan-y touch-pinch-zoom select-none"
         style={grid}
         onPointerDown={(e) => {
           if (e.button !== 0) return;
@@ -208,16 +239,22 @@ export default function GameBars({ slots, role, days, minors = false, name }: Pr
         {slots.map((slot, i) => {
           const day = showsDay(slot, i, slots.length, days);
           const dayText = (
-            <span aria-hidden className="block h-8 text-center">
+            // 글씨 크기는 bar-day-num(날짜)·bar-day-week(요일)이 정한다: 보통은 Caption·Micro 그대로이고, 칸이 좁아 이웃 날짜와 붙으면
+            // 0으로 접는다(자리 --day-room은 dayRooms). 줄 높이는 그대로라 막대 자리가 흔들리지 않는다
+            <span
+              aria-hidden
+              className="bar-day block h-8 text-center"
+              style={rooms[i] != null ? ({ "--day-room": rooms[i] } as CSSProperties) : undefined}
+            >
               {day && (
                 <>
                   {/* 30일이면 칸이 좁아 두 자리 날짜가 넘친다. 줄을 바꾸지 않고 칸 가운데에 걸쳐 쓴다 */}
                   <span
-                    className={`flex justify-center whitespace-nowrap text-caption font-bold ${i === selected ? "text-accent-ink" : slot.game ? "text-foreground" : "text-muted"}`}
+                    className={`bar-day-num flex justify-center whitespace-nowrap font-bold ${i === selected ? "text-accent-ink" : slot.game ? "text-foreground" : "text-muted"}`}
                   >
                     {slot.day}
                   </span>
-                  {days === 7 && <span className="block text-micro text-muted">{formatWeekday(slot.date)}</span>}
+                  {days === 7 && <span className="bar-day-week block text-muted">{formatWeekday(slot.date)}</span>}
                 </>
               )}
             </span>

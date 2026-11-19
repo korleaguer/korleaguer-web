@@ -955,6 +955,32 @@
   }
 
   /*
+   * 내 선수 경기별 막대 아래 날짜(GameBars, 이슈 #303). 칸 폭은 카드에 묶여 있는데 앱 큰 글씨에서는 글자와 칸 사이(rem)가 함께 커져,
+   * 2배 360px에서 14일 칸이 10px로 줄고 날짜가 '8910111213'처럼 붙었다. 날짜는 큰 글씨 그대로 두고 걸러 쓴다(하루 걸러 등):
+   * GameBars가 날짜마다 오른쪽 이웃 날짜까지 비워 둘 자리(--day-room, 칸 수)를 주고, 칸 간격((묶음 폭 + 칸 사이) / 칸 수) × 자리가
+   * 날짜 폭과 틈(두 자리 굵게 약 1.3em + 0.2em = 1.5em)보다 좁으면 그 글씨를 0으로 접는다(잰 값 × 1000을 0~글자 크기로 자른다).
+   * 줄 높이는 그대로라 막대가 움직이지 않는다. 자리가 없는 날짜(가장 최근 날짜 등)는 늘 보인다. 보통 크기에서는 320px 휴대폰 14일
+   * 칸 간격(18.6px)도 날짜 폭(18px)보다 넓어 지금처럼 날마다 보인다.
+   */
+  .bar-days {
+    container-type: inline-size;
+  }
+
+  .bar-day {
+    --day-fit: calc(((100cqi + var(--bar-gap)) / var(--bar-n) * var(--day-room, 99) - var(--text-caption) * 1.5) * 1000);
+  }
+
+  .bar-day-num {
+    font-size: clamp(0px, var(--day-fit), var(--text-caption));
+    line-height: var(--text-caption--line-height);
+  }
+
+  .bar-day-week {
+    font-size: clamp(0px, var(--day-fit), var(--text-micro));
+    line-height: var(--text-micro--line-height);
+  }
+
+  /*
    * 선수 페이지 타격 흐름 그래프 오른쪽 값 눈금 숫자('120'·'100'·'80', WrcTrend, 이슈 #279). 눈금 사이 간격은 그래프 높이
    * (150·180px)에 묶여 글자를 따라 커지지 않아서, 글자만 키우면 숫자끼리 붙는다(2배 22px에서 김하성 '100'·'80' 사이 틈 약 4px,
    * 범위가 더 넓은 선수는 맞닿는다). 숫자 크기를 가장 좁은 눈금 사이 간격(--tick-gap, 그래프 높이에 대한 비율)까지만 키운다:
