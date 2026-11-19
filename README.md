@@ -45,7 +45,9 @@ api가 꺼져 있어도 화면은 뜬다. 이때는 "데이터 서버에 연결�
 iOS·안드로이드 앱([korleaguer-app](https://github.com/korleaguer/korleaguer-app), Expo)은 이 웹을 웹뷰로 띄운다. 앱은 문서를 그리기 전에 `<html data-app="ios|android">`를 붙이고, User-Agent 끝에 `KORLeaguerApp/<버전> (<기기>)`를 덧붙인다.
 
 - `in-app:` Tailwind 변형(`globals.css`)은 앱 안에서만 켜진다. 예: 위쪽 메뉴는 `in-app:hidden`(앱 아래 탭이 대신한다).
-- `in-ios-app:`은 아이폰 앱에서만 켜진다. 아이폰 앱의 아래 탭 막대는 웹 위에 떠 있고 `env(safe-area-inset-bottom)`에 그 높이가 들어가지 않아서, 화면 아래에 붙은 창(`position: fixed`)은 이 변형으로 탭 막대 높이(84px)만큼 아래 여백을 더 준다. 예: 경기 상세 창.
+- `in-ios-app:`은 아이폰 앱에서만 켜진다. 아이폰 앱의 아래 탭 막대는 웹 위에 떠 있고 `env(safe-area-inset-bottom)`에 그 높이가 들어가지 않아서, 화면 아래에 붙은 창(`position: fixed`)은 이 변형으로 탭 막대 높이만큼 아래 여백을 더 준다. 예: 경기 상세 창 `in-ios-app:pb-[calc(var(--app-tab-bar)+1rem)]`. 높이는 CSS 변수 `--app-tab-bar`(화면 아래 끝부터, 홈 표시줄 포함) 하나다. 앱이 실제 높이를 `<html>` style에 넣고, 넣지 않은 옛 앱은 `globals.css`의 기본값 84px을 쓴다(앱 웹뷰 안에서는 `env(safe-area-inset-bottom)`이 0이라 84px이 홈 표시줄까지 덮는다). 스크립트에서는 `lib/app.ts`의 `iosTabBarHeight()`로 잰다.
+- 앱 안인지는 `lib/app.ts`의 `isInApp()`·`isIosApp()`(그리는 중이면 `useInApp()`)으로 본다. `<html data-app>`을 직접 찾지 않는다.
+- 화면을 덮는 창(모달: 경기 상세·거론 구단 창)은 `lib/useModalDialog.ts`의 `useModalDialog(dialogRef)`로 연다. 모달로 열고(`showModal`) 뒤 페이지 스크롤을 잠그고, `lib/app.ts`의 `useAppModal(dialogRef)`로 창이 열려 있는 동안 앱에 `{type:"modal", open:true}`, 창이 닫히거나 지워지면 `false`를 보낸다. 앱은 그동안 아이폰 왼쪽 끝 밀어 닫기와 아래 탭 누름을 막는다(창 대신 뒤 화면이 닫히지 않게).
 - 앱에는 브라우저의 뒤로 버튼이 없어서, 탭 첫 화면(`/`·`/players`·`/my`)이 아닌 화면(선수 페이지 등)의 머리글 왼쪽에 '뒤로' 버튼을 둔다(`components/AppBackButton.tsx`, 앱 안에서만 보임). 돌아갈 기록이 없으면 선수 목록이나 홈으로 간다.
 - 앱 안에서는 로고를 누를 수 없다(`in-app:pointer-events-none`). 홈은 앱 아래 '홈' 탭이 맡고, 다른 탭에서 로고로 홈을 열면 탭 표시와 화면이 어긋난다.
 - 앱 안에서는 누를 때 회색 번쩍임, 길게 눌러 뜨는 메뉴, 글자 선택을 끈다(입력칸 제외). 화면 확대는 앱이 막는다.
