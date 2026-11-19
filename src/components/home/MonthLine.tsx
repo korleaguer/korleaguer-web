@@ -35,9 +35,9 @@ interface Pt {
  * 단조 3차 곡선(Fritsch–Carlson): 점과 점 사이에서 값보다 위아래로 넘치지 않는다. 보통의 부드러운 곡선은 한 달 반짝한 값 옆에서
  * 점보다 위로 부풀어 '그 달에 없던 값'을 그리고, 평균 점선을 넘나드는 색 갈림도 어긋난다
  */
-function smoothPath(p: Pt[]): string {
+function smoothSegments(p: Pt[]): string[] {
   const f = (n: number) => n.toFixed(1);
-  if (p.length === 1) return `M${f(p[0].x)},${f(p[0].y)}`;
+  if (p.length === 1) return [];
   const n = p.length;
   const d: number[] = [];
   const m: number[] = [];
@@ -60,12 +60,18 @@ function smoothPath(p: Pt[]): string {
       m[i + 1] = t * b * d[i];
     }
   }
-  let s = `M${f(p[0].x)},${f(p[0].y)}`;
+  // 달 사이 구간마다 3차 곡선 하나('Cx1,y1 x2,y2 x,y')
+  const segs: string[] = [];
   for (let i = 0; i < n - 1; i++) {
     const h = (p[i + 1].x - p[i].x) / 3;
-    s += ` C${f(p[i].x + h)},${f(p[i].y + m[i] * h)} ${f(p[i + 1].x - h)},${f(p[i + 1].y - m[i + 1] * h)} ${f(p[i + 1].x)},${f(p[i + 1].y)}`;
+    segs.push(`C${f(p[i].x + h)},${f(p[i].y + m[i] * h)} ${f(p[i + 1].x - h)},${f(p[i + 1].y - m[i + 1] * h)} ${f(p[i + 1].x)},${f(p[i + 1].y)}`);
   }
-  return s;
+  return segs;
+}
+
+/** 곡선 전체 경로(칠 영역용) */
+function smoothPath(p: Pt[]): string {
+  return `M${p[0].x.toFixed(1)},${p[0].y.toFixed(1)}${smoothSegments(p).map((c) => ` ${c}`).join("")}`;
 }
 
 /**
@@ -73,14 +79,14 @@ function smoothPath(p: Pt[]): string {
  * 접선은 구간 전체로 한 번 구하니 모양은 smoothPath와 같다
  */
 function smoothGroups(p: Pt[]): { d: string; dashed: boolean }[] {
-  const segs = smoothPath(p).split(" C").slice(1);
+  const segs = smoothSegments(p);
   const f = (n: number) => n.toFixed(1);
   const groups: { d: string; dashed: boolean }[] = [];
   segs.forEach((c, i) => {
     const dashed = p[i].few || p[i + 1].few;
     const last = groups[groups.length - 1];
-    if (last && last.dashed === dashed) last.d += ` C${c}`;
-    else groups.push({ d: `M${f(p[i].x)},${f(p[i].y)} C${c}`, dashed });
+    if (last && last.dashed === dashed) last.d += ` ${c}`;
+    else groups.push({ d: `M${f(p[i].x)},${f(p[i].y)} ${c}`, dashed });
   });
   return groups;
 }
@@ -120,7 +126,7 @@ function layout(months: SeasonMonth[], pitcher: boolean, f: Frame) {
   // 세로 범위는 경기 적은 달을 빼고 정한다(4경기 wRC+ 249 하나가 범위를 늘려 나머지 달이 납작해지지 않게).
   // 경기 적지 않은 달이 하나도 없으면 모든 달로 정한다
   const playedMonths = months.filter((m) => played(m, pitcher));
-  const solid = playedMonths.filter((m) => !m.few);
+  const solid = playedMonths.filter((m) => m.few !== true);
   const vals = (solid.length > 0 ? solid : playedMonths).map((m) => plus(m, pitcher) as number);
   let lo = Math.min(...vals, 100);
   let hi = Math.max(...vals, 100);
@@ -351,7 +357,7 @@ export default function MonthLine({ months, pitcher }: { months: SeasonMonth[]; 
         )}
         {/* 앞뒤가 끊긴 외딴 달은 선이 없으니 점 하나 */}
         {runs
-          .filter((r) => r.length === 1)
+          .filter((r) => r.length === 1 && !r[0].few)
           .map((r) => (
             <span
               key={r[0].i}
@@ -373,20 +379,22 @@ export default function MonthLine({ months, pitcher }: { months: SeasonMonth[]; 
           </span>
         )}
         {/* 경기 적은 달: 속 빈 작은 점 + 흐린 'N경기'(투수 'N등판')로 점선의 뜻을 알린다. 범위를 넘어 끝에 붙인 점은 옆에 ▲▼.
-            글자는 점 아래에 두고, 위 끝에 붙은 점은 선이 아래에서 올라오니 위에 둔다 */}
+            글자는 점 아래에 두되, 끝에 붙은 점은 위에 둔다(위 끝은 선이 아래에서 올라오고, 아래 끝 밑은 '최저'·달 이름 자리) */}
         {all
           .filter((q) => q.few)
           .map((q) => {
             const m = months[q.i];
-            const above = q.edge === -1;
+            const above = q.edge !== 0;
             const side = q.i === lastIdx ? { right: `calc(${100 - (q.x / f.w) * 100}% + 7px)` } : { left: `calc(${px(q.x)} + 7px)` };
             return (
               <span key={q.i}>
+                {q !== last && (
                 <span
                   data-dot
                   className="absolute size-[7px] -translate-x-1/2 -translate-y-1/2 rounded-full border-[1.5px]"
                   style={{ left: px(q.x), top: py(q.y), background: "var(--surface)", borderColor: dotColor(q.v), boxSizing: "border-box" }}
                 />
+                )}
                 {q.edge !== 0 && (
                   <span className="month-line-label absolute -translate-y-1/2 text-muted" style={{ ...side, top: py(q.y) }}>
                     {q.edge === -1 ? "▲" : "▼"}
