@@ -90,7 +90,6 @@ export default function MonthBars({ months, pitcher }: { months: SeasonMonth[]; 
   // 비교한 리그가 둘 이상이면(메이저 + 트리플A, 트리플A + 더블A) 달마다 평균이 다르다
   const average = (hasMajors ? 1 : 0) + minorLevels.length > 1 ? "각 리그 평균" : "리그 평균";
   const anyFew = playedMonths.some((m) => m.few);
-  const anyHot = playedMonths.some((m) => m.hot);
   const anyCapped = months.some((m) => capped(m, pitcher));
   // 안내 줄. 기록 있는 달이 하나도 없으면(시즌 내내 부상·FA) 둘째 줄이 모두 빈칸이라 '아래 작은 숫자' 안내를 붙이지 않는다
   // 점선 뜻은 점선 오른쪽 끝 '평균' 이름표가, 주황은 주황 숫자·막대가 스스로 말한다(이슈 #329). 낭독 이름의 '100이 ${average}'는 그대로

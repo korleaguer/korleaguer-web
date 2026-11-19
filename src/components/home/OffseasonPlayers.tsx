@@ -4,7 +4,6 @@ import { formatUsDate } from "@/lib/format";
 import { readMyPlayers } from "@/lib/myPlayers";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import Section from "@/components/Section";
-import { WordGroup } from "@/components/Words";
 import FormCard from "@/components/my/FormCard";
 import SeasonReportList from "@/components/home/SeasonReportList";
 import MyPlayersLink from "@/components/home/MyPlayersLink";
