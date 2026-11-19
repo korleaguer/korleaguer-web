@@ -1,7 +1,7 @@
 "use client"; // 고른 줄을 기억하고(휴대폰은 아래 창, PC는 오른쪽 칸), 별을 눌러 순서가 바뀌어도 줄을 그 자리에 두려고 처음 순서를 붙잡아 두는 클라이언트 컴포넌트다.
 
 import { useRouter } from "next/navigation";
-import { useEffect, useId, useRef, useState, useSyncExternalStore, type ReactNode, type TouchEvent as ReactTouchEvent } from "react";
+import { memo, useEffect, useId, useRef, useState, useSyncExternalStore, type ReactNode, type TouchEvent as ReactTouchEvent } from "react";
 import { createPortal } from "react-dom";
 import PlayerAvatar from "@/components/PlayerAvatar";
 import { linkedSheetOpen } from "@/components/home/LinkedTeams";
@@ -84,7 +84,11 @@ function reportInHistory(state: unknown): number | null {
   return Number.isFinite(id) ? id : null;
 }
 
-function RowList({ rows }: { rows: ReportRow[] }) {
+/**
+ * memo: 위 SeasonReportRows는 useRouter()를 써서 뒤로 가기마다 다시 그려진다. 줄 데이터가 그대로면 목록은 다시 그리지 않아
+ * '표시 다시 붙이기' 효과가 앱 refresh(새 데이터)일 때만 돌게 한다(거론 구단 LinkedTeams가 서버 부품 안이라 그렇게 도는 것과 같다)
+ */
+const RowList = memo(function RowList({ rows }: { rows: ReportRow[] }) {
   const [firstOrder] = useState(() => rows.map((r) => r.id));
   const at = (id: number) => {
     const i = firstOrder.indexOf(id);
@@ -132,9 +136,12 @@ function RowList({ rows }: { rows: ReportRow[] }) {
   useEffect(() => {
     const onPop = () => syncRef.current();
     syncRef.current();
-    window.addEventListener("popstate", onPop);
+    // 캡처 단계로 받는다: Next의 popstate 처리(뒤로 가기)가 먼저 돌면 이 목록을 그 자리에서 다시 그리는데, 그때 아래 '표시 다시
+    // 붙이기' 효과가 ownsEntryRef가 아직 켜진 채로 돌아 돌아온 앞 기록에 창 표시를 붙였다(닫기를 눌러도 창이 다시 열렸다).
+    // window에서는 캡처 listener가 먼저 불리므로 Next보다 먼저 ownsEntryRef를 끈다
+    window.addEventListener("popstate", onPop, { capture: true });
     return () => {
-      window.removeEventListener("popstate", onPop);
+      window.removeEventListener("popstate", onPop, { capture: true });
       // 다른 화면으로 가며 지워지거나 숨겨지면(Next는 떠난 화면을 숨겨 두었다가 되살린다) 창을 닫아 둔다. 뒤로 가기로
       // 돌아오면 위 sync가 기록대로 다시 연다. 이때 닫히는 창은 포커스를 돌려주지 않는다(LinkedTeams와 같다)
       shownIdRef.current = null;
@@ -231,7 +238,7 @@ function RowList({ rows }: { rows: ReportRow[] }) {
       )}
     </div>
   );
-}
+});
 
 function Row({
   row,
