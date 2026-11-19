@@ -42,8 +42,8 @@ export interface GameLine {
   pitching: GamePitching | null;
   /** 선발(STARTER)인지 교체(SUB)로 나왔는지. 안 뛰었거나 모르면 null (MLB 공식 박스스코어 기준) */
   lineup: Lineup | null;
-  /** 그 경기가 정규시즌인지 포스트시즌인지(결장 줄도, korleaguer-server#192). 옛 api면 없고, 모르는 값이면 null */
-  seasonType?: SeasonType | null;
+  /** 그 경기가 정규시즌인지 포스트시즌인지(결장 줄도, korleaguer-server#192). 옛 api(칸 없음)·모르는 값이면 null */
+  seasonType: SeasonType | null;
 }
 
 export type Lineup = "STARTER" | "SUB";
@@ -659,8 +659,8 @@ export interface MinorGameLine {
   summary: string;
   batting: GameBatting | null;
   pitching: GamePitching | null;
-  /** GameLine.seasonType과 같은 칸. 서버가 정규시즌 줄만 저장해 늘 REGULAR다. 옛 api면 없고, 모르는 값이면 null */
-  seasonType?: SeasonType | null;
+  /** GameLine.seasonType과 같은 칸. 서버가 정규시즌 줄만 저장해 늘 REGULAR다. 옛 api(칸 없음)·모르는 값이면 null */
+  seasonType: SeasonType | null;
 }
 
 /**
