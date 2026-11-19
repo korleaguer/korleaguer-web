@@ -1,9 +1,11 @@
 import { useOptimistic, useRef, useTransition } from "react";
 import { setMyPlayer } from "@/app/my/actions";
 import { haptic } from "@/lib/app";
+import { callAction } from "@/lib/callAction";
 import { moveFocus } from "@/lib/focus";
 import { withObjectParticle } from "@/lib/format";
 import { toast, type ToastPress } from "@/lib/toast";
+import { toastSaveFailed } from "./toastSaveFailed";
 import { noteStarPress } from "./useFocusAfterRemove";
 
 /** '내 선수' 목록의 한 자리(setMyPlayer가 돌려준다): 번호와 바로 앞 선수 id */
@@ -13,8 +15,8 @@ type Slot = NonNullable<Awaited<ReturnType<typeof setMyPlayer>>>;
  * '내 선수' 넣기·빼기. 누르는 즉시 화면이 바뀌고(optimistic), 쿠키가 바뀌면 서버가 화면을 다시 그린다.
  * 결과는 알림 띠로 알린다(토스처럼): 넣으면 '보기', 빼면 '되돌리기' 버튼. 20명이 꽉 차서 못 넣으면 원래 모양으로 돌아가고,
  * 한 명을 빼고 넣으라고 알린다(내 선수 화면이 아니면 '내 선수 정리' 버튼).
- * 저장하지 못하면(연결 끊김·서버 오류) 원래 모양으로 돌아가고 '저장하지 못했어요' + '다시 시도'를 알린다. 예전에는 화면 전체가
- * 오류 화면(error.tsx)으로 바뀌어 보던 화면을 잃었다(전수조사 L324).
+ * 저장하지 못하면(연결 끊김·서버 오류) 원래 모양으로 돌아가고 '저장하지 못했어요' + '다시 시도'를 알린다(이 화면이 옛 배포면
+ * '다시 불러오기', toastSaveFailed). 예전에는 화면 전체가 오류 화면(error.tsx)으로 바뀌어 보던 화면을 잃었다(전수조사 L324).
  * ref는 이 훅을 쓰는 버튼에 단다: 알림 버튼을 누르면 알림과 함께 사라지는 포커스를 이 버튼으로 돌려준다(refocus).
  */
 export function useMyPlayerToggle(playerId: number, initialOn: boolean, nameKo: string) {
@@ -46,25 +48,20 @@ export function useMyPlayerToggle(playerId: number, initialOn: boolean, nameKo: 
     if (!next) haptic("tap");
     startTransition(async () => {
       setOptimisticOn(next);
-      // 넣었으면 들어간 자리, 뺐으면 빠지기 전 자리. 20명이 차서 못 넣었으면 null.
-      // undefined면 서버까지 닿지 못했거나(연결 끊김) 서버가 실패했다(서버 함수가 오류를 던진다)
-      const slot = await setMyPlayer(playerId, next, undoAt).catch(() => undefined);
-      if (slot === undefined) {
+      // 서버까지 닿지 못했거나(연결 끊김) 서버가 실패했거나 이 화면이 옛 배포면 실패 값으로 받는다(callAction)
+      const result = await callAction(() => setMyPlayer(playerId, next, undoAt));
+      if (!result.ok) {
         // 쿠키는 그대로라 별은 이 전환이 끝나며 원래 모양으로 돌아간다(useOptimistic).
-        // 같은 일(되돌리기였으면 그 자리로 다시 넣기)을 한 번 더 하는 버튼을 둔다
+        // 같은 일(되돌리기였으면 그 자리로 다시 넣기)을 한 번 더 하는 버튼을 둔다(옛 배포면 '다시 불러오기')
         haptic("error");
-        toast("저장하지 못했어요", {
-          tone: "error",
-          action: {
-            label: "다시 시도",
-            onClick: (press) => {
-              refocus(press);
-              set(next, undoAt);
-            },
-          },
+        toastSaveFailed(result.failure, (press) => {
+          refocus(press);
+          set(next, undoAt);
         });
         return;
       }
+      // 넣었으면 들어간 자리, 뺐으면 빠지기 전 자리. 20명이 차서 못 넣었으면 null
+      const slot = result.value;
       const ok = slot != null;
       if (next) haptic(ok ? "success" : "error");
       // 이미 내 선수 화면이면 그 화면으로 가는 버튼('보기'·'내 선수 정리')은 필요 없다(누르는 때의 주소로 판단해 훅이 주소를 구독하지 않게)

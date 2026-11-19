@@ -4,9 +4,11 @@ import { useLayoutEffect, useOptimistic, useRef, useState, useTransition, type K
 import { setMyPlayersOrder } from "@/app/my/actions";
 import type { PlayerSummary } from "@/lib/api";
 import { haptic } from "@/lib/app";
+import { callAction } from "@/lib/callAction";
 import { moveFocus } from "@/lib/focus";
-import { toast, type ToastPress } from "@/lib/toast";
+import type { ToastPress } from "@/lib/toast";
 import PlayerAvatar from "@/components/PlayerAvatar";
+import { toastSaveFailed } from "./toastSaveFailed";
 
 /** 줄을 옮기는 버튼: 위로·아래로·손잡이(끌기·화살표) */
 type Control = "up" | "down" | "handle";
@@ -83,11 +85,8 @@ export default function OrderList({ players }: { players: PlayerSummary[] }) {
   function save(next: number[], movedId: number, control: Control) {
     startTransition(async () => {
       setSaved(next);
-      const ok = await setMyPlayersOrder(next).then(
-        () => true,
-        () => false,
-      );
-      if (ok) return;
+      const result = await callAction(() => setMyPlayersOrder(next));
+      if (result.ok) return;
       haptic("error");
       // 원래 순서로 돌아가며 줄이 옮겨질 때 그 안의 포커스가 사라지지 않게, 지금 포커스가 있는 이 목록 버튼에 다시 둔다
       const active = document.activeElement;
@@ -95,10 +94,7 @@ export default function OrderList({ players }: { players: PlayerSummary[] }) {
         refocusRef.current = { key: active.dataset.move, scroll: true };
       }
       setMessage(`${byId.get(movedId)?.nameKo ?? ""}, 저장하지 못해 원래 자리로 돌아갔어요`);
-      toast("저장하지 못했어요", {
-        tone: "error",
-        action: { label: "다시 시도", onClick: (press) => retry(movedId, next.indexOf(movedId), control, press) },
-      });
+      toastSaveFailed(result.failure, (press) => retry(movedId, next.indexOf(movedId), control, press));
     });
   }
 

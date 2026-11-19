@@ -3,9 +3,11 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import type { NewsListItem } from "@/lib/api";
 import { loadMoreNews } from "@/app/news/actions";
+import { callAction, type ActionFailure } from "@/lib/callAction";
 import { formatDate, kstDayKey, kstPrevDayKey } from "@/lib/format";
 import { isNewArticle, type SeenMap } from "@/lib/newsSeen";
 import LoadingDots from "@/components/LoadingDots";
+import { useReload } from "@/components/ReloadButton";
 import NewsTitleList from "@/components/news/NewsTitleList";
 
 /**
@@ -47,7 +49,9 @@ export default function NewsFeed({
   // 다시 받으면(router.refresh) 새 값이 오는데, 그대로 쓰면 보던 줄의 '새'가 한꺼번에 꺼진다
   const [seenAtOpen] = useState(seen);
   const [next, setNext] = useState(firstNext);
-  const [failed, setFailed] = useState(false);
+  // 마지막으로 받지 못한 까닭. stale(이 화면이 옛 배포)이면 다시 해도 같아서 같은 버튼이 '다시 불러오기'(페이지를 새로 받기)가 된다
+  const [failure, setFailure] = useState<ActionFailure | null>(null);
+  const [reloading, reload] = useReload();
   const [pending, startTransition] = useTransition();
   const listRef = useRef<HTMLDivElement>(null);
   const moreRef = useRef<HTMLButtonElement>(null);
@@ -74,14 +78,15 @@ export default function NewsFeed({
   function load() {
     if (!next || pending) return;
     startTransition(async () => {
-      // 서버까지 닿지 못하면(연결 끊김) 서버 함수가 오류를 던진다. 그대로 두면 화면 전체가 오류 화면으로 바뀌어서,
-      // api 실패와 같이 '기사를 더 불러오지 못했어요' + '다시 시도'로 둔다(전수조사 L324와 같은 단계적 저하)
-      const result = await loadMoreNews(player, next, query).catch(() => ({ ok: false }) as const);
-      if (!result.ok) {
-        setFailed(true);
+      // 서버까지 닿지 못하면(연결 끊김) 서버 함수가 오류를 던진다. 그대로 두면 화면 전체가 오류 화면으로 바뀌어서 값으로 받고
+      // (callAction), api 실패와 같이 '기사를 더 불러오지 못했어요' + '다시 시도'로 둔다(전수조사 L324와 같은 단계적 저하)
+      const called = await callAction(() => loadMoreNews(player, next, query));
+      if (!called.ok || !called.value.ok) {
+        setFailure(called.ok ? "failed" : called.failure);
         return;
       }
-      setFailed(false);
+      const result = called.value;
+      setFailure(null);
       // 마우스로 누른 사파리처럼 버튼에 포커스가 없었으면 옮기지 않는다(그동안 다른 곳으로 옮겼어도 그대로 둔다)
       const focusNew = document.activeElement === moreRef.current;
       setRows((shown) => {
@@ -117,21 +122,24 @@ export default function NewsFeed({
           </div>
         </section>
       ))}
-      {failed && (
+      {failure && (
         <p role="alert" className="text-center text-meta text-muted">
-          기사를 더 불러오지 못했어요
+          {failure === "stale" ? "새 버전이 나와 기사를 더 불러오지 못했어요" : "기사를 더 불러오지 못했어요"}
         </p>
       )}
+      {/* 옛 배포면 버튼을 바꿔 끼우지 않고 같은 버튼의 할 일만 바꾼다(바꿔 끼우면 누른 버튼에 있던 포커스가 사라진다) */}
       {next && (
         <button
           ref={moreRef}
           type="button"
-          onClick={load}
-          aria-busy={pending}
+          onClick={failure === "stale" ? reload : load}
+          aria-busy={pending || reloading}
           className="card press-soft flex min-h-12 w-full cursor-pointer items-center justify-center gap-1 text-label text-accent-ink"
         >
-          <LoadingDots loading={pending}>{failed ? "다시 시도" : "기사 더 보기"}</LoadingDots>
-          {pending && <span className="sr-only"> 불러오는 중</span>}
+          <LoadingDots loading={pending || reloading}>
+            {failure === "stale" ? "다시 불러오기" : failure ? "다시 시도" : "기사 더 보기"}
+          </LoadingDots>
+          {(pending || reloading) && <span className="sr-only"> 불러오는 중</span>}
         </button>
       )}
     </div>
