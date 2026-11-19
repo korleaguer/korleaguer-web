@@ -12,6 +12,9 @@ import MyPlayersLink from "@/components/home/MyPlayersLink";
 /** 비시즌 카드는 시즌 합계라 기간이 뜻이 없다. /api/my가 요구하는 기간만 채운다 */
 const DAYS = 7;
 
+/** 성적표가 홈 맨 위일 때 사진을 바로 받을(eager) 앞 줄 수: 첫 화면 안 줄(맨 위 줄은 처음부터 펼쳐 둔다), 전수조사 L270 */
+const EAGER_ROWS = 2;
+
 /** 올해 메이저 출전(타자 경기·투수 등판). 사람들이 더 챙겨 보는 선수일수록 많다 */
 function majorGames(e: MyPlayer): number {
   return e.seasonTotals?.mlb?.games ?? 0;
@@ -59,17 +62,20 @@ function summaryParts(offseason: OffSeason, entries: MyPlayer[]): string[] {
 }
 
 /**
- * 비시즌 홈의 첫 묶음(홈 응답에 offseason이 있을 때). 지난 경기 한 줄과 '시즌 1위' 카드 대신 선수 전원의 시즌을 보인다.
+ * 비시즌 홈의 첫 묶음(홈 응답에 offseason이 있을 때). 지난 경기 한 줄과 '한국 선수 중 1위' 카드 대신 선수 전원의 시즌을 보인다.
  * 서버가 성적표를 주면 흰 카드 한 장 안 한 줄 목록(누르면 펼치기, 이슈 #276), 옛 api면 '내 선수' 카드의 시즌 합계 모양 카드.
  * 별은 실제로 '내 선수'로 골랐는지를 따른다.
  */
 export default async function OffseasonPlayers({
   offseason,
   asOf,
+  onTop = false,
 }: {
   offseason: OffSeason;
   /** 제목 옆 데이터 기준 시각("기준 11월 17일(화) 09:00"). 이 묶음이 홈 맨 위일 때만(MLB 도전 카드가 없을 때) 받는다(이슈 #277) */
   asOf?: string;
+  /** 이 묶음이 홈 맨 위면(MLB 도전 카드가 없을 때) true: 성적표 앞 줄 사진을 바로 받는다(첫 화면 안) */
+  onTop?: boolean;
 }) {
   const [myResult, myIds, playersResult] = await Promise.all([
     offseason.playerIds.length > 0 ? getMyPlayers(offseason.playerIds, DAYS) : Promise.resolve(null),
@@ -121,7 +127,12 @@ export default async function OffseasonPlayers({
       ) : !my || entries.length === 0 ? (
         <p className="card px-4 py-6 text-body text-muted">선수 기록이 모이면 선수별 시즌 성적이 여기에 나와요.</p>
       ) : hasReport ? (
-        <SeasonReportList entries={entries} reports={offseason.report ?? []} myIds={myIds} />
+        <SeasonReportList
+          entries={entries}
+          reports={offseason.report ?? []}
+          myIds={myIds}
+          eagerPhotos={onTop ? EAGER_ROWS : 0}
+        />
       ) : (
         // 옛 api(성적표 없음): 시즌 합계 카드. 같은 줄 카드는 높이를 맞춘다(시즌 합계 카드는 펼치는 목록이 없다)
         <ul className="grid items-stretch gap-3 sm:grid-cols-2 lg:grid-cols-3">

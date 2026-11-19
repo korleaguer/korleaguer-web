@@ -1,7 +1,8 @@
-// '내 선수'로 고른 선수 id 목록. 가입 없이 이 기기 쿠키에 "1.5.2"처럼 고른 순서대로 저장한다.
+// '내 선수'로 고른 선수 id 목록. 가입 없이 이 브라우저 쿠키(앱이면 앱 안 쿠키)에 "1.5.2"처럼 고른 순서대로 저장한다.
+// 같은 기기라도 다른 브라우저·앱과는 나누지 않는다.
 // 서버 컴포넌트와 서버 함수(actions.ts)에서만 쓴다.
 import { cookies } from "next/headers";
-import { PLAYER_ID } from "@/lib/ids";
+import { parseId } from "./ids";
 
 export const MY_PLAYERS_COOKIE = "kl_my";
 /** api가 한 번에 받는 최대 인원과 같다 */
@@ -14,8 +15,8 @@ export function parseMyPlayers(value: string | undefined): number[] {
   if (!value) return [];
   const ids = value
     .split(".")
-    .filter((part) => PLAYER_ID.test(part))
-    .map(Number);
+    .map(parseId)
+    .filter((id): id is number => id != null);
   return [...new Set(ids)].slice(0, MY_PLAYERS_MAX);
 }
 

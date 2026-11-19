@@ -1,18 +1,20 @@
 import type { PlayerSaber } from "@/lib/api";
 import Section from "@/components/Section";
+import PositionBar from "@/components/player/PositionBar";
 import { formatInningsOuts } from "@/lib/format";
+// 이보다 적으면 '참고용'(타자 100타석, 투수 30이닝 = 90아웃). 시즌 성적 한 줄·홈 성적표 작은 판과 같은 값을 한 곳에서 가져온다
+import { STEADY_OUTS, STEADY_PA } from "@/lib/seasonStats";
 import { cacheLife } from "next/cache";
 import { Fragment } from "react";
-
-/** 이보다 적으면 '참고용'(서버가 견주는 선수 기준과 같다: 타자 100타석, 투수 30이닝 = 90아웃). 홈 성적표 작은 판도 같은 기준이다 */
-export const STEADY_PA = 100;
-export const STEADY_OUTS = 90;
 
 export interface Row {
   label: string;
   /** 1~99(높을수록 좋다). 견줄 선수가 아직 없으면 null */
   pct: number | null;
-  /** 막대 아래 한 줄에 모으는 그 칸의 실제 값("WAR +1.0", "주루 +0.7점") */
+  /**
+   * 막대 아래 한 줄에 모으는 그 칸의 실제 값("종합 WAR +1.0", "주루 +0.7점"). 값만 모아 두면 'WAR'가 어느 막대 값인지
+   * 줄마다 맞춰 봐야 해서 막대 이름을 앞에 붙인다(주루·수비·삼진·볼넷은 값 이름에 이미 들어 있다)
+   */
   raw: string | null;
 }
 
@@ -29,8 +31,8 @@ export function rowsOf(saber: PlayerSaber): Row[] | null {
     const p = saber.percentiles;
     if (!p) return null;
     return [
-      { label: "종합", pct: p.overall, raw: saber.war == null ? null : `WAR ${signed(saber.war)}` },
-      { label: "타격", pct: p.batting, raw: saber.wrcPlus == null ? null : `wRC+ ${Math.round(saber.wrcPlus)}` },
+      { label: "종합", pct: p.overall, raw: saber.war == null ? null : `종합 WAR ${signed(saber.war)}` },
+      { label: "타격", pct: p.batting, raw: saber.wrcPlus == null ? null : `타격 wRC+ ${Math.round(saber.wrcPlus)}` },
       { label: "주루", pct: p.baseRunning, raw: saber.baseRunning == null ? null : `주루 ${signed(saber.baseRunning)}점` },
       { label: "수비", pct: p.fielding, raw: saber.fielding == null ? null : `수비 ${signed(saber.fielding)}점` },
     ];
@@ -38,19 +40,21 @@ export function rowsOf(saber: PlayerSaber): Row[] | null {
   const p = saber.percentiles;
   if (!p) return null;
   return [
-    { label: "종합", pct: p.overall, raw: saber.war == null ? null : `WAR ${signed(saber.war)}` },
-    { label: "실점 억제", pct: p.runPrevention, raw: saber.eraMinus == null ? null : `ERA- ${Math.round(saber.eraMinus)}` },
+    { label: "종합", pct: p.overall, raw: saber.war == null ? null : `종합 WAR ${signed(saber.war)}` },
+    { label: "실점 억제", pct: p.runPrevention, raw: saber.eraMinus == null ? null : `실점 억제 ERA- ${Math.round(saber.eraMinus)}` },
     { label: "삼진", pct: p.strikeouts, raw: saber.strikeoutRate == null ? null : `삼진 비율 ${saber.strikeoutRate.toFixed(1)}%` },
-    { label: "볼넷", pct: p.walks, raw: saber.walkRate == null ? null : `볼넷 비율 ${saber.walkRate.toFixed(1)}%` },
+    // '볼넷 상위 10%'는 볼넷을 많이 준다로 읽혀 '실점 억제'처럼 '볼넷 억제'(볼넷을 적게 줄수록 위). 이름 칸(4.25rem)에 그대로 든다
+    { label: "볼넷 억제", pct: p.walks, raw: saber.walkRate == null ? null : `볼넷 비율 ${saber.walkRate.toFixed(1)}%` },
   ];
 }
 
 /**
  * 선수 화면 'MLB 타자(투수) 중에서'(사용자 11-13 결정, Baseball Savant의 백분위 막대처럼).
  * 제목은 아래 줄과 이어 읽힌다: 'MLB 타자 중에서 타격 상위 41%'(처음 이름 'MLB 안 위치'는 어색하다는 사용자 의견으로 바꿨다).
- * 같은 시즌 MLB 선수 중 어디쯤인지를 네 줄로: 타자는 종합·타격·주루·수비, 투수는 종합·실점 억제·삼진·볼넷.
+ * 같은 시즌 MLB 선수 중 어디쯤인지를 네 줄로: 타자는 종합·타격·주루·수비, 투수는 종합·실점 억제·삼진·볼넷 억제.
  * 타율 하나로 폼을 판단하지 않게(사용자: "현대 야구에서 타율만으로 평가하진 않아서"), 실제 값은 막대 아래 한 줄에 작게만 둔다.
- * 중간보다 아래는 순위 대신 회색 '평균 아래'(혹평처럼 읽히지 않게). 숫자는 서버가 MLB 공식 세이버 지표로 계산한다(korleaguer-server#133).
+ * 중간보다 아래는 순위 대신 회색 '중간 아래'(혹평처럼 읽히지 않게). 가운데 선이 MLB 중간값(백분위 50)이라 '평균'이라 쓰지 않는다:
+ * 'WAR +1.0'인데 '평균 아래'면 모순처럼 읽혔다(WAR는 0이 평균이 아니다). 숫자는 서버가 MLB 공식 세이버 지표로 계산한다(korleaguer-server#133).
  * 항목마다 '이름 · 막대 · 순위'를 한 줄로 둔다(사용자 11-16 시안 A, 이슈 #236). 세 줄씩 쌓던 때는 이 칸이 시즌 성적보다 커서
  * 아래 경기 기록이 너무 멀었다. 표본이 적어 위치가 없으면 빈 칸 대신 시즌 성적 바로 아래 안내 한 줄만 둔다.
  */
@@ -89,9 +93,16 @@ export default async function LeaguePosition({ saber }: { saber: PlayerSaber }) 
             {hitter ? `${sample}뿐이라 더 뛰면 크게 바뀔 수 있어요` : `${sample}뿐이라 더 던지면 크게 바뀔 수 있어요`}
           </p>
         )}
-        <ul className="space-y-3">
+        {/* @container: 칸이 좁으면(앱 큰 글씨 등) 줄 모양을 바꾼다(PositionRow) */}
+        <ul className="@container space-y-3">
           {rows.map((r) => (
-            <PositionRow key={r.label} row={r} who={who} labelCol={hitter ? "2.5rem" : "4.25rem"} />
+            <PositionRow
+              key={r.label}
+              row={r}
+              who={who}
+              // 이름 칸: 타자 2.5rem(두 글자), 투수 4.25rem('실점 억제'·'볼넷 억제'). Tailwind가 읽게 클래스를 통째로 적는다
+              cols={hitter ? "grid-cols-[2.5rem_minmax(0,1fr)_4.5rem]" : "grid-cols-[4.25rem_minmax(0,1fr)_4.5rem]"}
+            />
           ))}
         </ul>
         {raws.length > 0 && (
@@ -104,44 +115,29 @@ export default async function LeaguePosition({ saber }: { saber: PlayerSaber }) 
             ))}
           </p>
         )}
+        {/* WAR 풀이는 이 각주 한 곳에만 둔다(시즌별 기록 표는 낭독기에만 보이지 않는 표 설명으로 붙인다) */}
         <p className="mt-3 border-t border-line pt-2.5 text-micro text-muted">
-          가운데 선 = MLB 중간 · {hitter ? "득점은 리그 평균 대비(수비는 포지션 난도 포함)" : "ERA-는 100이 평균, 낮을수록 좋아요"} · MLB
-          공식 세이버 지표 · {sample}
+          가운데 선 = MLB 중간 · WAR는 대체 선수보다 더 번 승수(0이 평균 아님) ·{" "}
+          {hitter ? "득점은 리그 평균 대비(수비는 포지션 난도 포함)" : "ERA-는 100이 평균, 낮을수록 좋아요"} · MLB 공식 세이버 지표 · {sample}
         </p>
       </div>
     </Section>
   );
 }
 
-/** 한 줄: 이름 | 막대(가운데 선 = MLB 중간) | 순위. 이름 칸 폭을 줄마다 같게 해 막대 시작점을 맞춘다 */
-function PositionRow({ row, who, labelCol }: { row: Row; who: string; labelCol: string }) {
+/**
+ * 한 줄: 이름 | 막대(가운데 선 = MLB 중간, PositionBar) | 순위. 이름 칸 폭을 줄마다 같게 해 막대 시작점을 맞춘다.
+ * 칸이 15rem보다 좁으면(앱 큰 글씨 1.5배 이상, 휴대폰) 이름·순위 한 줄 아래에 막대를 칸 폭 그대로 둔다.
+ * 한 줄로 두면 이름·순위 칸(rem)이 커져 막대 칸이 0이 되고 점만 남았다(2배 375px)
+ */
+function PositionRow({ row, who, cols }: { row: Row; who: string; cols: string }) {
   const { label, pct } = row;
   const top = pct != null && pct >= 50;
-  const verdict = pct == null ? "비교 전" : top ? `상위 ${100 - pct}%` : "평균 아래";
+  const verdict = pct == null ? "비교 전" : top ? `상위 ${100 - pct}%` : "중간 아래";
   return (
-    <li
-      className="grid items-center gap-x-3"
-      style={{ gridTemplateColumns: `${labelCol} minmax(0, 1fr) 4.5rem` }}
-    >
+    <li className={`grid items-center gap-x-3 ${cols} @max-[15rem]:grid-cols-[minmax(0,1fr)_auto] @max-[15rem]:gap-y-1.5`}>
       <span className="text-summary">{label}</span>
-      {/* data-bar·data-bar-track: 고대비 모드(Windows)에서는 바탕색이 지워져 막대가 사라져서 시스템 색으로 다시 칠한다(globals.css) */}
-      <div aria-hidden data-bar-track className="relative h-2 rounded-full bg-surface-2">
-        <span data-bar="dim" className="absolute inset-y-[-3px] left-1/2 w-px bg-line" />
-        {pct != null && (
-          <>
-            <span
-              data-bar={top ? "" : "dim"}
-              className={`absolute inset-y-0 left-0 rounded-full ${top ? "bg-accent" : "bg-muted/40"}`}
-              style={{ width: `${pct}%` }}
-            />
-            <span
-              data-bar={top ? "" : "dim"}
-              className={`absolute top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-surface ${top ? "bg-accent" : "bg-muted"}`}
-              style={{ left: `${pct}%` }}
-            />
-          </>
-        )}
-      </div>
+      <PositionBar pct={pct} size="md" className="@max-[15rem]:order-last @max-[15rem]:col-span-2" />
       <span className={`whitespace-nowrap text-right text-summary font-extrabold tabular-nums ${top ? "text-accent-ink" : "text-muted"}`}>
         <span className="sr-only">{`MLB ${who} 중 `}</span>
         {verdict}

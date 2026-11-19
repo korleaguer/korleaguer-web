@@ -1,5 +1,5 @@
 // 숫자·날짜를 화면용 문자열로 바꾸는 함수들. 값이 없거나 이상하면 "-"를 돌려준다.
-import type { GameLine } from "./api";
+import type { GameLine, PlayerSummary } from "./api";
 
 const KST = "Asia/Seoul";
 
@@ -143,6 +143,22 @@ export function formatScore(
   return `${line.teamScore} - ${line.opponentScore}`;
 }
 
+/**
+ * 팀 이름 앞말. FA·국내 복귀 선수의 팀 칸은 마지막 MLB 팀이라 '전'을 붙인다('FA' 옆 '애틀랜타'는 아직 소속처럼 읽혔다,
+ * 점검 11-13). 팀 이름을 쓰는 곳(정보 칩, 선수 머리 카드의 소속팀 사진 알약)이 함께 써서 규칙이 갈라지지 않게 한다
+ * (사진 알약만 '미네소타'로 남아 있었다, 11-17 전수조사). 지금 소속 팀이면 undefined
+ */
+export function teamPrefix(player: Pick<PlayerSummary, "freeAgent" | "returnedKo">): "전" | undefined {
+  return player.freeAgent || player.returnedKo ? "전" : undefined;
+}
+
+/** 팀 이름 글자: "샌프란시스코", FA·국내 복귀면 "전 애틀랜타". 팀을 모르면 null */
+export function teamLabel(player: Pick<PlayerSummary, "teamKo" | "freeAgent" | "returnedKo">): string | null {
+  if (!player.teamKo) return null;
+  const prefix = teamPrefix(player);
+  return prefix ? `${prefix} ${player.teamKo}` : player.teamKo;
+}
+
 /** 만 나이: 28 → "만 28세". 없으면 null (부르는 쪽에서 그 칸을 뺀다) */
 export function formatAge(age: number | null): string | null {
   return age == null ? null : `만 ${age}세`;
@@ -193,4 +209,13 @@ const dayKeyFormat = new Intl.DateTimeFormat("en-CA", { timeZone: KST, year: "nu
 export function kstDayKey(value: string | Date | null | undefined): string | null {
   const date = value instanceof Date ? value : toDate(value);
   return date ? dayKeyFormat.format(date) : null;
+}
+
+/**
+ * 한국 날짜 열쇠의 전날: "2026-11-15" → "2026-11-14". '오늘'·'어제' 글자를 정하는 곳(뉴스 탭 날짜 묶기, 층 홈 경기 한 줄)이
+ * 같은 규칙을 쓰게 한 곳에 둔다. 그날 한국 낮 12시에서 24시간을 빼서 센다(한국은 서머타임이 없다). 날짜 모양이 아니면 null
+ */
+export function kstPrevDayKey(day: string): string | null {
+  const noon = Date.parse(`${day}T12:00:00+09:00`);
+  return Number.isNaN(noon) ? null : kstDayKey(new Date(noon - 86_400_000));
 }

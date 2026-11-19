@@ -1,14 +1,18 @@
 "use client";
 
 // 알림 띠(토스트)를 그린다. layout에 하나만 둔다. 띄우는 쪽은 src/lib/toast.ts의 toast("…")를 부른다.
-// 토스(TDS Toast)처럼: 머리글 바로 아래에 떴다가 3초(버튼이 있으면 5초) 뒤 사라지고, 위로 밀면 바로 치워진다.
+// 토스(TDS Toast)처럼: 머리글 바로 아래에 떴다가 3초(버튼이 있으면 10초) 뒤 사라지고, 위로 밀면 바로 치워진다.
 // 앱(웹뷰) 안에서는 아래 네이티브 탭 막대가 화면 아래를 덮고 있어서 위쪽에 둔다.
 import Link from "next/link";
 import { useEffect, useRef, useState, useSyncExternalStore, type PointerEvent } from "react";
 import { currentToast, dismissToast, subscribeToast, type ToastItem } from "@/lib/toast";
 
 const SHOW_MS = 3000;
-const SHOW_WITH_ACTION_MS = 5000;
+/**
+ * 버튼('되돌리기'·'보기' 등)이 있는 알림. 5초는 버튼을 찾아 누르기에 짧았다: 별로 뺀 내 선수를 되돌리는 버튼이 이 알림에만 있고,
+ * 알림이 문서 맨 끝이라 키보드로 가는 사이 사라졌다(11-17 점검, 버튼이 있으면 10초 이상). 포커스·마우스가 올라가 있는 동안은 멈춘다
+ */
+const SHOW_WITH_ACTION_MS = 10000;
 /** 사라지는 움직임 길이(globals.css .toast-out과 같게) */
 const LEAVE_MS = 160;
 /** 이만큼 위로 밀면 치운다 */

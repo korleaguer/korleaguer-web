@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL, shareMeta } from "@/lib/share";
 import AppBridge from "@/components/AppBridge";
+import HiddenTransitionGuard from "@/components/HiddenTransitionGuard";
 import SiteFooter from "@/components/SiteFooter";
 import SiteHeader from "@/components/SiteHeader";
 import SkipLink from "@/components/SkipLink";
@@ -28,6 +29,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     // suppressHydrationWarning: 앱(웹뷰)이 React보다 먼저 <html>에 data-app 속성을 붙인다. 이 요소의 속성 차이는 그대로 둔다.
     <html lang="ko" className="h-full antialiased" suppressHydrationWarning>
+      <head>
+        {/* 숨은 문서에서 건너뛴 화면 전환 오류를 콘솔에 띄우지 않는다. 본문 스트리밍 스크립트보다 먼저 들어야 해서 head 안 */}
+        <HiddenTransitionGuard />
+      </head>
       <body className="flex min-h-full flex-col font-sans">
         {/* 맨 앞: 키보드로 처음 Tab을 누르면 보이는 '본문 바로가기' */}
         <SkipLink />
