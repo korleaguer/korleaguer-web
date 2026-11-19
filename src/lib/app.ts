@@ -61,12 +61,18 @@ export function useInApp(): boolean {
 
 /**
  * 아이폰 앱 아래 탭 막대가 웹 화면 아래를 덮는 높이(px, 화면 아래 끝부터 홈 표시줄까지 포함). 아이폰 앱이 아니면 0.
- * 값은 globals.css의 --app-tab-bar 하나다(앱이 실제 높이를 넣고, 넣지 않은 옛 앱은 전에 쓰던 84px). CSS 변수 자체는
- * 기본값일 때 calc를 풀지 않은 글자로 읽혀서, 같은 값을 쓰는 html의 scroll-padding-bottom(계산된 px)을 읽는다
+ * 값은 globals.css의 --app-tab-bar 하나다(앱이 실제 높이를 넣고, 넣지 않은 옛 앱은 84px). 그 높이를 준 보이지 않는 빈 칸을
+ * 잠깐 넣어 잰다: 변수를 글자로 읽어 풀지 않아도 되고, 같은 변수를 쓰는 다른 속성(html의 scroll-padding-bottom)이 나중에
+ * 바뀌어도 따라 틀어지지 않는다(#302 리뷰)
  */
 export function iosTabBarHeight(): number {
   if (!isIosApp()) return 0;
-  return parseFloat(getComputedStyle(document.documentElement).scrollPaddingBottom) || 0;
+  const probe = document.createElement("div");
+  probe.style.cssText = "position:absolute;visibility:hidden;pointer-events:none;width:0;height:var(--app-tab-bar)";
+  document.body.append(probe);
+  const height = probe.getBoundingClientRect().height;
+  probe.remove();
+  return height;
 }
 
 /** 앱에 메시지를 보낸다. 앱 안이 아니면 아무 일도 하지 않는다 */
