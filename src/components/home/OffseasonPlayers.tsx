@@ -4,7 +4,6 @@ import { formatUsDate } from "@/lib/format";
 import { readMyPlayers } from "@/lib/myPlayers";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import Section from "@/components/Section";
-import { WordGroup } from "@/components/Words";
 import FormCard from "@/components/my/FormCard";
 import SeasonReportList from "@/components/home/SeasonReportList";
 import MyPlayersLink from "@/components/home/MyPlayersLink";
@@ -92,19 +91,8 @@ export default async function OffseasonPlayers({
   const reportIndex = new Map((offseason.report ?? []).map((r, i) => [r.playerId, i]));
   const hasReport = reportIndex.size > 0;
   const entries = my ? (hasReport ? reportOrder(my.players, reportIndex, myIds) : order(my.players, myIds)) : [];
-  // 순서 이름은 실제 기준대로(예전 '잘한 순'은 판정 → 메이저 경기 수 순서와 달랐다, 전수조사 wip-13).
-  // 내 선수가 목록에 있을 때만 '내 선수 먼저'를 붙인다
-  const anyMine = entries.some((e) => myIds.includes(e.player.id));
-  const orderName = hasReport ? `${anyMine ? "내 선수 먼저 · " : ""}시즌 판정 순` : null;
-  // 제목 옆: 순서 이름, 받았으면 그 뒤에 기준 시각(선수 목록·내 선수 머리 줄과 같은 꼴). 기준 시각은 한 덩어리라
-  // 큰 글씨에서는 순서 이름 다음에서 통째로 내려가고, '·'는 '기준'에 붙여 줄 끝에 홀로 남지 않는다
-  const aside =
-    asOf && orderName ? (
-      <>
-        {`${orderName} `}
-        <WordGroup text={`·\u00a0${asOf}`} />
-      </>
-    ) : (asOf ?? orderName);
+  // 제목 옆은 기준 시각만(예전 '내 선수 먼저 · 시즌 판정 순'은 별 표시가 내 선수를 보이고 순서 까닭은 읽는 데 필요 없어 뺐다, 이슈 #329)
+  const aside = asOf;
 
   return (
     <Section

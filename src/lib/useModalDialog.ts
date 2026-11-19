@@ -10,6 +10,25 @@ let lockCount = 0;
 let overflowBefore = "";
 
 /**
+ * 열린 창(나중에 연 것이 뒤). 모달 창이 열리면 창 밖은 누를 수 없고(inert) 창 아래에 깔려서, 창 안에서 별을 누를 때 뜨는
+ * 알림('…뺐어요 · 되돌리기')이 어둡게 가려지고 버튼도 눌리지 않았다(이슈 #326). 알림 띠(Toaster)가 맨 위 창 안에 그려지도록 알린다
+ */
+const openDialogs: HTMLDialogElement[] = [];
+const modalListeners = new Set<() => void>();
+const emitModal = () => modalListeners.forEach((l) => l());
+
+/** useSyncExternalStore용: 열린 창이 바뀌면 부른다 */
+export function subscribeModal(listener: () => void): () => void {
+  modalListeners.add(listener);
+  return () => modalListeners.delete(listener);
+}
+
+/** 지금 맨 위에 열린 창. 없으면 null */
+export function topModal(): HTMLDialogElement | null {
+  return openDialogs[openDialogs.length - 1] ?? null;
+}
+
+/**
  * 화면을 덮는 창(<dialog>: 경기 상세·거론 구단·성적표 창)을 그려져 있는 동안 모달로 연다. 창들이 같이 쓴다.
  * 같은 묶음을 창마다 복사해 두면 다음 창이 하나를 빠뜨리기 쉬워 한 곳에 모았다(#302 리뷰).
  * - showModal: 포커스가 창 안에 머물고 뒤 화면은 누를 수 없다.
@@ -26,9 +45,14 @@ export function useModalDialog(dialogRef: RefObject<HTMLDialogElement | null>): 
     if (lockCount === 0) overflowBefore = root.style.overflow;
     lockCount += 1;
     root.style.overflow = "hidden";
+    openDialogs.push(dialog);
+    emitModal();
     return () => {
       lockCount = Math.max(0, lockCount - 1);
       if (lockCount === 0) root.style.overflow = overflowBefore;
+      const i = openDialogs.indexOf(dialog);
+      if (i >= 0) openDialogs.splice(i, 1);
+      emitModal();
       if (dialog.open) dialog.close();
     };
   }, [dialogRef]);

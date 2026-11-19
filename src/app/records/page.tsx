@@ -39,6 +39,10 @@ const TOP = 10;
  * (2026 운영 데이터: 21번 중 값 10 미만 8번을 빼면 13번, 남는 것은 강정호 233안타·이대호 14홈런 같은 것)
  */
 const PASSED_MIN = 10;
+/** '넘은 기록'에서 처음 보이는 묶음 수. 나머지는 '더 보기' */
+const PASSED_SHOWN = 6;
+/** 남은 것이 이만큼 이하면 버튼을 두지 않고 처음부터 모두 보인다(1~2개를 위해 버튼 하나를 누르게 하지 않는다, 이슈 #326) */
+const PASSED_REST_MIN = 3;
 /** '다음에 넘을 기록'에 보이는 선수 수 */
 const NEXT_PLAYERS = 4;
 
@@ -136,18 +140,19 @@ async function RecordsContent({ searchParams }: Pick<Props, "searchParams">) {
   );
   const meaningful = records.passed.filter((p) => p.passedValue >= PASSED_MIN);
   const passed = groupPassed(meaningful);
+  const shownPassed = passed.length - PASSED_SHOWN >= PASSED_REST_MIN ? PASSED_SHOWN : passed.length;
   const passedSection =
     passed.length > 0 ? (
       <Section key="passed" title={`${records.season}년에 넘은 기록`} aside={`${meaningful.length}번`}>
         <ul className="card divide-y divide-line overflow-hidden">
-          {passed.slice(0, 6).map((g) => (
+          {passed.slice(0, shownPassed).map((g) => (
             <PassedRow key={g.key} group={g} />
           ))}
         </ul>
-        {passed.length > 6 && (
-          <ShowMore moreLabel={`${passed.length - 6}개 더 보기`}>
+        {passed.length > shownPassed && (
+          <ShowMore moreLabel={`${passed.length - shownPassed}개 더 보기`}>
             <ul className="card mt-2 divide-y divide-line overflow-hidden">
-              {passed.slice(6).map((g) => (
+              {passed.slice(shownPassed).map((g) => (
                 <PassedRow key={g.key} group={g} />
               ))}
             </ul>

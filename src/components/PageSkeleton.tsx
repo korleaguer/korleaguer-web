@@ -239,8 +239,7 @@ export function HomeSkeleton() {
           <Bone onPage className="h-3.5 w-20" />
         </div>
         <div className="card px-4 pb-1">
-          {/* 목록 맨 위 흐린 안내('막대 = 4~9월 달마다 wRC+ · 줄을 누르면 자세히 보여요') */}
-          <Line h="h-7 pt-2" bone="h-3 w-64" />
+          <div className="pt-1" />
           {/* 휴대폰은 펼친 줄 없는 목록, PC는 왼쪽 목록 + 오른쪽 고른 선수 칸(SeasonReportRows) */}
           <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:items-start lg:gap-x-6">
           <div className="divide-y divide-line">
