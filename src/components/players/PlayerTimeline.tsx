@@ -1,33 +1,17 @@
 import Link from "next/link";
 import type { PlayerSummary, Timeline } from "@/lib/api";
-import { bandDays, dayIndex, KIND_NAME } from "@/lib/timeline";
-import PlayerTimelineRow, { BAND_CLASS } from "./PlayerTimelineRow";
+import { bandDays, KIND_NAME, monthTicks } from "@/lib/timeline";
+import SeasonReportRows from "@/components/home/SeasonReportRows";
+import { BAND_CLASS, buildTimelineRow } from "./PlayerTimelineRow";
 
 const LEGEND = ["MLB", "MINORS", "INJURED", "NO_TEAM"] as const;
 /** 사진을 바로 받을 앞 줄 수(선수는 여섯 명 안팎이라 휴대폰 첫 화면 뒤까지 받아도 작다) */
 const EAGER_ROWS = 6;
 
-/** 달 눈금: 띠가 덮는 달마다 그 달 1일의 자리(첫 달은 띠 시작) */
-function monthTicks(from: string, to: string) {
-  const ticks: { month: number; day: number }[] = [];
-  let y = Number(from.slice(0, 4));
-  let m = Number(from.slice(5, 7));
-  const endKey = to.slice(0, 7);
-  while (`${y}-${String(m).padStart(2, "0")}` <= endKey) {
-    const first = `${y}-${String(m).padStart(2, "0")}-01`;
-    ticks.push({ month: m, day: dayIndex(from, to, first < from ? from : first) });
-    m += 1;
-    if (m > 12) {
-      m = 1;
-      y += 1;
-    }
-  }
-  return ticks;
-}
-
 /**
  * 선수 탭 '어디서 뛰었나' 연표: 한 줄 안내, 시즌 고르기(시즌이 둘 이상일 때), 범례, 선수 줄.
  * 순서는 내 선수(별) 먼저, 그다음 가장 최근 이동이 늦은 순(이동이 없으면 뒤).
+ * 줄을 누르면 휴대폰은 아래 창, PC는 오른쪽 칸에 자세히(이동 목록 전부·숫자·선수 페이지)가 보인다. 틀은 홈 성적표와 같다(SeasonReportRows, 이슈 #325).
  */
 export default function PlayerTimeline({
   players,
@@ -51,6 +35,16 @@ export default function PlayerTimeline({
     .map(({ p }) => p);
   const total = bandDays(timeline.from, timeline.to);
   const latest = Math.max(...timeline.seasons, timeline.season);
+  const rows = ordered.map((p, i) =>
+    buildTimelineRow({
+      player: p,
+      entry: entries.get(p.id) ?? null,
+      timeline,
+      isMine: myIds.includes(p.id),
+      returned: timeline.season === latest,
+      eagerPhoto: i < EAGER_ROWS,
+    }),
+  );
 
   return (
     <div className="space-y-3">
@@ -86,27 +80,23 @@ export default function PlayerTimeline({
           </li>
         )}
       </ul>
-      <section className="card px-4 pt-3">
-        <div aria-hidden className="relative h-4 text-micro text-muted">
-          {monthTicks(timeline.from, timeline.to).map((t, i) => (
-            <span key={t.month} className="absolute tabular-nums" style={{ left: `${(t.day / total) * 100}%` }}>
-              {i === 0 ? `${t.month}월` : t.month}
-            </span>
-          ))}
-        </div>
-        <ul className="divide-y divide-line">
-          {ordered.map((p, i) => (
-            <PlayerTimelineRow
-              key={p.id}
-              player={p}
-              entry={entries.get(p.id) ?? null}
-              timeline={timeline}
-              isMine={myIds.includes(p.id)}
-              returned={timeline.season === latest}
-              eagerPhoto={i < EAGER_ROWS}
-            />
-          ))}
-        </ul>
+      <section className="card px-4 pb-1">
+        <SeasonReportRows
+          rows={rows}
+          listHeader={
+            <>
+              <p className="pb-0.5 pt-2.5 text-caption text-muted">줄을 누르면 자세히 보여요</p>
+              {/* 달 눈금: 줄 띠와 같은 폭(줄 버튼의 좌우 여백은 목록과 같다) */}
+              <div aria-hidden className="relative mt-1 h-4 text-micro text-muted">
+                {monthTicks(timeline.from, timeline.to).map((t, i) => (
+                  <span key={t.month} className="absolute tabular-nums" style={{ left: `${(t.day / total) * 100}%` }}>
+                    {i === 0 ? `${t.month}월` : t.month}
+                  </span>
+                ))}
+              </div>
+            </>
+          }
+        />
       </section>
     </div>
   );

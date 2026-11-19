@@ -1,11 +1,11 @@
 import Link from "next/link";
-import type { RosterMove, PlayerSummary, Timeline, TimelineKind, TimelinePlayer } from "@/lib/api";
+import type { PlayerSummary, RosterMove, Timeline, TimelineKind, TimelinePlayer } from "@/lib/api";
 import { formatEra, formatRate, teamLabel } from "@/lib/format";
-import { bandDays, bandSummary, buildFacts, buildMarkers, dayIndex, koDate } from "@/lib/timeline";
-import Chevron from "@/components/Chevron";
-import PlayerAvatar from "@/components/PlayerAvatar";
-import MovePill from "@/components/player/MovePill";
+import { bandDays, bandSummary, buildFacts, buildMarkers, dayIndex, koDate, monthTicks } from "@/lib/timeline";
 import MyPlayerToggle from "@/components/my/MyPlayerToggle";
+import MovePill from "@/components/player/MovePill";
+import PlayerAvatar from "@/components/PlayerAvatar";
+import type { ReportRow } from "@/components/home/SeasonReportRows";
 
 /** 구간 색(토큰이라 라이트·다크가 따라간다): 메이저 파랑 · 마이너 회색 · 부상 빨강 · 팀 없음 보라. 범례도 같이 쓴다 */
 export const BAND_CLASS: Record<TimelineKind, string> = {
@@ -14,9 +14,6 @@ export const BAND_CLASS: Record<TimelineKind, string> = {
   INJURED: "bg-danger-fg",
   NO_TEAM: "bg-fa-fg",
 };
-
-/** 펼친 곳에 보일 이동 줄 수 */
-const MOVES_SHOWN = 5;
 
 const pct = (days: number, total: number) => `${(days / total) * 100}%`;
 
@@ -33,74 +30,93 @@ function statLine(stat: NonNullable<TimelinePlayer["stat"]>, role: PlayerSummary
     .join(" · ");
 }
 
+/**
+ * 띠 한 줄(전부 span: 줄 버튼 안에도 들어간다). tall이면 창 안 큰 띠(높이 16px)에 날짜 눈금(달)을 위에 붙인다.
+ * 띠는 그림이라 화면 낭독기에는 구간 요약 글(label)을 읽어 준다
+ */
 function Band({
   timeline,
   entry,
   returnedKo,
   label,
+  tall = false,
 }: {
   timeline: Timeline;
   entry: TimelinePlayer | null;
   returnedKo: string | null;
   label: string;
+  tall?: boolean;
 }) {
   const total = bandDays(timeline.from, timeline.to);
   const segments = entry?.segments ?? [];
   const markers = entry ? buildMarkers(entry.moves, timeline.from, timeline.to) : [];
   const today = timeline.inSeason ? dayIndex(timeline.from, timeline.to, timeline.today) : null;
   const last = segments[segments.length - 1];
+  const h = tall ? 22 : 18;
 
   return (
-    <div className="relative h-[18px]">
-      {/* 띠는 그림이라 화면 낭독기에는 아래 요약 글을 읽어 준다 */}
-      <div aria-hidden className="absolute inset-x-0 top-[3px] h-3 overflow-hidden rounded-full bg-surface-2">
-        {segments.map((g) => {
-          const start = dayIndex(timeline.from, timeline.to, g.from);
-          const days = bandDays(g.from, g.to);
-          return (
-            <span
-              key={g.from}
-              className={`absolute inset-y-0 min-w-[3px] ${BAND_CLASS[g.kind]}`}
-              style={{ left: pct(start, total), width: pct(days, total) }}
-            >
-              {/* 국내로 돌아간 선수: 팀 없음 구간 끝에 구단 글자 */}
-              {g === last && g.kind === "NO_TEAM" && returnedKo && days > (total * 40) / 264 && (
-                <span className="absolute inset-y-0 right-1.5 flex items-center text-micro font-bold leading-none text-fa-bg">
-                  {returnedKo.split(" ")[0]}
-                </span>
-              )}
+    <span className="block">
+      {tall && (
+        <span aria-hidden className="relative block h-4 text-micro text-muted">
+          {monthTicks(timeline.from, timeline.to).map((t, i) => (
+            <span key={t.month} className="absolute tabular-nums" style={{ left: pct(t.day, total) }}>
+              {i === 0 ? `${t.month}월` : t.month}
             </span>
-          );
-        })}
-      </div>
-      {markers.map((m) => (
-        <span
-          key={m.date}
-          aria-hidden
-          title={m.labels.join(" · ")}
-          className="absolute top-0 h-[18px] w-[2px] -translate-x-1/2 rounded-full bg-foreground ring-1 ring-surface"
-          style={{ left: pct(m.day + 0.5, total) }}
-        />
-      ))}
-      {today != null && (
-        <span
-          aria-hidden
-          className="absolute top-0 h-[18px] -translate-x-1/2 border-l border-dashed border-foreground"
-          style={{ left: pct(today + 0.5, total) }}
-        />
+          ))}
+        </span>
       )}
-      <span className="sr-only">{label}</span>
-    </div>
+      <span className="relative block" style={{ height: h }}>
+        <span
+          aria-hidden
+          className={`absolute inset-x-0 block overflow-hidden rounded-full bg-surface-2 ${tall ? "top-[3px] h-4" : "top-[3px] h-3"}`}
+        >
+          {segments.map((g) => {
+            const start = dayIndex(timeline.from, timeline.to, g.from);
+            const days = bandDays(g.from, g.to);
+            return (
+              <span
+                key={g.from}
+                className={`absolute inset-y-0 block min-w-[3px] ${BAND_CLASS[g.kind]}`}
+                style={{ left: pct(start, total), width: pct(days, total) }}
+              >
+                {/* 국내로 돌아간 선수: 팀 없음 구간 끝에 구단 글자 */}
+                {g === last && g.kind === "NO_TEAM" && returnedKo && days > (total * 40) / 264 && (
+                  <span className="absolute inset-y-0 right-1.5 flex items-center text-micro font-bold leading-none text-fa-bg">
+                    {returnedKo.split(" ")[0]}
+                  </span>
+                )}
+              </span>
+            );
+          })}
+        </span>
+        {markers.map((m) => (
+          <span
+            key={m.date}
+            aria-hidden
+            title={m.labels.join(" · ")}
+            className="absolute top-0 block w-[2px] -translate-x-1/2 rounded-full bg-foreground ring-1 ring-surface"
+            style={{ left: pct(m.day + 0.5, total), height: h }}
+          />
+        ))}
+        {today != null && (
+          <span
+            aria-hidden
+            className="absolute top-0 block -translate-x-1/2 border-l border-dashed border-foreground"
+            style={{ left: pct(today + 0.5, total), height: h }}
+          />
+        )}
+        <span className="sr-only">{label}</span>
+      </span>
+    </span>
   );
 }
 
+/** 창·오른쪽 칸 안 이동 목록: 그 시즌 이동 전부, 최신 먼저(MovePill은 선수 페이지 이동 기록과 같다) */
 function MoveList({ moves }: { moves: RosterMove[] }) {
-  // 최근 것부터 몇 줄만(전부는 선수 페이지 이동 기록)
-  const shown = [...moves].reverse().slice(0, MOVES_SHOWN);
-  if (shown.length === 0) return <p className="text-meta text-muted">이 시즌에는 이동 기록이 없어요.</p>;
+  if (moves.length === 0) return <p className="text-meta text-muted">이 시즌에는 이동 기록이 없어요.</p>;
   return (
     <ol className="space-y-2">
-      {shown.map((m, i) => (
+      {[...moves].reverse().map((m, i) => (
         <li key={`${m.date}-${m.typeCode}-${i}`} className="flex items-start gap-3">
           <time dateTime={m.date} className="w-[4.5rem] shrink-0 pt-0.5 text-meta tabular-nums text-muted">
             {koDate(m.date)}
@@ -118,10 +134,11 @@ function MoveList({ moves }: { moves: RosterMove[] }) {
 }
 
 /**
- * 연표의 선수 한 줄: 사진·이름·구단·별 / 띠 / 사실 한 줄. 줄을 누르면 이동 목록·시즌 숫자·선수 페이지 링크가 펼쳐진다(details).
- * 별은 summary 밖 오른쪽 위에 놓는다(눌러도 줄이 펼쳐지지 않고, 버튼 안에 버튼이 들어가지 않게).
+ * 연표 한 줄을 성적표 목록(SeasonReportRows)이 쓰는 줄 데이터로 만든다(사용자 11-19: 처음엔 요약만, 자세한 것은 휴대폰은 아래 창·PC는 오른쪽 칸).
+ * 줄(line): 사진·이름·구단 / 띠 / 사실 한 줄. 별은 줄 버튼 밖(star). head: 창·오른쪽 칸 머리(이름·구단·사실 줄).
+ * panel: 큰 띠(날짜 눈금) + 이동 목록 전부 + 시즌 숫자 한 줄 + 선수 페이지 링크.
  */
-export default function PlayerTimelineRow({
+export function buildTimelineRow({
   player,
   entry,
   timeline,
@@ -136,49 +153,60 @@ export default function PlayerTimelineRow({
   /** 국내 복귀 글('LG 트윈스 복귀')을 이 시즌 줄에 붙일지: 가장 최근 시즌일 때만 */
   returned: boolean;
   eagerPhoto: boolean;
-}) {
+}): ReportRow {
   const returnedKo = returned ? player.returnedKo : null;
   const moves = entry?.moves ?? [];
   const facts = buildFacts(moves, entry?.segments ?? [], !!returnedKo);
   const factLine = [...facts, returnedKo ? `${returnedKo} 복귀` : null].filter(Boolean).join(" · ");
   const label = `${player.nameKo} ${timeline.season} 시즌: ${entry && entry.segments.length > 0 ? bandSummary(entry.segments) : "기록 없음"}`;
+  const team = teamLabel(player);
 
-  return (
-    <li className="relative">
-      <details className="group">
-        <summary className="block cursor-pointer list-none py-3 outline-offset-2 focus-visible:outline-2 focus-visible:outline-accent [&::-webkit-details-marker]:hidden">
-          <div className="flex items-center gap-2 pr-9">
-            <PlayerAvatar nameKo={player.nameKo} photoUrl={player.photoUrl} teamAbbr={player.teamAbbr} size={28} eager={eagerPhoto} />
-            <span className="text-body font-bold">{player.nameKo}</span>
-            <span className="min-w-0 flex-1 truncate text-meta text-muted">{teamLabel(player)}</span>
-          </div>
-          <div className="mt-1.5">
-            <Band timeline={timeline} entry={entry} returnedKo={returnedKo} label={label} />
-          </div>
-          <p className="mt-1 flex items-start gap-1.5 text-caption text-muted">
-            <span className="min-w-0 flex-1 text-pretty">{factLine}</span>
-            <span className="mt-0.5 shrink-0 transition-transform group-open:rotate-90">
-              <Chevron />
-            </span>
-            <span className="sr-only">{`${player.nameKo} 이동 기록 펼치기`}</span>
-          </p>
-        </summary>
-        <div className="space-y-3 pb-4 pl-9">
-          <MoveList moves={moves} />
-          {entry?.stat && <p className="text-meta tabular-nums text-muted">{statLine(entry.stat, player.role)}</p>}
-          <Link href={`/players/${player.id}`} className="inline-flex items-center gap-1 text-label text-accent-ink">
-            선수 페이지
-            <Chevron small />
-          </Link>
-        </div>
-      </details>
-      <MyPlayerToggle
-        playerId={player.id}
-        nameKo={player.nameKo}
-        initialOn={isMine}
-        variant="icon"
-        className="absolute right-[-0.5rem] top-1.5"
-      />
-    </li>
-  );
+  return {
+    id: player.id,
+    photo: { nameKo: player.nameKo, photoUrl: player.photoUrl, teamAbbr: player.teamAbbr, eager: eagerPhoto },
+    line: (
+      <>
+        <span className="flex items-center gap-2 pr-9">
+          <PlayerAvatar nameKo={player.nameKo} photoUrl={player.photoUrl} teamAbbr={player.teamAbbr} size={28} eager={eagerPhoto} />
+          <span className="text-body font-bold">{player.nameKo}</span>
+          <span className="min-w-0 flex-1 truncate text-meta text-muted">{team}</span>
+        </span>
+        <span className="mt-1.5 block">
+          <Band timeline={timeline} entry={entry} returnedKo={returnedKo} label={label} />
+        </span>
+        <span className="mt-1 block text-caption text-pretty text-muted">{factLine}</span>
+      </>
+    ),
+    star: (
+      <MyPlayerToggle playerId={player.id} nameKo={player.nameKo} initialOn={isMine} variant="icon" />
+    ),
+    head: (
+      <>
+        <span className="block text-heading">{player.nameKo}</span>
+        {team && <span className="block text-meta text-muted">{team}</span>}
+        {factLine && <span className="mt-0.5 block text-caption text-pretty text-muted">{factLine}</span>}
+      </>
+    ),
+    spark: null,
+    second: null,
+    secondInPanel: false,
+    sheetKey: null,
+    panel: (
+      <div className="space-y-4 pb-2">
+        <Band timeline={timeline} entry={entry} returnedKo={returnedKo} label={label} tall />
+        <MoveList moves={moves} />
+        {entry?.stat && <p className="text-meta tabular-nums text-muted">{statLine(entry.stat, player.role)}</p>}
+        <Link
+          href={`/players/${player.id}`}
+          className="press inline-flex min-h-11 items-center gap-0.5 whitespace-nowrap text-label text-accent-ink hover:underline"
+        >
+          <span className="sr-only">{`${player.nameKo} `}</span>
+          선수 페이지
+          <svg aria-hidden viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="size-3.5">
+            <path d="m6 4 4 4-4 4" />
+          </svg>
+        </Link>
+      </div>
+    ),
+  };
 }

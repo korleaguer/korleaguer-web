@@ -36,6 +36,13 @@ export interface ReportRow {
   panel: ReactNode;
   /** 자세히 보이는 곳에 든 거론 구단 기사 창의 이름(LinkedTeams sheetKey). 없으면 null */
   sheetKey: string | null;
+  /**
+   * 줄 모양을 통째로 정할 때(선수 탭 연표, 이슈 #334): 있으면 위 사진·head·spark·둘째 줄 대신 이 내용이 줄 버튼 안을 채운다
+   * (버튼 안이라 span만). 눌러서 아래 창·오른쪽 칸이 열리는 일은 그대로다. 없으면 성적표 줄 모양
+   */
+  line?: ReactNode;
+  /** 줄 버튼 밖 오른쪽 위에 놓는 것(별). line이 있을 때만 쓴다. 눌러도 창이 열리지 않는다 */
+  star?: ReactNode;
 }
 
 /**
@@ -54,9 +61,9 @@ export interface ReportRow {
  * 같은 화면에서 별을 눌러 서버가 다시 그릴 때도 번호가 그대로라 자리를 지킨다. 다른 화면에서 별을 바꾸면 Next가 뒤로 가기용
  * 데이터를 버려서, 뒤로 가기로 와도 새 번호로 다시 그린다.
  */
-export default function SeasonReportRows({ rows }: { rows: ReportRow[] }) {
+export default function SeasonReportRows({ rows, listHeader }: { rows: ReportRow[]; listHeader?: ReactNode }) {
   const { bfcacheId } = useRouter();
-  return <RowList key={bfcacheId} rows={rows} />;
+  return <RowList key={bfcacheId} rows={rows} listHeader={listHeader} />;
 }
 
 /** 성적표 창을 열며 쌓은 주소 기록 표시(history.state의 키). 값은 'report:<선수 번호>'. LinkedTeams의 SHEET_STATE와 다르다 */
@@ -88,7 +95,7 @@ function reportInHistory(state: unknown): number | null {
  * memo: 위 SeasonReportRows는 useRouter()를 써서 뒤로 가기마다 다시 그려진다. 줄 데이터가 그대로면 목록은 다시 그리지 않아
  * '표시 다시 붙이기' 효과가 앱 refresh(새 데이터)일 때만 돌게 한다(거론 구단 LinkedTeams가 서버 부품 안이라 그렇게 도는 것과 같다)
  */
-const RowList = memo(function RowList({ rows }: { rows: ReportRow[] }) {
+const RowList = memo(function RowList({ rows, listHeader }: { rows: ReportRow[]; listHeader?: ReactNode }) {
   const [firstOrder] = useState(() => rows.map((r) => r.id));
   const at = (id: number) => {
     const i = firstOrder.indexOf(id);
@@ -213,22 +220,34 @@ const RowList = memo(function RowList({ rows }: { rows: ReportRow[] }) {
     } else setSheetId(null);
   };
 
+  // @container: 줄 폭이 16rem보다 좁으면(앱 큰 글씨) 막대를 글자 아래로 내린다(Row). rem 조건이라 글자 배율을 따라간다
+  const list = (
+    <ul ref={listRef} className="@container divide-y divide-line">
+      {shown.map((row) => (
+        <Row
+          key={row.id}
+          row={row}
+          wide={wide}
+          current={wide && row.id === selected.id}
+          asideId={asideId}
+          onPress={() => (wide ? setPicked(row.id) : openSheet(row.id))}
+        />
+      ))}
+    </ul>
+  );
+
   return (
     // lg 이상: 왼쪽 줄 목록 | 오른쪽 고른 선수 칸
     <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:items-start lg:gap-x-6">
-      {/* @container: 줄 폭이 16rem보다 좁으면(앱 큰 글씨) 막대를 글자 아래로 내린다(Row). rem 조건이라 글자 배율을 따라간다 */}
-      <ul ref={listRef} className="@container divide-y divide-line">
-        {shown.map((row) => (
-          <Row
-            key={row.id}
-            row={row}
-            wide={wide}
-            current={wide && row.id === selected.id}
-            asideId={asideId}
-            onPress={() => (wide ? setPicked(row.id) : openSheet(row.id))}
-          />
-        ))}
-      </ul>
+      {/* listHeader(선수 탭 달 눈금)는 왼쪽 줄 목록 칸 위에만 둔다. 없으면 목록이 그대로 격자 칸이다 */}
+      {listHeader ? (
+        <div className="min-w-0">
+          {listHeader}
+          {list}
+        </div>
+      ) : (
+        list
+      )}
       {/* 오른쪽 칸(PC): 머리(사진·이름·판정·숫자) + 자세히. 줄을 누르면 이 칸만 바뀌어 아래가 밀리지 않는다.
           휴대폰이면 자세히(panel)를 그리지 않는다: panel 안 거론 구단(LinkedTeams)이 창과 이 칸에 둘이면 popstate마다 창이 둘 뜬다 */}
       {wide && (
@@ -274,6 +293,29 @@ function Row({
 }) {
   // PC에서 고른 줄은 오른쪽 칸이 같은 말을 하면 둘째 줄을 숨긴다(같은 화면에 같이 보인다)
   const second = row.second != null && !(current && row.secondInPanel) ? row.second : null;
+  if (row.line) {
+    // 줄 모양을 통째로 정한 줄(선수 탭 연표): 버튼 안은 line, 별은 버튼 밖 오른쪽 위(눌러도 창이 열리지 않는다)
+    return (
+      <li className={current ? "-mx-2 rounded-xl bg-surface-2 px-2" : undefined}>
+        <div className="relative">
+          <h3>
+            <button
+              type="button"
+              data-report-row={row.id}
+              {...(wide
+                ? { "aria-controls": asideId, "aria-current": current ? ("true" as const) : undefined }
+                : { "aria-haspopup": "dialog" as const })}
+              onClick={onPress}
+              className="press-soft -mx-2 block w-[calc(100%+1rem)] cursor-pointer rounded-xl px-2 py-3 text-left hover:bg-surface-2"
+            >
+              <span className="block">{row.line}</span>
+            </button>
+          </h3>
+          {row.star && <span className="absolute right-[-0.5rem] top-1.5">{row.star}</span>}
+        </div>
+      </li>
+    );
+  }
   return (
     <li className={current ? "-mx-2 rounded-xl bg-surface-2 px-2" : undefined}>
       <h3>

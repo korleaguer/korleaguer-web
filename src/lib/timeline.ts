@@ -90,3 +90,22 @@ export function buildFacts(moves: RosterMove[], segments: TimelineSegment[], pla
   if (fa) out.push(plainFa ? "FA" : `${koDate(fa.date)} FA`);
   return out;
 }
+
+/** 달 눈금: 띠가 덮는 달마다 그 달 1일의 자리(첫 달은 띠 시작) */
+export function monthTicks(from: string, to: string) {
+  const ticks: { month: number; day: number }[] = [];
+  let y = Number(from.slice(0, 4));
+  let m = Number(from.slice(5, 7));
+  const endKey = to.slice(0, 7);
+  while (`${y}-${String(m).padStart(2, "0")}` <= endKey) {
+    const first = `${y}-${String(m).padStart(2, "0")}-01`;
+    ticks.push({ month: m, day: dayIndex(from, to, first < from ? from : first) });
+    m += 1;
+    if (m > 12) {
+      m = 1;
+      y += 1;
+    }
+  }
+  return ticks;
+}
+
