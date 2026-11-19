@@ -4,10 +4,12 @@ import { useRef, useState, type CSSProperties, type KeyboardEvent, type PointerE
 import type { GameLine, Role } from "@/lib/api";
 import { haptic } from "@/lib/app";
 import { formatDate, formatLineup, formatShortDate, formatSummary, formatWeekday } from "@/lib/format";
+import { isPostseason } from "@/lib/gameLog";
 import { radioKeyIndex } from "@/lib/radioKeys";
 import ResultPill from "@/components/ResultPill";
 import Highlights from "@/components/Highlights";
 import ScoreText from "@/components/ScoreText";
+import { PostseasonLine } from "@/components/player/GameRow";
 import StepButton from "@/components/StepButton";
 import type { BarSlot } from "./columns";
 import Words from "@/components/Words";
@@ -31,10 +33,10 @@ function barValue(game: GameLine, role: Role): number | null {
   return role === "PITCHER" ? (game.pitching?.outs ?? null) : (game.batting?.hits ?? null);
 }
 
-/** 화면 낭독기용 막대 설명: "9월 27일(일) 콜로라도전 2안타 1홈런" */
+/** 화면 낭독기용 막대 설명: "9월 27일(일) 콜로라도전 2안타 1홈런". 포스트시즌이면 날짜 뒤에 "포스트시즌"(경기 달력 칸 낭독 이름과 같은 자리) */
 function barLabel(game: GameLine, role: Role): string {
   const lineup = formatLineup(game);
-  const head = `${formatDate(game.startTimeKst)} ${game.opponentKo}전${lineup ? ` ${lineup}` : ""}`;
+  const head = `${formatDate(game.startTimeKst)}${isPostseason(game) ? " 포스트시즌" : ""} ${game.opponentKo}전${lineup ? ` ${lineup}` : ""}`;
   if (!game.played) return `${head} ${game.summary}`;
   if (role === "PITCHER") {
     const innings = game.pitching?.inningsText;
@@ -398,9 +400,12 @@ export default function GameBars({ slots, role, days, minors = false, name }: Pr
           <>
             {/* 보이는 머리 줄. 화면 낭독기는 아래 바뀌는 글(aria-live) 안의 같은 줄을 읽어서 여기서는 감춘다.
                 버튼보다 앞에 둬서 칸 폭을 다 쓴다(점수·결과가 한 줄에 남고 결과 알약이 칸 오른쪽 끝에 붙는다) */}
-            <p aria-hidden className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-meta text-muted">
-              <GameHead line={current} />
-            </p>
+            <div aria-hidden>
+              <PostseasonLine game={current} />
+              <p className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-meta text-muted">
+                <GameHead line={current} />
+              </p>
+            </div>
             {/* 이전·다음 경기 버튼(44px). 막대 한 칸이 14일 약 18px·30일 약 8px라 손가락이 2~5칸을 덮어서, 한 경기씩 정확히 옮기는 길을 둔다.
                 바뀌는 글(aria-live) 밖에 두고, 기록 한 줄 오른쪽에 띄운다(float). 머리 줄 오른쪽에 띄우면 flex인 머리 줄 전체가 버튼 폭(약 80px)만큼
                 좁아져, 운영 30일 97경기 중 375px에서 63경기·PC 세 칸에서 74경기의 머리 줄이 두 줄로 내려가고 결과 알약이 칸 끝에서 떨어졌다(11-18 검토).
@@ -430,9 +435,12 @@ export default function GameBars({ slots, role, days, minors = false, name }: Pr
         <div aria-live="polite">
           {current ? (
             <>
-              <p className="sr-only flex">
-                <GameHead line={current} />
-              </p>
+              <div className="sr-only">
+                <PostseasonLine game={current} />
+                <p className="flex">
+                  <GameHead line={current} />
+                </p>
+              </div>
               <p
                 className={`mt-0.5 text-summary text-pretty ${current.played ? "" : "font-medium text-muted"}`}
               >
