@@ -398,7 +398,10 @@ function PlayerHead({ player: p }: { player: PostingPlayer }) {
             </div>
             <p className="text-right text-label tabular-nums @max-[15.5rem]:text-left">
               {deadlineKst(p.deadlineAt)}
-              <span className="block text-caption text-muted">한국 시간 · 미국 동부 {deadlineUs(p.deadlineAt)}</span>
+              <span className="block text-caption text-muted">
+                <span aria-hidden>미국 {deadlineUs(p.deadlineAt)}</span>
+                <span className="sr-only">미국 동부 {deadlineUs(p.deadlineAt)}</span>
+              </span>
             </p>
           </div>
         </div>
@@ -429,7 +432,7 @@ function RankLine({ rank, total }: { rank: number; total: number }) {
       <span className="rounded-full bg-success-bg px-2.5 py-0.5 text-badge text-success-fg tabular-nums">
         역대 {rank}위
       </span>
-      <span className="text-caption text-muted tabular-nums">포스팅 계약 {total}건 중 · 보장액 기준</span>
+      <span className="text-caption text-muted tabular-nums">포스팅 계약 {total}건 중</span>
     </p>
   );
 }
@@ -606,7 +609,7 @@ function SigningList({
       {signings.some((s) => s.krw) ? <MoneyUnitScope className={flush ? "pt-3" : ""}>{list}</MoneyUnitScope> : list}
       {foot && (
         <p className="mt-1.5 pb-1 text-micro text-muted">
-          보장액 기준(옵션 제외), 원화는 계약 당시 환율로 어림. 출처: MLB Trade Rumors 등
+          옵션 제외 · 원화는 계약 당시 환율 · 출처 MLB Trade Rumors 등
         </p>
       )}
     </div>
