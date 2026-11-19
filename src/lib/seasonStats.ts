@@ -54,6 +54,21 @@ export function smallSampleNote(season: LevelSeason<HitterSeason | PitcherSeason
 }
 
 /**
+ * 모든 묶음이 표본이 적을 때(개막 2주쯤 트리플A 9경기·메이저 4경기) 큰 숫자 블록으로 그릴 하나: 가장 많이 뛴 묶음
+ * (타자는 타석, 투수는 아웃 수가 많은 쪽, 같으면 앞 묶음). 모두 작은 한 줄이면 큰 숫자가 하나도 없어 무엇을 봐야 할지 흐려서다
+ * (사용자 11-19 '추천대로', 이슈 #313). 하나라도 충분한 묶음이 있으면 null이라 지금처럼 충분한 묶음만 큰 숫자다.
+ * 이름표의 '…타석이라 참고용'(smallSampleNote)은 그대로 둔다
+ */
+export function featuredSmallSeason<T extends HitterSeason | PitcherSeason>(
+  seasons: LevelSeason<T>[],
+  pitcher: boolean,
+): LevelSeason<T> | null {
+  if (seasons.length === 0 || seasons.some((s) => smallSampleNote(s, pitcher) == null)) return null;
+  const amount = (s: LevelSeason<T>) => (pitcher ? (s.line as PitcherSeason).outs : (s.line as HitterSeason).plateAppearances);
+  return seasons.reduce((best, s) => (amount(s) > amount(best) ? s : best));
+}
+
+/**
  * 선수 한 명의 시즌 핵심 기록 세 칸(선수 목록 카드, 공유 미리보기 그림).
  * 타자끼리, 투수끼리 같은 칸이 같은 자리에 와서 나란히 비교할 수 있다. 기록이 없으면 null
  */

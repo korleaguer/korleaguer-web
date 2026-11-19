@@ -1,7 +1,7 @@
 import { Fragment, type ReactNode } from "react";
 import type { HitterSeason, PitcherSeason } from "@/lib/api";
 import { formatEra, formatRate } from "@/lib/format";
-import { levelSeasons, sampleLabel, smallSampleNote } from "@/lib/seasonStats";
+import { featuredSmallSeason, levelSeasons, sampleLabel, smallSampleNote } from "@/lib/seasonStats";
 import RollingNumber from "@/components/RollingNumber";
 import Section from "@/components/Section";
 import { cacheLife } from "next/cache";
@@ -27,7 +27,8 @@ type RestStat = [label: string, value: number, numberFirst?: boolean];
  * 세부 기록은 팬이 먼저 찾는 넷(안타·홈런·타점·도루)을 크게, 나머지는 아래 한 줄로 모은다(사용자가 고른 시안 B, 이슈 #232).
  * 묶음마다 '메이저 4경기'처럼 단계·경기 수를 먼저 적는다. 메이저만 보이면 트리플A 85경기를 뛴 김혜성이 43경기로 읽히고,
  * 메이저 4경기 9.00이 시즌 전체처럼 보였다(이슈 #184). 표본이 적은 묶음(타자 100타석·투수 30이닝 미만)은 큰 숫자 대신
- * 작은 한 줄 카드와 '참고용'이다(StatLine, 11-17 사용자 결정).
+ * 작은 한 줄 카드와 '참고용'이다(StatLine, 11-17 사용자 결정). 단 모든 묶음이 작으면 가장 많이 뛴 묶음만 큰 숫자 블록이다
+ * (featuredSmallSeason, 11-19 사용자 결정, 이슈 #313). 그 묶음도 이름표에 '참고용'을 단다.
  */
 export default async function SeasonSummary({
   season,
@@ -44,6 +45,9 @@ export default async function SeasonSummary({
   cacheLife({ stale: 30, revalidate: 30, expire: 300 });
   const hitterSeasons = levelSeasons(hitting, minorHitting);
   const pitcherSeasons = levelSeasons(pitching, minorPitching);
+  // 모든 묶음이 표본이 적을 때만, 가장 많이 뛴 묶음이 큰 숫자 블록을 받는다(나머지는 작은 한 줄)
+  const featuredHitter = featuredSmallSeason(hitterSeasons, false);
+  const featuredPitcher = featuredSmallSeason(pitcherSeasons, true);
   return (
     <Section id="season-title" title={`${season} 시즌 성적`} aside={asOf}>
       {/* 묶음 사이 28px: 20px이면 앞 묶음 세부 카드와 다음 묶음 이름표가 붙어 이름표가 어느 숫자의 것인지 흐렸다(11-17 전수조사) */}
@@ -66,7 +70,7 @@ export default async function SeasonSummary({
           const note = smallSampleNote(s, false);
           return (
             <LevelBlock key={s.levelKo} label={sampleLabel(s, false)} note={note}>
-              {note ? (
+              {note && s !== featuredHitter ? (
                 // 작은 한 줄: 도루는 0이면 뺀다(모두가 쌓는 기록이 아니라 몇 경기 묶음에서는 대개 0이다)
                 <StatLine stats={[...big, ...main.filter(([label, value]) => label !== "도루" || value !== 0)]} />
               ) : (
@@ -95,7 +99,7 @@ export default async function SeasonSummary({
           const note = smallSampleNote(s, true);
           return (
             <LevelBlock key={s.levelKo} label={sampleLabel(s, true)} note={note}>
-              {note ? (
+              {note && s !== featuredPitcher ? (
                 // 작은 한 줄: 등판은 이름표('메이저 4번 등판')에 있어 빼고, 세이브는 0이면 뺀다(결정 그림 ④의 한 줄과 같다)
                 <StatLine
                   stats={[

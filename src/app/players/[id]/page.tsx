@@ -126,7 +126,7 @@ async function PlayerContent({ params }: Pick<Props, "params">) {
           {saber && <LeaguePosition saber={saber} />}
           {trend && (
             <Section id="trend-title" title="타격 흐름" aside="누적 wRC+">
-              <WrcTrend points={trend} />
+              <WrcTrend points={trend} moves={moves ?? []} />
             </Section>
           )}
           {/* 기사는 휴대폰에선 경기 기록 위, PC에선 오른쪽 칸(사용자 11-12: PC 오른쪽 칸은 관련 기사) */}

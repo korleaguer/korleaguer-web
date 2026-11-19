@@ -1,7 +1,8 @@
 "use client"; // 손가락(마우스)으로 훑는 자리를 기억하고 그날 값을 바꿔 보여 줘야 해서 클라이언트 컴포넌트다.
 
 import { useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent } from "react";
-import type { TrendPoint } from "@/lib/wrcTrend";
+import type { RosterMove } from "@/lib/api";
+import { trendGaps, type TrendGap, type TrendPoint } from "@/lib/wrcTrend";
 import { formatShortDate } from "@/lib/format";
 import { haptic } from "@/lib/app";
 
@@ -23,6 +24,14 @@ const GRID = [80, 120];
  */
 const MIN_GRID_GAP_PX = 16;
 
+/** 점의 달(1~12). 한국 날짜 기준 */
+function monthOf(p: TrendPoint): number {
+  return Number(formatShortDate(p.startTimeKst).split(".")[0]);
+}
+
+/** 끊긴 곳 이유 글자를 선 아래에 두려면 선 끝 점 아래에 이만큼(그래프 단위 = 휴대폰 px)은 남아야 한다. 아니면 선 위에 둔다 */
+const GAP_LABEL_ROOM = 28;
+
 /** 그래프 아래 달 눈금 하나: 그 달 첫 경기 자리(%)와 달 */
 interface MonthTick {
   pct: number;
@@ -38,7 +47,7 @@ function monthTicks(points: TrendPoint[]): MonthTick[] {
   const last = points.length - 1;
   const all: MonthTick[] = [];
   points.forEach((p, i) => {
-    const month = Number(formatShortDate(p.startTimeKst).split(".")[0]);
+    const month = monthOf(p);
     if (all.length === 0 || all[all.length - 1].month !== month) all.push({ pct: (i / last) * 100, month });
   });
   if (all.length > 1 && all[1].pct - all[0].pct < MIN_TICK_GAP) all.shift();
@@ -61,8 +70,11 @@ function words(v: number): string {
  * 타격 흐름 그래프: 시즌 처음부터 그날까지 누적 wRC+ 선 하나와 리그 평균(100) 점선.
  * 토스증권 차트처럼 손가락으로 훑으면 그날까지의 값이 위에 보이고, 날이 바뀔 때마다 고르기 틱(앱 안).
  * 손가락은 떼면 그 자리에 머물고, 마우스는 그래프를 떠나면 시즌 전체 값으로 돌아간다. 키보드는 ←→로 하루씩, Home/End로 처음·마지막.
+ * 가로축은 경기 순서라 한 달 넘게 쉰 곳(정규시즌 안 30일 초과)도 점 하나 간격이다. 그대로 이으면 쉬는 동안 뛴 것처럼 보여서
+ * 그 구간은 선을 끊고 끊긴 곳 아래에 이유('부상'·'마이너', 이동 기록으로 알 때만)를 적는다(사용자 11-19 '추천대로', 이슈 #313).
+ * 훑기는 끊긴 곳도 한 칸으로 지나가고, 끊긴 뒤 첫 경기에서는 값 위 말과 낭독에 그 사실을 덧붙인다.
  */
-export default function WrcTrend({ points }: { points: TrendPoint[] }) {
+export default function WrcTrend({ points, moves }: { points: TrendPoint[]; moves: RosterMove[] }) {
   const last = points.length - 1;
   const [picked, setPicked] = useState(last);
   // 점 수가 줄어든 새 points가 와도 범위를 넘지 않게
@@ -74,13 +86,19 @@ export default function WrcTrend({ points }: { points: TrendPoint[] }) {
   const hi = Math.max(...values, 100) + 10;
   const x = (i: number) => (i / last) * W;
   const y = (v: number) => H - ((v - lo) / (hi - lo)) * H;
-  const path = points.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(p.value).toFixed(1)}`).join(" ");
+  const gaps = trendGaps(points, moves);
+  const gapAt = new Map<number, TrendGap>(gaps.map((g) => [g.index, g]));
+  // 끊긴 곳 뒤 점은 이어 긋지 않고(M) 새로 시작한다
+  const path = points
+    .map((p, i) => `${i && !gapAt.has(i) ? "L" : "M"}${x(i).toFixed(1)},${y(p.value).toFixed(1)}`)
+    .join(" ");
 
   const pick = (i: number) => {
     const next = Math.max(0, Math.min(last, i));
     if (next !== active) {
       setPicked(next);
-      haptic("select");
+      // 달이 바뀌는 곳을 지날 때만 틱(날마다 울리면 경기 수만큼 잦다)
+      if (monthOf(points[next]) !== monthOf(points[active])) haptic("select");
     }
   };
   const fromPointer = (e: PointerEvent<HTMLDivElement>) => {
@@ -101,6 +119,9 @@ export default function WrcTrend({ points }: { points: TrendPoint[] }) {
   const value = Math.round(p.value);
   const date = formatShortDate(p.startTimeKst);
   const ticks = monthTicks(points);
+  // 지금 점이 끊긴 뒤 첫 점이면 그 사실: '부상 뒤 첫 경기', 이유를 모르면 '38일 만의 경기'
+  const gap = gapAt.get(active);
+  const afterGap = gap ? (gap.reason ? `${gap.reason} 뒤 첫 경기` : `${gap.days}일 만의 경기`) : null;
   // 그래프 위아래 끝에 붙는 눈금은 숫자가 그래프 밖으로 반쯤 나가 빼고(5%), 100과 너무 가까우면 숫자가 겹쳐 뺀다
   const grid = GRID.filter(
     (v) => v > lo + (hi - lo) * 0.05 && v < hi - (hi - lo) * 0.05 && (Math.abs(v - 100) / (hi - lo)) * H >= MIN_GRID_GAP_PX,
@@ -114,7 +135,9 @@ export default function WrcTrend({ points }: { points: TrendPoint[] }) {
       {/* 큰 글씨에서 말('리그 평균보다 크게 높아요')이 8rem도 못 받으면 wRC+ 숫자를 다음 줄 오른쪽으로 내린다(이슈 #264) */}
       <div className="mb-2 flex flex-wrap items-end justify-between gap-x-3">
         <div className="min-w-0 flex-1 basis-[8rem]">
-          <p className="text-caption text-muted tabular-nums">{active === last ? "시즌 전체" : `${date}까지`}</p>
+          <p className="text-caption text-muted tabular-nums">{active === last ? "시즌 전체" : `${date}까지`}
+            {afterGap && ` · ${afterGap}`}
+          </p>
           <p className={`text-label ${value >= 105 ? "text-accent-ink" : "text-muted"}`}>{words(value)}</p>
         </div>
         <p className="ml-auto shrink-0 text-stat tabular-nums">
@@ -131,7 +154,7 @@ export default function WrcTrend({ points }: { points: TrendPoint[] }) {
         aria-valuemax={last}
         aria-valuenow={active}
         // 마지막 점만 MLB 공식 값이고 중간은 어림값이다(아래 설명 줄과 같은 뜻)
-        aria-valuetext={`${date}까지 wRC+ ${value}${active === last ? "" : "(어림)"}`}
+        aria-valuetext={`${date}까지 wRC+ ${value}${active === last ? "" : "(어림)"}${afterGap ? `, ${afterGap}` : ""}`}
         onPointerDown={(e) => {
           e.currentTarget.setPointerCapture(e.pointerId);
           fromPointer(e);
@@ -210,6 +233,29 @@ export default function WrcTrend({ points }: { points: TrendPoint[] }) {
               {v}
             </span>
           ))}
+          {/* 끊긴 곳 이유: 끊긴 자리(두 점 사이) 가운데, 두 끝 점 중 낮은 쪽 바로 아래. 아래가 좁으면(선이 바닥 가까이,
+              김하성은 12px 남짓) 선에 겹치지 않게 높은 쪽 바로 위에 둔다. 모르면 글자 없이 끊기만 한다.
+              글자 폭(em)만큼 양 끝에서 조여 그래프 밖으로 나가지 않게 한다(달 눈금과 같은 방식) */}
+          {gaps.map((g) => {
+            if (!g.reason) return null;
+            const ys = [y(points[g.index - 1].value), y(points[g.index].value)];
+            const below = H - Math.max(...ys) >= GAP_LABEL_ROOM;
+            const half = g.reason.length / 2;
+            return (
+              <span
+                key={g.index}
+                className="absolute -translate-x-1/2 whitespace-nowrap text-micro text-muted"
+                style={{
+                  left: `clamp(${half}em, ${((g.index - 0.5) / last) * 100}%, calc(100% - ${half}em))`,
+                  ...(below
+                    ? { top: `calc(${(Math.max(...ys) / H) * 100}% + 3px)` }
+                    : { bottom: `calc(${(1 - Math.min(...ys) / H) * 100}% + 3px)` }),
+                }}
+              >
+                {g.reason}
+              </span>
+            );
+          })}
           <span
             className="absolute size-[13px] -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-surface bg-accent"
             style={{ left: `${(x(active) / W) * 100}%`, top: `${(y(p.value) / H) * 100}%` }}
