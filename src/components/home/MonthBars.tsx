@@ -93,8 +93,8 @@ export default function MonthBars({ months, pitcher }: { months: SeasonMonth[]; 
   const anyHot = playedMonths.some((m) => m.hot);
   const anyCapped = months.some((m) => capped(m, pitcher));
   // 안내 줄. 기록 있는 달이 하나도 없으면(시즌 내내 부상·FA) 둘째 줄이 모두 빈칸이라 '아래 작은 숫자' 안내를 붙이지 않는다
-  const notes: ReactNode[] = [`점선 = ${average}(100)`];
-  if (anyHot) notes.push(<span className="text-hot-ink">주황 = 아주 잘한 달</span>);
+  // 점선 뜻은 점선 오른쪽 끝 '평균' 이름표가, 주황은 주황 숫자·막대가 스스로 말한다(이슈 #329). 낭독 이름의 '100이 ${average}'는 그대로
+  const notes: ReactNode[] = [];
   if (pitcher && playedMonths.length > 0) notes.push("아래 작은 숫자는 평균자책점");
   if (anyFew) notes.push(pitcher ? "옅으면 등판 적은 달" : "옅으면 경기 적은 달");
   if (anyCapped) notes.push("꺾인 막대는 200\u00a0넘음");
@@ -110,27 +110,29 @@ export default function MonthBars({ months, pitcher }: { months: SeasonMonth[]; 
       {/* month-bars: 여섯 칸 글자는 칸 폭만큼만 키운다(globals.css, 이슈 #264) */}
       <ol className="month-bars grid grid-cols-6 items-end" aria-label={`달마다 ${stat}, 100이 ${average}`}>
         {months.map((m) => (
-          <MonthColumn key={m.month} m={m} pitcher={pitcher} />
+          <MonthColumn key={m.month} m={m} pitcher={pitcher} last={m === months[months.length - 1]} />
         ))}
       </ol>
       {/* 안내 하나는 한 덩어리로 줄을 바꾼다(inline-block, 한 줄보다 길 때만 안에서 바꾼다): '꺾인 / 막대는'처럼 말 중간에서
           갈리지 않게. '·'는 앞 안내에 붙여 줄 머리에 오지 않게 한다 */}
-      <p className="mt-1 text-caption text-muted">
-        {notes.map((note, i) => (
-          <Fragment key={i}>
-            <span className="inline-block">
-              {note}
-              {i < notes.length - 1 && "\u00a0·"}
-            </span>
-            {i < notes.length - 1 && " "}
-          </Fragment>
-        ))}
-      </p>
+      {notes.length > 0 && (
+        <p className="mt-1 text-caption text-muted">
+          {notes.map((note, i) => (
+            <Fragment key={i}>
+              <span className="inline-block">
+                {note}
+                {i < notes.length - 1 && "\u00a0·"}
+              </span>
+              {i < notes.length - 1 && " "}
+            </Fragment>
+          ))}
+        </p>
+      )}
     </div>
   );
 }
 
-function MonthColumn({ m, pitcher }: { m: SeasonMonth; pitcher: boolean }) {
+function MonthColumn({ m, pitcher, last }: { m: SeasonMonth; pitcher: boolean; last: boolean }) {
   const has = played(m, pitcher);
   const v = plus(m, pitcher) ?? 0;
   const value = has ? plusText(v) : REST[m.kind];
@@ -159,6 +161,8 @@ function MonthColumn({ m, pitcher }: { m: SeasonMonth; pitcher: boolean }) {
       {/* 칸 사이 틈이 없어 칸마다 그은 점선이 한 줄로 이어진다. 2px 선의 가운데가 100 높이(칸 가운데)에 온다 */}
       <span aria-hidden className="relative flex h-11 w-full items-end px-[9px]">
         <span className="absolute inset-x-0 bottom-[calc(50%-1px)] border-t-2 border-dashed" style={{ borderColor: AVERAGE_LINE }} />
+        {/* 점선 이름표 '평균': 점선 오른쪽 끝 바로 위(범례 글 '점선 = 리그 평균(100)' 대신, 이슈 #329). 타격 흐름 그래프와 같은 말 */}
+        {last && <span className="absolute bottom-[calc(50%+1px)] right-0 z-10 rounded-sm bg-surface/80 px-0.5 text-micro text-muted">평균</span>}
         <span
           // 경기 적은 달은 옅은 색(barFill). overflow-hidden: 꺾임 표시를 막대 모양(둥근 위 끝) 안으로 자른다
           className={`relative w-full overflow-hidden ${has ? "rounded-t-[5px] rounded-b-[2px]" : "rounded-full"}`}

@@ -78,31 +78,11 @@ export default function SeasonReportList({
   const rows = entries.map((entry, i) =>
     buildRow(entry, byId.get(entry.player.id) ?? null, myIds.includes(entry.player.id), i < eagerPhotos),
   );
-  const bars = barsGuide(entries, byId);
   return (
     <div className="card px-4 pb-1">
-      {/* 한 줄에 못 들어가면(360px 휴대폰 등) 고른 그림처럼 두 덩어리 사이에서만 줄을 바꾼다. '·'는 앞 덩어리에 붙여
-          줄 머리에 오지 않게(375px는 한 줄에 들어간다) */}
-      <p className="pb-0.5 pt-2.5 text-caption text-muted">
-        {bars && `${bars}\u00a0· `}
-        <span className="whitespace-nowrap">줄을 누르면 자세히 보여요</span>
-      </p>
       <SeasonReportRows rows={rows} />
     </div>
   );
-}
-
-/**
- * 목록 맨 위 흐린 안내의 앞 덩어리: '막대 = 4~9월 달마다 wRC+(투수는 ERA+)'(뒤에 '줄을 누르면 자세히 보여요').
- * 막대 이름은 목록에 있는 선수만큼만(타자만 있으면 wRC+, 투수만 있으면 ERA+). 달별 기록이 없으면(옛 api) null(누르기 안내만)
- */
-function barsGuide(entries: MyPlayer[], byId: Map<number, SeasonReport>): string | null {
-  const withMonths = entries.filter((e) => (byId.get(e.player.id)?.months?.length ?? 0) > 0);
-  if (withMonths.length === 0) return null;
-  const months = withMonths.flatMap((e) => byId.get(e.player.id)?.months?.map((m) => m.month) ?? []);
-  const pitchers = withMonths.filter((e) => e.player.role === "PITCHER").length;
-  const stat = pitchers === 0 ? "wRC+" : pitchers === withMonths.length ? "ERA+" : "wRC+(투수는 ERA+)";
-  return `막대 = ${Math.min(...months)}~${Math.max(...months)}월 달마다 ${stat}`;
 }
 
 function buildRow(entry: MyPlayer, report: SeasonReport | null, isMine: boolean, eagerPhoto: boolean): ReportRow {

@@ -1,5 +1,6 @@
 "use client"; // 고른 줄을 기억하고(휴대폰은 아래 창, PC는 오른쪽 칸), 별을 눌러 순서가 바뀌어도 줄을 그 자리에 두려고 처음 순서를 붙잡아 두는 클라이언트 컴포넌트다.
 
+import Chevron from "@/components/Chevron";
 import { useRouter } from "next/navigation";
 import { memo, useEffect, useId, useRef, useState, useSyncExternalStore, type ReactNode, type TouchEvent as ReactTouchEvent } from "react";
 import { createPortal } from "react-dom";
@@ -289,16 +290,23 @@ function Row({
             ? { "aria-controls": asideId, "aria-current": current ? ("true" as const) : undefined }
             : { "aria-haspopup": "dialog" as const })}
           onClick={onPress}
-          className={`press-soft -mx-2 grid w-[calc(100%+1rem)] cursor-pointer grid-cols-[44px_minmax(0,1fr)_84px] items-center gap-x-3 rounded-xl px-2 pt-3 text-left hover:bg-surface-2 @max-[16rem]:grid-cols-[44px_minmax(0,1fr)] @max-[16rem]:items-start ${second ? "pb-1" : "pb-3 lg:pb-1"}`}
+          className={`press-soft -mx-2 grid w-[calc(100%+1rem)] cursor-pointer grid-cols-[44px_minmax(0,1fr)_84px_0.75rem] items-center gap-x-3 rounded-xl px-2 pt-3 text-left hover:bg-surface-2 @max-[16rem]:grid-cols-[44px_minmax(0,1fr)] @max-[16rem]:items-start ${second ? "pb-1" : "pb-3 lg:pb-1"}`}
         >
           {/* 서버 요소 칸(head·spark)은 감싸개 안에 혼자 둔다(ReportRow 칸 규칙: 다른 자식과 나란히 두면 key 경고) */}
           <PlayerAvatar size={44} nameKo={row.photo.nameKo} photoUrl={row.photo.photoUrl} teamAbbr={row.photo.teamAbbr} eager={row.photo.eager} />
           <span className="min-w-0">{row.head}</span>
-          {row.spark && (
+          {row.spark ? (
             <span className="justify-self-end @max-[16rem]:col-start-2 @max-[16rem]:mt-1.5 @max-[16rem]:justify-self-start">
               {row.spark}
             </span>
+          ) : (
+            <span className="@max-[16rem]:hidden" />
           )}
+          {/* 누르면 자세히(아래 창·PC는 오른쪽 칸)가 열린다는 표시. 예전 목록 맨 위 글 '줄을 누르면 자세히 보여요' 대신(이슈 #329).
+              줄 폭이 16rem보다 좁으면(큰 글씨) 막대를 글자 아래로 내리는 모양이라 표시는 뺀다 */}
+          <span className="@max-[16rem]:hidden">
+            <Chevron />
+          </span>
         </button>
       </h3>
       {second ? (
