@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
-import { getHome, getPlayers } from "@/lib/api";
+import { getHome, getPlayers, getTimeline, type PlayerSummary } from "@/lib/api";
 import { formatAsOf } from "@/lib/format";
 import { readMyPlayers } from "@/lib/myPlayers";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import DataBanners, { StatsFailedBanner } from "@/components/DataBanners";
 import { PlayersSkeleton } from "@/components/PageSkeleton";
 import PlayerCard from "@/components/players/PlayerCard";
+import PlayerTimeline from "@/components/players/PlayerTimeline";
 import StateNotice from "@/components/StateNotice";
 import PageSuspense from "@/components/PageSuspense";
 import { WordGroup } from "@/components/Words";
@@ -13,7 +14,7 @@ import { shareMeta, SITE_NAME } from "@/lib/share";
 
 // <title>: "선수 · KOR Leaguer" (뒷부분은 layout의 template이 붙인다)
 const TITLE = "선수";
-const DESCRIPTION = "해외파 한국 선수 모아보기. 선수별 시즌 기록을 한눈에 봐요.";
+const DESCRIPTION = "해외파 한국 선수들이 올해 어디서 뛰었는지 한눈에.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -30,22 +31,37 @@ export const metadata: Metadata = {
 const EAGER_CARDS = 6;
 
 // 선수 목록. 데이터는 요청마다 api에서 새로 받는다.
-export default function PlayersPage() {
+export default function PlayersPage({ searchParams }: PageProps<"/players">) {
   return (
     <div className="space-y-4">
       <h1 className="px-1 text-display">선수</h1>
       <PageSuspense fallback={<PlayersSkeleton />}>
-        <PlayersContent />
+        <PlayersContent searchParams={searchParams} />
       </PageSuspense>
     </div>
   );
 }
 
-async function PlayersContent() {
-  // 목록은 /api/players, 시즌 성적은 /api/home에서 받아 playerId로 합친다.
-  const [playersResult, homeResult, myIds] = await Promise.all([getPlayers(), getHome(), readMyPlayers()]);
+/** ?season=2025 → 2025. 모르는 값이면 0(서버가 지금 시즌을 고른다) */
+function parseSeason(value: string | string[] | undefined): number {
+  const n = typeof value === "string" && /^\d{4}$/.test(value) ? Number(value) : 0;
+  return n >= 2000 ? n : 0;
+}
+
+async function PlayersContent({ searchParams }: Pick<PageProps<"/players">, "searchParams">) {
+  const season = parseSeason((await searchParams).season);
+  // 연표(/api/players/timeline)는 선수 목록과 같이 받는다. 옛 api라 연표가 없으면(404·실패) 아래 선수 카드 목록으로 대신 그린다.
+  const [playersResult, timelineResult, myIds] = await Promise.all([getPlayers(), getTimeline(season), readMyPlayers()]);
   if (!playersResult.ok) return <ApiErrorNotice failure={playersResult.failure} />;
-  const players = playersResult.data;
+  if (playersResult.data.length > 0 && timelineResult.ok) {
+    return <PlayerTimeline players={playersResult.data} timeline={timelineResult.data} myIds={myIds} />;
+  }
+  return <PlayerCards players={playersResult.data} myIds={myIds} />;
+}
+
+/** 선수 카드 목록(연표를 못 받았을 때와 선수가 없을 때). 목록은 /api/players, 시즌 성적은 /api/home에서 받아 playerId로 합친다. */
+async function PlayerCards({ players, myIds }: { players: PlayerSummary[]; myIds: number[] }) {
+  const homeResult = await getHome();
   // 시즌 기록(홈 api)만 못 받았으면 오류 화면으로 카드까지 버리지 않는다. 받은 선수 카드는 그리고(기록 칸 없이) 맨 위 띠로
   // 알린다(11-17 전수조사, 단계적 저하). 선수가 없으면 보여 줄 것이 없어 예전처럼 오류 안내다.
   // 카드 목록은 성공·실패가 같은 경로로 그린다(맨 위 띠와 개수 줄만 다르다). 따로 두면 칸·카드 속성을 고칠 때 한쪽만 고쳐진다

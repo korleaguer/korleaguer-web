@@ -270,39 +270,31 @@ export function HomeSkeleton() {
   );
 }
 
-/** 선수 목록(제목 '선수' 아래): 한 줄 설명 + 선수 카드 격자(사진·이름, 정보 칩, 숫자 셋) */
+/** 선수 목록(제목 '선수' 아래): 한 줄 안내 + 시즌 알약 + 범례 + 카드 한 장 안의 선수 줄 여섯(사진·이름, 띠, 사실 한 줄) */
 export function PlayersSkeleton() {
   return (
-    <Frame className="space-y-4">
+    <Frame className="space-y-3">
       <Bone onPage className="mx-1 h-5 w-32" />
-      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-        {[0, 1, 2, 3, 4, 5].map((i) => (
-          <div key={i} className="card p-4">
-            <div className="flex items-center gap-3">
-              <Circle className="size-14" />
-              <div className="flex-1 space-y-2">
-                <Bone className="h-[1.375rem] w-16" />
-                <Bone className="h-3 w-28" />
+      <div className="flex gap-2 px-1">
+        <Bone onPage className="h-[34px] w-[3.75rem]" />
+        <Bone onPage className="h-[34px] w-[3.75rem]" />
+      </div>
+      <Bone onPage className="mx-1 h-4 w-60" />
+      <div className="card px-4 pt-3">
+        <div className="h-4" />
+        <div className="divide-y divide-line">
+          {[0, 1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="py-3">
+              <div className="flex items-center gap-2">
+                <Circle className="size-7" />
+                <Bone className="h-[1.375rem] w-14" />
+                <Bone className="h-3 w-20" />
               </div>
+              <Bone className="mt-1.5 h-3 w-full" />
+              <Bone className="mt-1.5 h-3 w-40" />
             </div>
-            <div className="mt-3 flex gap-1.5">
-              {["w-16", "w-24", "w-14", "w-[3.75rem]"].map((w) => (
-                <Bone key={w} className={`h-7 ${w}`} />
-              ))}
-            </div>
-            <div className="mt-3.5 border-t border-line pt-3">
-              <Bone className="h-4 w-24" />
-              <div className="mt-2 grid grid-cols-3">
-                {[0, 1, 2].map((k) => (
-                  <div key={k} className="space-y-1.5">
-                    <Bone className="h-3 w-8" />
-                    <Bone className="h-6 w-14 rounded-lg" />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </Frame>
   );
