@@ -2,6 +2,7 @@
 
 import { useRef, useState, useSyncExternalStore, type KeyboardEvent, type ReactNode } from "react";
 import { haptic } from "@/lib/app";
+import { radioKeyIndex } from "@/lib/radioKeys";
 
 type Unit = "auto" | "usd" | "krw";
 
@@ -43,10 +44,10 @@ export default function MoneyUnitScope({ children, className = "" }: { children:
    * 이미 고른 단위로 옮겨도 번갈아 보기로 되돌리지 않는다(화살표는 고르기만 한다)
    */
   function onKey(e: KeyboardEvent<HTMLSpanElement>) {
-    const at = (e.target as HTMLElement).closest("[data-unit]")?.getAttribute("data-unit");
-    const other = at === "krw" ? "usd" : "krw";
-    const to = e.key.startsWith("Arrow") ? other : e.key === "Home" ? "usd" : e.key === "End" ? "krw" : null;
-    if (to == null) return;
+    const at = UNITS.findIndex((u) => u === (e.target as HTMLElement).closest("[data-unit]")?.getAttribute("data-unit"));
+    const k = radioKeyIndex(e.key, at, UNITS.length);
+    if (k == null) return;
+    const to = UNITS[k];
     e.preventDefault();
     if (shown !== to) {
       haptic("select");

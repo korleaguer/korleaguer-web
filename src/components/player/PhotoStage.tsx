@@ -3,6 +3,7 @@
 import { useId, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import { haptic } from "@/lib/app";
 import { smallPhoto, STAGE_DIAMETER } from "@/lib/photo";
+import { radioKeyIndex } from "@/lib/radioKeys";
 
 /** 머리 카드에 넘겨 볼 사진 한 장(소속팀 하나) */
 export interface Shot {
@@ -78,9 +79,7 @@ export default function PhotoStage({
   function onPillKey(e: KeyboardEvent<HTMLSpanElement>) {
     // 키를 꾹 누르면 다시 그리기 전에 또 와서 state(index)는 한 칸 늦다. 포커스는 바로 옮겨 두므로 포커스가 있는 알약에서 센다
     const at = Number((e.target as HTMLElement).closest("[data-shot]")?.getAttribute("data-shot") ?? index);
-    const step = e.key === "ArrowLeft" || e.key === "ArrowUp" ? -1 : e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : 0;
-    const to =
-      step !== 0 ? (at + step + shots.length) % shots.length : e.key === "Home" ? 0 : e.key === "End" ? shots.length - 1 : null;
+    const to = radioKeyIndex(e.key, at, shots.length);
     if (to == null) return;
     e.preventDefault();
     choose(to);

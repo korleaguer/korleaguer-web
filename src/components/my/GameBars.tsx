@@ -4,6 +4,7 @@ import { useRef, useState, type CSSProperties, type KeyboardEvent, type PointerE
 import type { GameLine, Role } from "@/lib/api";
 import { haptic } from "@/lib/app";
 import { formatDate, formatLineup, formatShortDate, formatSummary, formatWeekday } from "@/lib/format";
+import { radioKeyIndex } from "@/lib/radioKeys";
 import ResultPill from "@/components/ResultPill";
 import Highlights from "@/components/Highlights";
 import ScoreText from "@/components/ScoreText";
@@ -187,11 +188,9 @@ export default function GameBars({ slots, role, days, minors = false, name }: Pr
   function onBarKey(e: KeyboardEvent<HTMLDivElement>) {
     const order = slots.flatMap((slot, i) => (slot.game ? [i] : []));
     // 키를 꾹 눌러 다시 그리기 전에 또 오면 state(selected)는 한 칸 늦어서, 마지막으로 고른 칸(picked)에서 센다
-    const at = order.indexOf(picked.current);
-    const step = e.key === "ArrowLeft" || e.key === "ArrowUp" ? -1 : e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : 0;
-    const next =
-      step !== 0 ? order.at((at + step) % order.length) : e.key === "Home" ? order[0] : e.key === "End" ? order.at(-1) : undefined;
-    if (next == null) return;
+    const to = radioKeyIndex(e.key, order.indexOf(picked.current), order.length);
+    if (to == null) return;
+    const next = order[to];
     e.preventDefault();
     pick(next);
     groupRef.current?.querySelector<HTMLElement>(`[data-slot="${next}"]`)?.focus();
