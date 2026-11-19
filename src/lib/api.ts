@@ -3,6 +3,7 @@ import { cache } from "react";
 import { cacheLife } from "next/cache";
 import { connection } from "next/server";
 import { apiUrl } from "@/lib/apiUrl";
+import { PHOTO_PATH } from "@/lib/photo";
 
 /** mlb: MLB 공식 Stats API에서 받은 실제 데이터, sample: 테스트·오프라인용 지어낸 데이터 */
 export type DataMode = "sample" | "mlb";
@@ -892,9 +893,9 @@ function httpUrl(value: string | null | undefined): string | null {
   return value && /^https?:\/\//i.test(value) ? value : null;
 }
 
-/** 선수 사진 주소: 우리가 호스팅하는 사진(/photos/mlb-808982)이나 http(s) 주소. 그 밖에는 null */
+/** 선수 사진 주소: 우리가 호스팅하는 사진(/photos/mlb-808982, 내용 버전이 붙은 /photos/mlb-808982?v=1a2b3c4d)이나 http(s) 주소. 그 밖에는 null */
 function photoUrl(value: string | null | undefined): string | null {
-  return value && /^\/photos\/[a-z0-9-]{1,60}$/.test(value) ? value : httpUrl(value);
+  return value && PHOTO_PATH.test(value) ? value : httpUrl(value);
 }
 
 function normalizeLine(line: GameLine): GameLine {
