@@ -57,14 +57,16 @@ async function MyContent({ searchParams }: Pick<PageProps<"/my">, "searchParams"
 
   // 카드 기록(/api/my)만 못 받았으면 화면 전체를 오류로 덮지 않는다. 제목과 '선수 고르기'(넣기·빼기·순서)는 쓸 수 있게 그리고
   // 카드 자리에 안내 한 줄(전수조사 L324, 선수 목록의 '시즌 기록을 불러오지 못했어요'와 같은 단계적 저하).
-  // 그때 고른 선수는 쿠키 번호 중 명단에 있는 선수다(받았으면 api가 같은 기준으로 거른 카드 순서를 쓴다)
-  const myFailed = myResult != null && !myResult.ok;
+  // 그때 고른 선수는 쿠키 번호 중 명단에 있는 선수다(받았으면 api가 같은 기준으로 거른 카드 순서를 쓴다).
+  // 명단에 있는 선수가 없으면(쿠키에 남은 번호가 모두 명단에서 빠짐) 받을 기록이 애초에 없어서 아무도 안 고른 화면과 같게 그린다:
+  // '내 선수 0명'과 실패 띠 대신 빈 안내, 샘플 띠 상태는 /api/home에서(PR #301 리뷰)
+  const known = ids.filter((id) => playersResult.data.some((p) => p.id === id));
+  const myFailed = myResult != null && !myResult.ok && known.length > 0;
   const my = myResult?.ok ? myResult.data : null;
   const picked = my?.players ?? [];
-  const selectedIds = myFailed
-    ? ids.filter((id) => playersResult.data.some((p) => p.id === id))
-    : picked.map((e) => e.player.id);
-  const status = my ?? (homeResult?.ok ? homeResult.data : null);
+  const selectedIds = myFailed ? known : picked.map((e) => e.player.id);
+  const home = homeResult ?? (myResult != null && !myResult.ok && !myFailed ? await getHome() : null);
+  const status = my ?? (home?.ok ? home.data : null);
   // 고른 선수가 모두 시즌 합계 카드(시즌 끝·FA)면 기간이 뜻이 없다: 기간 알약·안내를 빼고 머리말을 시즌 합계로.
   // 머리말에 '비시즌이라' 같은 이유는 붙이지 않는다(문구 점검 11-13: 머리 줄에 이유 구절이 끼어 어색했다)
   const seasonView = picked.length > 0 && picked.every((e) => e.basis === "SEASON");
