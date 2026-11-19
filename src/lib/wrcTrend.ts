@@ -1,5 +1,5 @@
 // 선수 화면 '타격 흐름': 시즌 처음부터 그날까지의 누적 wRC+(100 = 리그 평균). WrcTrend가 그린다.
-import type { GameLine } from "./api";
+import type { GameLine, RosterMove } from "./api";
 
 export interface TrendPoint {
   /** 그 경기 시작(한국 시간 ISO). 화면엔 "5.28까지" */
@@ -67,4 +67,54 @@ export function buildWrcTrend(games: GameLine[], seasonWrc: number, regularGames
   if (raw.length < 10) return null;
   const shift = seasonWrc - raw[raw.length - 1].value;
   return raw.map((p) => ({ ...p, value: p.value + shift }));
+}
+
+/** 이웃한 두 점의 날짜가 이만큼(일)을 넘게 벌어지면 선을 끊는다(정규시즌 안의 한 달 넘는 공백: 부상·마이너) */
+export const TREND_GAP_DAYS = 30;
+
+/** 선이 끊긴 곳: index 점이 끊긴 뒤 첫 점이다. 이유는 이동 기록으로 알 수 있을 때만 */
+export interface TrendGap {
+  index: number;
+  days: number;
+  reason: "부상" | "마이너" | null;
+}
+
+const DAY_MS = 86_400_000;
+
+/** 시각이 있는 값("2026-07-26T19:40:00+09:00")과 날짜만 있는 값("2026-07-26", 한국 날짜로 읽는다) → 한국 날짜의 일 수. 못 읽으면 null */
+function dayOf(value: string): number | null {
+  const t = new Date(/^\d{4}-\d{2}-\d{2}$/.test(value) ? `${value}T00:00:00+09:00` : value).getTime();
+  return Number.isNaN(t) ? null : Math.floor((t + 9 * 3_600_000) / DAY_MS);
+}
+
+/**
+ * 빈 기간(앞 점 날짜 ~ 뒤 점 날짜)의 이유. 이동 기록은 미국 날짜만 와서 한국 날짜와 하루 다를 수 있어 앞뒤 하루씩 넓게 본다.
+ * 부상자 명단 이동(등재·이동·해제)이 기간 안에 있거나, 기간이 시작될 때 이미 명단에 올라 있었으면 '부상'(명단 해제만 있었던 것도 포함),
+ * 아니면 마이너로 옮긴 기록(toLevel MINORS)이 기간 안에 있으면 '마이너', 모르면 null
+ */
+function gapReason(from: number, to: number, moves: RosterMove[]): TrendGap["reason"] {
+  const dated = moves.flatMap((m) => {
+    const day = dayOf(m.date);
+    return day == null ? [] : [{ m, day }];
+  });
+  const isIl = (m: RosterMove) => (m.labelKo ?? "").startsWith("부상자 명단");
+  const inside = dated.filter(({ day }) => day >= from - 1 && day <= to + 1);
+  if (inside.some(({ m }) => isIl(m))) return "부상";
+  // 기간이 시작되기 전 마지막 명단 기록이 해제가 아니면 아직 명단에 있는 중이다
+  const before = dated.filter(({ m, day }) => isIl(m) && day < from - 1).sort((a, b) => b.day - a.day)[0];
+  if (before && !before.m.labelKo.endsWith("해제")) return "부상";
+  if (inside.some(({ m }) => m.toLevel === "MINORS")) return "마이너";
+  return null;
+}
+
+/** 점 사이 30일 넘게 벌어진 곳(앞에서부터). 이동 기록이 없어도 끊기만 한다 */
+export function trendGaps(points: TrendPoint[], moves: RosterMove[]): TrendGap[] {
+  const gaps: TrendGap[] = [];
+  for (let i = 1; i < points.length; i++) {
+    const from = dayOf(points[i - 1].startTimeKst);
+    const to = dayOf(points[i].startTimeKst);
+    if (from == null || to == null || to - from <= TREND_GAP_DAYS) continue;
+    gaps.push({ index: i, days: Math.round(to - from), reason: gapReason(from, to, moves) });
+  }
+  return gaps;
 }

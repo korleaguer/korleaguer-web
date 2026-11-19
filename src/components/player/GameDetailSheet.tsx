@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useId, useRef, useState, type RefObject } from "react";
-import type { GameDetail, GameLine, GamePlay, Role } from "@/lib/api";
+import type { GameDetail, GameHighlight, GameLine, GamePlay, Role } from "@/lib/api";
 import { lineOf, type CalendarDay, type LogGame } from "@/lib/gameLog";
 import { formatDate, formatLineup, formatSummary, formatTime } from "@/lib/format";
 import { haptic } from "@/lib/app";
@@ -382,7 +382,7 @@ function DetailContent({
 }) {
   const pitcher = detail.role === "PITCHER";
   const first = detail.highlights[0] ?? null;
-  const [clip, setClip] = useState<(Clip & { label: string; sub: string | null }) | null>(() =>
+  const [clip, setClip] = useState<(Clip & { label: string; original: string | null; sub: string | null }) | null>(() =>
     first
       ? {
           key: `h-0`,
@@ -390,7 +390,8 @@ function DetailContent({
           mp4Url: first.mp4Url,
           posterUrl: first.imageUrl,
           autoPlay: false,
-          label: first.title,
+          label: highlightTitle(first).main,
+          original: highlightTitle(first).original,
           sub: highlightSub(first.durationSec),
         }
       : null,
@@ -420,17 +421,16 @@ function DetailContent({
 
   const showHighlight = (i: number) => {
     const h = detail.highlights[i];
-    haptic("select");
+    // 영상 재생에는 진동을 쓰지 않는다(사용자 11-19 '추천대로', 이슈 #313)
     // 앞서 못 받은 타석 안내·낭독 줄은 지난 일이라 지운다(▶를 새로 누를 때와 같다)
     setClipNotice(null);
     setClipStatus("");
-    setClip({ key: `h-${i}`, hlsUrl: h.hlsUrl, mp4Url: h.mp4Url, posterUrl: h.imageUrl, autoPlay: true, label: h.title, sub: highlightSub(h.durationSec) });
+    setClip({ key: `h-${i}`, hlsUrl: h.hlsUrl, mp4Url: h.mp4Url, posterUrl: h.imageUrl, autoPlay: true, label: highlightTitle(h).main, original: highlightTitle(h).original, sub: highlightSub(h.durationSec) });
   };
 
   const showPlay = useCallback(
     async (play: GamePlay) => {
       if (!play.playId || loadingPlay) return;
-      haptic("select");
       setLoadingPlay(play.playId);
       setClipNotice(null);
       setClipStatus("영상을 불러오는 중");
@@ -446,7 +446,7 @@ function DetailContent({
       // 영상 이름은 포커스를 받은 영상 묶음이 읽는다(같은 말을 두 번 읽지 않게 낭독 줄은 비운다)
       setClipStatus("");
       focusClipRef.current = true;
-      setClip({ key: `p-${play.playId}`, hlsUrl: null, mp4Url, posterUrl: null, autoPlay: true, label: playTitle(play), sub: "그 타석 마지막 공" });
+      setClip({ key: `p-${play.playId}`, hlsUrl: null, mp4Url, posterUrl: null, autoPlay: true, label: playTitle(play), original: null, sub: "그 타석 마지막 공" });
       // 영상이 창 맨 위에 있어 그리로 올린다
       scrollRef.current?.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
     },
@@ -461,6 +461,7 @@ function DetailContent({
           <ClipPlayer clip={clip} />
           <figcaption className="mt-2">
             <span className="block text-summary">{clip.label}</span>
+            {clip.original && <span className="block text-caption text-muted">{clip.original}</span>}
             <span className="block text-caption text-muted">{clip.sub ? `${clip.sub} · MLB 영상` : "MLB 영상"}</span>
           </figcaption>
         </figure>
@@ -493,7 +494,9 @@ function DetailContent({
                   ) : (
                     <span className="block aspect-video w-full rounded-lg bg-surface-2" />
                   )}
-                  <span className="mt-1 line-clamp-2 block text-caption">{h.title}</span>
+                  <span className="mt-1 line-clamp-2 block text-caption">{highlightTitle(h).main}</span>
+                  {/* 한국어 제목이 있으면 영어 원제는 흐린 둘째 줄, 목록 칸에서는 한 줄만 */}
+                  {h.titleKo && <span className="block truncate text-caption text-muted">{h.title}</span>}
                 </button>
               </li>
             );
@@ -530,6 +533,11 @@ function DetailContent({
       </p>
     </div>
   );
+}
+
+/** 하이라이트 제목: 한국어가 있으면 한국어가 주 글자고 영어 원제는 둘째 줄(original), 없으면 영어 한 줄 */
+function highlightTitle(h: GameHighlight): { main: string; original: string | null } {
+  return h.titleKo ? { main: h.titleKo, original: h.title } : { main: h.title, original: null };
 }
 
 function highlightSub(sec: number | null): string | null {

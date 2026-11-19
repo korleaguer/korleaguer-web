@@ -1,5 +1,6 @@
 import type { RosterMove } from "@/lib/api";
 import Section from "@/components/Section";
+import ScrollList from "@/components/ScrollList";
 import ShowMore from "@/components/ShowMore";
 import { cacheLife } from "next/cache";
 import MovePill from "./MovePill";
@@ -40,11 +41,15 @@ export default async function RosterMoves({ moves }: { moves: RosterMove[] }) {
           {rest.length > 0 && (
             <ShowMore moreLabel={`${rest.length}건 더 보기`} buttonClassName="border-t border-line py-2.5">
               {/* 이동이 많은 선수(20건 넘게)도 화면이 아래로 끝없이 늘지 않게, 펼친 줄은 일정 높이 안에서 스크롤한다 */}
-              <ol className="max-h-[26rem] divide-y divide-line overflow-y-auto overscroll-contain border-t border-line">
+              {/* 넘칠 때만 키보드로 닿는 영역이 된다(ScrollList, 이슈 #294). 상자 높이 26rem은 그대로(11-10 사용자 결정) */}
+              <ScrollList
+                label="이동 기록 더 보기 목록"
+                className="max-h-[26rem] divide-y divide-line overflow-y-auto overscroll-contain border-t border-line"
+              >
                 {rest.map((move, i) => (
                   <MoveRow key={`${move.date}-${move.typeCode}-r${i}`} move={move} />
                 ))}
-              </ol>
+              </ScrollList>
             </ShowMore>
           )}
         </div>

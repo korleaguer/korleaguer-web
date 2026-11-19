@@ -432,8 +432,8 @@ export default function GameCalendar({
       {selected && (
         <button
           type="button"
+          // 진동 없음: 창이 열리고 영상이 나오는 일이라 손끝 틱이 겹치면 번거롭다(사용자 11-19 '추천대로', 이슈 #313)
           onClick={(e) => {
-            haptic("select");
             if (sheetKey === null) {
               openerRef.current = e.currentTarget;
               ownsEntryRef.current = true;
