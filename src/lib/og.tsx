@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import sharp from "sharp";
 import { apiUrl } from "@/lib/apiUrl";
+import { parsePhotoPath } from "@/lib/photo";
 import { logoSvg } from "@/lib/logo";
 
 /** 카톡·페이스북·X가 권하는 큰 카드 크기(1.91:1) */
@@ -93,9 +94,9 @@ export function mixHex(a: string, b: string, amount: number): string {
  */
 export async function photoDataUrl(photoUrl: string | null): Promise<string | null> {
   if (!photoUrl) return null;
-  const key = /^\/photos\/([a-z0-9-]{1,60})$/.exec(photoUrl)?.[1];
-  const url = key
-    ? apiUrl(`/api/photos/${key}`)
+  const ours = parsePhotoPath(photoUrl);
+  const url = ours
+    ? apiUrl(`/api/photos/${ours.key}${ours.version ? `?v=${ours.version}` : ""}`)
     : /^https?:\/\//i.test(photoUrl)
       ? new URL(photoUrl)
       : null;

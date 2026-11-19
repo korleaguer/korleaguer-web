@@ -9,24 +9,30 @@
 import { cacheLife } from "next/cache";
 import sharp from "sharp";
 import { apiUrl } from "@/lib/apiUrl";
-import { PHOTO_KEY, SMALL_PHOTO_WIDTHS } from "@/lib/photo";
+import { PHOTO_KEY, SMALL_PHOTO_WIDTHS, photoVersion } from "@/lib/photo";
 
 /** 처음 요청이면 api가 원본을 받는 동안 기다린다(원본 사진 경로와 같다) */
 const TIMEOUT_MS = 20_000;
 
-export async function GET(_request: Request, { params }: RouteContext<"/photos/[key]/[w]">) {
+export async function GET(request: Request, { params }: RouteContext<"/photos/[key]/[w]">) {
   const { key, w } = await params;
   const width = Number(w);
   if (!PHOTO_KEY.test(key) || !(SMALL_PHOTO_WIDTHS as readonly number[]).includes(width) || String(width) !== w) {
     return new Response(null, { status: 404, headers: { "cache-control": "public, max-age=300" } });
   }
 
-  const webp = await resized(key, width);
-  if (!webp) {
-    return new Response(null, { status: 307, headers: { location: `/photos/${key}`, "cache-control": "no-store" } });
+  // api가 준 내용 버전(?v=). 현재 내용과 같은 버전이면 api가 immutable로 답한 것이라 이 응답도 1년 저장한다
+  const version = photoVersion(new URL(request.url).searchParams.get("v"));
+  const result = await resized(key, width, version);
+  if (!result) {
+    const query = version ? `?v=${version}` : "";
+    return new Response(null, { status: 307, headers: { location: `/photos/${key}${query}`, "cache-control": "no-store" } });
   }
-  return new Response(Buffer.from(webp, "base64"), {
-    headers: { "content-type": "image/webp", "cache-control": "public, max-age=86400" },
+  return new Response(Buffer.from(result.webp, "base64"), {
+    headers: {
+      "content-type": "image/webp",
+      "cache-control": result.immutable ? "public, max-age=31536000, immutable" : "public, max-age=86400",
+    },
   });
 }
 
@@ -35,10 +41,11 @@ export async function GET(_request: Request, { params }: RouteContext<"/photos/[
  * 같은 사진·폭은 서버 메모리에 두고 다시 쓴다(운영 서버는 라즈베리파이라 줄이는 일이 비싸다). 하루 지나면 원본을 다시 보고, 실패는 1분만 둔다.
  * 품질 82는 기사 사진 줄이기와 같다(원본과 나란히 견줘 정한 값).
  */
-async function resized(key: string, width: number): Promise<string | null> {
+async function resized(key: string, width: number, version: string | null): Promise<{ webp: string; immutable: boolean } | null> {
   "use cache";
   try {
     const url = apiUrl(`/api/photos/${key}`);
+    if (version) url.searchParams.set("v", version);
     const res = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
     if (!res.ok) throw new Error(`api ${res.status}`);
     const input = Buffer.from(await res.arrayBuffer());
@@ -48,7 +55,7 @@ async function resized(key: string, width: number): Promise<string | null> {
       .webp({ quality: 82 })
       .toBuffer();
     cacheLife({ stale: 86_400, revalidate: 86_400, expire: 604_800 });
-    return out.toString("base64");
+    return { webp: out.toString("base64"), immutable: /\bimmutable\b/.test(res.headers.get("cache-control") ?? "") };
   } catch (e) {
     console.warn(`[photos] ${key} ${width}px 줄이기 실패:`, e instanceof Error ? e.message : e);
     cacheLife({ stale: 60, revalidate: 60, expire: 120 });
