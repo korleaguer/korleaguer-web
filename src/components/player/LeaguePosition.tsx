@@ -54,7 +54,7 @@ export function rowsOf(saber: PlayerSaber): Row[] | null {
  * 제목은 아래 줄과 이어 읽힌다: 'MLB 타자 중에서 타격 상위 41%'(처음 이름 'MLB 안 위치'는 어색하다는 사용자 의견으로 바꿨다).
  * 같은 시즌 MLB 선수 중 어디쯤인지를 네 줄로: 타자는 종합·타격·주루·수비, 투수는 종합·실점 억제·삼진·볼넷 억제.
  * 타율 하나로 폼을 판단하지 않게(사용자: "현대 야구에서 타율만으로 평가하진 않아서"), 실제 값은 막대 아래 한 줄에 작게만 둔다.
- * 중간보다 아래는 순위 대신 회색 '중간 아래'(혹평처럼 읽히지 않게). 가운데 선이 MLB 중간값(백분위 50)이라 '평균'이라 쓰지 않는다:
+ * 순위는 위아래 모두 '상위 N%'로 쓰고, 중간(백분위 50)보다 아래는 흐린 회색 글자로 둔다(혹평처럼 읽히지 않게). 기준이 중간값이라 '평균'이라 쓰지 않는다:
  * 'WAR +1.0'인데 '평균 아래'면 모순처럼 읽혔다(WAR는 0이 평균이 아니다). 숫자는 서버가 MLB 공식 세이버 지표로 계산한다(korleaguer-server#133).
  * 항목마다 '이름 · 막대 · 순위'를 한 줄로 둔다(사용자 11-16 시안 A, 이슈 #236). 세 줄씩 쌓던 때는 이 칸이 시즌 성적보다 커서
  * 아래 경기 기록이 너무 멀었다. 표본이 적어 위치가 없으면 빈 칸 대신 시즌 성적 바로 아래 안내 한 줄만 둔다.
@@ -84,7 +84,6 @@ export default async function LeaguePosition({ saber }: { saber: PlayerSaber }) 
 
   // ⓘ 안 줄(이슈 #327): 예전 카드 아래 각주와 '참고용' 문장. WAR 풀이는 시즌별 기록 표 설명(낭독)과 달리 보이는 곳은 여기 한 곳뿐이다
   const tips = [
-    "가운데 선은 MLB 중간",
     "WAR는 대체 선수보다 더 번 승수(0이 평균 아님)",
     hitter ? "득점은 리그 평균 대비(수비는 포지션 난도 포함)" : "ERA-는 100이 평균, 낮을수록 좋아요",
     `MLB 공식 세이버 지표 · ${sample}`,
@@ -108,10 +107,9 @@ export default async function LeaguePosition({ saber }: { saber: PlayerSaber }) 
         )}
         {/* @container: 칸이 좁으면(앱 큰 글씨 등) 줄 모양을 바꾼다(PositionRow) */}
         <ul className="@container space-y-3">
-          {rows.map((r, i) => (
+          {rows.map((r) => (
             <PositionRow
               key={r.label}
-              midLabel={i === 0}
               row={r}
               who={who}
               // 이름 칸: 타자 2.5rem(두 글자), 투수 4.25rem('실점 억제'·'볼넷 억제'). Tailwind가 읽게 클래스를 통째로 적는다
@@ -135,18 +133,18 @@ export default async function LeaguePosition({ saber }: { saber: PlayerSaber }) 
 }
 
 /**
- * 한 줄: 이름 | 막대(가운데 선 = MLB 중간, PositionBar) | 순위. 이름 칸 폭을 줄마다 같게 해 막대 시작점을 맞춘다.
+ * 한 줄: 이름 | 막대(PositionBar) | 순위. 이름 칸 폭을 줄마다 같게 해 막대 시작점을 맞춘다.
  * 칸이 15rem보다 좁으면(앱 큰 글씨 1.5배 이상, 휴대폰) 이름·순위 한 줄 아래에 막대를 칸 폭 그대로 둔다.
  * 한 줄로 두면 이름·순위 칸(rem)이 커져 막대 칸이 0이 되고 점만 남았다(2배 375px)
  */
-function PositionRow({ row, who, cols, midLabel }: { row: Row; who: string; cols: string; midLabel: boolean }) {
+function PositionRow({ row, who, cols }: { row: Row; who: string; cols: string }) {
   const { label, pct } = row;
   const top = pct != null && pct >= 50;
-  const verdict = pct == null ? "비교 전" : top ? `상위 ${100 - pct}%` : "중간 아래";
+  const verdict = pct == null ? "비교 전" : `상위 ${100 - pct}%`;
   return (
     <li className={`grid items-center gap-x-3 ${cols} @max-[15rem]:grid-cols-[minmax(0,1fr)_auto] @max-[15rem]:gap-y-1.5`}>
       <span className="text-summary">{label}</span>
-      <PositionBar pct={pct} size="md" midLabel={midLabel} className="@max-[15rem]:order-last @max-[15rem]:col-span-2" />
+      <PositionBar pct={pct} size="md" className="@max-[15rem]:order-last @max-[15rem]:col-span-2" />
       <span className={`whitespace-nowrap text-right text-summary font-extrabold tabular-nums ${top ? "text-accent-ink" : "text-muted"}`}>
         <span className="sr-only">{`MLB ${who} 중 `}</span>
         {verdict}
