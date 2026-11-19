@@ -46,7 +46,18 @@ export function useSheetDrag(panelRef: RefObject<HTMLElement | null>, onClose: (
   const drag = useRef<{ y: number; dy: number; moves: { t: number; dy: number }[] } | null>(null);
   /** 내려가며 닫히는 중이면 그 타이머를 치우는 함수. 그동안은 다시 닫지도 끌지도 않고, 창이 먼저 지워지면 치운다 */
   const closing = useRef<(() => void) | null>(null);
-  useEffect(() => () => closing.current?.(), []);
+  /**
+   * 덜 끌어 제자리로 돌아오는 중이면 그 끝맺음을 멈추는 함수. 돌아오는 중에 다시 끌거나 닫으면 먼저 멈춘다:
+   * 그대로 두면 늦게 도는 끝맺음이 인라인 위치를 비우고 애니메이션을 취소해, 끄는 창이 위로 튀거나 내려가던 창이 되돌아왔다
+   */
+  const returning = useRef<(() => void) | null>(null);
+  useEffect(
+    () => () => {
+      closing.current?.();
+      returning.current?.();
+    },
+    [],
+  );
 
   /** 지금 위치에서 시작해 창·덮개를 같이 움직인다. 끝나면(또는 시간+50ms 타이머가 먼저 오면) 한 번만 done */
   const play = (
@@ -102,10 +113,17 @@ export function useSheetDrag(panelRef: RefObject<HTMLElement | null>, onClose: (
   const onDragStart = (e: ReactPointerEvent<HTMLElement>) => {
     const panel = panelRef.current;
     if (!panel || closing.current || e.pointerType === "mouse" || (e.target as HTMLElement).closest("button")) return;
-    drag.current = { y: e.clientY, dy: 0, moves: [] };
-    // 열리거나 돌아오는 중이면 멈추고 손가락을 바로 따라오게 한다. 도는 애니메이션이 인라인 transform을 이기기 때문에 취소해야 한다
+    returning.current?.();
+    returning.current = null;
+    // 열리거나 돌아오는 중이면 멈추고 손가락을 바로 따라오게 한다. 도는 애니메이션이 인라인 transform을 이기기 때문에 취소해야 한다.
+    // 취소하면 창·덮개가 애니메이션 전 값으로 뛰므로, 지금 보이는 위치·짙기를 먼저 읽어 인라인으로 붙들고 거기서부터 끈다
+    const from = Math.max(0, new DOMMatrix(getComputedStyle(panel).transform).m42);
+    const shade = panel.parentElement ? getComputedStyle(panel.parentElement).backgroundColor : "";
     panel.getAnimations().forEach((a) => a.cancel());
     panel.parentElement?.getAnimations().forEach((a) => a.cancel());
+    panel.style.transform = from > 0 ? `translateY(${from}px)` : "";
+    if (from > 0) setScrim(panel, shade);
+    drag.current = { y: e.clientY - from, dy: from, moves: [] };
     e.currentTarget.setPointerCapture(e.pointerId);
   };
 
@@ -147,8 +165,9 @@ export function useSheetDrag(panelRef: RefObject<HTMLElement | null>, onClose: (
       slideOut(DRAG_CLOSE_MIN_MS + DRAG_CLOSE_EXTRA_MS * remaining, false);
       return;
     }
-    // 제자리로: 지금 위치에서 같은 곡선으로 돌아오고, 끝나면 인라인 스타일을 비운다(돌아오는 중에 다시 끌면 onDragStart가 취소한다)
-    play(panel, dialog, { transform: "none" }, scrim(SCRIM_ALPHA), RETURN_MS, () => {
+    // 제자리로: 지금 위치에서 같은 곡선으로 돌아오고, 끝나면 인라인 스타일을 비운다(돌아오는 중에 다시 끌거나 닫으면 returning으로 멈춘다)
+    returning.current = play(panel, dialog, { transform: "none" }, scrim(SCRIM_ALPHA), RETURN_MS, () => {
+      returning.current = null;
       panel.style.transform = "";
       setScrim(panel, "");
       panel.getAnimations().forEach((a) => a.cancel());
@@ -165,6 +184,8 @@ export function useSheetDrag(panelRef: RefObject<HTMLElement | null>, onClose: (
   const close = () => {
     if (closing.current) return;
     drag.current = null;
+    returning.current?.();
+    returning.current = null;
     slideOut(CLOSE_MS, window.matchMedia("(min-width: 40rem)").matches);
   };
 
