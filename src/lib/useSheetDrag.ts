@@ -10,8 +10,8 @@ const SWIPE_CLOSE = 96;
 const FLICK_SPEED = 0.4;
 /** 튕김 속도를 재는 구간(ms) */
 const FLICK_WINDOW = 100;
-/** 닫기 버튼·바깥·Esc로 닫을 때 내려가는 시간(ms) */
-const CLOSE_MS = 260;
+/** 닫기 버튼·바깥·Esc로 닫을 때 내려가는 시간(ms). 곡선은 아래 EASE_SHEET_FROM_REST */
+const CLOSE_MS = 300;
 /** 끌다 놓았을 때 남은 거리 비율에 따라 160~260ms */
 const DRAG_CLOSE_MIN_MS = 160;
 const DRAG_CLOSE_EXTRA_MS = 100;
@@ -23,8 +23,13 @@ const POP_CLOSE_MS = 150;
 const FADE_MS = 150;
 /** 덮개 짙기(열린 상태). CSS의 bg-black/40과 같아야 한다 */
 const SCRIM_ALPHA = 0.4;
-/** 시트 곡선. globals.css의 --ease-sheet와 같다 */
+/** 시트 곡선. globals.css의 --ease-sheet와 같다. 출발이 빨라서 손가락 속도를 이어받는 끌다 놓기(닫기·되돌아오기)에 쓴다 */
 const EASE_SHEET = "cubic-bezier(0.32, 0.72, 0, 1)";
+/**
+ * 멈춰 있던 창이 닫기 버튼·바깥·Esc로 내려갈 때의 곡선: 출발 속도 0, 끝은 시트 곡선처럼 천천히 멈춘다.
+ * 시트 곡선을 그대로 쓰면 첫 50ms에 63%가 내려가서, 사파리 앱 녹화에서 첫 그려진 프레임이 이미 82% 내려간 채라 '사라짐'으로 보였다(이슈 #338)
+ */
+const EASE_SHEET_FROM_REST = "cubic-bezier(0.32, 0, 0.24, 1)";
 
 const scrim = (alpha: number) => `rgba(0, 0, 0, ${alpha})`;
 /** 덮개 = 패널 부모 <dialog>의 배경색. 훅 밖 함수로 둔 것은 린트가 ref에서 나온 값의 직접 수정을 막기 때문이다 */
@@ -67,14 +72,19 @@ export function useSheetDrag(panelRef: RefObject<HTMLElement | null>, onClose: (
     scrimTo: string,
     ms: number,
     done: () => void,
+    easing: string = EASE_SHEET,
   ) => {
+    // 지금 보이는 값을 먼저 읽고, 남아 있는 애니메이션(CSS 열기 등)을 취소한 뒤 거기서부터 움직인다. 사파리(WebKit)는 끝난 CSS
+    // 열기 애니메이션이 남아 있으면 새 닫기 애니메이션을 그리지 않고, 끝날 때까지 제자리에 있다가 한 번에 사라졌다(이슈 #338 녹화).
+    // 끌기는 시작할 때 이미 취소해서 끌어 닫기만 제대로 내려갔다
     const style = getComputedStyle(panel);
-    const options = { duration: ms, easing: EASE_SHEET, fill: "forwards" as const };
-    const a = panel.animate([{ transform: style.transform, opacity: style.opacity }, panelTo], options);
-    const b = dialog.animate(
-      [{ backgroundColor: getComputedStyle(dialog).backgroundColor }, { backgroundColor: scrimTo }],
-      options,
-    );
+    const from = { transform: style.transform, opacity: style.opacity };
+    const shade = getComputedStyle(dialog).backgroundColor;
+    panel.getAnimations().forEach((x) => x.cancel());
+    dialog.getAnimations().forEach((x) => x.cancel());
+    const options = { duration: ms, easing, fill: "forwards" as const };
+    const a = panel.animate([from, panelTo], options);
+    const b = dialog.animate([{ backgroundColor: shade }, { backgroundColor: scrimTo }], options);
     let timer = 0;
     let finished = false;
     const finish = () => {
@@ -92,8 +102,8 @@ export function useSheetDrag(panelRef: RefObject<HTMLElement | null>, onClose: (
     };
   };
 
-  /** 아래로(또는 흐려지며) 사라진 뒤 onClose. 닫는 중에는 같은 길로 두 번 오지 않는다 */
-  const slideOut = (ms: number, pop: boolean) => {
+  /** 아래로(또는 흐려지며) 사라진 뒤 onClose. 닫는 중에는 같은 길로 두 번 오지 않는다. fromRest: 멈춰 있던 창(버튼·바깥·Esc) */
+  const slideOut = (ms: number, pop: boolean, fromRest: boolean) => {
     const panel = panelRef.current;
     const dialog = panel?.parentElement;
     if (!panel || !dialog) {
@@ -107,7 +117,7 @@ export function useSheetDrag(panelRef: RefObject<HTMLElement | null>, onClose: (
         ? { opacity: 0, transform: "scale(0.98)" }
         : { transform: "translateY(100%)" };
     const duration = reduced ? FADE_MS : pop ? POP_CLOSE_MS : ms;
-    closing.current = play(panel, dialog, panelTo, scrim(0), duration, onClose);
+    closing.current = play(panel, dialog, panelTo, scrim(0), duration, onClose, fromRest ? EASE_SHEET_FROM_REST : EASE_SHEET);
   };
 
   const onDragStart = (e: ReactPointerEvent<HTMLElement>) => {
@@ -162,7 +172,7 @@ export function useSheetDrag(panelRef: RefObject<HTMLElement | null>, onClose: (
     }
     if (close) {
       const remaining = Math.max(0, 1 - d.dy / Math.max(1, panel.offsetHeight));
-      slideOut(DRAG_CLOSE_MIN_MS + DRAG_CLOSE_EXTRA_MS * remaining, false);
+      slideOut(DRAG_CLOSE_MIN_MS + DRAG_CLOSE_EXTRA_MS * remaining, false, false);
       return;
     }
     // 제자리로: 지금 위치에서 같은 곡선으로 돌아오고, 끝나면 인라인 스타일을 비운다(돌아오는 중에 다시 끌거나 닫으면 returning으로 멈춘다)
@@ -186,7 +196,7 @@ export function useSheetDrag(panelRef: RefObject<HTMLElement | null>, onClose: (
     drag.current = null;
     returning.current?.();
     returning.current = null;
-    slideOut(CLOSE_MS, window.matchMedia("(min-width: 40rem)").matches);
+    slideOut(CLOSE_MS, window.matchMedia("(min-width: 40rem)").matches, true);
   };
 
   return { onDragStart, onDragMove, onDragEnd, close };
