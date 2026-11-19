@@ -5,7 +5,9 @@
 // 앱(웹뷰) 안에서는 아래 네이티브 탭 막대가 화면 아래를 덮고 있어서 위쪽에 둔다.
 import Link from "next/link";
 import { useEffect, useRef, useState, useSyncExternalStore, type MouseEvent, type PointerEvent } from "react";
+import { createPortal } from "react-dom";
 import { currentToast, dismissToast, subscribeToast, type ToastItem } from "@/lib/toast";
+import { subscribeModal, topModal } from "@/lib/useModalDialog";
 
 const SHOW_MS = 3000;
 /**
@@ -57,7 +59,10 @@ export default function Toaster() {
   }
 
   const toastItem = shown?.item;
-  return (
+  // 창(<dialog> 모달)이 열려 있으면 그 창 안에 그린다. 창 밖은 창 아래 깔리고 누를 수 없어서(inert) 창 안에서 별을 누를 때 뜬
+  // '되돌리기' 알림이 가려졌다(이슈 #326). 창은 위치를 바꾸지 않는(transform 없는) 전체 화면이라 fixed 위치는 그대로다
+  const host = useSyncExternalStore(subscribeModal, topModal, () => null);
+  const bar = (
     // 화면 낭독기가 새 알림을 읽도록 자리는 늘 둔다. data-toast: 포커스가 아직 사라지는 알림 안에 있는지 알아볼 때 쓴다(useFocusAfterRemove)
     <div
       role="status"
@@ -85,6 +90,7 @@ export default function Toaster() {
       )}
     </div>
   );
+  return host ? createPortal(bar, host) : bar;
 }
 
 function ActionButton({ item }: { item: ToastItem }) {
