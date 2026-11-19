@@ -1,5 +1,6 @@
 import type { GameLine } from "@/lib/api";
 import { formatDate, formatLineup, formatShortDate, formatSummary, formatTime, formatWeekday } from "@/lib/format";
+import { isPostseason } from "@/lib/gameLog";
 import ResultPill from "@/components/ResultPill";
 import Highlights from "@/components/Highlights";
 import ScoreText from "@/components/ScoreText";
@@ -7,9 +8,19 @@ import TeamName from "@/components/TeamName";
 import Words from "@/components/Words";
 
 /**
+ * 포스트시즌 경기면 경기 정보 줄 위에 두는 '포스트시즌' 한 줄(본문 글자, 알약 아님. 11-17 전수조사 L350).
+ * 경기 상세 창의 경기 한 줄도 이것을 써서 두 곳이 같은 모양이다(PR #308 리뷰). 경기 정보 줄 맨 앞에 넣으면 375px에서
+ * 줄이 넘쳐 결과 알약만 다음 줄로 밀렸다. 포스트시즌이 아니면(옛 api 포함) 그리지 않는다
+ */
+export function PostseasonLine({ game }: { game: GameLine }) {
+  return isPostseason(game) ? <p className="text-meta font-semibold text-foreground">포스트시즌</p> : null;
+}
+
+/**
  * 경기 한 줄(선수 페이지 경기 기록, 내 선수 카드의 '모두 보기'가 같이 쓴다).
  * 서버에서도, 브라우저에서도(경기 달력 GameCalendar) 그린다. 서버 전용 기능을 쓰지 않는다.
  * 마이너 경기면 levelKo('트리플A')를 상대 팀 앞에 작게 붙이고, 상대 로고는 opponentId(팀 번호)로 찾는다.
+ * 포스트시즌 경기면 경기 정보 줄 위에 PostseasonLine.
  * hideVenue면 홈·원정을 쓰지 않는다(마이너 경기에서 모를 때).
  */
 export default function GameRow({
@@ -41,6 +52,7 @@ export default function GameRow({
         <span className="sr-only">{formatDate(g.startTimeKst)}</span>
       </p>
       <div className="min-w-[min(8rem,100%)] flex-1">
+        <PostseasonLine game={g} />
         <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-meta text-muted">
           {levelKo && (
             <span className="rounded-md bg-surface-2 px-1.5 py-0.5 text-badge text-foreground/70">{levelKo}</span>
