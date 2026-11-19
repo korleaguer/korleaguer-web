@@ -7,9 +7,9 @@ import { appHas, postToApp, useAppFeature } from "@/lib/app";
 
 /**
  * 앱 아래 탭의 첫 화면. 여기서는 뒤로 버튼을 두지 않는다. 앱(korleaguer-app src/app)의 탭과 같다.
- * 기록(/records)은 '내 선수' 자리에 새로 들어간 탭이다(이슈 #244). 내 선수(/my)와 뉴스(/news)는 앱에 따라 다르다(아래).
+ * 기록(/records)·내 선수(/my)·뉴스(/news)는 앱에 따라 다르다(아래).
  */
-const TAB_ROOTS = new Set(["/", "/players", "/records"]);
+const TAB_ROOTS = new Set(["/", "/players"]);
 
 /** 돌아갈 기록이 없을 때 갈 곳: 선수 페이지는 선수 목록, 기사 한 건은 뉴스, 나머지는 홈 */
 function parentOf(pathname: string): string {
@@ -32,11 +32,21 @@ export default function AppBackButton() {
   const pathname = usePathname();
   const router = useRouter();
   // 뉴스(/news)는 뉴스 탭이 있는 앱에서만 탭 첫 화면이고, 옛 앱에서는 쌓인 하위 화면이다.
-  // 내 선수(/my)는 반대로 옛 앱('내 선수' 탭)에서만 탭 첫 화면이다. 기록 탭이 있는 앱에서는 알림 '보기'·홈 입구로 쌓아 여는
-  // 하위 화면이라 뒤로 버튼을 둔다(전수조사 P1, 이슈 #262)
+  // 기록(/records)은 기록 탭 앱(korleaguer-app#46)에서만 탭 첫 화면이다. 옛 앱(4번째 칸이 '내 선수')과 3칸 앱(three-tabs,
+  // korleaguer-app#60)에서는 주소로 열거나 쌓아 여는 하위 화면이라 뒤로 버튼을 둔다.
+  // 내 선수(/my)는 반대로 옛 앱('내 선수' 탭)에서만 탭 첫 화면이다. 기록 탭 앱과 3칸 앱에서는 알림 '보기'·홈 입구로 쌓아 여는
+  // 하위 화면이라 뒤로 버튼을 둔다(전수조사 P1, 이슈 #262).
+  // 서버 그리기는 모든 기능을 있다고 보므로 서버 HTML은 3칸 앱 기준(두 화면 모두 뒤로 버튼 있음)이다. 옛 앱에서는 이어받은 뒤 고쳐 그린다.
   const newsTab = useAppFeature("news-tab");
   const recordsTab = useAppFeature("records-tab");
-  if (TAB_ROOTS.has(pathname) || (pathname === "/news" && newsTab) || (pathname === "/my" && !recordsTab)) return null;
+  const threeTabs = useAppFeature("three-tabs");
+  if (
+    TAB_ROOTS.has(pathname) ||
+    (pathname === "/news" && newsTab) ||
+    (pathname === "/records" && recordsTab && !threeTabs) ||
+    (pathname === "/my" && !recordsTab && !threeTabs)
+  )
+    return null;
 
   return (
     <button

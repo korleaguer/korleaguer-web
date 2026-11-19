@@ -8,7 +8,7 @@ import { postToApp } from "@/lib/app";
 
 /** 홈 맨 위 묶음: "posting" = MLB 도전 카드, "report" = 비시즌 성적표(포스팅 선수 없음), "season" = 시즌 중 층 */
 export type HomeTop = "posting" | "report" | "season";
-/** 기록 탭 맨 위 묶음 순서: "passed" = 올해 넘은 기록, "next" = 다음에 넘을 기록. 그려지지 않은 묶음은 뺀다 */
+/** 기록 화면 맨 위 묶음 순서: "passed" = 올해 넘은 기록, "next" = 다음에 넘을 기록. 그려지지 않은 묶음은 뺀다 */
 export type RecordsOrder = ("passed" | "next")[];
 
 type Props = {

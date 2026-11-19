@@ -12,9 +12,10 @@ type AppWindow = Window & {
 /**
  * 앱이 할 수 있는 일. "stack" = 화면을 네이티브로 쌓는다(0.2.0~), "haptic" = 손끝 진동, "share" = 기기 공유 창,
  * "news-tab" = 아래 탭에 '뉴스'(/news)가 있고 앱이 보낸 "navigate" 이벤트로 그 탭의 주소를 바꾼다(korleaguer-app#40),
- * "records-tab" = 아래 탭 4번째가 '내 선수'(/my) 대신 '기록'(/records)이라 /my는 쌓아 여는 하위 화면이다(korleaguer-app#46부터 알린다. #45만 있는 빌드는 알리지 않아 /my가 탭 첫 화면처럼 뒤로 버튼이 없다)
+ * "records-tab" = 아래 탭 4번째가 '내 선수'(/my) 대신 '기록'(/records)이라 /my는 쌓아 여는 하위 화면이다(korleaguer-app#46부터 알린다. #45만 있는 빌드는 알리지 않아 /my가 탭 첫 화면처럼 뒤로 버튼이 없다),
+ * "three-tabs" = 아래 탭이 홈·선수·뉴스 3칸뿐이라 /records·/my는 둘 다 쌓아 여는 하위 화면이다(korleaguer-app#60부터 알린다. 이 앱은 "records-tab"을 알리지 않는다)
  */
-export type AppFeature = "stack" | "haptic" | "share" | "news-tab" | "records-tab";
+export type AppFeature = "stack" | "haptic" | "share" | "news-tab" | "records-tab" | "three-tabs";
 
 /** 지금 이 웹을 띄운 앱이 그 기능을 갖고 있나. 브라우저나 옛 앱이면 false */
 export function appHas(feature: AppFeature): boolean {
@@ -30,7 +31,7 @@ function subscribeNothing(): () => void {
 }
 
 /**
- * 앱에 이 기능이 있나("news-tab": 뉴스 탭, "records-tab": '내 선수' 자리에 기록 탭). 서버에는 앱 정보가 없어 지금 앱(둘 다 있음)으로
+ * 앱에 이 기능이 있나("news-tab": 뉴스 탭, "three-tabs": 아래 탭 3칸). 서버에는 앱 정보가 없어 지금 앱(둘 다 있음)으로
  * 보고 그리고, 브라우저에서 화면을 이어받은 뒤 실제 값으로 다시 그린다(렌더 중에 window를 바로 읽으면 서버 HTML과 첫 화면이 달라
  * React가 화면을 통째로 다시 그린다). 서버를 '없음'으로 두면 지금 앱에서 /my를 열 때마다 버튼이 뒤늦게 끼어들어 로고가 옆으로
  * 튀었다(리뷰 지적, 이슈 #262). 이제는 옛 빌드에서만 고쳐 그린다
