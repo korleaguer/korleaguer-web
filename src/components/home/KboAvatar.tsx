@@ -25,7 +25,8 @@ export default function KboAvatar({
   fetchPriority?: "high" | "low";
 }) {
   const { failed, ref, onError } = useImageFailed(photoUrl);
-  // 56px 이하 원은 화면 배율에 맞춰 줄인 사진(lib/photo). KBO 사진(94px)은 그보다 키우지 않는다
+  // 56px 이하 원은 화면 배율에 맞춰 줄인 사진(lib/photo, 2배·3배 폭 최대 168px). 지금 KBO 사진 kbo-…은 256px 편집본이라 늘 줄여 받는다.
+  // 그보다 큰 원(MLB 도전 카드 76px 머리)은 원본 256px 그대로다
   const small = smallPhoto(photoUrl, size);
   return (
     <div

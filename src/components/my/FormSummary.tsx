@@ -57,31 +57,6 @@ export function StatusBadge({ status }: { status: CardStatus }) {
   );
 }
 
-/**
- * 무대가 없는 카드의 이름 옆 상태 알약(홈 시즌 성적표). 무대 위 배지(StatusBadge)와 같은 글·점이고, 흰 카드 위라 바탕을 칠한다.
- * 위기는 빨간 바탕 대신 회색 바탕 + 빨간 점 + 본문 글자다(회색 바탕은 '좋은 시즌' 주황 바탕과 색차 9.7, 빨간 바탕은 5.6)
- */
-const PILL_TONE: Record<BadgeTone, string> = {
-  danger: "bg-neutral-pill text-foreground",
-  success: "bg-success-bg text-success-fg",
-  accent: "bg-accent-soft text-accent-ink",
-  fa: "bg-fa-bg text-fa-fg",
-  neutral: "bg-neutral-pill text-neutral-pill-fg",
-};
-
-export function StatusPill({ status }: { status: CardStatus }) {
-  const badge = statusBadge(status);
-  if (!badge) return null;
-  return (
-    <span
-      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-0.5 text-badge ${PILL_TONE[badge.tone]}`}
-    >
-      <span aria-hidden className={`size-[7px] shrink-0 rounded-full ${DOT_TONE[badge.tone]}`} />
-      {badge.text}
-    </span>
-  );
-}
-
 /*
  * 출전 줄 칸. 흐림(투명도) 없이 단색이라 카드 대비 3:1을 넘는다(경기별 막대와 같은 이유, 이슈 #273).
  * 선발·교체를 모르는 출전은 strip-played: 밝은 모드는 경기별 막대의 안 고른 색(옅은 파랑), 다크 모드는 그 색이 선발 파랑과

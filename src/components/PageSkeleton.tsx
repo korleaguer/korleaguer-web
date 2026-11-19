@@ -162,6 +162,8 @@ function ReportPanelSkeleton() {
  * 홈: 큰 카드 하나(비시즌 MLB 도전·시즌 중 층 자리) + 비시즌 성적표(흰 카드 한 장 안 줄 목록, 맨 위 줄은 펼침).
  * 성적표 자리는 예전 '내 선수' 무대 카드 격자였는데, 성적표가 줄 목록으로 바뀌어(#286) 모양·높이가 달랐다(전수조사 L253).
  * 375px에서 성적표 섹션 전체(제목·요약 줄 포함) 1,110px, 그중 흰 카드 1,040px다(실제 1,116px·1,046px, 11-19 측정).
+ * 첫 묶음(MLB 도전, 제목·'포스팅 1명' 포함)은 375px에서 688px로 실제 카드와 같다. 예전에는 599px라 내용이 오면 아래가 89px 밀렸다
+ * (11-19 운영 노시환 카드를 줄마다 재서 맞춤, 이슈 #303).
  * 이 뼈대는 getHome()보다 먼저 그리는 Suspense fallback이라 시즌 여부를 모른다. 그래서 시즌 중 홈(층)과는 모양·높이가 다르다
  */
 export function HomeSkeleton() {
@@ -170,42 +172,67 @@ export function HomeSkeleton() {
       <section>
         <SectionTitle className="w-40" />
         <Bone white className="-mt-0.5 mb-2 ml-1 h-6 w-20" />
+        {/* MLB 도전 카드(MlbChallenge, 선수 한 명·협상 중). 줄 높이·간격은 실제 카드와 같다: 띠 72px → 띠에 36px 걸친 76px 사진과
+            띠 아래 이름(30px)·흐린 한 줄(19.5px) → 16px 아래 남은 날 줄 60px → 20px 아래 거론 구단(제목 20px + 알약 두 줄 76px) →
+            16px 아래 선 밑 관련 기사(제목 20px + 기사 두 건 90px + '전체 기사 보기' 44px) */}
         <div className="card overflow-hidden p-4">
-          <div className="-mx-4 -mt-4 h-[4.5rem] bg-surface-2" />
-          <div className="-mt-8 flex items-end gap-3">
+          <div className="relative -mx-4 -mt-4 h-[4.5rem] bg-surface-2">
+            {/* 띠 오른쪽 위 흰 상태 알약('협상 중') */}
+            <Bone white className="absolute right-3 top-3 h-[1.375rem] w-[4.25rem]" />
+          </div>
+          {/* relative: 띠(알약 자리 때문에 relative)보다 나중에 그려 사진 원이 띠 위에 걸친다 */}
+          <div className="relative -mt-9 flex items-start gap-3">
             <Circle className="size-[4.75rem] border-4 border-surface" />
-            <div className="space-y-2 pb-1">
-              <Bone className="h-6 w-20" />
-              <Bone className="h-3.5 w-36" />
+            <div className="pt-[2.75rem]">
+              <Line h="h-[1.875rem]" bone="h-6 w-20" />
+              <Line h="mt-0.5 h-[1.21875rem]" bone="h-3.5 w-36" />
             </div>
           </div>
-          <div className="mt-5 flex items-end justify-between gap-3">
-            <div className="space-y-2">
-              <Bone className="h-3 w-20" />
-              <Bone className="h-11 w-28 rounded-lg" />
+          {/* 왼쪽 '협상 마감까지'·'D-13', 오른쪽 마감 시각 한 줄 + 흐린 두 줄 */}
+          <div className="mt-4 flex items-end justify-between gap-3">
+            <div>
+              <Line h="h-4" bone="h-3 w-20" />
+              <Line h="h-11" bone="h-9 w-28 rounded-lg" />
             </div>
-            <div className="flex flex-col items-end space-y-2">
-              <Bone className="h-4 w-32" />
+            <div className="flex flex-col items-end">
+              <Line h="h-5" bone="h-4 w-36" />
+              <Line h="h-4" bone="h-3 w-40" />
+              <Line h="h-4" bone="h-3 w-10" />
+            </div>
+          </div>
+          {/* '행선지로 거론된 구단' 제목 줄 + 구단 알약(32px) 두 줄, 둘째 줄 끝은 '외 n개 구단' 글자 */}
+          <div className="mt-5">
+            <div className="mb-2 flex h-5 items-center justify-between gap-3">
+              <Bone className="h-3.5 w-32" />
+              <Bone className="h-3 w-24" />
+            </div>
+            <div className="flex flex-wrap items-center gap-x-1.5 gap-y-3">
+              {["w-28", "w-28", "w-28"].map((w, i) => (
+                <Bone key={i} className={`h-8 ${w}`} />
+              ))}
+              <Bone className="ml-1 h-3 w-16" />
+            </div>
+          </div>
+          <div className="mt-4 border-t border-line pt-3">
+            <div className="flex h-5 items-center justify-between gap-3">
+              <Bone className="h-3.5 w-14" />
               <Bone className="h-3 w-40" />
             </div>
-          </div>
-          <Bone className="mt-6 h-4 w-32" />
-          <div className="mt-3 flex flex-wrap gap-2">
-            {["w-28", "w-28", "w-24"].map((w, i) => (
-              <Bone key={i} className={`h-8 ${w}`} />
-            ))}
-          </div>
-          <div className="mt-6 space-y-5 border-t border-line pt-4">
-            {[0, 1].map((i) => (
-              <div key={i} className="flex gap-3">
-                <div className="flex-1 space-y-2">
-                  <Bone className="h-3 w-32" />
-                  <Bone className="h-4 w-full" />
-                  <Bone className="h-4 w-3/4" />
+            <div className="divide-y divide-line">
+              {[0, 1].map((i) => (
+                <div key={i} className="flex items-center gap-3 py-3">
+                  <div className="flex-1 space-y-2">
+                    <Bone className="h-3 w-32" />
+                    <Bone className="h-4 w-full" />
+                    <Bone className="h-4 w-3/4" />
+                  </div>
+                  <div className="h-[66px] w-[88px] shrink-0 rounded-xl bg-surface-2" />
                 </div>
-                <div className="h-[66px] w-[88px] shrink-0 rounded-xl bg-surface-2" />
-              </div>
-            ))}
+              ))}
+            </div>
+            <div className="flex h-11 items-center justify-center">
+              <Bone className="h-3.5 w-24" />
+            </div>
           </div>
         </div>
       </section>
