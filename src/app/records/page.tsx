@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getHome, getRecords, type RecordNext, type RecordsResponse } from "@/lib/api";
 import { shareMeta, SITE_NAME } from "@/lib/share";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
+import AppShape, { type RecordsOrder } from "@/components/AppShape";
 import DataBanners from "@/components/DataBanners";
 import { RecordsSkeleton } from "@/components/PageSkeleton";
 import PageSuspense from "@/components/PageSuspense";
@@ -193,8 +194,11 @@ async function RecordsContent({ searchParams }: Pick<Props, "searchParams">) {
 
   // 시즌 중: 다음에 넘을 기록(매일 줄어듦) → 통산 순위 → 넘은 기록 → 한 시즌. 비시즌: 이번 시즌 결산(넘은 기록)부터
   const left = offseason ? [passedSection, nextSection] : [nextSection, passedSection];
+  // 앱 로딩 뼈대가 다음 실행 때 같은 순서·같은 묶음으로 그려지게 앱에 알린다(그려진 묶음만, korleaguer-app#54)
+  const order = left.flatMap((section) => (section ? [section.key as RecordsOrder[number]] : []));
   return (
     <div className="space-y-4">
+      <AppShape records={order} />
       <DataBanners dataMode={records.dataMode} statsAvailable />
       {/* 화면 제목이 '한국인 메이저리거 역대 기록'이라 같은 말을 되풀이하지 않는다 */}
       <p className="px-1 text-meta text-muted">{`박찬호부터 지금 선수까지 ${people}명`}</p>
