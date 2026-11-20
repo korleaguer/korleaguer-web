@@ -279,11 +279,8 @@ export default async function MlbChallenge({
   const twoColumns = news.length > 0 || showHistory;
   return (
     <Section id="mlb-challenge-title" title="이번 겨울 MLB 도전" aside={asOf}>
-      <ul className="-mt-0.5 mb-2 flex flex-wrap gap-1.5 px-1">
-        <li className="rounded-full bg-surface px-2.5 py-0.5 text-label text-neutral-pill-fg tabular-nums">
-          포스팅 {players.length}명
-        </li>
-      </ul>
+      {/* 못 누르는 개수라 알약 대신 흐린 글자(11-21 결정). 한 명이면 말할 것이 없어 뺀다 */}
+      {players.length > 1 && <p className="-mt-0.5 mb-2 px-1 text-label text-muted tabular-nums">포스팅 {players.length}명</p>}
       {/* PC(lg): 왼쪽 선수·거론 구단·역대 계약 접기, 오른쪽 관련 기사. 휴대폰은 위에서 아래로 */}
       <div className={`card p-4 lg:p-5 ${twoColumns ? "lg:grid lg:grid-cols-2 lg:gap-x-8" : ""}`}>
         {single && <HeadBand player={single} />}

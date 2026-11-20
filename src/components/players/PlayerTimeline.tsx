@@ -85,9 +85,8 @@ export default function PlayerTimeline({
           rows={rows}
           listHeader={
             <>
-              <p className="pb-0.5 pt-2.5 text-caption text-muted">줄을 누르면 자세히 보여요</p>
               {/* 달 눈금: 줄 띠와 같은 폭(줄 버튼의 좌우 여백은 목록과 같다) */}
-              <div aria-hidden className="relative mt-1 h-4 text-micro text-muted">
+              <div aria-hidden className="relative mt-3 h-4 text-micro text-muted">
                 {monthTicks(timeline.from, timeline.to).map((t, i) => (
                   <span key={t.month} className="absolute tabular-nums" style={{ left: `${(t.day / total) * 100}%` }}>
                     {i === 0 ? `${t.month}월` : t.month}
