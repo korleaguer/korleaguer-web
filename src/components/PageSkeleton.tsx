@@ -157,7 +157,7 @@ function ReportPanelSkeleton() {
  * 홈: 큰 카드 하나(비시즌 MLB 도전·시즌 중 층 자리) + 비시즌 성적표(흰 카드 한 장 안 줄 목록, 맨 위 줄은 펼침).
  * 성적표 자리는 예전 '내 선수' 무대 카드 격자였는데, 성적표가 줄 목록으로 바뀌어(#286) 모양·높이가 달랐다(전수조사 L253).
  * 375px에서 성적표 섹션 전체(제목·요약 줄 포함) 1,110px, 그중 흰 카드 1,040px다(실제 1,116px·1,046px, 11-19 측정).
- * 첫 묶음(MLB 도전, 제목·'포스팅 1명' 포함)은 375px에서 688px로 실제 카드와 같다. 예전에는 599px라 내용이 오면 아래가 89px 밀렸다
+ * 첫 묶음(MLB 도전, 제목 포함, 한 명이면 '포스팅 n명' 글자가 없다)은 375px에서 실제 카드와 같다. 예전에는 599px라 내용이 오면 아래가 89px 밀렸다
  * (11-19 운영 노시환 카드를 줄마다 재서 맞춤, 이슈 #303).
  * 이 뼈대는 getHome()보다 먼저 그리는 Suspense fallback이라 시즌 여부를 모른다. 그래서 시즌 중 홈(층)과는 모양·높이가 다르다
  */
@@ -166,7 +166,6 @@ export function HomeSkeleton() {
     <Frame className="space-y-7">
       <section>
         <SectionTitle className="w-40" />
-        <Bone white className="-mt-0.5 mb-2 ml-1 h-6 w-20" />
         {/* MLB 도전 카드(MlbChallenge, 선수 한 명·협상 중). 줄 높이·간격은 실제 카드와 같다: 띠 72px → 띠에 36px 걸친 76px 사진과
             띠 아래 이름(30px)·흐린 한 줄(19.5px) → 16px 아래 남은 날 줄 60px → 20px 아래 거론 구단(제목 20px + 알약 두 줄 76px) →
             16px 아래 선 밑 관련 기사(제목 20px + 기사 두 건 90px + '전체 기사 보기' 44px) */}
@@ -270,7 +269,7 @@ export function HomeSkeleton() {
 }
 
 /**
- * 선수 목록(제목 '선수' 아래, PlayerTimeline): 한 줄 안내 + 범례 + 카드 한 장(안내 줄·달 눈금 + 선수 줄 여섯: 사진·이름, 띠, 사실 한 줄).
+ * 선수 목록(제목 '선수' 아래, PlayerTimeline): 한 줄 안내 + 범례 + 카드 한 장(달 눈금 + 선수 줄 여섯: 사진·이름, 띠, 사실 한 줄).
  * 시즌 알약은 시즌이 둘 이상일 때만 보여 뼈대에는 두지 않는다(2026 시즌만 있는 지금 넣으면 카드가 47px 아래에서 시작해 뜰 때 튄다).
  * 줄 높이는 실제 줄과 같다(위아래 12 + 사진 28 + 6 + 띠 칸 18 + 4 + 사실 줄 16 = 96). 앱 뼈대(korleaguer-app LoadingSkeleton
  * PlayersShape)와 같은 모양이라 앱 뼈대가 걷힌 뒤 이 뼈대가 잠깐 보여도 이어진다(이슈 #345)
@@ -285,10 +284,7 @@ export function PlayersSkeleton() {
         <Bone onPage className="h-3 w-56" />
       </div>
       <div className="card px-4 pb-1">
-        <div className="flex h-4 items-center pb-0.5 pt-2.5 box-content">
-          <Bone className="h-3 w-36" />
-        </div>
-        <div className="mt-1 flex h-4 items-center">
+        <div className="mt-3 flex h-4 items-center">
           <Bone className="h-2.5 w-full" />
         </div>
         <div className="divide-y divide-line">
