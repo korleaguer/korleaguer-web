@@ -147,7 +147,7 @@ function dayDiff(from: string, to: string): number {
   return Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000);
 }
 
-const isOpen = (p: PostingPlayer) => p.status === "NEGOTIATING" || p.status === "UPCOMING";
+export const isOpen = (p: PostingPlayer) => p.status === "NEGOTIATING" || p.status === "UPCOMING";
 
 /** 포스팅으로 계약한 선수 한 명: 지난 겨울에 계약한 선수, 또는 올해 계약한 포스팅 선수 */
 interface Signing {
@@ -176,7 +176,7 @@ function money(years: number, usd: number, krwPerUsd: number | null): Pick<Signi
 }
 
 /** 지난 포스팅 계약(2012~, 제도를 나누지 않는다). 결렬은 넣지 않는다(사용자 결정 11-11) */
-function pastSignings(history: PostingPast[]): Signing[] {
+export function pastSignings(history: PostingPast[]): Signing[] {
   return history.flatMap((h) => {
     const d = h.deal;
     if (!d || h.daysBeforeDeadline == null || d.years == null || d.guaranteedUsd == null) return [];
@@ -196,7 +196,7 @@ function pastSignings(history: PostingPast[]): Signing[] {
 }
 
 /** 올해 계약한 포스팅 선수(합의 보도일 → 협상 마감일, 미국 날짜). 결렬·결과 확인 중은 넣지 않는다 */
-function thisYearSignings(players: PostingPlayer[]): Signing[] {
+export function thisYearSignings(players: PostingPlayer[]): Signing[] {
   return players.flatMap((p) => {
     const d = p.deal;
     if (p.status !== "SIGNED" || !d?.agreedOn || d.years == null || d.guaranteedUsd == null) return [];
@@ -217,12 +217,12 @@ function thisYearSignings(players: PostingPlayer[]): Signing[] {
   });
 }
 /** 역대 순위: 보장액이 더 큰 계약 수 + 1(같은 금액은 공동 순위, 리뷰 #235) */
-function historyRank(signings: Signing[], amount: number): number {
+export function historyRank(signings: Signing[], amount: number): number {
   return signings.filter((s) => s.amount > amount).length + 1;
 }
 
 /** 카드 안 선수 순서: 협상 중·시작 전(마감 가까운 순) → 계약 → 결과 확인 중 → 결렬 */
-function rank(p: PostingPlayer): number {
+export function rank(p: PostingPlayer): number {
   if (isOpen(p)) return 0;
   return p.status === "SIGNED" ? 1 : p.status === "CLOSED" ? 2 : 3;
 }
@@ -244,10 +244,13 @@ function rank(p: PostingPlayer): number {
 export default async function MlbChallenge({
   posting,
   asOf,
+  inSheet = false,
 }: {
   posting: PostingSummary;
   /** 제목 옆 데이터 기준 시각("기준 11월 17일(화) 09:00"). 비시즌 홈 맨 위 묶음이라 여기에 둔다(이슈 #277) */
   asOf?: string;
+  /** 홈 첫 화면 줄인 카드(MlbChallengeCompact)를 누르면 뜨는 아래 창 안 본문. 섹션 제목·카드 틀 없이 한 칸으로 그린다(창 제목이 그 자리를 맡는다) */
+  inSheet?: boolean;
 }) {
   // 잠깐 재사용: 같은 데이터면 30초 동안 그려 둔 것을 다시 쓴다(쿠키와 상관없는 부품이라 모두에게 같다).
   // 운영 서버(라즈베리파이 4)는 화면 그리기가 느려서 큰 부품을 매번 그리지 않는다.
@@ -276,44 +279,51 @@ export default async function MlbChallenge({
   // 띠가 있으면 오른쪽 칸을 띠 아래 20px에서 시작한다(띠의 lg:-mt-5가 카드 위 여백을 먹는다)
   const rightPad = single ? "lg:pt-5" : "";
   // 기사도 역대 계약도 없으면 오른쪽 칸 없이 한 칸으로 그린다
-  const twoColumns = news.length > 0 || showHistory;
+  const twoColumns = !inSheet && (news.length > 0 || showHistory);
+  const body = (
+    <>
+      {single && <HeadBand player={single} flat={inSheet} />}
+      <div className="min-w-0">
+        {single ? (
+          <PlayerHead player={single} />
+        ) : inSheet ? null : (
+          // 여러 명이면 첫 화면 줄이 이미 한 사람 한 줄이라 창 안에서는 되풀이하지 않는다
+          <PlayerRows players={players} rankOf={rankOf} total={signings.length} />
+        )}
+        {singleRank != null && <RankLine rank={singleRank} total={signings.length} />}
+        {single && isOpen(single) && single.linkedTeams && (
+          <LinkedTeams
+            counts={single.linkedTeams}
+            sheetKey={`posting-${single.nameKo}`}
+            className="mt-5"
+            pcBars={!inSheet}
+            playerPhotoUrl={single.photoUrl}
+          />
+        )}
+        {showHistory && (
+          <div className={historyOnRight && !inSheet ? "lg:hidden" : undefined}>
+            <HistorySheetRow
+              title={`역대 포스팅 계약 ${signings.length}건`}
+              hint={<Words text={`1위 ${signings[0].nameKo} ${signings[0].years}년 ${signings[0].usd} · 보장액 순`} />}
+            >
+              <SigningList signings={signings} head={false} flush />
+            </HistorySheetRow>
+          </div>
+        )}
+        <div className={inSheet ? undefined : "lg:hidden"}>
+          <PostingNews items={news} shown={NEWS_SHOWN} player={newsPlayer} heading={single ? "h4" : "h3"} />
+        </div>
+      </div>
+    </>
+  );
+  if (inSheet) return <div className="pb-4">{body}</div>;
   return (
     <Section id="mlb-challenge-title" title="이번 겨울 MLB 도전" aside={asOf}>
       {/* 못 누르는 개수라 알약 대신 흐린 글자(11-21 결정). 한 명이면 말할 것이 없어 뺀다 */}
       {players.length > 1 && <p className="-mt-0.5 mb-2 px-1 text-label text-muted tabular-nums">포스팅 {players.length}명</p>}
       {/* PC(lg): 왼쪽 선수·거론 구단·역대 계약 접기, 오른쪽 관련 기사. 휴대폰은 위에서 아래로 */}
       <div className={`card p-4 lg:p-5 ${twoColumns ? "lg:grid lg:grid-cols-2 lg:gap-x-8" : ""}`}>
-        {single && <HeadBand player={single} />}
-        <div className="min-w-0">
-          {single ? (
-            <PlayerHead player={single} />
-          ) : (
-            <PlayerRows players={players} rankOf={rankOf} total={signings.length} />
-          )}
-          {singleRank != null && <RankLine rank={singleRank} total={signings.length} />}
-          {single && isOpen(single) && single.linkedTeams && (
-            <LinkedTeams
-              counts={single.linkedTeams}
-              sheetKey={`posting-${single.nameKo}`}
-              className="mt-5"
-              pcBars
-              playerPhotoUrl={single.photoUrl}
-            />
-          )}
-          {showHistory && (
-            <div className={historyOnRight ? "lg:hidden" : undefined}>
-              <HistorySheetRow
-                title={`역대 포스팅 계약 ${signings.length}건`}
-                hint={<Words text={`1위 ${signings[0].nameKo} ${signings[0].years}년 ${signings[0].usd} · 보장액 순`} />}
-              >
-                <SigningList signings={signings} head={false} flush />
-              </HistorySheetRow>
-            </div>
-          )}
-          <div className="lg:hidden">
-            <PostingNews items={news} shown={NEWS_SHOWN} player={newsPlayer} heading={single ? "h4" : "h3"} />
-          </div>
-        </div>
+        {body}
         {twoColumns && (
           <div className={`hidden lg:block ${rightPad}`}>
             {historyOnRight ? (
@@ -329,11 +339,11 @@ export default async function MlbChallenge({
 }
 
 /** 카드 맨 위 원소속 KBO 구단 색 띠(선수가 한 명일 때). PC에서도 카드 전체 폭을 가로지른다(두 칸 위) */
-function HeadBand({ player: p }: { player: PostingPlayer }) {
+function HeadBand({ player: p, flat = false }: { player: PostingPlayer; flat?: boolean }) {
   const status = STATUS[p.status] ?? STATUS.CLOSED;
   return (
     <div
-      className="posting-band -mx-4 -mt-4 h-[4.5rem] rounded-t-[1rem] lg:col-span-2 lg:-mx-5 lg:-mt-5"
+      className={`posting-band h-[4.5rem] ${flat ? "rounded-xl" : "-mx-4 -mt-4 rounded-t-[1rem] lg:col-span-2 lg:-mx-5 lg:-mt-5"}`}
       style={{ "--team": kboTeamColor(p.kboTeam) } as CSSProperties}
     >
       {/* 휴대폰만. PC는 띠가 넓어 알약이 이름에서 멀리 떨어지므로 이름 옆에 둔다(PlayerHead) */}
@@ -660,7 +670,7 @@ const NEWS_MAX = 12;
  * 관련 기사. 여러 명이면 모두의 기사를 모아(같은 기사는 읽을거리가 많은 사본 하나) 선수 이름을 붙이고 늦은 순으로 둔다.
  * 기사 수는 서버가 정한다(선수마다 최대 12건).
  */
-function newsOf(players: PostingPlayer[]) {
+export function newsOf(players: PostingPlayer[]) {
   const multi = players.length > 1;
   return uniqueByUrl(
     players.flatMap((p) => p.news.map((n) => ({ ...n, who: multi ? p.nameKo : null, playerPhotoUrl: p.photoUrl }))),

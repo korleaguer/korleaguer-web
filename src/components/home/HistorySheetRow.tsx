@@ -16,11 +16,17 @@ const HISTORY_STATE = "korleaguerHistorySheet";
  */
 export default function HistorySheetRow({
   title,
+  sheetTitle = title,
+  stateKey = HISTORY_STATE,
   hint,
   children,
   className = "mt-4 border-t border-line",
 }: {
   title: string;
+  /** 창 머리 제목. 줄 제목과 다를 때만(줄 제목에는 위 카드의 이름이 이미 있어 빼고, 창에서는 이름을 붙인다) */
+  sheetTitle?: string;
+  /** 주소 기록 표시 이름. 이 창 안에 다른 HistorySheetRow가 들어가면 서로 달라야 한다(같으면 바깥 창을 열 때 안쪽 창도 같이 열린다) */
+  stateKey?: string;
   /** 둘째 줄. 금액처럼 아이폰에서 갈리면 안 되는 낱말은 Words로 감싸 넘긴다 */
   hint: ReactNode;
   /** 창 몸에 그릴 목록 */
@@ -28,7 +34,7 @@ export default function HistorySheetRow({
   className?: string;
 }) {
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const { open, openSheet, close } = useHistorySheet(HISTORY_STATE, buttonRef);
+  const { open, openSheet, close } = useHistorySheet(stateKey, buttonRef);
   return (
     <div className={className}>
       <button
@@ -52,7 +58,7 @@ export default function HistorySheetRow({
         </span>
       </button>
       {open && (
-        <BottomSheet title={title} onClose={close}>
+        <BottomSheet title={sheetTitle} onClose={close}>
           {children}
         </BottomSheet>
       )}
