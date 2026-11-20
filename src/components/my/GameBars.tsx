@@ -397,7 +397,9 @@ export default function GameBars({ slots, role, days, minors = false, name }: Pr
         <span>{minors ? "빈칸은 뛰지 않은 날" : "빈칸은 경기 없는 날"}</span>
       </p>
 
-      <div className="mt-3 flow-root rounded-xl bg-surface-2 px-3 py-2.5">
+      {/* sm 이상은 같은 줄에 카드가 나란히 서므로 고른 경기 칸의 최소 높이를 둔다. 경기 요약이 한 줄이거나 두 줄이고 '포스트시즌' 줄이 있다 없다 해서
+          칸이 66~94px로 달라 큰 숫자 자리와 카드 높이가 갈렸다(사용자 11-16·11-21 '들쭉날쭉', 운영 7일 4명 측정). 가장 큰 94px(5.9rem, 큰 글씨는 따라 커진다)에 맞춘다 */}
+      <div className="mt-3 flow-root rounded-xl bg-surface-2 px-3 py-2.5 sm:min-h-[5.9rem]">
         {current && (
           <>
             {/* 보이는 머리 줄. 화면 낭독기는 아래 바뀌는 글(aria-live) 안의 같은 줄을 읽어서 여기서는 감춘다.

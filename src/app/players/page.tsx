@@ -6,6 +6,7 @@ import ApiErrorNotice from "@/components/ApiErrorNotice";
 import DataBanners, { StatsFailedBanner } from "@/components/DataBanners";
 import { PlayersSkeleton } from "@/components/PageSkeleton";
 import PlayerCard from "@/components/players/PlayerCard";
+import LeagueInfo from "@/components/LeagueInfo";
 import PlayerTimeline from "@/components/players/PlayerTimeline";
 import StateNotice from "@/components/StateNotice";
 import PageSuspense from "@/components/PageSuspense";
@@ -34,7 +35,10 @@ const EAGER_CARDS = 6;
 export default function PlayersPage({ searchParams }: PageProps<"/players">) {
   return (
     <div className="space-y-4">
-      <h1 className="px-1 text-display">선수</h1>
+      <div className="flex items-center gap-1.5 px-1">
+        <h1 className="text-display">선수</h1>
+        <LeagueInfo title="선수 기록" />
+      </div>
       <PageSuspense fallback={<PlayersSkeleton />}>
         <PlayersContent searchParams={searchParams} />
       </PageSuspense>

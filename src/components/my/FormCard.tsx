@@ -1,7 +1,9 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
-import type { HitterPeriod, MyPlayer, PitcherPeriod } from "@/lib/api";
+import type { GameLine, HitterPeriod, MyPlayer, PitcherPeriod } from "@/lib/api";
 import { formatEra, formatRate } from "@/lib/format";
+import { leagueWords, periodEraPlus } from "@/lib/leagueWords";
+import { periodWrcPlus } from "@/lib/wrcTrend";
 import { teamColor } from "@/lib/teams";
 import BandPhoto from "./BandPhoto";
 import { Notice, Numbers, SeasonNumbers, StatusBadge, StatusSrText, SummaryLines } from "./FormSummary";
@@ -93,6 +95,9 @@ export default async function FormCard({
 
         {statsAvailable && <SummaryLines entry={entry} />}
 
+        {/* 아래 묶음(큰 숫자·막대·기록 링크)은 카드 바닥에 붙인다: 같은 줄 카드는 높이가 같고(목록이 stretch), 위 줄이 선수마다
+            있다 없다 해도 큰 숫자와 바닥선이 같은 자리에 선다(사용자 11-16·11-21 '들쭉날쭉', 한 줄 카드 244·273·297px) */}
+        <div className="mt-auto flex flex-col">
         {!statsAvailable ? (
           <Notice>아직 경기 기록을 받지 못했어요.</Notice>
         ) : basis === "SEASON" && entry.seasonTotals ? (
@@ -107,7 +112,7 @@ export default async function FormCard({
         ) : period ? (
           <>
             {entry.hitting && (
-              <HitterNumbers period={periodLabel(basis, level, days, entry.isFallback)} hitting={entry.hitting} minors={minors} />
+              <HitterNumbers period={periodLabel(basis, level, days, entry.isFallback)} hitting={entry.hitting} games={games} minors={minors} />
             )}
             {entry.pitching && (
               <PitcherNumbers period={periodLabel(basis, level, days, entry.isFallback)} pitching={entry.pitching} minors={minors} />
@@ -132,7 +137,7 @@ export default async function FormCard({
         {/* 경기별 기록은 카드 안에서 펼치지 않고(아래 카드가 밀렸다, 이슈 #326) 선수 페이지 '경기 기록' 칸으로 보낸다.
             카드 전체가 선수 페이지 링크(after:absolute)라 이 링크는 그 위(relative z-10)에 올려 제 주소로 간다 */}
         {showsGames && (
-          <div data-no-press className="relative z-10 mt-auto pt-3">
+          <div data-no-press className="relative z-10 pt-3">
             <Link
               href={`/players/${player.id}#games-title`}
               className="press-soft flex min-h-11 w-full items-center justify-center gap-0.5 rounded-lg py-2 text-label text-accent-ink hover:underline"
@@ -145,22 +150,23 @@ export default async function FormCard({
             </Link>
           </div>
         )}
+        </div>
       </div>
     </li>
   );
 }
 
-function HitterNumbers({ period, hitting, minors }: { period: string; hitting: HitterPeriod; minors: boolean }) {
+function HitterNumbers({ period, hitting, games, minors }: { period: string; hitting: HitterPeriod; games: GameLine[]; minors: boolean }) {
   return (
     <Numbers
       label={`${period} 타율`}
       value={formatRate(hitting.avg)}
       note={
         <RateDelta
-          value={hitting.avg}
-          season={hitting.seasonAvg}
+          plus={periodWrcPlus(games)}
           atBats={hitting.atBats}
           played={hitting.games > 0}
+          hasAvg={hitting.avg != null}
           minors={minors}
         />
       }
@@ -181,8 +187,7 @@ function PitcherNumbers({ period, pitching, minors }: { period: string; pitching
       value={formatEra(pitching.era)}
       note={
         <EraDelta
-          value={pitching.era}
-          season={pitching.seasonEra}
+          era={pitching.era}
           outs={pitching.outs}
           inningsText={pitching.inningsText}
           played={pitching.games > 0}
@@ -199,107 +204,78 @@ function PitcherNumbers({ period, pitching, minors }: { period: string; pitching
 }
 
 /**
- * 비교하는 시즌 이름. 마이너 카드의 시즌 값은 그해 마이너 전체(여러 단계를 더한 값)라 '마이너 시즌'이다.
- * 그냥 '시즌 .262보다'면 트리플A 최근 기록을 메이저 시즌과 견준 것처럼 읽혔다(11-17 점검)
- */
-function seasonName(minors: boolean): string {
-  return minors ? "마이너 시즌" : "시즌";
-}
-
-/**
- * 기간 타율을 시즌과 견줘도 되는 가장 적은 타수. 이보다 적으면 차이를 색·화살표로 보이지 않고 '참고용'이라고만 쓴다.
- * 타율의 표본 흔들림(표준편차)이 20타수에서 약 .10(√(.25×.75÷20))이라, 그 안쪽 차이(▲.142 같은 값)는 실력 차이로 읽으면 안 된다.
+ * 기간 타율을 리그 평균과 견줘도 되는 가장 적은 타수. 이보다 적으면 말 없이 '참고용'이라고만 쓴다.
+ * 타율의 표본 흔들림(표준편차)이 20타수에서 약 .10(√(.25×.75÷20))이라, 그 안쪽 차이는 실력 차이로 읽으면 안 된다.
  * 타자 기간 카드에는 타석 기준(STEADY)이 따로 없어 이 카드에 맞게 정했다. 한 주(7일) 정규 타자가 대개 20타수 안팎이라,
  * 한 주를 거의 다 뛴 선수는 비교하고 반 주만 뛴 선수(6타수 등)는 참고용으로 갈린다(운영 데이터 11-19: 이정후 7일 21타수, 송성문 7일 6·14일 9타수)
  */
 const MIN_AT_BATS_FOR_DELTA = 20;
 
-/** "시즌 .301보다 ▲.047"(마이너 카드는 "마이너 시즌 .262보다"). 타수가 없거나 시즌 기록이 없으면 그 사실만. 타수가 적으면 "시즌 .191 · 6타수라 참고용" */
+/**
+ * 큰 숫자(타율) 아래 판정 한 줄: 기간 기록을 리그 평균과 견준 말('평균보다 30% 잘 침', 사용자 11-21). 시즌 타율과 견줘 ▲▼로 말하던 것을 대신한다.
+ * 타율 하나로 좋아졌는지 말하지 않는다(볼넷·장타가 빠진다). 말은 기간 wRC+(lib/wrcTrend periodWrcPlus)에서 나온다.
+ * 마이너 기록은 그 단계 리그 평균이 화면에 없어(메이저 평균으로 재면 높게 나온다) 견주지 않는다.
+ * 평균 위만 주황(좋은 활약 색), 아래는 색 없이 본문 글자. 카드마다 이 줄은 한 줄 자리를 늘 가진다(같은 줄 카드 높이를 맞추려고)
+ */
 function RateDelta({
-  value,
-  season,
+  plus,
   atBats,
   played,
+  hasAvg,
   minors,
 }: {
-  value: number | null;
-  season: number | null;
+  plus: number | null;
   atBats: number;
   played: boolean;
+  hasAvg: boolean;
   minors: boolean;
 }) {
   if (!played) return <>이 기간 출전 없음</>;
-  if (value == null) return <>이 기간 타수 없음</>;
-  if (season == null) return null;
-  if (atBats < MIN_AT_BATS_FOR_DELTA) return <>{`${seasonName(minors)} ${formatRate(season)} · ${atBats}타수라 참고용`}</>;
-  // 소수 셋째 자리에서 비교해 화면 숫자와 어긋나지 않게 한다. 타율은 높을수록 좋다
-  const diff = Math.round(value * 1000) - Math.round(season * 1000);
-  return (
-    <Delta
-      seasonText={`${seasonName(minors)} ${formatRate(season)}`}
-      diff={diff}
-      better={diff > 0}
-      amount={formatRate(Math.abs(diff) / 1000)}
-    />
-  );
+  if (!hasAvg) return <>이 기간 타수 없음</>;
+  if (minors) return <>마이너라 평균 비교 없음</>;
+  // 표본 문턱을 먼저 본다: 경기 세부 칸이 없어 값을 못 만든 카드도 '참고용'은 말해야 한다
+  if (atBats < MIN_AT_BATS_FOR_DELTA) return <>{`${atBats}타수라 참고용`}</>;
+  if (plus == null) return <>&nbsp;</>;
+  return <Verdict plus={plus} pitcher={false} />;
 }
 
 /**
- * 기간 평균자책점을 시즌과 견줘도 되는 가장 적은 아웃 수(9아웃 = 3이닝). 이보다 적으면 색·화살표 없이 '참고용'이라고만 쓴다.
+ * 기간 평균자책점을 리그 평균과 견줘도 되는 가장 적은 아웃 수(9아웃 = 3이닝). 이보다 적으면 말 없이 '참고용'이라고만 쓴다.
  * 3이닝 평균자책점은 실점 한 점에 4.5점이 움직이고, 불펜 투수의 한 주 등판이 대개 3이닝 안팎이라 한 번 던진 투수와 갈린다
  */
 const MIN_OUTS_FOR_DELTA = 9;
 
-/** "시즌 3.12보다 ▼0.85". 평균자책점은 낮을수록 좋다. 등판이 없거나 시즌 기록이 없으면 그 사실만. 이닝이 적으면 "시즌 3.12 · 2⅓이닝이라 참고용" */
+/** 투수 판정 한 줄: 기간 평균자책점을 리그 평균 평균자책점과 견준 말('평균보다 30% 잘 막음'). 기준은 타자 RateDelta와 같다 */
 function EraDelta({
-  value,
-  season,
+  era,
   outs,
   inningsText,
   played,
   minors,
 }: {
-  value: number | null;
-  season: number | null;
+  era: number | null;
   outs: number;
   inningsText: string;
   played: boolean;
   minors: boolean;
 }) {
   if (!played) return <>이 기간 등판 없음</>;
-  if (season == null) return null;
-  if (value == null) return <>{`${seasonName(minors)} ${formatEra(season)}`}</>;
-  if (outs < MIN_OUTS_FOR_DELTA) return <>{`${seasonName(minors)} ${formatEra(season)} · ${inningsText}이닝이라 참고용`}</>;
-  // 소수 둘째 자리(화면 숫자)에서 비교한다
-  const diff = Math.round(value * 100) - Math.round(season * 100);
-  return (
-    <Delta
-      seasonText={`${seasonName(minors)} ${formatEra(season)}`}
-      diff={diff}
-      better={diff < 0}
-      amount={(Math.abs(diff) / 100).toFixed(2)}
-    />
-  );
+  if (minors) return <>마이너라 평균 비교 없음</>;
+  if (outs < MIN_OUTS_FOR_DELTA) return <>{`${inningsText}이닝이라 참고용`}</>;
+  if (era == null) return <>&nbsp;</>;
+  // 자책점이 없으면 ERA+가 상한(300)에 붙어 '평균보다 200%'가 되니 퍼센트 대신 사실만
+  if (era <= 0) return <span className="font-semibold text-hot-ink">자책점 없음</span>;
+  return <Verdict plus={periodEraPlus(era)} pitcher />;
 }
 
-/**
- * 시즌과 비교한 차이. 화살표는 숫자가 오른 쪽(▲)·내린 쪽(▼), 좋아지면 불꽃 주황(좋은 활약 색), 나빠지면 색 없이 본문 글자.
- * 예전에는 증권 화면처럼 나빠짐을 진한 파랑으로 칠했는데, 다른 화면의 파랑은 1위·좋음·고른 칸이라 같은 색이
- * 정반대 뜻이 됐다(11-17 점검, 사용자 결정 '추천대로'). 화면 낭독기는 "좋아짐/나빠짐"도 읽는다.
- */
-function Delta({ seasonText, diff, better, amount }: { seasonText: string; diff: number; better: boolean; amount: string }) {
-  if (diff === 0) return <>{`${seasonText} · 차이 없음`}</>;
-  const up = diff > 0;
+/** 리그 대비 말 한 줄. 평균 위만 주황 굵게(좋은 활약 색), 비슷·아래는 색 없이 본문 글자. 숫자는 굵게 */
+function Verdict({ plus, pitcher }: { plus: number; pitcher: boolean }) {
+  const w = leagueWords(plus, pitcher);
   return (
-    <span className="inline-flex items-center gap-0.5">
-      {`${seasonText}보다`}
-      <span className={`ml-0.5 inline-flex items-center gap-0.5 font-semibold ${better ? "text-hot-ink" : "text-foreground"}`}>
-        <svg aria-hidden viewBox="0 0 10 10" className={`size-2.5 fill-current ${up ? "" : "rotate-180"}`}>
-          <path d="M5 1.5 9 8.5H1z" />
-        </svg>
-        <span className="sr-only">{`${up ? "높음" : "낮음"}, ${better ? "좋아짐" : "나빠짐"}`}</span>
-        <span className="tabular-nums">{amount}</span>
-      </span>
+    <span className={w.tone === "up" ? "font-semibold text-hot-ink" : "text-foreground"}>
+      {w.lead}
+      {w.num && <span className="font-bold tabular-nums">{w.num}</span>}
+      {w.tail}
     </span>
   );
 }

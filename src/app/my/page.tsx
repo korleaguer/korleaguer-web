@@ -6,6 +6,7 @@ import ApiErrorNotice from "@/components/ApiErrorNotice";
 import AppShape from "@/components/AppShape";
 import DataBanners, { StatsFailedBanner } from "@/components/DataBanners";
 import { MySkeleton } from "@/components/PageSkeleton";
+import LeagueInfo from "@/components/LeagueInfo";
 import FormCard from "@/components/my/FormCard";
 import MyHeader from "@/components/my/MyHeader";
 import { PhotoPriority } from "@/components/my/PhotoPriority";
@@ -99,11 +100,17 @@ async function MyContent({ searchParams }: Pick<PageProps<"/my">, "searchParams"
         <StatsFailedBanner title="내 선수 기록을 불러오지 못했어요" detail={null} />
       ) : my && picked.length > 0 ? (
         <>
-          {!seasonView && <PeriodTabs days={days} />}
+          {!seasonView && (
+            // 기간 고르기 옆 ⓘ: 카드의 '평균보다 12% 잘 침' 풀이(지표 이름은 화면에 쓰지 않는다, 사용자 11-21)
+            <div className="flex items-center gap-1">
+              <PeriodTabs days={days} />
+              <LeagueInfo title="내 선수 기록" />
+            </div>
+          )}
           {/* 첫 줄(PC 세 칸) 카드만 무대 사진을 바로 받고, 나머지는 화면에 다가올 때 받는다(6명이면 화면 밖 사진까지 처음에 다 받았다).
               휴대폰 한 칸이면 2·3번째도 바로 받지만(사진 한 장 약 17KB) 서버는 칸 수를 모른다. 바로 받을지는 카드 props가 아니라
               감싸서 건넨다(카드는 "use cache"라 props가 캐시 열쇠다, PhotoPriority) */}
-          <ul className="grid items-start gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="grid items-stretch gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {picked.map((entry, index) => (
               <PhotoPriority key={entry.player.id} eager={index < 3}>
                 <FormCard entry={entry} days={my.days} statsAvailable={my.statsAvailable} />
