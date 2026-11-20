@@ -1,5 +1,7 @@
 "use client"; // 로고가 안 뜰 때(onError) 색 점으로 바꿔야 해서 클라이언트 컴포넌트다.
 
+import type { CSSProperties } from "react";
+import { teamFill } from "@/lib/teams";
 import { useImageFailed } from "@/lib/useImageFailed";
 
 export type TeamMarkSize = "sm" | "md";
@@ -15,13 +17,15 @@ interface Props {
   logoUrl: string | null;
   color: string;
   size: TeamMarkSize;
+  /** 경기 카드 점수 띠: 흰 둥근 칸에 넣고 팀 색 고리를 두른다. 팀 약어를 넘기면 어두운 모드에서 어두운 팀만 밝힌 색을 쓴다 */
+  ringTeam?: string | null;
 }
 
 /**
  * 팀 로고. 밝은 모드는 로고만, 다크 모드는 흰 둥근 칸 안에 넣는다(어두운 팀 로고가 바탕에 묻히지 않게).
  * 로고가 없거나 안 뜨면 팀 색 점. 옆에 팀 이름이 있으니 화면 낭독기는 건너뛴다.
  */
-export default function TeamMark({ logoUrl, color, size }: Props) {
+export default function TeamMark({ logoUrl, color, size, ringTeam }: Props) {
   const { failed, ref, onError } = useImageFailed(logoUrl);
 
   if (!logoUrl || failed) {
@@ -35,6 +39,30 @@ export default function TeamMark({ logoUrl, color, size }: Props) {
   }
 
   const { box, px } = SIZES[size];
+  if (ringTeam !== undefined) {
+    const fill = teamFill(ringTeam);
+    // 고리 색은 사진 원 바탕과 같은 teamFill. 흰 칸은 두 모드 모두 같다(로고가 어두운 팀이라도 묻히지 않게)
+    return (
+      <span
+        aria-hidden
+        className={`mx-0.5 inline-flex ${box} shrink-0 items-center justify-center rounded-full bg-white p-0.5 shadow-[0_0_0_2.5px_var(--ring-l)] dark:shadow-[0_0_0_2.5px_var(--ring-d)]`}
+        style={{ "--ring-l": fill?.light ?? color, "--ring-d": fill?.dark ?? color } as CSSProperties}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element -- 우리 서버를 거치지 않고 브라우저가 직접 받는다 */}
+        <img
+          ref={ref}
+          src={logoUrl}
+          alt=""
+          width={px}
+          height={px}
+          loading="lazy"
+          referrerPolicy="no-referrer"
+          onError={onError}
+          className="size-full object-contain"
+        />
+      </span>
+    );
+  }
   return (
     <span
       aria-hidden

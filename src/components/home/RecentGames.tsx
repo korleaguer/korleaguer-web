@@ -151,7 +151,7 @@ function TeamSide({ teamKo, teamAbbr, end = false }: { teamKo: string; teamAbbr:
     <span
       className={`flex min-w-0 items-center gap-1.5 text-label ${end ? "flex-row-reverse text-right" : ""}`}
     >
-      <TeamMark logoUrl={teamLogoUrl(teamAbbr)} color={teamColor(teamAbbr)} size="md" />
+      <TeamMark logoUrl={teamLogoUrl(teamAbbr)} color={teamColor(teamAbbr)} size="md" ringTeam={teamAbbr} />
       <span className="truncate">{teamKo}</span>
     </span>
   );

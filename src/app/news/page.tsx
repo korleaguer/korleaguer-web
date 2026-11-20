@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import Link from "next/link";
-import { getNewsList, type NewsListPlayer } from "@/lib/api";
+import { getNewsList, getTeamAbbrById, type NewsListPlayer } from "@/lib/api";
 import { readMyPlayers } from "@/lib/myPlayers";
 import { NEWS_QUERY_MAX, newsHref } from "@/lib/news";
 import { hasNewSince, NEWS_SEEN_COOKIE, parseSeen, toSeconds } from "@/lib/newsSeen";
@@ -52,10 +52,11 @@ async function NewsContent({ searchParams }: Pick<Props, "searchParams">) {
   // 검색어(이슈 #214). api 상한보다 길면 잘라서 찾는다
   const rawQ = params.q;
   const q = typeof rawQ === "string" && rawQ.trim() !== "" ? rawQ.trim().slice(0, NEWS_QUERY_MAX) : null;
-  const [result, myIds, cookieStore] = await Promise.all([
+  const [result, myIds, cookieStore, teams] = await Promise.all([
     getNewsList(tooLong ? null : wanted, null, q),
     readMyPlayers(),
     cookies(),
+    getTeamAbbrById(),
   ]);
   if (!result.ok) return <ApiErrorNotice failure={result.failure} />;
 
@@ -98,7 +99,7 @@ async function NewsContent({ searchParams }: Pick<Props, "searchParams">) {
     // PC: 왼쪽 칸에 선수 목록(내려도 따라온다), 오른쪽 칸에 검색창·자주 나온 말과 목록(줄이 너무 길지 않게 폭을 묶는다)
     <div className="space-y-3 lg:grid lg:grid-cols-[12rem_minmax(0,48rem)] lg:grid-rows-[auto_1fr] lg:items-start lg:gap-x-6 lg:gap-y-3 lg:space-y-0">
       <div className="lg:sticky lg:top-6 lg:col-start-1 lg:row-span-2 lg:row-start-1">
-        <NewsPlayerPicker players={players} selected={unknown ? null : player} mine={mine} fresh={fresh} query={q} />
+        <NewsPlayerPicker players={players} teams={teams} selected={unknown ? null : player} mine={mine} fresh={fresh} query={q} />
         {/* 검색 결과는 그 선수 기사를 다 본 것이 아니라 본 때를 남기지 않는다(처음 온 기기의 시작값만) */}
         <NewsSeenMarker
           players={players}

@@ -59,7 +59,7 @@ function ActiveTag() {
 }
 
 /** 통산 순위 한 줄: 등수 · 사진 · 이름(현역 표시 또는 뛴 해) · 값 */
-export function LeaderRow({ leader, unit }: { leader: RecordLeader; unit: string }) {
+export function LeaderRow({ leader, unit, teamAbbr = null }: { leader: RecordLeader; unit: string; teamAbbr?: string | null }) {
   return (
     <li className={leader.active ? "bg-accent-soft/40" : undefined}>
       <RowShell playerId={leader.playerId}>
@@ -70,7 +70,7 @@ export function LeaderRow({ leader, unit }: { leader: RecordLeader; unit: string
           {/* 낭독기는 '6 이정후'가 아니라 '6위 이정후'로(역대 포스팅 계약 목록과 같은 방식) */}
           <span className="sr-only">위</span>
         </span>
-        <PlayerAvatar nameKo={leader.nameKo} photoUrl={leader.photoUrl} teamAbbr={null} size={28} />
+        <PlayerAvatar nameKo={leader.nameKo} photoUrl={leader.photoUrl} teamAbbr={teamAbbr} size={28} />
         {/* 이름 칸 기본 폭 3.5rem(세 글자 이름): 값과 › 자리를 빼고 이만큼도 안 남으면 값이 다음 줄 오른쪽으로 내려간다 */}
         <span className="flex min-w-0 flex-1 basis-[3.5rem] flex-wrap items-center gap-x-2 gap-y-0.5">
           <span className="text-heading">{leader.nameKo}</span>
@@ -96,11 +96,11 @@ export function LeaderRow({ leader, unit }: { leader: RecordLeader; unit: string
  * 진행 막대(지금 값 ÷ 넘을 값)는 뺐다. api가 선수마다 남은 비율이 가장 작은 기록을 먼저 주므로 막대가 늘 85~95%에 몰려
  * 차이가 안 보였고, 남은 수가 가장 적은 선수의 막대가 가장 짧기도 해서 큰 남은 수와 거꾸로 읽혔다(11-17 UI/UX 전수조사)
  */
-export function NextRow({ next }: { next: RecordNext }) {
+export function NextRow({ next, teamAbbr = null }: { next: RecordNext; teamAbbr?: string | null }) {
   return (
     <li>
       <RowShell playerId={next.playerId}>
-        <PlayerAvatar nameKo={next.nameKo} photoUrl={next.photoUrl} teamAbbr={null} size={44} />
+        <PlayerAvatar nameKo={next.nameKo} photoUrl={next.photoUrl} teamAbbr={teamAbbr} size={44} />
         <span className="min-w-0 flex-1">
           <span className="flex flex-wrap items-baseline justify-between gap-x-3">
             <span className="min-w-0 flex-1 basis-[6rem]">
@@ -151,7 +151,7 @@ function when(items: RecordPassed[]): string {
   return months.length === 1 ? `${months[0]}월` : `${months[0]}–${months[months.length - 1]}월`;
 }
 
-export function PassedRow({ group }: { group: PassedGroup }) {
+export function PassedRow({ group, teamAbbr = null }: { group: PassedGroup; teamAbbr?: string | null }) {
   const { first, items } = group;
   // 넘은 순서대로(작은 값부터) 읽히게
   const names = [...items].sort((a, b) => a.passedValue - b.passedValue);
@@ -160,7 +160,7 @@ export function PassedRow({ group }: { group: PassedGroup }) {
   return (
     <li className="@container">
       <RowShell playerId={first.playerId}>
-        <PlayerAvatar nameKo={first.nameKo} photoUrl={first.photoUrl} teamAbbr={null} size={28} />
+        <PlayerAvatar nameKo={first.nameKo} photoUrl={first.photoUrl} teamAbbr={teamAbbr} size={28} />
         <span className="w-12 shrink-0 text-heading @max-[18rem]:w-auto">{first.nameKo}</span>
         {/* 기록 이름표는 누르는 것이 아니라 흐린 글자로 둔다(알약은 누르는 것·드문 상태만, 사용자 규칙 11-17) */}
         <span className="shrink-0 text-label text-muted">{first.label}</span>

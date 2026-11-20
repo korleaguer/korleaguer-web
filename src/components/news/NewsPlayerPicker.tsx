@@ -21,12 +21,15 @@ import StarIcon from "@/components/my/StarIcon";
  */
 export default function NewsPlayerPicker({
   players,
+  teams = {},
   selected,
   mine = [],
   fresh = [],
   query = null,
 }: {
   players: NewsListPlayer[];
+  /** 명단 선수 번호 → 팀 약어(사진 원 바탕 팀 색). 없으면 회색 원 */
+  teams?: Record<number, string | null>;
   selected: string | null;
   /** 지금 검색어. 선수를 바꿔도 그대로 찾는다 */
   query?: string | null;
@@ -78,7 +81,7 @@ export default function NewsPlayerPicker({
                   {p.posting ? (
                     <KboAvatar nameKo={p.nameKo} photoUrl={p.photoUrl} size={24} />
                   ) : (
-                    <PlayerAvatar nameKo={p.nameKo} photoUrl={p.photoUrl} teamAbbr={null} size={24} />
+                    <PlayerAvatar nameKo={p.nameKo} photoUrl={p.photoUrl} teamAbbr={p.playerId === null ? null : (teams[p.playerId] ?? null)} size={24} />
                   )}
                   {dot && (
                     <span

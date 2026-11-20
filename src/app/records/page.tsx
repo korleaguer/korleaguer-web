@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getHome, getRecords, type RecordNext, type RecordsResponse } from "@/lib/api";
+import { getHome, getRecords, getTeamAbbrById, type RecordNext, type RecordsResponse } from "@/lib/api";
 import { shareMeta, SITE_NAME } from "@/lib/share";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import AppShape, { type RecordsOrder } from "@/components/AppShape";
@@ -103,7 +103,8 @@ function StatPills({
 }
 
 async function RecordsContent({ searchParams }: Pick<Props, "searchParams">) {
-  const [params, result, home] = await Promise.all([searchParams, getRecords(), getHome()]);
+  const [params, result, home, teams] = await Promise.all([searchParams, getRecords(), getHome(), getTeamAbbrById()]);
+  const teamOf = (id: number | null) => (id === null ? null : (teams[id] ?? null));
   if (!result.ok) {
     if (result.failure === "notFound") {
       // 바로 위 화면 제목이 '한국인 메이저리거 역대 기록'이라 같은 말을 되풀이하지 않는다
@@ -133,7 +134,7 @@ async function RecordsContent({ searchParams }: Pick<Props, "searchParams">) {
     <Section key="next" title={offseason ? `${records.season + 1}년에 넘을 기록` : "다음에 넘을 기록"} aside="남은 수">
       <ul className="card divide-y divide-line overflow-hidden">
         {nexts.map((n) => (
-          <NextRow key={`${n.nameKo}-${n.category}`} next={n} />
+          <NextRow key={`${n.nameKo}-${n.category}`} next={n} teamAbbr={teamOf(n.playerId)} />
         ))}
       </ul>
     </Section>
@@ -146,14 +147,14 @@ async function RecordsContent({ searchParams }: Pick<Props, "searchParams">) {
       <Section key="passed" title={`${records.season}년에 넘은 기록`} aside={`${meaningful.length}번`}>
         <ul className="card divide-y divide-line overflow-hidden">
           {passed.slice(0, shownPassed).map((g) => (
-            <PassedRow key={g.key} group={g} />
+            <PassedRow key={g.key} group={g} teamAbbr={teamOf(g.first.playerId)} />
           ))}
         </ul>
         {passed.length > shownPassed && (
           <ShowMore moreLabel={`${passed.length - shownPassed}개 더 보기`}>
             <ul className="card mt-2 divide-y divide-line overflow-hidden">
               {passed.slice(shownPassed).map((g) => (
-                <PassedRow key={g.key} group={g} />
+                <PassedRow key={g.key} group={g} teamAbbr={teamOf(g.first.playerId)} />
               ))}
             </ul>
           </ShowMore>
@@ -172,14 +173,14 @@ async function RecordsContent({ searchParams }: Pick<Props, "searchParams">) {
       />
       <ul className="card divide-y divide-line overflow-hidden">
         {category.leaders.slice(0, TOP).map((l) => (
-          <LeaderRow key={l.nameKo} leader={l} unit={category.unit} />
+          <LeaderRow key={l.nameKo} leader={l} unit={category.unit} teamAbbr={teamOf(l.playerId)} />
         ))}
       </ul>
       {category.leaders.length > TOP && (
         <ShowMore moreLabel={`${category.leaders.length - TOP}명 더 보기`}>
           <ul className="card mt-2 divide-y divide-line overflow-hidden">
             {category.leaders.slice(TOP).map((l) => (
-              <LeaderRow key={l.nameKo} leader={l} unit={category.unit} />
+              <LeaderRow key={l.nameKo} leader={l} unit={category.unit} teamAbbr={teamOf(l.playerId)} />
             ))}
           </ul>
         </ShowMore>
