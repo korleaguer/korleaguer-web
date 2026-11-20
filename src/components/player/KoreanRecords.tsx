@@ -52,7 +52,7 @@ export default function KoreanRecords({ rows }: { rows: RecordNext[] }) {
               <div aria-hidden className="mt-2 h-1.5 overflow-hidden rounded-full bg-surface-2">
                 <div
                   className="h-full rounded-full bg-accent"
-                  style={{ width: `${Math.min(100, Math.max(0, (n.value / n.targetValue) * 100))}%` }}
+                  style={{ width: `${Math.min(100, Math.max(0, n.targetValue > 0 ? (n.value / n.targetValue) * 100 : 0))}%` }}
                 />
               </div>
               <p className="mt-1.5 text-meta text-muted">
