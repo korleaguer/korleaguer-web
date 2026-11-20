@@ -322,7 +322,7 @@ export default function GameCalendar({
               disabled={empty}
               aria-label={empty ? `${m.month}월 경기 없음` : `${m.month}월`}
               onClick={() => pickMonth(m.key)}
-              className={`press tap-target min-w-10 flex-1 shrink-0 rounded-full px-1.5 py-1.5 text-label tabular-nums transition ${
+              className={`press tap-target min-w-10 flex-1 shrink-0 rounded-full px-1.5 py-1.5 text-label tabular-nums transition motion-reduce:transition-none ${
                 on
                   ? "bg-accent-soft text-accent-ink"
                   : empty
