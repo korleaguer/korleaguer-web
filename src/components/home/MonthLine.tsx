@@ -76,6 +76,7 @@ function smoothSegments(p: Pt[]): string[] {
 
 /** 곡선 위 점들(글자가 선과 겹치는지 가늠하는 데 쓴다): 구간마다 t를 10등분 */
 function curveSamples(p: Pt[]): { x: number; y: number }[] {
+  if (p.length < 2) return [];
   const out = [{ x: p[0].x, y: p[0].y }];
   smoothBeziers(p).forEach((b, i) => {
     const [x0, y0] = [p[i].x, p[i].y];
@@ -330,8 +331,10 @@ export default function MonthLine({ months, pitcher }: { months: SeasonMonth[]; 
   const farFirst = first && first.i === 0 ? Math.abs(first.y - y100) : 99;
   const farLast = last && last.i === lastIdx ? Math.abs(last.y - y100) : 99;
   // 같으면 왼쪽: 오른쪽 끝에는 마지막 달 강조 점(옅은 원 지름 16)이 있어 이름표를 가린다(평평한 선수). 오른쪽이 점선에 가까우면 점 안쪽으로 비킨다
-  const avgRight = farLast > farFirst;
-  const avgInset = avgRight && farLast < 14 ? 14 : 0;
+  // 양 끝 모두 선이 닿지 않으면(처음·끝 달이 부상·FA) 오른쪽(강조 점도 없다)
+  const avgRight = farLast > farFirst || (farLast === 99 && farFirst === 99);
+  // 오른쪽 끝 강조 점의 옅은 원(반지름 8)이 이름표 칸(점선 위 15, 아래 0)에 닿으면 점 안쪽으로 14px 비킨다
+  const avgInset = avgRight && last && last.i === lastIdx && last.y > y100 - 23 && last.y < y100 + 8 ? 14 : 0;
   // 최고·최저 후보에서 경기 적은 달은 뺀다(후보가 없으면 이름표 없음)
   const cand = all.filter((q) => !q.few);
   const mx = cand.length > 0 ? cand.reduce((a, b) => (b.v > a.v ? b : a)) : null;
@@ -389,7 +392,7 @@ export default function MonthLine({ months, pitcher }: { months: SeasonMonth[]; 
   if (last) near(last.x, last.y, 8);
   all.forEach((q) => {
     if (q.few) near(q.x, q.y, 4);
-    if (q.edge !== 0) fixed.push({ x0: q.i === lastIdx ? q.x - 18 : q.x + 5, y0: q.y - 7, x1: q.i === lastIdx ? q.x - 5 : q.x + 18, y1: q.y + 7 });
+    if (q.edge !== 0) fixed.push({ x0: q.i === lastIdx ? q.x - 18 : q.x + 5, y0: q.y - 5, x1: q.i === lastIdx ? q.x - 5 : q.x + 18, y1: q.y + 5 });
   });
   runs.forEach((r) => {
     if (r.length === 1) near(r[0].x, r[0].y, 4);
