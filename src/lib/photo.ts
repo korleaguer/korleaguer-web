@@ -19,6 +19,11 @@ export function parsePhotoPath(url: string | null | undefined): { key: string; v
   return match ? { key: match[1], version: match[2] ?? null } : null;
 }
 
+/** 배경 없는 MLB 사진(/photos/mlb-…)인지. 이 사진만 원 바탕을 팀 색으로 칠한다(KBO 사진은 배경이 있고, posting-…은 흰 바탕 편집본) */
+export function isMlbPhoto(url: string | null | undefined): boolean {
+  return parsePhotoPath(url)?.key.startsWith("mlb-") === true;
+}
+
 /** 요청의 v 값이 내용 버전 모양(16진수 8자)이면 그 값, 아니면 null(그 밖의 값은 api로 넘기지 않는다) */
 export function photoVersion(value: string | null): string | null {
   return value && /^[0-9a-f]{8}$/.test(value) ? value : null;

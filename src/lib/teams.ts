@@ -120,6 +120,36 @@ export function textColorOn(hex: string): string {
   return onBlack > onWhite ? "#111111" : "#ffffff";
 }
 
+/** 어두운 모드에서 카드·점수 띠 바탕 가운데 가장 밝은 색(--surface-2). 팀 색 원·고리는 이 색과 3:1 이상이어야 보인다(WCAG 1.4.11) */
+const DARK_CARD = "#222731";
+/** 3:1이 모자란 어두운 팀을 밝힐 때 흰색을 섞는 몫(sRGB). 36~40% 범위, 어두운 팀 모두 3:1을 넘는다(11-21 사용자 결정) */
+const DARK_LIFT = 0.38;
+
+function contrast(a: string, b: string): number {
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+function mixWhite(hex: string, share: number): string {
+  const n = parseInt(hex.slice(1), 16);
+  const ch = (shift: number) => Math.round(((n >> shift) & 255) * (1 - share) + 255 * share);
+  return `#${[16, 8, 0].map((s) => ch(s).toString(16).padStart(2, "0")).join("")}`.toUpperCase();
+}
+
+/**
+ * 선수 사진 원 바탕·이니셜 원·경기 카드 로고 고리에 칠할 팀 색(밝은 모드 / 어두운 모드). 모르는 팀이면 null.
+ * 어두운 모드에서 카드와 3:1이 안 나오는 어두운 팀(남색·갈색·검정 계열)만 밝힌다. 샌프란시스코 같은 밝은 팀은 그대로다
+ * (밝히면 활약 주황과 헷갈린다). lightText·darkText는 그 색 위에 올릴 이니셜 글자색이다
+ */
+export function teamFill(
+  teamAbbr: string | null,
+): { light: string; dark: string; lightText: string; darkText: string } | null {
+  if (!teamAbbr || !TEAM_COLORS[teamAbbr]) return null;
+  const light = TEAM_COLORS[teamAbbr];
+  const dark = contrast(light, DARK_CARD) < 3 ? mixWhite(light, DARK_LIFT) : light;
+  return { light, dark, lightText: textColorOn(light), darkText: textColorOn(dark) };
+}
+
 // KBO 구단 대표 색(한글 구단 이름으로 찾는다). 포스팅 선수 원·선수 페이지 과거 소속팀 띠에 쓴다.
 const KBO_COLORS: Record<string, string> = {
   "한화 이글스": "#FC4E00",

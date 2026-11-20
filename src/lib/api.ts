@@ -1639,6 +1639,15 @@ export const getPlayers = cache(async () => {
   return playersFromApi();
 });
 
+/**
+ * 선수 번호 → 지금 팀 약어(명단 선수만). 기록·뉴스처럼 응답에 팀이 없는 화면이 사진 원을 팀 색으로 칠하려고 쓴다.
+ * getPlayers는 React cache라 같은 요청 안의 다른 호출과 한 번만 부른다. 못 받으면 빈 표(회색 원)
+ */
+export async function getTeamAbbrById(): Promise<Record<number, string | null>> {
+  const result = await getPlayers();
+  return result.ok ? Object.fromEntries(result.data.map((p) => [p.id, p.teamAbbr])) : {};
+}
+
 /** GET /api/players/timeline: 선수 탭 연표. season 0이면 서버가 지금 시즌을 고른다. 옛 api면 notFound(선수 목록으로 대신 그린다) */
 export const getTimeline = cache(async (season: number = 0) => {
   await connection();
