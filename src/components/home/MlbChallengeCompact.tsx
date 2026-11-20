@@ -3,7 +3,7 @@ import Section from "@/components/Section";
 import Words from "@/components/Words";
 import HistorySheetRow from "@/components/home/HistorySheetRow";
 import KboAvatar from "@/components/home/KboAvatar";
-import MlbChallenge, { formatUsd, historyRank, newsOf, pastSignings, rank, thisYearSignings } from "@/components/home/MlbChallenge";
+import MlbChallenge, { formatUsd, historyRank, newsOf, pastSignings, isOpen, rank, thisYearSignings } from "@/components/home/MlbChallenge";
 import PostingNews from "@/components/home/PostingNews";
 
 /** 첫 화면 줄 오른쪽에 두는 기사 수(PC 오른쪽 칸). 휴대폰은 창 안에서 본다 */
@@ -33,7 +33,10 @@ export default function MlbChallengeCompact({ posting, asOf }: { posting: Postin
   const players = [...posting.players].sort((a, b) => rank(a) - rank(b) || (a.daysLeft ?? 99) - (b.daysLeft ?? 99));
   const multi = players.length > 1;
   const news = newsOf(players);
-  const teams = players.flatMap((p) => p.linkedTeams?.teams.filter((t) => t.linked > 0) ?? []).sort((a, b) => b.linked - a.linked);
+  const single = players.length === 1 ? players[0] : null;
+  // 거론 구단은 창 본문이 보여 주는 경우(한 명이고 협상 중·시작 전)에만 줄에 쓴다. 안 그러면 줄에는 있는데 창에서 볼 길이 없다
+  const teams =
+    single && isOpen(single) ? (single.linkedTeams?.teams.filter((t) => t.linked > 0) ?? []).sort((a, b) => b.linked - a.linked) : [];
   const signings = [...thisYearSignings(players), ...pastSignings(posting.history)].sort(
     (a, b) => b.amount - a.amount || b.season - a.season,
   );
@@ -62,10 +65,12 @@ export default function MlbChallengeCompact({ posting, asOf }: { posting: Postin
       <div className="card px-4 lg:grid lg:grid-cols-2 lg:items-center lg:gap-x-8 lg:px-5">
         <div className="min-w-0">
           <ul className="divide-y divide-line">
-            {players.map((p) => (
-              <PlayerLine key={p.nameKo} player={p} place={rankOf(p.nameKo)} total={signings.length} />
+            {players.map((p, i) => (
+              <PlayerLine key={p.nameKo} player={p} first={i === 0} place={rankOf(p.nameKo)} total={signings.length} />
             ))}
           </ul>
+          {/* 창 본문이 비는 경우(여러 명인데 기사도 계약도 없음)에는 줄도 두지 않는다 */}
+          {(single || news.length > 0 || signedNow) && (
           <HistorySheetRow
             title="포스팅 소식"
             sheetTitle={multi ? "포스팅 소식" : `${players[0].nameKo} 포스팅 소식`}
@@ -75,6 +80,7 @@ export default function MlbChallengeCompact({ posting, asOf }: { posting: Postin
           >
             <MlbChallenge posting={posting} inSheet />
           </HistorySheetRow>
+          )}
         </div>
         {/* PC: 매일 바뀌는 기사만 오른쪽에 둔다(휴대폰은 창 안) */}
         {news.length > 0 && (
@@ -88,12 +94,12 @@ export default function MlbChallengeCompact({ posting, asOf }: { posting: Postin
 }
 
 /** 선수 한 줄: 사진 · 이름 + 상태 · 구단·포지션(계약이면 '원소속 → 새 구단') | 남은 날과 마감일(계약이면 금액과 역대 순위) */
-function PlayerLine({ player: p, place, total }: { player: PostingPlayer; place: number | null; total: number }) {
+function PlayerLine({ player: p, place, total, first }: { player: PostingPlayer; place: number | null; total: number; first: boolean }) {
   const tone = TONE[p.status] ?? TONE.CLOSED;
   const deal = p.deal && p.deal.years != null && p.deal.guaranteedUsd != null ? p.deal : null;
   return (
     <li className="flex items-center gap-3 py-3">
-      <KboAvatar nameKo={p.nameKo} photoUrl={p.photoUrl} size={44} eager fetchPriority="high" />
+      <KboAvatar nameKo={p.nameKo} photoUrl={p.photoUrl} size={44} eager fetchPriority={first ? "high" : undefined} />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
           <h3 className="whitespace-nowrap text-heading">{p.nameKo}</h3>
@@ -106,7 +112,9 @@ function PlayerLine({ player: p, place, total }: { player: PostingPlayer; place:
           {p.status === "SIGNED" && deal?.mlbTeamKo ? `${p.kboTeam} → ${deal.mlbTeamKo}` : `${p.kboTeam} · ${p.positionKo}`}
         </p>
       </div>
-      {p.status === "NEGOTIATING" && p.daysLeft != null ? (
+      {p.status === "NEGOTIATING" && p.daysLeft == null ? (
+        <p className="shrink-0 text-right text-micro text-muted tabular-nums">{kstMonthDay(p.deadlineAt)} 마감</p>
+      ) : p.status === "NEGOTIATING" && p.daysLeft != null ? (
         <div className="shrink-0 text-right">
           <p className="text-stat leading-none tabular-nums">
             <span aria-hidden>{p.daysLeft === 0 ? "오늘" : `D-${p.daysLeft}`}</span>
