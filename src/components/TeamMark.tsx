@@ -39,8 +39,8 @@ export default function TeamMark({ logoUrl, color, size, ringTeam }: Props) {
   }
 
   const { box, px } = SIZES[size];
-  const fill = ringTeam === undefined ? null : teamFill(ringTeam);
   if (ringTeam !== undefined) {
+    const fill = teamFill(ringTeam);
     // 고리 색은 사진 원 바탕과 같은 teamFill. 흰 칸은 두 모드 모두 같다(로고가 어두운 팀이라도 묻히지 않게)
     return (
       <span

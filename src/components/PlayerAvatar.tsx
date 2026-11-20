@@ -1,7 +1,7 @@
 "use client"; // 사진이 안 뜰 때(onError) 대신 보여 줄 모양으로 바꿔야 해서 클라이언트 컴포넌트다.
 
 import type { CSSProperties } from "react";
-import { parsePhotoPath, smallPhoto } from "@/lib/photo";
+import { isMlbPhoto, smallPhoto } from "@/lib/photo";
 import { teamColor, teamFill, textColorOn } from "@/lib/teams";
 import { useImageFailed } from "@/lib/useImageFailed";
 
@@ -92,7 +92,7 @@ export default function PlayerAvatar({
   }
 
   // 사진 속 팀 색 바탕: 배경 없는 MLB 사진일 때만
-  const teamBg = fill !== null && parsePhotoPath(photoUrl)?.key.startsWith("mlb-") === true;
+  const teamBg = fill !== null && isMlbPhoto(photoUrl);
   return (
     <span
       className={`inline-block shrink-0 overflow-hidden rounded-full ${teamBg ? "bg-(--fill-l) dark:bg-(--fill-d)" : "bg-avatar-bg"} ${ringClass}`}
