@@ -27,7 +27,7 @@ const STATUS: Record<string, string> = {
   scheduled: "경기 전",
 };
 
-/** 제목 세 갈래: 최근 24시간 / 마지막 경기일로 대신 / 경기 데이터 없음. note는 요약 알약 앞에 붙는 설명 */
+/** 제목 세 갈래: 최근 24시간 / 마지막 경기일로 대신 / 경기 데이터 없음. note는 요약 글자 앞에 붙는 설명 */
 function heading(recent: Recent): { title: string; note: string | null } {
   if (!recent.isFallback) return { title: "최근 24시간", note: null };
   if (recent.dateKst) {
@@ -57,21 +57,13 @@ function sideNote(line: GameLine): string | null {
 export default function RecentGames({ recent, asOf }: Props) {
   const { title, note } = heading(recent);
   const noData = recent.isFallback && !recent.dateKst;
-  const pills = [note, ...tally(recent.lines)].filter((part): part is string => Boolean(part));
+  const summary = [note, ...tally(recent.lines)].filter((part): part is string => Boolean(part));
 
   return (
     <Section id="recent-title" title={title} aside={asOf}>
-      {pills.length > 0 && (
-        <ul className="-mt-0.5 mb-3 flex flex-wrap gap-1.5 px-1">
-          {pills.map((part) => (
-            <li
-              key={part}
-              className="rounded-full bg-surface px-2.5 py-0.5 text-label text-neutral-pill-fg"
-            >
-              {part}
-            </li>
-          ))}
-        </ul>
+      {/* 못 누르는 개수·결과라 알약 대신 흐린 '·' 이은 글자 한 줄(11-21 결정) */}
+      {summary.length > 0 && (
+        <p className="-mt-0.5 mb-3 px-1 text-label text-muted tabular-nums">{summary.join(" · ")}</p>
       )}
 
       {recent.lines.length === 0 ? (

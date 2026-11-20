@@ -4,6 +4,7 @@ import { formatEra, formatRate, teamLabel } from "@/lib/format";
 import { bandDays, bandSummary, buildFacts, buildMarkers, dayIndex, koDate, monthTicks } from "@/lib/timeline";
 import MyPlayerToggle from "@/components/my/MyPlayerToggle";
 import MovePill from "@/components/player/MovePill";
+import Chevron from "@/components/Chevron";
 import PlayerAvatar from "@/components/PlayerAvatar";
 import type { ReportRow } from "@/components/home/SeasonReportRows";
 
@@ -183,7 +184,11 @@ export function buildTimelineRow({
         <span className="mt-1.5 block">
           <Band timeline={timeline} entry={entry} returnedKo={returnedKo} label={label} />
         </span>
-        <span className="mt-1 block text-caption text-pretty text-muted">{factLine}</span>
+        {/* 줄 끝 ›: 누르면 자세히(휴대폰 아래 창·PC 오른쪽 칸)가 열린다는 표시. 예전 목록 맨 위 글 '줄을 누르면 자세히 보여요' 대신(이슈 #329와 같은 방식) */}
+        <span className="mt-1 flex items-center justify-between gap-2">
+          <span className="min-w-0 text-caption text-pretty text-muted">{factLine}</span>
+          <Chevron />
+        </span>
       </>
     ),
     star: (
