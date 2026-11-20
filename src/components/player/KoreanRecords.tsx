@@ -18,7 +18,7 @@ function RecordsLink() {
 }
 
 /**
- * 선수 페이지 '한국인 통산 기록'(이슈 #380). 이 선수가 넘기까지 남은 수가 큰 숫자, 아래는 누구를 넘으면 몇 위인지.
+ * 선수 페이지 '한국인 통산 기록'(이슈 #380). 이 선수가 넘기까지 남은 수가 큰 숫자, 아래는 누구를 넘으면 몇 위인지(진행 막대는 없다. 11-17에 기록 화면에서 뺀 것과 같은 이유로 막대가 85~95%에 몰려 차이가 안 보인다).
  * 줄은 lib/koreanRank.ts의 규칙으로 고른다. 줄이 없는 선수(통산 순위 종목이 없는 투수 등)와 기록을 못 받았을 때는
  * 제목 없이 '역대 기록' 줄만 담은 카드 하나를 둔다(빈 칸을 그리지 않는다). '넘으면 한국인 n위'는 기록 화면과 같은 말이다
  */
@@ -49,13 +49,7 @@ export default function KoreanRecords({ rows }: { rows: RecordNext[] }) {
                   <span className="sr-only"> 남음</span>
                 </p>
               </div>
-              <div aria-hidden className="mt-2 h-1.5 overflow-hidden rounded-full bg-surface-2">
-                <div
-                  className="h-full rounded-full bg-accent"
-                  style={{ width: `${Math.min(100, Math.max(0, n.targetValue > 0 ? (n.value / n.targetValue) * 100 : 0))}%` }}
-                />
-              </div>
-              <p className="mt-1.5 text-meta text-muted">
+              <p className="mt-0.5 text-meta text-muted">
                 {`${n.targetNameKo} ${count(n.targetValue)}${n.unit} 넘으면 한국인 ${n.rankAfter}위`}
               </p>
             </li>
