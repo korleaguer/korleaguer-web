@@ -19,7 +19,8 @@ export interface LeagueWords {
 
 /** 100 = 리그 평균인 값을 말로. 평균 위는 '평균보다 12% 잘 침'(투수 '잘 막음'), 아래는 꾸밈 없이 '평균보다 22% 아래' */
 export function leagueWords(plus: number, pitcher: boolean): LeagueWords {
-  const v = Math.round(plus);
+  // 값이 0 아래(몇 타수 무안타)나 300 위로 가도 '평균보다 213% 아래'가 나오지 않게 가둔다
+  const v = Math.max(0, Math.min(300, Math.round(plus)));
   if (v >= SAME_TO) {
     const num = `${v - 100}%`;
     const tail = pitcher ? " 잘 막음" : " 잘 침";

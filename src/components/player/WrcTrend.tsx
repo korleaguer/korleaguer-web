@@ -12,12 +12,12 @@ const H = 150;
 /** 달 눈금 사이 최소 간격(그래프 폭의 %). 휴대폰 그래프 폭 약 320px에서 '10월'(약 24px) 둘이 8px 넘게 떨어진다 */
 const MIN_TICK_GAP = 11;
 /**
- * 값 눈금(옅은 가로선 + 오른쪽 숫자). 세로 범위가 선수마다 그 선수 최저·최고 ±10이라 같은 높이 차가 선수마다 다른 wRC+ 차다.
+ * 값 눈금(옅은 가로선 + 오른쪽 숫자). 세로 범위가 선수마다 그 선수 최저·최고 ±10이라 같은 높이 차가 선수마다 다른 평균 대비 % 차다(값은 wRC+ 점수 차 = % 차).
  * 100(리그 평균) 점선 위아래 20씩만 그어 '20이 이만큼'을 읽게 한다(사용자 11-17 '추천대로'). 범위 밖이면 긋지 않는다
  */
 const GRID = [80, 120];
 /**
- * 눈금 숫자끼리 이만큼(px)은 떨어져야 그린다. 범위가 아주 넓으면 80·120이 100 숫자에 붙는다.
+ * 눈금 숫자끼리 이만큼(px)은 떨어져야 그린다. 범위가 아주 넓으면 80·120(눈금 −20%·+20%)이 100(0) 글자에 붙는다.
  * 일부러 낮은 쪽 높이(H = 150px, 휴대폰)로 잰다. 640px 이상 그래프(180px)는 1.2배 여유가 있지만, 같은 선수는 휴대폰·PC에서
  * 같은 눈금을 보이고, 높이마다 따로 재면 큰 글씨 숫자 크기(tickGap)도 높이마다 달라져야 한다. PC에서만 더 그을 수 있는 경우는
  * 세로 범위(hi − lo)가 187.5~225일 때뿐이다(2026 타자 4명은 77~152).
@@ -25,10 +25,10 @@ const GRID = [80, 120];
  */
 const MIN_GRID_GAP_PX = 16;
 
-/** 눈금 숫자: 평균(100)은 '0', 위아래는 평균 대비 퍼센트 숫자('+20'·'−20', 11-21 지표 이름 wRC+ 대신). 세 글자까지라 오른쪽 2rem 자리에 든다 */
+/** 눈금 글자: 평균(100)은 '0', 위아래는 평균 대비 퍼센트('+20%'·'−20%', 11-21 지표 이름 wRC+ 대신). 말('평균보다 12% 잘 침')과 같은 단위 */
 function tickText(v: number): string {
   const d = Math.round(v - 100);
-  return d === 0 ? "0" : `${d > 0 ? "+" : "−"}${Math.abs(d)}`;
+  return d === 0 ? "0" : `${d > 0 ? "+" : "−"}${Math.abs(d)}%`;
 }
 
 /** 점의 달(1~12). 한국 날짜 기준 */
@@ -66,7 +66,7 @@ function monthTicks(points: TrendPoint[]): MonthTick[] {
 }
 
 /**
- * 타격 흐름 그래프: 시즌 처음부터 그날까지 누적 wRC+ 선 하나와 리그 평균(100) 점선.
+ * 타격 흐름 그래프: 시즌 처음부터 그날까지 누적 wRC+(리그 평균 = 100, 화면에는 평균 대비 말·%로) 선 하나와 평균 점선.
  * 토스증권 차트처럼 손가락으로 훑으면 그날까지의 값이 위에 보이고, 날이 바뀔 때마다 고르기 틱(앱 안).
  * 손가락은 떼면 그 자리에 머물고, 마우스는 그래프를 떠나면 시즌 전체 값으로 돌아간다. 키보드는 ←→로 하루씩, Home/End로 처음·마지막.
  * 가로축은 경기 순서라 한 달 넘게 쉰 곳(정규시즌 안 30일 초과)도 점 하나 간격이다. 그대로 이으면 쉬는 동안 뛴 것처럼 보여서
@@ -137,7 +137,7 @@ export default function WrcTrend({ points, moves }: { points: TrendPoint[]; move
         <p className="text-caption text-muted tabular-nums">{active === last ? "시즌 전체" : `${date}까지`}
           {afterGap && ` · ${afterGap}`}
         </p>
-        <p className={`text-heading ${verdict.tone === "up" ? "text-hot-ink" : ""}`}>{verdict.text}</p>
+        <p className={`text-heading ${verdict.tone === "up" ? "text-accent-ink" : "text-muted"}`}>{verdict.text}</p>
       </div>
       <div
         ref={boxRef}
@@ -215,7 +215,7 @@ export default function WrcTrend({ points, moves }: { points: TrendPoint[]; move
             <line x1={x(active)} x2={x(active)} y1="0" y2={H} stroke="var(--accent)" strokeOpacity="0.35" vectorEffect="non-scaling-stroke" />
           </svg>
           {/* 눈금 숫자: SVG 안 글자는 그래프와 함께 가로로 늘어나 찌그러져서, 점처럼 % 자리의 글자로 그래프 오른쪽 밖(mr-8 자리)에
-              둔다. 오른쪽 끝을 카드 안쪽 끝(위 wRC+ 숫자와 같은 세로줄)에 맞추면 세 자리 숫자도 마지막 점(지름 13px, 그래프 끝에서
+              둔다. 오른쪽 끝을 카드 안쪽 끝에 맞추면 세 글자 눈금도 마지막 점(지름 13px, 그래프 끝에서
               반쯤 나옴)과 5px 넘게 떨어진다. 마우스가 숫자 위에 가면 그래프를 떠난 것으로.
               크기는 Micro지만 큰 글씨에서는 눈금 사이 간격까지만 커진다(trend-tick) */}
           {[...grid, 100].map((v) => (
