@@ -6,7 +6,7 @@ import ApiErrorNotice from "@/components/ApiErrorNotice";
 import AppShape from "@/components/AppShape";
 import DataBanners from "@/components/DataBanners";
 import { HomeSkeleton } from "@/components/PageSkeleton";
-import MlbChallenge from "@/components/home/MlbChallenge";
+import MlbChallengeCompact from "@/components/home/MlbChallengeCompact";
 import OffseasonPlayers from "@/components/home/OffseasonPlayers";
 import SeasonFloors, { preloadFloors } from "@/components/home/SeasonFloors";
 import SeasonLeaders from "@/components/home/SeasonLeaders";
@@ -49,7 +49,7 @@ async function HomeContent() {
       {home.offseason ? (
         <>
           {/* 포스팅 시즌: 이번 겨울 MLB에 도전하는 KBO 선수와 선배들의 계약 시기 */}
-          {home.posting && <MlbChallenge posting={home.posting} asOf={asOf} />}
+          {home.posting && <MlbChallengeCompact posting={home.posting} asOf={asOf} />}
           <OffseasonPlayers offseason={home.offseason} asOf={reportOnTop ? asOf : undefined} onTop={reportOnTop} />
         </>
       ) : (
