@@ -215,7 +215,7 @@ function SheetBody({ playerId, role, day }: { playerId: number; role: Role; day:
               // 하나만 고르는 탭이라 aria-pressed(켬·끔) 대신 '지금 보는 경기'로 알린다(11-17 전수조사)
               aria-current={i === index ? "true" : undefined}
               onClick={() => setIndex(i)}
-              className={`tap-target rounded-full px-3 py-1.5 text-label ${i === index ? "bg-accent-soft text-accent-ink" : "text-muted hover:bg-surface-2"}`}
+              className={`press tap-target rounded-full px-3 py-1.5 text-label ${i === index ? "bg-accent-soft text-accent-ink" : "text-muted hover:bg-surface-2"}`}
             >
               <span className={`bold-reserve ${i === index ? "font-extrabold" : ""}`} data-text={label}>
                 {label}

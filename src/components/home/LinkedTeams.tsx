@@ -214,7 +214,7 @@ export default function LinkedTeams({
                     aria-haspopup="dialog"
                     data-team={t.abbreviation}
                     onClick={(e) => open(t, e.currentTarget)}
-                    className="-mx-2 flex w-[calc(100%+1rem)] cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1 text-left text-label hover:bg-surface-2"
+                    className="press-soft -mx-2 flex w-[calc(100%+1rem)] cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1 text-left text-label hover:bg-surface-2"
                   >
                     {row}
                     <Chevron />
@@ -499,7 +499,7 @@ function MoreTeams({ teams, onPick }: { teams: Team[]; onPick: (t: Team, from: H
                     // 목록은 닫히니 창을 닫으면 '외 n개 구단'으로 돌아온다
                     onPick(t, buttonRef.current);
                   }}
-                  className="flex min-h-[max(2.75rem,44px)] w-full cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-left text-label hover:bg-surface-2"
+                  className="press-soft flex min-h-[max(2.75rem,44px)] w-full cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-left text-label hover:bg-surface-2"
                 >
                   {row}
                   <Chevron />
@@ -536,7 +536,7 @@ function MoreTeams({ teams, onPick }: { teams: Team[]; onPick: (t: Team, from: H
           else if (open) hide();
           else show(false);
         }}
-        className="tap-target inline-flex min-h-8 cursor-pointer items-center text-caption text-muted underline decoration-dotted underline-offset-2 tabular-nums hover:text-foreground"
+        className="press tap-target inline-flex min-h-8 cursor-pointer items-center text-caption text-muted underline decoration-dotted underline-offset-2 tabular-nums hover:text-foreground"
       >
         외 {teams.length}개 구단
       </button>
