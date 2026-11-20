@@ -63,7 +63,15 @@ export default function RecentGames({ recent, asOf }: Props) {
     <Section id="recent-title" title={title} aside={asOf}>
       {/* 못 누르는 개수·결과라 알약 대신 흐린 '·' 이은 글자 한 줄(11-21 결정) */}
       {summary.length > 0 && (
-        <p className="-mt-0.5 mb-3 px-1 text-label text-muted tabular-nums">{summary.join(" · ")}</p>
+        <p className="-mt-0.5 mb-3 px-1 text-label text-muted tabular-nums">
+          {/* 줄이 바뀌어도 '팀 결과 3승 3패' 한가운데에서 끊기지 않게 덩어리마다 묶는다 */}
+          {summary.map((part, i) => (
+            <span key={part}>
+              {i > 0 && " · "}
+              <span className="whitespace-nowrap">{part}</span>
+            </span>
+          ))}
+        </p>
       )}
 
       {recent.lines.length === 0 ? (
