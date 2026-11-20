@@ -4,7 +4,7 @@
 import { ImageResponse } from "next/og";
 import { parseId } from "@/lib/ids";
 import { OG_COLORS, OgBrand, ogFonts } from "@/lib/og";
-import { SITE_URL } from "@/lib/share";
+import { OG_VERSION, SITE_URL } from "@/lib/share";
 import { getShareCard } from "@/lib/shareCard";
 
 const SIZE = { width: 1080, height: 1350 };
@@ -13,7 +13,10 @@ const BAR_ME = OG_COLORS.accent;
 const BAR_OTHER = "#d3d8e0";
 
 export async function GET(_request: Request, { params }: RouteContext<"/players/[id]/og/card/[v]">) {
-  const playerId = parseId((await params).id);
+  const { id, v } = await params;
+  // 판 번호는 배포 커밋 하나뿐이다. 아무 값이나 받으면 값마다 새로 그려 서버와 api에 부담이 된다
+  if (v !== OG_VERSION) return new Response("없는 주소예요", { status: 404, headers: { "cache-control": "no-store" } });
+  const playerId = parseId(id);
   const card = playerId == null ? null : await getShareCard(playerId);
   // 카드를 만들 수 없는 선수: 공유 창이 그림 대신 링크 복사만 보인다. 잠깐의 api 오류가 오래 남지 않게 저장하지 않는다
   if (!card) return new Response("카드를 만들 수 없어요", { status: 404, headers: { "cache-control": "no-store" } });
@@ -33,7 +36,7 @@ export async function GET(_request: Request, { params }: RouteContext<"/players/
           {card.rows.map((row) => (
             <div key={`${row.rank}-${row.name}`} style={{ display: "flex", alignItems: "center", gap: 22 }}>
               <div style={{ display: "flex", width: 44, fontSize: 34, fontWeight: 700, color: row.me ? BAR_ME : OG_COLORS.muted }}>{row.rank}</div>
-              <div style={{ display: "flex", width: 190, fontSize: 40, fontWeight: row.me ? 800 : 700, color: row.me ? BAR_ME : OG_COLORS.foreground }}>{row.name}</div>
+              <div style={{ display: "flex", width: 210, overflow: "hidden", whiteSpace: "nowrap", fontSize: 40, fontWeight: row.me ? 800 : 700, color: row.me ? BAR_ME : OG_COLORS.foreground }}>{row.name}</div>
               <div style={{ display: "flex", position: "relative", flex: 1, height: 22 }}>
                 <div style={{ display: "flex", width: `${Math.round(row.ratio * 100)}%`, height: 22, borderRadius: 11, background: row.me ? BAR_ME : BAR_OTHER }} />
                 {row.broken && (

@@ -87,24 +87,27 @@ function sourceLine(generatedAt: string, label: string): string {
  * 선수 페이지 공유 창(그림 보이기)과 그림 경로(players/[id]/card)가 같은 값을 쓴다
  */
 export async function getShareCard(playerId: number): Promise<ShareCard | null> {
-  const player = await getPlayer(playerId);
+  const [player, records] = await Promise.all([getPlayer(playerId), getRecords()]);
   if (!player.ok) return null;
   const name = player.data.player.nameKo;
 
-  const records = await getRecords();
   if (records.ok) {
     const top = pickRankRows(records.data.next, playerId)[0];
     const category = top && records.data.categories.find((c) => c.key === top.category);
     if (top && category) {
-      const rows = windowRows(
-        category.leaders.map((l) => ({
-          rank: l.rank,
-          name: l.nameKo,
-          amount: l.value,
-          text: l.value.toLocaleString("ko-KR"),
-          me: l.playerId === playerId,
-        })),
-      );
+      const entries = category.leaders.map((l) => ({
+        rank: l.rank,
+        name: l.nameKo,
+        amount: l.value,
+        text: l.value.toLocaleString("ko-KR"),
+        me: l.playerId === playerId,
+      }));
+      // 순위(next)는 있는데 순위표(leaders)에 없으면(두 목록은 따로 만든다) 선수 줄을 값 자리에 끼운다. 카드가 사라지지 않게
+      if (!entries.some((e) => e.me)) {
+        entries.push({ rank: top.rank, name, amount: top.value, text: top.value.toLocaleString("ko-KR"), me: true });
+        entries.sort((a, b) => b.amount - a.amount);
+      }
+      const rows = windowRows(entries);
       if (rows) {
         const sub = `넘기까지 ${top.toPass.toLocaleString("ko-KR")}${top.unit} · 넘으면 한국인 ${top.rankAfter}위`;
         return {
@@ -127,16 +130,18 @@ export async function getShareCard(playerId: number): Promise<ShareCard | null> 
   const deals = history
     .flatMap((h) => (h.deal?.guaranteedUsd != null ? [{ name: h.nameKo, season: h.season, deal: h.deal, usd: h.deal.guaranteedUsd }] : []))
     .sort((a, b) => b.usd - a.usd || b.season - a.season);
-  const mine = deals.find((d) => d.name === name);
-  if (!mine) return null;
+  // 계약 기록에는 선수 번호가 없어 이름으로 찾는다. 같은 이름이 둘이어도 먼저 나온 한 줄만 '나'로 친다
+  const mineAt = deals.findIndex((d) => d.name === name);
+  if (mineAt < 0) return null;
+  const mine = deals[mineAt];
   const rank = deals.filter((d) => d.usd > mine.usd).length + 1;
   const rows = windowRows(
-    deals.map((d) => ({
+    deals.map((d, i) => ({
       rank: deals.filter((x) => x.usd > d.usd).length + 1,
       name: d.name,
       amount: d.usd,
       text: formatUsd(d.usd).replace(/ 달러$/, ""),
-      me: d.name === name,
+      me: i === mineAt,
     })),
   );
   if (!rows) return null;

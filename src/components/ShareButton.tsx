@@ -19,8 +19,8 @@ export default function ShareButton() {
   async function share() {
     // 선수 페이지는 머리 카드의 공유 창(한국인 순위 카드)을 연다. 단추가 화면에 하나만 있게 선수 페이지의 단추는 앱에서 숨겨 둔다
     if (/^\/players\/\d+$/.test(pathname)) {
-      window.dispatchEvent(new Event(OPEN_PLAYER_SHARE));
-      return;
+      // 창이 받으면 preventDefault로 알려 온다. 받는 곳이 없으면(선수 화면이 아직 그려지는 중 등) 아래 링크 공유로 물러난다
+      if (!window.dispatchEvent(new Event(OPEN_PLAYER_SHARE, { cancelable: true }))) return;
     }
     const url = window.location.href;
     // 제목의 ' · KOR Leaguer'는 공유 카드에 사이트 이름이 따로 붙으므로 뺀다

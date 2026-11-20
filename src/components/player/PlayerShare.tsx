@@ -27,7 +27,11 @@ export default function PlayerShare({ playerId, nameKo, version }: { playerId: n
   });
 
   useEffect(() => {
-    const onSignal = () => openRef.current();
+    const onSignal = (event: Event) => {
+      // 신호를 받았다고 알린다(ShareButton이 받는 곳이 없으면 링크 공유로 물러난다)
+      event.preventDefault();
+      openRef.current();
+    };
     window.addEventListener(OPEN_PLAYER_SHARE, onSignal);
     return () => window.removeEventListener(OPEN_PLAYER_SHARE, onSignal);
   }, []);
@@ -71,7 +75,12 @@ function ShareSheet({ playerId, nameKo, version, onClose }: { playerId: number; 
         const blob = await res.blob();
         if (cancelled) return;
         objectUrl = URL.createObjectURL(blob);
-        const alt = decodeURIComponent(res.headers.get("x-card-alt") ?? "");
+        let alt = "";
+        try {
+          alt = decodeURIComponent(res.headers.get("x-card-alt") ?? "");
+        } catch {
+          // 대체 글을 못 읽어도 그림은 보인다
+        }
         const file = new File([blob], fileName, { type: "image/png" });
         setCanSendFile(typeof navigator.canShare === "function" && navigator.canShare({ files: [file] }));
         setCard({ state: "ready", blob, src: objectUrl, alt });
@@ -91,16 +100,19 @@ function ShareSheet({ playerId, nameKo, version, onClose }: { playerId: number; 
     if (canSendFile) {
       try {
         await navigator.share({ files: [file], title: `${nameKo} 한국인 순위` });
-      } catch {
-        // 공유 창을 닫은 것도 오류로 온다. 할 일 없음
+        return;
+      } catch (error) {
+        // 공유 창을 닫은 것(AbortError)은 할 일이 없다. 그 밖의 실패(누른 뒤 시간이 지남 등)는 파일 저장으로 물러난다
+        if (error instanceof DOMException && error.name === "AbortError") return;
       }
-      return;
     }
     // 파일 공유가 없는 브라우저(PC 등): 그림 파일을 저장한다
     const link = document.createElement("a");
     link.href = card.src;
     link.download = fileName;
+    document.body.appendChild(link);
     link.click();
+    link.remove();
     toast("그림을 저장했어요", { tone: "success" });
   }
 
