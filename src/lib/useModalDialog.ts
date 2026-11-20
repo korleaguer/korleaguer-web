@@ -40,7 +40,15 @@ export function useModalDialog(dialogRef: RefObject<HTMLDialogElement | null>): 
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
-    if (!dialog.open) dialog.showModal();
+    if (!dialog.open) {
+      // showModal은 창 안 첫 버튼(머리 오른쪽 닫기)에 포커스를 주는데, 아이폰 WebKit은 손가락으로 연 창에서도 그 포커스를
+      // :focus-visible로 보아 닫기 버튼에 파란 동그라미 테두리를 그렸다(이슈 #354). 포커스는 창 자체에 둔다(APG 대화상자:
+      // 내용이 긴 창은 맨 앞의 정적인 곳에 포커스를 둔다). 키보드로는 Tab 한 번에 첫 버튼으로 간다.
+      // 같은 실행 안에서 옮겨 닫기 버튼의 테두리는 한 번도 그려지지 않는다. 창 자체의 테두리는 globals.css가 지운다
+      dialog.tabIndex = -1;
+      dialog.showModal();
+      dialog.focus({ preventScroll: true });
+    }
     const root = document.documentElement;
     if (lockCount === 0) overflowBefore = root.style.overflow;
     lockCount += 1;
