@@ -199,7 +199,7 @@ export default function LinkedTeams({
                   {t.today && (
                     <>
                       {/* 오늘 나온 기사에서도 거론됨: 뉴스 탭 선수 알약의 '새 기사' 점과 같은 뜻 표시(글자 '새'는 뜻을 몰랐다) */}
-                      <span aria-hidden className="inline-block size-2.5 shrink-0 rounded-full bg-accent" />
+                      <span aria-hidden className="inline-block size-1.5 shrink-0 rounded-full bg-accent" />
                       <span className="sr-only">오늘 새 기사</span>
                     </>
                   )}
@@ -244,7 +244,7 @@ export default function LinkedTeams({
               {t.today && (
                 <>
                   {/* 뉴스 탭 선수 알약의 '새 기사' 점과 같은 뜻 표시 */}
-                  <span aria-hidden className="inline-block size-2.5 shrink-0 rounded-full bg-accent" />
+                  <span aria-hidden className="inline-block size-1.5 shrink-0 rounded-full bg-accent" />
                   <span className="sr-only">오늘 새 기사</span>
                 </>
               )}
@@ -482,7 +482,7 @@ function MoreTeams({ teams, onPick }: { teams: Team[]; onPick: (t: Team, from: H
               {t.today && (
                 <>
                   {/* 뉴스 탭 선수 알약의 '새 기사' 점과 같은 뜻 표시 */}
-                  <span aria-hidden className="inline-block size-2.5 shrink-0 rounded-full bg-accent" />
+                  <span aria-hidden className="inline-block size-1.5 shrink-0 rounded-full bg-accent" />
                   <span className="sr-only">오늘 새 기사</span>
                 </>
               )}
