@@ -762,6 +762,15 @@
     animation-delay: calc(var(--i, 0) * 35ms);
   }
 
+  /*
+   * 큰 일 작은 축하(11-21): 카드의 가장 큰 표시 하나가 처음 보일 때 한 번 커졌다 돌아온다(Celebrate가 data-play를 단다).
+   * 300ms 한 번, 크기와 자리는 변하지 않는다(scale만). --celebrate-scale 알약 1.1·글자 줄 1.05, --celebrate-delay 카드 순서
+   */
+  .celebrate[data-play] {
+    transform-origin: var(--celebrate-origin, center);
+    animation: celebrate-pop 300ms var(--ease-out-expo) var(--celebrate-delay, 0ms) backwards;
+  }
+
   /* 내 선수 카드의 경기별 막대가 처음 그려질 때 아래에서 자란다. --i = 막대 순서 */
   .bar-rise {
     transform-origin: bottom;
@@ -822,6 +831,7 @@
   @media (prefers-reduced-motion: reduce) {
     .card-rise,
     .bar-rise,
+    .celebrate[data-play],
     .reveal {
       animation: none;
     }
@@ -1054,6 +1064,18 @@
   .trend-tick {
     font-size: min(var(--text-micro), 100cqh * var(--tick-gap, 1));
     line-height: var(--text-micro--line-height);
+  }
+}
+
+@keyframes celebrate-pop {
+  0% {
+    scale: 1;
+  }
+  35% {
+    scale: var(--celebrate-scale, 1.1);
+  }
+  100% {
+    scale: 1;
   }
 }
 

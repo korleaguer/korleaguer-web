@@ -1,11 +1,12 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
-import type { GameLine, GameResult, HomeResponse } from "@/lib/api";
+import type { GameBuzz, GameLine, GameResult, HomeResponse } from "@/lib/api";
 import { formatDate, formatLineup, formatSummary, formatTime } from "@/lib/format";
 import { teamColor, teamLogoUrl } from "@/lib/teams";
 import PlayerAvatar from "@/components/PlayerAvatar";
 import ResultPill from "@/components/ResultPill";
-import Highlights from "@/components/Highlights";
+import Highlights, { gameHighlights } from "@/components/Highlights";
+import BuzzLine from "@/components/home/BuzzLine";
 import { PostseasonLine } from "@/components/player/GameRow";
 import ScoreText from "@/components/ScoreText";
 import Section from "@/components/Section";
@@ -80,8 +81,14 @@ export default function RecentGames({ recent, asOf }: Props) {
         </p>
       ) : (
         <ul className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-          {recent.lines.map((line, index) => (
-            <GameCard key={`${line.playerId}-${line.gameId}`} line={line} index={index} />
+          {cards(recent).map(({ line, buzz, slot }, index) => (
+            <GameCard
+              key={`${line.playerId}-${line.gameId}`}
+              line={line}
+              index={index}
+              buzz={buzz}
+              celebrateSlot={slot}
+            />
           ))}
         </ul>
       )}
@@ -89,7 +96,42 @@ export default function RecentGames({ recent, asOf }: Props) {
   );
 }
 
-function GameCard({ line, index }: { line: GameLine; index: number }) {
+/** 이 줄의 화제 문구(없으면 null). 옛 api는 buzz 칸이 없어 늘 null이다 */
+function buzzOf(buzz: GameBuzz[] | undefined, line: GameLine): GameBuzz | null {
+  return buzz?.find((b) => b.playerId === line.playerId && b.gameId === line.gameId) ?? null;
+}
+
+/**
+ * 카드마다 화제 문구와 축하 자리(slot)를 정한다. 축하는 '최근 24시간'일 때만 돌고, 가장 큰 표시가 있는 카드끼리 순서를 센다
+ * (화제 문구가 있거나 채운 주황 배지가 있는 카드). 가장 큰 표시가 없는 카드가 앞에 있어도 첫 3장 제한을 쓰지 않는다. 없으면 -1.
+ */
+function cards(recent: Recent): { line: GameLine; buzz: GameBuzz | null; slot: number }[] {
+  let next = 0;
+  return recent.lines.map((line) => {
+    const buzz = line.played ? buzzOf(recent.buzz, line) : null;
+    const hasBig = buzz !== null || gameHighlights(line).some((h) => h.strong);
+    return { line, buzz, slot: !recent.isFallback && hasBig ? next++ : -1 };
+  });
+}
+
+/**
+ * 카드 하나. buzz가 있으면 한 줄 기록 아래에 화제 문구 한 줄이 서고, 같은 뜻의 활약 배지는 빠지며 배지는 한 개까지다
+ * (주황 표시는 문구 + 배지 합쳐 카드당 둘까지, The Hot Is Earned Rule).
+ * celebrateSlot이 0 이상이면(홈 '최근 24시간'에서 가장 큰 표시가 있는 카드) 그 표시 하나가 처음 보일 때 한 번 커졌다 돌아온다:
+ * 화제 문구가 있으면 문구 줄, 없으면 채운 주황 배지. slot은 그런 카드 사이의 순서다.
+ */
+function GameCard({
+  line,
+  index,
+  buzz,
+  celebrateSlot,
+}: {
+  line: GameLine;
+  index: number;
+  buzz: GameBuzz | null;
+  celebrateSlot: number;
+}) {
+  const celebration = celebrateSlot >= 0 ? { id: `${line.playerId}-${line.gameId}`, order: celebrateSlot } : undefined;
   // "종료 · 홈 · 05:05". 모르는 상태는 뺀다.
   const meta = [STATUS[line.gameStatus], line.home ? "홈" : "원정", formatTime(line.startTimeKst)]
     .filter(Boolean)
@@ -138,7 +180,14 @@ function GameCard({ line, index }: { line: GameLine; index: number }) {
           >
             <Words text={formatSummary(line.summary)} />
           </p>
-          <Highlights line={line} className="mt-1.5" />
+          {buzz && <BuzzLine text={buzz.text} className="mt-1.5" celebrate={celebration} />}
+          <Highlights
+            line={line}
+            className="mt-1.5"
+            cover={buzz?.stat}
+            max={buzz ? 1 : undefined}
+            celebrate={buzz ? undefined : celebration}
+          />
         </div>
       </div>
     </li>

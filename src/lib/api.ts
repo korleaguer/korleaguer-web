@@ -10,6 +10,23 @@ export type DataMode = "sample" | "mlb";
 export type Role = "HITTER" | "PITCHER";
 export type GameResult = "W" | "L" | "T" | null;
 
+/**
+ * 경기 카드 안 화제 문구 한 줄(선수 × 경기마다 최대 하나, 서버가 우선순위로 골라 준다).
+ * kind: PASSED 한국인 통산 기록 넘음 / FIRST 메이저 데뷔·올 시즌 처음 / STREAK 연속 안타 / SEASON_BEST 올 시즌 최고 경기.
+ * stat은 문구가 이미 말하는 활약(homeRuns·hits·rbi·stolenBases·wins·saves·strikeouts)이라 같은 뜻의 활약 배지는 카드에서 뺀다.
+ * 활약을 말하지 않는 문구(연속·최고 경기)는 null이다.
+ */
+export interface GameBuzz {
+  playerId: number;
+  gameId: number;
+  kind: "PASSED" | "FIRST" | "STREAK" | "SEASON_BEST";
+  stat: BuzzStat | null;
+  text: string;
+}
+
+/** 활약 배지(Highlights)가 있는 기록 이름. 서버 GameBuzz.stat과 배지의 stat이 같으면 같은 뜻이라 배지를 뺀다 */
+export type BuzzStat = "homeRuns" | "hits" | "rbi" | "stolenBases" | "wins" | "saves" | "strikeouts";
+
 /** 선수 × 경기 한 줄 */
 export interface GameLine {
   playerId: number;
@@ -158,6 +175,8 @@ export interface HomeResponse {
     dateKst: string | null;
     /** 선수당 한 줄 */
     lines: GameLine[];
+    /** 줄마다 화제 문구(선수 id·경기 id로 줄과 짝짓는다, 없는 줄은 빠진다). 옛 api는 이 칸이 없다 */
+    buzz: GameBuzz[];
   };
   /** 순위 기준. 없으면(오래된 api) null이고, 그때는 거르지 않는다 */
   ranking: RankingMinimums | null;
@@ -1014,6 +1033,7 @@ function normalizeHome(raw: HomeResponse): HomeResponse {
       isFallback: raw.recent?.isFallback ?? true,
       dateKst: raw.recent?.dateKst ?? null,
       lines: (raw.recent?.lines ?? []).map(normalizeLine),
+      buzz: raw.recent?.buzz ?? [],
     },
     ranking: raw.ranking ?? null,
     hitters: (raw.hitters ?? []).map(normalizeSeason),
