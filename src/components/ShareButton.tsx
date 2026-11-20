@@ -6,6 +6,7 @@
 // - 옛 앱: 기기 공유(navigator.share), 그것도 없으면 주소를 복사하고 알림 띠로 알린다(복사하지 못해도 알린다)
 import { usePathname } from "next/navigation";
 import { appHas, postToApp } from "@/lib/app";
+import { OPEN_PLAYER_SHARE } from "@/components/player/PlayerShare";
 import { toast } from "@/lib/toast";
 
 /** 공유할 것이 없는 화면(사람마다 다른 '내 선수') */
@@ -16,6 +17,11 @@ export default function ShareButton() {
   if (NOT_SHARED.has(pathname)) return null;
 
   async function share() {
+    // 선수 페이지는 머리 카드의 공유 창(한국인 순위 카드)을 연다. 단추가 화면에 하나만 있게 선수 페이지의 단추는 앱에서 숨겨 둔다
+    if (/^\/players\/\d+$/.test(pathname)) {
+      window.dispatchEvent(new Event(OPEN_PLAYER_SHARE));
+      return;
+    }
     const url = window.location.href;
     // 제목의 ' · KOR Leaguer'는 공유 카드에 사이트 이름이 따로 붙으므로 뺀다
     const title = document.title.replace(/ · KOR Leaguer$/, "");
