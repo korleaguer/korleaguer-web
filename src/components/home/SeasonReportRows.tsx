@@ -222,7 +222,8 @@ const RowList = memo(function RowList({ rows, listHeader }: { rows: ReportRow[];
     } else setSheetId(null);
   };
 
-  // @container: 줄 폭이 16rem보다 좁으면(앱 큰 글씨) 막대를 글자 아래로 내린다(Row). rem 조건이라 글자 배율을 따라간다
+  // 11-21: 판정 말('평균보다 22% 아래', 약 115px)이 글자 칸에 들어가려고 16rem에서 19.5rem으로 올렸다(320·360px 휴대폰은 막대가 글자 아래로 가고, 375px부터 옆에 둔다).
+  // @container: 줄 폭이 19.5rem보다 좁으면(앱 큰 글씨) 막대를 글자 아래로 내린다(Row). rem 조건이라 글자 배율을 따라간다
   const list = (
     <ul ref={listRef} className="@container divide-y divide-line">
       {shown.map((row) => (
@@ -321,8 +322,8 @@ function Row({
   return (
     <li className={current ? "-mx-2 rounded-xl bg-surface-2 px-2" : undefined}>
       <h3>
-        {/* 사진 44px | 글자 | 작은 막대 84px. 줄 폭이 16rem보다 좁으면(375px 휴대폰은 앱 큰 글씨 1.25배부터) 막대를 글자 아래로 내린다.
-            한 줄에 두면 사진·막대가 px로 자리를 잡아 글자 칸이 한두 글자 폭으로 찌그러졌다. 보통 크기는 320px 휴대폰도 16rem을 넘는다.
+        {/* 사진 44px | 글자 | 작은 막대 84px. 줄 폭이 19.5rem보다 좁으면(375px 휴대폰은 앱 큰 글씨 1.25배부터) 막대를 글자 아래로 내린다.
+            한 줄에 두면 사진·막대가 px로 자리를 잡아 글자 칸이 한두 글자 폭으로 찌그러졌다. 보통 크기는 320px 휴대폰도 19.5rem을 넘는다.
             그때는 글자 덩어리가 여러 줄로 길어져서, 가운데 맞춤이면 사진이 이름에서 떨어져 내려가므로 위(이름 줄)에 붙인다.
             -mx-2 px-2: 마우스를 올렸을 때 옅은 바탕이 글자에 붙지 않게 바탕만 카드 여백 쪽으로 넓힌다(내용 자리는 그대로).
             휴대폰은 누르면 아래 창이 열리고(aria-haspopup), PC는 오른쪽 칸(aria-controls)이 바뀐다(aria-current) */}
@@ -333,28 +334,28 @@ function Row({
             ? { "aria-controls": asideId, "aria-current": current ? ("true" as const) : undefined }
             : { "aria-haspopup": "dialog" as const })}
           onClick={onPress}
-          className={`press-soft -mx-2 grid w-[calc(100%+1rem)] cursor-pointer grid-cols-[44px_minmax(0,1fr)_84px_0.75rem] items-center gap-x-3 rounded-xl px-2 pt-3 text-left hover:bg-surface-2 @max-[16rem]:grid-cols-[44px_minmax(0,1fr)] @max-[16rem]:items-start ${second ? "pb-1" : "pb-3 lg:pb-1"}`}
+          className={`press-soft -mx-2 grid w-[calc(100%+1rem)] cursor-pointer grid-cols-[44px_minmax(0,1fr)_84px_0.75rem] items-center gap-x-3 rounded-xl px-2 pt-3 text-left hover:bg-surface-2 @max-[19.5rem]:grid-cols-[44px_minmax(0,1fr)] @max-[19.5rem]:items-start ${second ? "pb-1" : "pb-3 lg:pb-1"}`}
         >
           {/* 서버 요소 칸(head·spark)은 감싸개 안에 혼자 둔다(ReportRow 칸 규칙: 다른 자식과 나란히 두면 key 경고) */}
           <PlayerAvatar size={44} nameKo={row.photo.nameKo} photoUrl={row.photo.photoUrl} teamAbbr={row.photo.teamAbbr} eager={row.photo.eager} />
           <span className="min-w-0">{row.head}</span>
           {row.spark ? (
-            <span className="justify-self-end @max-[16rem]:col-start-2 @max-[16rem]:mt-1.5 @max-[16rem]:justify-self-start">
+            <span className="justify-self-end @max-[19.5rem]:col-start-2 @max-[19.5rem]:mt-1.5 @max-[19.5rem]:justify-self-start">
               {row.spark}
             </span>
           ) : (
-            <span className="@max-[16rem]:hidden" />
+            <span className="@max-[19.5rem]:hidden" />
           )}
           {/* 누르면 자세히(아래 창·PC는 오른쪽 칸)가 열린다는 표시. 예전 목록 맨 위 글 '줄을 누르면 자세히 보여요' 대신(이슈 #329).
-              줄 폭이 16rem보다 좁으면(큰 글씨) 막대를 글자 아래로 내리는 모양이라 표시는 뺀다 */}
-          <span className="@max-[16rem]:hidden">
+              줄 폭이 19.5rem보다 좁으면(큰 글씨) 막대를 글자 아래로 내리는 모양이라 표시는 뺀다 */}
+          <span className="@max-[19.5rem]:hidden">
             <Chevron />
           </span>
         </button>
       </h3>
       {second ? (
-        // 사진만큼 들여 글자 칸과 줄을 맞춘다. 줄 폭이 16rem보다 좁으면(큰 글씨) 들이지 않고 세 줄까지 흘린다(한 줄이면 '이번 겨울 11…'만 남는다)
-        <div className="pb-2 pl-[calc(44px+0.75rem)] @max-[16rem]:pl-0">{second}</div>
+        // 사진만큼 들여 글자 칸과 줄을 맞춘다. 줄 폭이 19.5rem보다 좁으면(큰 글씨) 들이지 않고 세 줄까지 흘린다(한 줄이면 '이번 겨울 11…'만 남는다)
+        <div className="pb-2 pl-[calc(44px+0.75rem)] @max-[19.5rem]:pl-0">{second}</div>
       ) : (
         // PC는 줄 높이를 선수마다 맞춘다: 둘째 줄이 없어도 한 줄 자리를 둔다(전수조사 P3 'PC 높이 들쭉날쭉')
         <div aria-hidden className="hidden pb-2 lg:block">

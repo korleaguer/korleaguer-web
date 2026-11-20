@@ -10,6 +10,7 @@ import StarIcon from "@/components/my/StarIcon";
 import { type BadgeTone, levelKo, statusBadge } from "@/components/my/formLabels";
 import LinkedTeams from "@/components/home/LinkedTeams";
 import MonthLine, { MonthSpark } from "@/components/home/MonthLine";
+import StatLine from "@/components/StatLine";
 import SeasonReportRows, { type ReportRow } from "@/components/home/SeasonReportRows";
 import LeaguePositionCompact from "@/components/player/LeaguePositionCompact";
 
@@ -38,11 +39,11 @@ const LINKED_IN_LINE = 2;
 
 /**
  * 둘째 줄 글자 칸(거론 구단·이번 겨울 기사): 보통은 한 줄 말줄임에 위아래 4px(누르는 높이 24px).
- * 줄 폭이 16rem보다 좁으면(큰 글씨) 자르지 않고 세 줄까지 흘린다. 이때 줄 수를 자르는 칸 안에 위아래 여백이 있으면
+ * 줄 폭이 19.5rem보다 좁으면(큰 글씨) 자르지 않고 세 줄까지 흘린다. 이때 줄 수를 자르는 칸 안에 위아래 여백이 있으면
  * 그 여백 안으로 넷째 줄 윗부분이 비쳐 보여서(앱 2배에서 확인) 여백을 칸 바깥(margin)으로 옮긴다
  */
 const SECOND_LINE =
-  "truncate py-1 text-caption @max-[16rem]:my-1 @max-[16rem]:line-clamp-3 @max-[16rem]:whitespace-normal @max-[16rem]:py-0";
+  "truncate py-1 text-caption @max-[19.5rem]:my-1 @max-[19.5rem]:line-clamp-3 @max-[19.5rem]:whitespace-normal @max-[19.5rem]:py-0";
 
 /**
  * 목록 줄 숫자 하나: '143경기'(games), '평균보다 12% 잘 침'(plus, 리그 대비 말), '타율 .276'(rate).
@@ -58,6 +59,29 @@ interface Stat {
   said?: string;
   /** 마이너 합계일 때 맨 앞 칸에 한 번 붙이는 단계 이름('트리플A'). 없으면 null */
   level: string | null;
+}
+
+/** 목록 줄 숫자 하나를 글자로: 마이너 단계 이름(첫 칸), 리그 대비 말, '타율 .276'·'143경기'. 숫자만 굵게 */
+function statNode(s: Stat | undefined): ReactNode {
+  if (!s) return null;
+  return (
+    <>
+      {s.level && `${s.level} `}
+      {s.words ? (
+        <>
+          {s.words.lead}
+          {s.words.num && <span className="font-bold text-foreground">{s.words.num}</span>}
+          {s.words.tail}
+        </>
+      ) : (
+        <>
+          {s.kind !== "games" && `${s.label} `}
+          <span className="font-bold text-foreground">{s.value}</span>
+          {s.kind === "games" && s.label}
+        </>
+      )}
+    </>
+  );
 }
 
 /**
@@ -144,32 +168,13 @@ function buildRow(entry: MyPlayer, report: SeasonReport | null, isMine: boolean,
         {status && <StatusText status={status} />}
       </span>
       {stats.length > 0 && (
-        // 고른 그림처럼 12px(Caption)에 숫자만 굵게. 13px이면 375px 휴대폰에서 '85경기 · wRC+ 75 · 타율 .262'가
-        // 글자 칸(167px)을 넘어 두 줄이 됐다
-        <span className="mt-0.5 block text-caption text-muted tabular-nums">
-          {stats.map((s, i) => (
-            <Fragment key={s.kind}>
-              {/* '·'는 앞 숫자에 붙여 줄이 바뀌어도 줄 머리에 '·'가 오지 않게 */}
-              {i > 0 && "\u00a0· "}
-              <span className="whitespace-nowrap">
-                {s.level && `${s.level} `}
-                {s.words ? (
-                  <>
-                    {s.words.lead}
-                    {s.words.num && <span className="font-bold text-foreground">{s.words.num}</span>}
-                    {s.words.tail}
-                  </>
-                ) : (
-                  <>
-                    {s.kind !== "games" && `${s.label} `}
-                    <span className="font-bold text-foreground">{s.value}</span>
-                    {s.kind === "games" && s.label}
-                  </>
-                )}
-              </span>
-            </Fragment>
-          ))}
-        </span>
+        // 고른 그림처럼 12px(Caption)에 숫자만 굵게. 칸이 좁으면 모든 줄이 '경기 · 타율 / 판정' 두 줄 꼴, 넓으면 한 줄(StatLine)
+        <StatLine
+          className="mt-0.5 text-caption text-muted"
+          games={statNode(stats.find((s) => s.kind === "games"))}
+          verdict={statNode(stats.find((s) => s.kind === "plus"))}
+          rate={statNode(stats.find((s) => s.kind === "rate"))}
+        />
       )}
     </>
   );
