@@ -480,6 +480,11 @@
     border-radius: 6px;
   }
 
+  /* 창(<dialog>)은 열릴 때 포커스를 받는 출발점일 뿐이라 화면 전체를 두르는 테두리를 그리지 않는다(useModalDialog, 이슈 #354) */
+  dialog:focus-visible {
+    outline: none;
+  }
+
   /* 기사 페이지 제목은 넓은 화면(640px 이상)에서 한 단계 크게(24px) */
   @media (width >= 40rem) {
     :root {
