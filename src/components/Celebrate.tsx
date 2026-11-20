@@ -55,6 +55,11 @@ export default function Celebrate({
     const observer = new IntersectionObserver(
       (entries) => {
         if (!entries.some((entry) => entry.isIntersecting)) return;
+        // 숨은 탭에서 교차가 잡히면 아무도 못 본 채 기록만 남으니, 탭이 보일 때까지 미룬다
+        if (document.visibilityState !== "visible") {
+          document.addEventListener("visibilitychange", retry, { once: true });
+          return;
+        }
         observer.disconnect();
         try {
           const seen = readSeen();
@@ -67,8 +72,16 @@ export default function Celebrate({
       },
       { threshold: 0.6 },
     );
+    // 관찰을 다시 걸면 지금 교차 상태로 콜백이 한 번 더 온다
+    const retry = () => {
+      observer.unobserve(el);
+      observer.observe(el);
+    };
     observer.observe(el);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      document.removeEventListener("visibilitychange", retry);
+    };
   }, [id, order]);
 
   return (

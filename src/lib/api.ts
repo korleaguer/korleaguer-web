@@ -20,9 +20,12 @@ export interface GameBuzz {
   playerId: number;
   gameId: number;
   kind: "PASSED" | "FIRST" | "STREAK" | "SEASON_BEST";
-  stat: string | null;
+  stat: BuzzStat | null;
   text: string;
 }
+
+/** 활약 배지(Highlights)가 있는 기록 이름. 서버 GameBuzz.stat과 배지의 stat이 같으면 같은 뜻이라 배지를 뺀다 */
+export type BuzzStat = "homeRuns" | "hits" | "rbi" | "stolenBases" | "wins" | "saves" | "strikeouts";
 
 /** 선수 × 경기 한 줄 */
 export interface GameLine {

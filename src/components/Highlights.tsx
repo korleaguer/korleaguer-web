@@ -1,4 +1,5 @@
-import type { GameLine } from "@/lib/api";
+import { Fragment } from "react";
+import type { BuzzStat, GameLine } from "@/lib/api";
 import Celebrate from "@/components/Celebrate";
 
 interface Highlight {
@@ -6,7 +7,7 @@ interface Highlight {
   /** 가장 큰 활약(홈런, 승리투수, 세이브)은 채운 주황, 나머지는 옅은 주황 */
   strong: boolean;
   /** 이 배지가 말하는 활약. 화제 문구(GameBuzz.stat)가 같은 활약을 말하면 카드에서 뺀다 */
-  stat?: string;
+  stat?: BuzzStat;
 }
 
 /** 배지를 만드는 데 쓰는 경기 한 줄의 칸 */
@@ -17,7 +18,7 @@ const MAX = 2;
 
 interface HighlightOptions {
   /** 화제 문구가 이미 말하는 활약(GameBuzz.stat). 같은 뜻의 배지는 뺀다 */
-  cover?: string | null;
+  cover?: BuzzStat | null;
   /** 보여 줄 배지 수. 화제 문구가 있으면 문구와 합쳐 주황 표시가 둘이 되게 1로 줄인다. 기본 2 */
   max?: number;
 }
@@ -69,7 +70,7 @@ export default function Highlights({
 }: {
   line: HighlightSource;
   className?: string;
-  cover?: string | null;
+  cover?: BuzzStat | null;
   max?: number;
   /** 있으면 채운 주황 배지(가장 큰 표시)가 처음 보일 때 한 번 커졌다 돌아온다(홈 최근 24시간 카드). id = 경기 키, order = 카드 순서 */
   celebrate?: { id: string; order: number };
@@ -83,7 +84,6 @@ export default function Highlights({
       {items.map((h, i) => {
         const badge = (
           <span
-            key={h.text}
             aria-hidden
             className={`inline-flex items-center rounded-full px-2 py-0.5 text-badge ${h.strong ? "bg-hot-strong text-hot-on" : "bg-hot-soft text-hot-ink"}`}
           >
@@ -95,7 +95,7 @@ export default function Highlights({
             {badge}
           </Celebrate>
         ) : (
-          badge
+          <Fragment key={h.text}>{badge}</Fragment>
         );
       })}
     </p>
