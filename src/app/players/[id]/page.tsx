@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import { getPlayer } from "@/lib/api";
+import { getPlayer, getRecords } from "@/lib/api";
 import { formatAsOf } from "@/lib/format";
 import { parseId } from "@/lib/ids";
 import { playerShareImage, shareMeta } from "@/lib/share";
+import { pickRankRows } from "@/lib/koreanRank";
 import { readMyPlayers } from "@/lib/myPlayers";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import DataBanners from "@/components/DataBanners";
@@ -12,6 +13,7 @@ import InfoTip from "@/components/InfoTip";
 import CareerSeasons from "@/components/player/CareerSeasons";
 import GameLog from "@/components/player/GameLog";
 import JumpNav, { type JumpTarget } from "@/components/player/JumpNav";
+import KoreanRecords from "@/components/player/KoreanRecords";
 import LeaguePosition from "@/components/player/LeaguePosition";
 import PlayerHeader from "@/components/player/PlayerHeader";
 import PlayerNews from "@/components/player/PlayerNews";
@@ -70,7 +72,7 @@ async function PlayerContent({ params }: Pick<Props, "params">) {
   const id = parseId((await params).id);
   if (id == null) return <NotFoundNotice message="찾는 선수가 없어요" />;
 
-  const [result, myIds] = await Promise.all([getPlayer(id), readMyPlayers()]);
+  const [result, myIds, records] = await Promise.all([getPlayer(id), readMyPlayers(), getRecords()]);
   if (!result.ok) {
     if (result.failure === "notFound") return <NotFoundNotice message="찾는 선수가 없어요" />;
     // 선수 이름(h1)을 그리지 못했으니 안내 제목이 이 화면의 h1이다
@@ -125,6 +127,8 @@ async function PlayerContent({ params }: Pick<Props, "params">) {
             asOf={generatedAt ? formatAsOf(generatedAt) : undefined}
           />
           {saber && <LeaguePosition saber={saber} />}
+          {/* 기록을 못 받았으면 줄 없이 '역대 기록' 줄만 */}
+          <KoreanRecords rows={records.ok ? pickRankRows(records.data.next, player.id) : []} />
           {trend && (
             <Section
               id="trend-title"
