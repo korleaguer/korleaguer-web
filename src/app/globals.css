@@ -534,34 +534,23 @@
     }
 
     /*
-     * 달별 꺾은선(MonthLine, 이슈 #347): SVG 선·칠·점은 forced-color-adjust: none으로 두고 시스템 색으로 다시 칠한다.
-     * 평균 위 선은 글자색, 아래 선(data-line="dim")·평균 점선은 흐린 글자색, 선 아래 옅은 칠(data-area)은 뺀다(옅은 색은 이 모드에서
-     * 비치지 않고 선만 있어도 읽힌다). 점(data-dot)은 글자색, 부상 달 빨간 줄(data-injury)은 흐린 글자색 줄로 남긴다
+     * 달별 꺾은선(MonthLine, 이슈 #347 → #359): SVG 선·점선·점은 forced-color-adjust: none으로 두고 시스템 색으로 다시 칠한다.
+     * 선은 글자색, 평균 점선은 흐린 글자색, 최고·최저·마지막 달 점은 글자색
      */
-    :is([data-line], [data-avg]) {
+    [data-line] {
       forced-color-adjust: none;
       stroke: CanvasText !important;
     }
 
-    :is([data-line="dim"], [data-avg]) {
+    [data-avg] {
+      forced-color-adjust: none;
       stroke: GrayText !important;
-    }
-
-    [data-area] {
-      display: none;
     }
 
     [data-dot] {
       forced-color-adjust: none;
       background: CanvasText !important;
-      border-color: Canvas !important;
       fill: CanvasText !important;
-    }
-
-    [data-injury] {
-      forced-color-adjust: none;
-      background: GrayText !important;
-      stroke: GrayText !important;
     }
 
     /*
@@ -991,7 +980,7 @@
 
   /*
    * 홈 성적표 달별 꺾은선(MonthLine, 이슈 #264 → #347). 그래프 폭은 카드에 묶여 있어 글자만 키우면 '최고 118'·'최저 −37'·
-   * 달 이름('10월')이 서로 겹치거나 카드 밖으로 넘친다. 칸 폭(100cqi)이 허락하는 만큼만 키운다.
+   * 달 이름('10월')·그 밑 '4경기'가 서로 겹치거나 카드 밖으로 넘친다. 칸 폭(100cqi)이 허락하는 만큼만 키운다.
    * 이름표: '최고 118'은 약 4.5em이라 폭의 1/20(휴대폰 343px에서 17px)까지. 달 이름: 여섯 칸 하나('10월' 약 2.6em)에 들어가는 만큼.
    * 보통 크기에서는 그대로다.
    */
