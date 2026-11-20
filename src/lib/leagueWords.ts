@@ -33,7 +33,8 @@ export function leagueWords(plus: number, pitcher: boolean): LeagueWords {
 
 /** 평균 대비 부호 있는 퍼센트: 123 → '+23%', 78 → '−22%'(성적표 창 제목·달별 그래프 최고·최저) */
 export function signedPct(v: number): string {
-  const d = v - 100;
+  // leagueWords와 같이 0~300으로 가둔다(한 달 wRC+가 0 아래여도 '−108%'가 나오지 않게: 아래쪽 끝은 −100%)
+  const d = Math.max(0, Math.min(300, Math.round(v))) - 100;
   return d === 0 ? "0%" : `${d > 0 ? "+" : "−"}${Math.abs(d)}%`;
 }
 
