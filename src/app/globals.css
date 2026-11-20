@@ -556,6 +556,7 @@
     [data-injury] {
       forced-color-adjust: none;
       background: GrayText !important;
+      stroke: GrayText !important;
     }
 
     /*

@@ -35,8 +35,7 @@ interface Pt {
  * 단조 3차 곡선(Fritsch–Carlson): 점과 점 사이에서 값보다 위아래로 넘치지 않는다. 보통의 부드러운 곡선은 한 달 반짝한 값 옆에서
  * 점보다 위로 부풀어 '그 달에 없던 값'을 그리고, 평균 점선을 넘나드는 색 갈림도 어긋난다
  */
-function smoothSegments(p: Pt[]): string[] {
-  const f = (n: number) => n.toFixed(1);
+function smoothBeziers(p: Pt[]): number[][] {
   if (p.length === 1) return [];
   const n = p.length;
   const d: number[] = [];
@@ -60,13 +59,37 @@ function smoothSegments(p: Pt[]): string[] {
       m[i + 1] = t * b * d[i];
     }
   }
-  // 달 사이 구간마다 3차 곡선 하나('Cx1,y1 x2,y2 x,y')
-  const segs: string[] = [];
+  // 달 사이 구간마다 3차 곡선 하나: [제어점1 x, y, 제어점2 x, y, 끝 x, y]
+  const segs: number[][] = [];
   for (let i = 0; i < n - 1; i++) {
     const h = (p[i + 1].x - p[i].x) / 3;
-    segs.push(`C${f(p[i].x + h)},${f(p[i].y + m[i] * h)} ${f(p[i + 1].x - h)},${f(p[i + 1].y - m[i + 1] * h)} ${f(p[i + 1].x)},${f(p[i + 1].y)}`);
+    segs.push([p[i].x + h, p[i].y + m[i] * h, p[i + 1].x - h, p[i + 1].y - m[i + 1] * h, p[i + 1].x, p[i + 1].y]);
   }
   return segs;
+}
+
+/** 구간마다 SVG 경로 조각('Cx1,y1 x2,y2 x,y') */
+function smoothSegments(p: Pt[]): string[] {
+  const f = (n: number) => n.toFixed(1);
+  return smoothBeziers(p).map((b) => `C${f(b[0])},${f(b[1])} ${f(b[2])},${f(b[3])} ${f(b[4])},${f(b[5])}`);
+}
+
+/** 곡선 위 점들(글자가 선과 겹치는지 가늠하는 데 쓴다): 구간마다 t를 10등분 */
+function curveSamples(p: Pt[]): { x: number; y: number }[] {
+  const out = [{ x: p[0].x, y: p[0].y }];
+  smoothBeziers(p).forEach((b, i) => {
+    const [x0, y0] = [p[i].x, p[i].y];
+    for (let k = 1; k <= 10; k++) {
+      const t = k / 10;
+      const u = 1 - t;
+      const w = [u * u * u, 3 * u * u * t, 3 * u * t * t, t * t * t];
+      out.push({
+        x: w[0] * x0 + w[1] * b[0] + w[2] * b[2] + w[3] * b[4],
+        y: w[0] * y0 + w[1] * b[1] + w[2] * b[3] + w[3] * b[5],
+      });
+    }
+  });
+  return out;
 }
 
 /** 곡선 전체 경로(칠 영역용) */
@@ -118,7 +141,7 @@ const DOWN = "color-mix(in srgb, var(--muted) 70%, var(--surface))";
 const AVERAGE = "var(--muted)";
 
 /**
- * 그래프 좌표 계산: 달 칸 → 점, 세로 범위는 선수마다 자동(100을 늘 포함, 위아래 8% 여유라 음수 달끼리도 갈린다).
+ * 그래프 좌표 계산: 달 칸 → 점, 세로 범위는 선수마다 자동(100을 늘 포함, 위아래 8% 여유라 음수 달끼리도 갈린다. 단 100 ±20보다 좁아지지는 않는다).
  * 기록 있는 달이 이어진 구간(runs)마다 선 하나이고 기록 없는 달에서 끊는다
  */
 function layout(months: SeasonMonth[], pitcher: boolean, f: Frame) {
@@ -133,6 +156,9 @@ function layout(months: SeasonMonth[], pitcher: boolean, f: Frame) {
   const span = hi - lo || 40;
   lo -= span * 0.08;
   hi += span * 0.08;
+  // 최소 폭: 평균 100 ±20보다 좁으면 넓힌다(99~101처럼 값 차이가 작은 선수의 선이 크게 출렁이지 않게)
+  lo = Math.min(lo, 80);
+  hi = Math.max(hi, 120);
   const bottom = f.h - f.padB;
   const y = (v: number) => f.padT + (1 - (v - lo) / (hi - lo)) * (bottom - f.padT);
   const x = (i: number) => (n === 1 ? f.w / 2 : f.padL + (i * (f.w - f.padL - f.padR)) / (n - 1));
@@ -303,7 +329,9 @@ export default function MonthLine({ months, pitcher }: { months: SeasonMonth[]; 
   const first = all.length > 0 ? all[0] : null;
   const farFirst = first && first.i === 0 ? Math.abs(first.y - y100) : 99;
   const farLast = last && last.i === lastIdx ? Math.abs(last.y - y100) : 99;
-  const avgRight = farLast >= farFirst;
+  // 같으면 왼쪽: 오른쪽 끝에는 마지막 달 강조 점(옅은 원 지름 16)이 있어 이름표를 가린다(평평한 선수). 오른쪽이 점선에 가까우면 점 안쪽으로 비킨다
+  const avgRight = farLast > farFirst;
+  const avgInset = avgRight && farLast < 14 ? 14 : 0;
   // 최고·최저 후보에서 경기 적은 달은 뺀다(후보가 없으면 이름표 없음)
   const cand = all.filter((q) => !q.few);
   const mx = cand.length > 0 ? cand.reduce((a, b) => (b.v > a.v ? b : a)) : null;
@@ -316,6 +344,91 @@ export default function MonthLine({ months, pitcher }: { months: SeasonMonth[]; 
     if (q.i === lastIdx) return { ...vert, right: `calc(${100 - (q.x / f.w) * 100}% - 4px)` };
     return { ...vert, left: px(q.x), transform: "translateX(-50%)" };
   };
+
+  // ---- 'N경기' 글자 자리: 점 위·아래 × 왼쪽 붙임·가운데·오른쪽 붙임 여섯 곳 중, 선·다른 글자·점과 가장 안 겹치는 곳.
+  // 글자 크기는 휴대폰 1배 기준 어림(글자 폭 px ≈ 그림 단위)이라 PC·큰 글씨에서는 조금 어긋날 수 있다
+  const LH = 14;
+  const textW = (t: string) => [...t].reduce((a, c) => a + (c === " " ? 3 : /[0-9a-zA-Z+−\-–.]/.test(c) ? 6.6 : 11.5), 0);
+  interface Rect {
+    x0: number;
+    y0: number;
+    x1: number;
+    y1: number;
+  }
+  const fixed: Rect[] = [];
+  const near = (cx: number, cy: number, r: number) => fixed.push({ x0: cx - r, y0: cy - r, x1: cx + r, y1: cy + r });
+  /** 점 q 위(above)·아래에 놓이는 글자의 칸. horiz: 점에서 오른쪽으로(start)·왼쪽으로(end)·가운데 */
+  const labelRect = (q: Pt, text: string, above: boolean, horiz: "start" | "center" | "end", gap: number): Rect => {
+    const w = textW(text);
+    const y0 = above ? q.y - gap - LH : q.y + gap;
+    const x0 = horiz === "start" ? q.x - 4 : horiz === "end" ? q.x + 4 - w : q.x - w / 2;
+    return { x0, y0, x1: x0 + w, y1: y0 + LH };
+  };
+  // 이미 놓인 것들의 칸: 최고·최저 이름표, 단계 이름, 달 이름, 부상·FA 글자, 평균 이름표, 점
+  if (mx) fixed.push(labelRect(mx, `최고 ${plusText(mx.v)}`, true, mx.i === 0 ? "start" : mx.i === lastIdx ? "end" : "center", 7));
+  if (mx && mn && mn !== mx) fixed.push(labelRect(mn, `최저 ${plusText(mn.v)}`, false, mn.i === 0 ? "start" : mn.i === lastIdx ? "end" : "center", 7));
+  minorBands(months).forEach((b) => {
+    const step = (f.w - f.padL - f.padR) / Math.max(1, months.length - 1);
+    const x0 = Math.max(0, x(b.from) - step / 2) + 6;
+    fixed.push({ x0, y0: 2, x1: x0 + textW(b.level), y1: 2 + LH });
+  });
+  months.forEach((m, i) => {
+    const w = textW(`${m.month}월`);
+    const x0 = i === 0 ? x(i) : i === lastIdx ? x(i) - w : x(i) - w / 2;
+    fixed.push({ x0, y0: f.h - LH, x1: x0 + w, y1: f.h });
+    if (!played(m, pitcher)) {
+      const rw = textW(m.kind === "INJURED" ? "부상" : m.kind === "FREE_AGENT" ? "FA" : "–");
+      const rx = Math.min(f.w - rw, Math.max(0, x(i) - rw / 2));
+      fixed.push({ x0: rx, y0: bottom - 2 - LH, x1: rx + rw, y1: bottom });
+    }
+  });
+  if (all.length > 0) {
+    const aw = textW("평균");
+    fixed.push(avgRight ? { x0: f.w - avgInset - aw, y0: y100 - LH - 1, x1: f.w - avgInset, y1: y100 } : { x0: 0, y0: y100 - LH - 1, x1: aw, y1: y100 });
+  }
+  if (last) near(last.x, last.y, 8);
+  all.forEach((q) => {
+    if (q.few) near(q.x, q.y, 4);
+    if (q.edge !== 0) fixed.push({ x0: q.i === lastIdx ? q.x - 18 : q.x + 5, y0: q.y - 7, x1: q.i === lastIdx ? q.x - 5 : q.x + 18, y1: q.y + 7 });
+  });
+  runs.forEach((r) => {
+    if (r.length === 1) near(r[0].x, r[0].y, 4);
+    else {
+      if (r[0].i > 0) near(r[0].x, r[0].y, 3);
+      if (r[r.length - 1].i < lastIdx) near(r[r.length - 1].x, r[r.length - 1].y, 3);
+    }
+  });
+  const samples = runs.filter((r) => r.length > 1).flatMap((r) => curveSamples(r));
+  const hit = (a: Rect, b: Rect) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
+  const fewPlace = new Map<number, { above: boolean; horiz: "start" | "center" | "end" }>();
+  all
+    .filter((q) => q.few)
+    .forEach((q) => {
+      const text = `${months[q.i].games}${pitcher ? "등판" : "경기"}`;
+      // 안쪽 우선: 위 끝에 붙은 점은 아래, 아래 끝에 붙은 점은 위. 그 밖에는 아래부터
+      const order = q.edge === 1 ? [true, false] : [false, true];
+      let best: { above: boolean; horiz: "start" | "center" | "end"; rect: Rect } | null = null;
+      let bestCost = Infinity;
+      order.forEach((above, oi) => {
+        (["center", "start", "end"] as const).forEach((horiz, hi) => {
+          const rect = labelRect(q, text, above, horiz, 6);
+          let cost = oi * 0.4 + hi * 0.1;
+          if (rect.x0 < 0 || rect.x1 > f.w || rect.y0 < 0 || rect.y1 > f.h) cost += 20;
+          const grown = { x0: rect.x0 - 1.5, y0: rect.y0 - 1.5, x1: rect.x1 + 1.5, y1: rect.y1 + 1.5 };
+          cost += fixed.filter((r) => hit(grown, r)).length * 10;
+          cost += samples.filter((pt) => pt.x > grown.x0 && pt.x < grown.x1 && pt.y > grown.y0 && pt.y < grown.y1).length;
+          if (cost < bestCost) {
+            bestCost = cost;
+            best = { above, horiz, rect };
+          }
+        });
+      });
+      if (best) {
+        const b = best as { above: boolean; horiz: "start" | "center" | "end"; rect: Rect };
+        fewPlace.set(q.i, { above: b.above, horiz: b.horiz });
+        fixed.push(b.rect);
+      }
+    });
 
   return (
     <div className="mt-3">
@@ -350,7 +463,7 @@ export default function MonthLine({ months, pitcher }: { months: SeasonMonth[]; 
         {all.length > 0 && (
           <span
             className="month-line-label pointer-events-none absolute -translate-y-full pb-px text-muted"
-            style={avgRight ? { right: 0, top: py(y100) } : { left: 0, top: py(y100) }}
+            style={avgRight ? { right: avgInset, top: py(y100) } : { left: 0, top: py(y100) }}
           >
             평균
           </span>
@@ -366,6 +479,19 @@ export default function MonthLine({ months, pitcher }: { months: SeasonMonth[]; 
               style={{ left: px(r[0].x), top: py(r[0].y), background: dotColor(r[0].v) }}
             />
           ))}
+        {/* 기록 없는 달에서 끊긴 구간의 끝(앞이나 뒤가 끊긴 점)에 작은 점: 잘린 조각처럼 보이지 않게. 마지막 강조 점·경기 적은 달 빈 점이 우선 */}
+        {runs
+          .filter((r) => r.length > 1)
+          .flatMap((r) => [...(r[0].i > 0 ? [r[0]] : []), ...(r[r.length - 1].i < lastIdx ? [r[r.length - 1]] : [])])
+          .filter((q) => !q.few && q !== last)
+          .map((q) => (
+            <span
+              key={`cut${q.i}`}
+              data-dot
+              className="absolute size-[5px] -translate-x-1/2 -translate-y-1/2 rounded-full"
+              style={{ left: px(q.x), top: py(q.y), background: dotColor(q.v) }}
+            />
+          ))}
         {mx && (
           <span className="month-line-label absolute whitespace-nowrap text-foreground" style={labelStyle(mx, true)}>
             <span className="text-muted">최고 </span>
@@ -379,12 +505,11 @@ export default function MonthLine({ months, pitcher }: { months: SeasonMonth[]; 
           </span>
         )}
         {/* 경기 적은 달: 속 빈 작은 점 + 흐린 'N경기'(투수 'N등판')로 점선의 뜻을 알린다. 범위를 넘어 끝에 붙인 점은 옆에 ▲▼.
-            글자는 점 아래에 두되, 끝에 붙은 점은 위에 둔다(위 끝은 선이 아래에서 올라오고, 아래 끝 밑은 '최저'·달 이름 자리) */}
+            글자 자리는 위의 fewPlace가 정한다(선·다른 글자·점과 안 겹치는 곳, 끝에 붙은 점은 안쪽 우선) */}
         {all
           .filter((q) => q.few)
           .map((q) => {
             const m = months[q.i];
-            const above = q.edge !== 0;
             const side = q.i === lastIdx ? { right: `calc(${100 - (q.x / f.w) * 100}% + 7px)` } : { left: `calc(${px(q.x)} + 7px)` };
             return (
               <span key={q.i}>
@@ -402,14 +527,17 @@ export default function MonthLine({ months, pitcher }: { months: SeasonMonth[]; 
                 )}
                 <span
                   className="month-line-label absolute whitespace-nowrap text-muted opacity-80"
-                  style={{
-                    ...(q.i === 0
-                      ? { left: px(q.x) }
-                      : q.i === lastIdx
-                        ? { right: `${100 - (q.x / f.w) * 100}%` }
-                        : { left: px(q.x), transform: "translateX(-50%)" }),
-                    ...(above ? { bottom: `calc(${100 - (q.y / f.h) * 100}% + 6px)` } : { top: `calc(${py(q.y)} + 6px)` }),
-                  }}
+                  style={(() => {
+                    const pl = fewPlace.get(q.i) ?? { above: false, horiz: "center" as const };
+                    const horiz =
+                      pl.horiz === "start"
+                        ? { left: `calc(${px(q.x)} - 4px)` }
+                        : pl.horiz === "end"
+                          ? { right: `calc(${100 - (q.x / f.w) * 100}% - 4px)` }
+                          : { left: px(q.x), transform: "translateX(-50%)" };
+                    const vert = pl.above ? { bottom: `calc(${100 - (q.y / f.h) * 100}% + 6px)` } : { top: `calc(${py(q.y)} + 6px)` };
+                    return { ...horiz, ...vert };
+                  })()}
                 >
                   {`${m.games}${pitcher ? "등판" : "경기"}`}
                 </span>
@@ -508,12 +636,28 @@ export function MonthSpark({ months, pitcher }: { months: SeasonMonth[]; pitcher
   const id = useSvgId();
   if (months.length === 0) return null;
   const f = SMALL;
-  const { runs, y100, bottom } = layout(months, pitcher, f);
+  const { runs, x, y100, bottom } = layout(months, pitcher, f);
   return (
     <svg aria-hidden viewBox={`0 0 ${f.w} ${f.h}`} width={f.w} height={f.h} className="block h-[30px] w-[84px] overflow-visible">
       <Defs id={id} f={f} y100={y100} bottom={bottom} alpha={0.28} />
       <AverageLine f={f} y100={y100} opacity={0.6} scaled={false} />
       <Runs id={id} runs={runs} bottom={bottom} lineWidth={1.75} scaled={false} />
+      {/* 부상 달 자리 바닥에 짧은 빨간 줄(큰 그래프 '부상' 줄과 같은 색): 선이 끊긴 이유. 끊긴 구간 끝 점은 너무 작아 넣지 않는다 */}
+      {months.map((m, i) =>
+        m.kind === "INJURED" ? (
+          <line
+            key={`inj${m.month}`}
+            data-injury
+            x1={x(i) - 3}
+            x2={x(i) + 3}
+            y1={f.h - 1.5}
+            y2={f.h - 1.5}
+            stroke="color-mix(in srgb, var(--danger-fg) 80%, transparent)"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+        ) : null,
+      )}
       {runs
         .filter((r) => r.length === 1)
         .map((r) => (
