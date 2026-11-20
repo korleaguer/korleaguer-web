@@ -259,7 +259,7 @@ export default function MonthLine({ months, pitcher }: { months: SeasonMonth[]; 
             }
           >
             <span className="month-line-small">{`${m.month}월`}</span>
-            <span className="month-line-small opacity-70">{note(m, pitcher) ?? " "}</span>
+            <span className="month-line-small">{note(m, pitcher) ?? " "}</span>
           </span>
         ))}
       </div>
