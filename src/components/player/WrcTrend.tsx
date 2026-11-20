@@ -5,6 +5,7 @@ import type { RosterMove } from "@/lib/api";
 import { trendGaps, type TrendGap, type TrendPoint } from "@/lib/wrcTrend";
 import { formatShortDate } from "@/lib/format";
 import { haptic } from "@/lib/app";
+import { leagueWords } from "@/lib/leagueWords";
 
 const W = 340;
 const H = 150;
@@ -23,6 +24,12 @@ const GRID = [80, 120];
  * 1배 숫자(11px) 기준이라, 큰 글씨에서는 숫자 크기를 눈금 사이 간격까지만 키운다(아래 tickGap)
  */
 const MIN_GRID_GAP_PX = 16;
+
+/** 눈금 숫자: 평균(100)은 '0', 위아래는 평균 대비 퍼센트 숫자('+20'·'−20', 11-21 지표 이름 wRC+ 대신). 세 글자까지라 오른쪽 2rem 자리에 든다 */
+function tickText(v: number): string {
+  const d = Math.round(v - 100);
+  return d === 0 ? "0" : `${d > 0 ? "+" : "−"}${Math.abs(d)}`;
+}
 
 /** 점의 달(1~12). 한국 날짜 기준 */
 function monthOf(p: TrendPoint): number {
@@ -56,14 +63,6 @@ function monthTicks(points: TrendPoint[]): MonthTick[] {
     if (kept.length === 0 || t.pct - kept[kept.length - 1].pct >= MIN_TICK_GAP) kept.push(t);
   }
   return kept;
-}
-
-/** wRC+를 쉬운 말로(100 = 리그 평균) */
-function words(v: number): string {
-  if (v >= 120) return "리그 평균보다 크게 높아요";
-  if (v >= 105) return "리그 평균보다 높아요";
-  if (v >= 95) return "리그 평균과 비슷해요";
-  return "리그 평균보다 낮아요";
 }
 
 /**
@@ -116,7 +115,7 @@ export default function WrcTrend({ points, moves }: { points: TrendPoint[]; move
   };
 
   const p = points[active];
-  const value = Math.round(p.value);
+  const verdict = leagueWords(p.value, false);
   const date = formatShortDate(p.startTimeKst);
   const ticks = monthTicks(points);
   // 지금 점이 끊긴 뒤 첫 점이면 그 사실: '부상 뒤 첫 경기', 이유를 모르면 '38일 만의 경기'
@@ -132,29 +131,24 @@ export default function WrcTrend({ points, moves }: { points: TrendPoint[]; move
 
   return (
     <div className="@container card px-4 pb-3 pt-4">
-      {/* 큰 글씨에서 말('리그 평균보다 크게 높아요')이 8rem도 못 받으면 wRC+ 숫자를 다음 줄 오른쪽으로 내린다(이슈 #264) */}
-      <div className="mb-2 flex flex-wrap items-end justify-between gap-x-3">
-        <div className="min-w-0 flex-1 basis-[8rem]">
-          <p className="text-caption text-muted tabular-nums">{active === last ? "시즌 전체" : `${date}까지`}
-            {afterGap && ` · ${afterGap}`}
-          </p>
-          <p className={`text-label ${value >= 105 ? "text-accent-ink" : "text-muted"}`}>{words(value)}</p>
-        </div>
-        <p className="ml-auto shrink-0 text-stat tabular-nums">
-          <span className="mr-1 text-caption text-muted">wRC+</span>
-          {value}
+      {/* 판정 말('평균보다 12% 잘 침')이 이 카드의 큰 글자다(사용자 11-21: 지표 이름 wRC+·숫자는 화면에 쓰지 않고 ⓘ로).
+          예전에는 말(작게)과 'wRC+ 112'(크게)가 같은 뜻을 두 번 했다. 큰 글씨에서는 날짜와 말이 칸 폭 안에서 줄을 바꾼다 */}
+      <div className="mb-2">
+        <p className="text-caption text-muted tabular-nums">{active === last ? "시즌 전체" : `${date}까지`}
+          {afterGap && ` · ${afterGap}`}
         </p>
+        <p className={`text-heading ${verdict.tone === "up" ? "text-hot-ink" : ""}`}>{verdict.text}</p>
       </div>
       <div
         ref={boxRef}
         role="slider"
         tabIndex={0}
-        aria-label="타격 흐름(누적 wRC+)"
+        aria-label="타격 흐름(누적, 리그 평균 대비)"
         aria-valuemin={0}
         aria-valuemax={last}
         aria-valuenow={active}
         // 마지막 점만 MLB 공식 값이고 중간은 어림값이다(제목 옆 ⓘ 안 설명과 같은 뜻)
-        aria-valuetext={`${date}까지 wRC+ ${value}${active === last ? "" : "(어림)"}${afterGap ? `, ${afterGap}` : ""}`}
+        aria-valuetext={`${date}까지 ${verdict.text}${active === last ? "" : "(어림)"}${afterGap ? `, ${afterGap}` : ""}`}
         onPointerDown={(e) => {
           e.currentTarget.setPointerCapture(e.pointerId);
           fromPointer(e);
@@ -230,7 +224,7 @@ export default function WrcTrend({ points, moves }: { points: TrendPoint[]; move
               className="trend-tick pointer-events-none absolute -right-8 -translate-y-1/2 text-muted tabular-nums"
               style={{ top: `${(y(v) / H) * 100}%` }}
             >
-              {v}
+              {tickText(v)}
             </span>
           ))}
           {/* 점선 이름표 '평균': 점선 왼쪽 끝 바로 위. SVG 안 글자는 그래프와 함께 가로로 늘어나 찌그러지므로(위 눈금 숫자와 같은 이유)
