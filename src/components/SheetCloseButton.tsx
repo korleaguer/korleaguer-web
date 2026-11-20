@@ -15,7 +15,7 @@ export default function SheetCloseButton({ onClick }: { onClick: () => void }) {
     >
       <span
         aria-hidden
-        className="grid size-8 place-items-center rounded-full bg-surface-2 transition-colors group-hover:bg-line group-focus-visible:outline-2 group-focus-visible:outline-offset-2 group-focus-visible:outline-accent group-focus-visible:outline-solid"
+        className="grid size-8 place-items-center rounded-full bg-surface-2 transition-[background-color] group-hover:bg-line group-focus-visible:outline-2 group-focus-visible:outline-offset-2 group-focus-visible:outline-accent group-focus-visible:outline-solid"
       >
         <svg viewBox="0 0 16 16" className="size-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
           <path d="M4 4l8 8M12 4l-8 8" />
