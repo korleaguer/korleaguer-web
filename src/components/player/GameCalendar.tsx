@@ -322,7 +322,7 @@ export default function GameCalendar({
               disabled={empty}
               aria-label={empty ? `${m.month}월 경기 없음` : `${m.month}월`}
               onClick={() => pickMonth(m.key)}
-              className={`tap-target min-w-10 flex-1 shrink-0 rounded-full px-1.5 py-1.5 text-label tabular-nums transition-colors ${
+              className={`press tap-target min-w-10 flex-1 shrink-0 rounded-full px-1.5 py-1.5 text-label tabular-nums transition motion-reduce:transition-none ${
                 on
                   ? "bg-accent-soft text-accent-ink"
                   : empty
@@ -530,7 +530,7 @@ function DayCell({
       tabIndex={tabbable ? 0 : -1}
       data-day={day.key}
       onClick={(e) => onPick(day.key, e.currentTarget)}
-      className={`flex min-w-0 cursor-pointer flex-col justify-between rounded-lg p-[4px] text-left sm:p-[8px] ${TONE[tone]} ${
+      className={`press flex min-w-0 cursor-pointer flex-col justify-between rounded-lg p-[4px] text-left sm:p-[8px] ${TONE[tone]} ${
         on ? "ring-2 ring-foreground ring-offset-1 ring-offset-surface" : ""
       }`}
     >
