@@ -315,7 +315,7 @@ function NewsLine({ news }: { news: NewsHeadline }) {
       <span className="group-hover:underline">{news.titleKo ?? news.title}</span>
     </>
   );
-  const className = `group block ${SECOND_LINE} text-foreground`;
+  const className = `press-soft group block ${SECOND_LINE} text-foreground`;
   if (news.id == null) {
     return (
       <a href={news.url} target="_blank" rel="noopener noreferrer" className={className}>
