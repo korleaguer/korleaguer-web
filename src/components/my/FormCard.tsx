@@ -233,8 +233,9 @@ function RateDelta({
   if (!played) return <>이 기간 출전 없음</>;
   if (!hasAvg) return <>이 기간 타수 없음</>;
   if (minors) return <>마이너라 평균 비교 없음</>;
-  if (plus == null) return <>&nbsp;</>;
+  // 표본 문턱을 먼저 본다: 경기 세부 칸이 없어 값을 못 만든 카드도 '참고용'은 말해야 한다
   if (atBats < MIN_AT_BATS_FOR_DELTA) return <>{`${atBats}타수라 참고용`}</>;
+  if (plus == null) return <>&nbsp;</>;
   return <Verdict plus={plus} pitcher={false} />;
 }
 
@@ -260,8 +261,10 @@ function EraDelta({
 }) {
   if (!played) return <>이 기간 등판 없음</>;
   if (minors) return <>마이너라 평균 비교 없음</>;
-  if (era == null) return <>&nbsp;</>;
   if (outs < MIN_OUTS_FOR_DELTA) return <>{`${inningsText}이닝이라 참고용`}</>;
+  if (era == null) return <>&nbsp;</>;
+  // 자책점이 없으면 ERA+가 상한(300)에 붙어 '평균보다 200%'가 되니 퍼센트 대신 사실만
+  if (era <= 0) return <span className="font-semibold text-hot-ink">자책점 없음</span>;
   return <Verdict plus={periodEraPlus(era)} pitcher />;
 }
 

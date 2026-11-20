@@ -14,11 +14,6 @@ function played(m: SeasonMonth, pitcher: boolean): boolean {
   return (m.kind === "MLB" || m.kind === "MINORS") && plus(m, pitcher) != null;
 }
 
-/** 값 글자(음수는 긴 빼기표) */
-function plusText(v: number): string {
-  return signedPct(v);
-}
-
 /** 점 하나: i는 달 칸 번호, x·y는 그래프 좌표(viewBox 단위) */
 interface Pt {
   i: number;
@@ -227,13 +222,13 @@ export default function MonthLine({ months, pitcher }: { months: SeasonMonth[]; 
         {mx && (
           <span className="month-line-label absolute whitespace-nowrap text-foreground" style={labelStyle(mx, true)}>
             <span className="text-muted">최고 </span>
-            <b>{plusText(mx.v)}</b>
+            <b>{signedPct(mx.v)}</b>
           </span>
         )}
         {mx && mn && mn !== mx && (
           <span className="month-line-label absolute whitespace-nowrap text-foreground" style={labelStyle(mn, false)}>
             <span className="text-muted">최저 </span>
-            <b>{plusText(mn.v)}</b>
+            <b>{signedPct(mn.v)}</b>
           </span>
         )}
         {/* 최고·최저 달과 마지막 달에만 작은 점(테두리·옅은 원 없이 파랑 6px) */}

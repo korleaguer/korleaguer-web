@@ -140,5 +140,7 @@ export function periodWrcPlus(games: GameLine[]): number | null {
     den += b.atBats + b.walks + (b.sacFlies ?? 0) + hbp;
   }
   if (den === 0) return null;
-  return (((num / den - LEAGUE_WOBA) / WOBA_SCALE + RUNS_PER_PA) / RUNS_PER_PA) * 100;
+  // 몇 타수 안타 없음이면 음수까지 내려가고 몇 타수 몰아치면 크게 올라가서, 서버 시즌 값처럼 0~300으로 가둔다('평균보다 213% 아래'가 나오지 않게)
+  const plus = (((num / den - LEAGUE_WOBA) / WOBA_SCALE + RUNS_PER_PA) / RUNS_PER_PA) * 100;
+  return Math.max(0, Math.min(300, plus));
 }
