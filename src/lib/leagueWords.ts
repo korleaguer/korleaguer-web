@@ -44,10 +44,10 @@ export function signedPct(v: number): string {
  */
 export function leagueFlow(text: string): string {
   // 서버 글은 두 번째 숫자에 지표 이름이 없다('6월까지 wRC+ 123 → 7월부터 78'): 앞 숫자에만 '평균'을 붙이고 둘 다 바꾼다
-  const half = /^(.*?)(?:wRC\+|ERA\+) ?(\d+)( → \d+월부터 )(\d+)$/.exec(text);
+  const half = /^(.*?)(?:wRC\+|ERA\+) ?(-?\d+)( → \d+월부터 )(-?\d+)$/.exec(text);
   if (half) return `${half[1]}평균 ${signedPct(Number(half[2]))}${half[3]}${signedPct(Number(half[4]))}`;
   let first = true;
-  return text.replace(/(?:wRC\+|ERA\+) ?(\d+)/g, (_m, n: string) => {
+  return text.replace(/(?:wRC\+|ERA\+) ?(-?\d+)/g, (_m, n: string) => {
     const out = first ? `평균 ${signedPct(Number(n))}` : signedPct(Number(n));
     first = false;
     return out;
