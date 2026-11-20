@@ -1,12 +1,14 @@
 import type { ReactNode } from "react";
 import type { PlayerDetail } from "@/lib/api";
 import { formatAge, formatBirthDate, formatBody, formatSummary, teamLabel, teamPrefix } from "@/lib/format";
+import { OG_VERSION } from "@/lib/share";
 import { kboTeamColor, teamColor } from "@/lib/teams";
 import ExternalLinkIcon from "@/components/ExternalLinkIcon";
 import LevelChip from "@/components/LevelChip";
 import PlayerSubline from "@/components/PlayerSubline";
 import TeamName from "@/components/TeamName";
 import MyPlayerToggle from "@/components/my/MyPlayerToggle";
+import PlayerShare from "@/components/player/PlayerShare";
 import PhotoStage, { type Shot } from "@/components/player/PhotoStage";
 import Words from "@/components/Words";
 
@@ -45,7 +47,12 @@ export default function PlayerHeader({ player, isMine }: { player: PlayerDetail;
         nameKo={player.nameKo}
         shots={shots}
         initial={shots.length - 1}
-        toggle={<MyPlayerToggle playerId={player.id} nameKo={player.nameKo} initialOn={isMine} variant="pill" />}
+        toggle={
+          <div className="flex items-center gap-2">
+            <MyPlayerToggle playerId={player.id} nameKo={player.nameKo} initialOn={isMine} variant="pill" />
+            <PlayerShare playerId={player.id} nameKo={player.nameKo} version={OG_VERSION} />
+          </div>
+        }
       >
         <h1 id="player-name" className="mt-2 text-display">
           {player.nameKo}
