@@ -1,5 +1,6 @@
 import type { SeasonMonth } from "@/lib/api";
 import { formatEra } from "@/lib/format";
+import { leagueWords, signedPct } from "@/lib/leagueWords";
 
 /** 그 달 리그 평균 대비 값(100 = 평균, 높을수록 잘함). 타자 wRC+, 투수 ERA+ */
 function plus(m: SeasonMonth, pitcher: boolean): number | null {
@@ -11,11 +12,6 @@ function plus(m: SeasonMonth, pitcher: boolean): number | null {
 /** 선에 올리는 달: 메이저·마이너에서 뛰어 값이 있는 달 */
 function played(m: SeasonMonth, pitcher: boolean): boolean {
   return (m.kind === "MLB" || m.kind === "MINORS") && plus(m, pitcher) != null;
-}
-
-/** 값 글자(음수는 긴 빼기표) */
-function plusText(v: number): string {
-  return v < 0 ? `−${Math.abs(v)}` : String(v);
 }
 
 /** 점 하나: i는 달 칸 번호, x·y는 그래프 좌표(viewBox 단위) */
@@ -163,11 +159,10 @@ function Curve({ pts, lineWidth, scaled }: { pts: Pt[]; lineWidth: number; scale
  * - 폭이 휴대폰 창(~343px)부터 PC 오른쪽 칸까지 바뀌어, 선수 화면 타격 흐름(WrcTrend)처럼 SVG를 가로로 늘이고(preserveAspectRatio="none",
  *   선은 non-scaling-stroke) 글자·점은 SVG 밖의 % 자리 HTML로 둔다(SVG 안 글자는 같이 찌그러진다). 높이는 rem이라 큰 글씨에서 같이 커진다.
  *   글자 크기는 칸 폭이 허락하는 만큼만 키운다(globals.css .month-line, 이슈 #264).
- * 화면 읽기 프로그램에는 달마다 '4월 메이저 31경기 wRC+ 118' 한 줄씩 읽힌다(그림은 숨긴다).
+ * 화면 읽기 프로그램에는 달마다 '4월 메이저 31경기 평균보다 18% 잘 침' 한 줄씩 읽힌다(그림은 숨긴다).
  */
 export default function MonthLine({ months, pitcher }: { months: SeasonMonth[]; pitcher: boolean }) {
   if (months.length === 0) return null;
-  const stat = pitcher ? "ERA+" : "wRC+";
   const f = BIG;
   const { pts, x, y100 } = layout(months, pitcher, f);
   const playedMonths = months.filter((m) => played(m, pitcher));
@@ -203,9 +198,9 @@ export default function MonthLine({ months, pitcher }: { months: SeasonMonth[]; 
 
   return (
     <div className="mt-3">
-      <p className="mb-1.5 text-caption text-muted">{`달마다 ${stat}`}</p>
+      <p className="mb-1.5 text-caption text-muted">달마다 평균 대비</p>
       {/* 화면 읽기: 그림은 숨기고 달마다 한 줄씩 */}
-      <ol className="sr-only" aria-label={`달마다 ${stat}, 100이 ${average}`}>
+      <ol className="sr-only" aria-label={`달마다 ${average} 대비`}>
         {months.map((m) => (
           <li key={m.month}>{spoken(m, pitcher)}</li>
         ))}
@@ -227,13 +222,13 @@ export default function MonthLine({ months, pitcher }: { months: SeasonMonth[]; 
         {mx && (
           <span className="month-line-label absolute whitespace-nowrap text-foreground" style={labelStyle(mx, true)}>
             <span className="text-muted">최고 </span>
-            <b>{plusText(mx.v)}</b>
+            <b>{signedPct(mx.v)}</b>
           </span>
         )}
         {mx && mn && mn !== mx && (
           <span className="month-line-label absolute whitespace-nowrap text-foreground" style={labelStyle(mn, false)}>
             <span className="text-muted">최저 </span>
-            <b>{plusText(mn.v)}</b>
+            <b>{signedPct(mn.v)}</b>
           </span>
         )}
         {/* 최고·최저 달과 마지막 달에만 작은 점(테두리·옅은 원 없이 파랑 6px) */}
@@ -273,7 +268,7 @@ function note(m: SeasonMonth, pitcher: boolean): string | null {
   return m.few === true ? `${m.games}${pitcher ? "등판" : "경기"}` : null;
 }
 
-/** 화면 읽기 한 줄: '4월 메이저 31경기 wRC+ 118'(투수는 평균자책점도), 기록 없는 달은 '9월 부상' */
+/** 화면 읽기 한 줄: '4월 메이저 31경기 평균보다 18% 잘 침'(투수는 평균자책점도), 기록 없는 달은 '9월 부상' */
 function spoken(m: SeasonMonth, pitcher: boolean): string {
   if (!played(m, pitcher)) {
     const rest = m.kind === "INJURED" ? "부상" : m.kind === "FREE_AGENT" ? "FA" : "기록 없음";
@@ -282,8 +277,8 @@ function spoken(m: SeasonMonth, pitcher: boolean): string {
   const v = plus(m, pitcher) as number;
   const where = m.kind === "MLB" ? "메이저" : (m.levelKo ?? "마이너");
   return pitcher
-    ? `${m.month}월 ${where} ${m.games}등판 ERA+ ${v}, 평균자책점 ${formatEra(m.era)}${m.few ? ", 등판 적은 달" : ""}`
-    : `${m.month}월 ${where} ${m.games}경기 wRC+ ${v}${m.few ? ", 경기 적은 달" : ""}`;
+    ? `${m.month}월 ${where} ${m.games}등판 ${leagueWords(v, true).text}, 평균자책점 ${formatEra(m.era)}${m.few ? ", 등판 적은 달" : ""}`
+    : `${m.month}월 ${where} ${m.games}경기 ${leagueWords(v, false).text}${m.few ? ", 경기 적은 달" : ""}`;
 }
 
 /**
