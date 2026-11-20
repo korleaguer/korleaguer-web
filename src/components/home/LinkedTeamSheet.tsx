@@ -12,6 +12,7 @@ import Words, { WordGroup } from "@/components/Words";
 import { teamColor, teamLogoUrl } from "@/lib/teams";
 import { useModalDialog } from "@/lib/useModalDialog";
 import { useSheetDrag } from "@/lib/useSheetDrag";
+import SheetCloseButton from "@/components/SheetCloseButton";
 
 /** 날짜 막대는 기사가 이만큼 이상일 때만(1~2건은 막대가 정보를 더하지 않는다) */
 const CHART_MIN = 3;
@@ -96,16 +97,7 @@ export default function LinkedTeamSheet({
                 )}
               </p>
             </div>
-            <button
-              type="button"
-              aria-label="닫기"
-              onClick={close}
-              className="press grid size-[44px] shrink-0 place-items-center rounded-full text-muted hover:bg-surface-2"
-            >
-              <svg aria-hidden viewBox="0 0 16 16" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
-                <path d="M4 4l8 8M12 4l-8 8" />
-              </svg>
-            </button>
+            <SheetCloseButton onClick={close} />
           </div>
         </div>
         {/* 아이폰 앱은 아래 탭 막대가 창 위에 떠 있어 그 높이(--app-tab-bar, 홈 표시줄 포함)만큼 더 띄운다(globals.css) */}

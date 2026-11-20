@@ -17,6 +17,7 @@ import TeamName from "@/components/TeamName";
 import type { Clip } from "./ClipPlayer";
 import { PostseasonLine } from "./GameRow";
 import Words from "@/components/Words";
+import SheetCloseButton from "@/components/SheetCloseButton";
 
 // 영상 플레이어(Video.js 10, hls.js 포함 약 270KB)는 창이 열릴 때 받아 온다. 선수 페이지 첫 로딩에는 넣지 않는다
 const ClipPlayer = dynamic(() => import("./ClipPlayer"), {
@@ -157,16 +158,7 @@ export default function GameDetailSheet({
               {formatDate(day.key)}
             </h2>
             <NavButton label="다음 경기" onClick={onNext} dir="next" />
-            <button
-              type="button"
-              aria-label="닫기"
-              onClick={close}
-              className="press grid size-[44px] shrink-0 place-items-center rounded-full text-muted hover:bg-surface-2"
-            >
-              <svg aria-hidden viewBox="0 0 16 16" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
-                <path d="M4 4l8 8M12 4l-8 8" />
-              </svg>
-            </button>
+            <SheetCloseButton onClick={close} />
           </div>
         </div>
         {/* 날짜를 바꾸면 안쪽(고른 경기·영상·스크롤)을 처음부터 */}

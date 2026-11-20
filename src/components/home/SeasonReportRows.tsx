@@ -8,6 +8,7 @@ import PlayerAvatar from "@/components/PlayerAvatar";
 import { linkedSheetOpen } from "@/components/home/LinkedTeams";
 import { useModalDialog } from "@/lib/useModalDialog";
 import { useSheetDrag } from "@/lib/useSheetDrag";
+import SheetCloseButton from "@/components/SheetCloseButton";
 
 /**
  * 성적표 목록 한 줄. 내용은 서버가 그리고(SeasonReportList), 여기서는 줄을 눌러 고른 선수를 보이는 일만 맡는다.
@@ -449,16 +450,7 @@ function ReportSheet({
             <div id={titleId} aria-live="polite" className="min-w-0 flex-1">
               {row.head}
             </div>
-            <button
-              type="button"
-              aria-label="닫기"
-              onClick={close}
-              className="press grid size-[44px] shrink-0 place-items-center rounded-full text-muted hover:bg-surface-2"
-            >
-              <svg aria-hidden viewBox="0 0 16 16" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
-                <path d="M4 4l8 8M12 4l-8 8" />
-              </svg>
-            </button>
+            <SheetCloseButton onClick={close} />
           </div>
         </div>
         {/* 몸: 선수가 바뀌면 처음부터 다시 그려(key) 스크롤이 맨 위로 돌아온다 */}

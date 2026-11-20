@@ -4,6 +4,7 @@ import { useId, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useModalDialog } from "@/lib/useModalDialog";
 import { useSheetDrag } from "@/lib/useSheetDrag";
+import SheetCloseButton from "@/components/SheetCloseButton";
 
 /**
  * 아래에서 올라오는 창(640px 이상은 가운데 창)의 틀(이슈 #326). 거론 구단 창(LinkedTeamSheet)·성적표 창과 같은 모양이다:
@@ -63,16 +64,7 @@ export default function BottomSheet({
             <h2 id={titleId} className="min-w-0 flex-1 text-heading">
               {title}
             </h2>
-            <button
-              type="button"
-              aria-label="닫기"
-              onClick={close}
-              className="press grid size-[44px] shrink-0 place-items-center rounded-full text-muted hover:bg-surface-2"
-            >
-              <svg aria-hidden viewBox="0 0 16 16" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
-                <path d="M4 4l8 8M12 4l-8 8" />
-              </svg>
-            </button>
+            <SheetCloseButton onClick={close} />
           </div>
         </div>
         {/* 아이폰 앱은 아래 탭 막대가 창 위에 떠 있어 그 높이(--app-tab-bar, 홈 표시줄 포함)만큼 더 띄운다(globals.css) */}
