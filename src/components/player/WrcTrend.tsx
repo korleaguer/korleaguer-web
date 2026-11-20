@@ -5,24 +5,31 @@ import type { RosterMove } from "@/lib/api";
 import { trendGaps, type TrendGap, type TrendPoint } from "@/lib/wrcTrend";
 import { formatShortDate } from "@/lib/format";
 import { haptic } from "@/lib/app";
+import { leagueWords } from "@/lib/leagueWords";
 
 const W = 340;
 const H = 150;
 /** 달 눈금 사이 최소 간격(그래프 폭의 %). 휴대폰 그래프 폭 약 320px에서 '10월'(약 24px) 둘이 8px 넘게 떨어진다 */
 const MIN_TICK_GAP = 11;
 /**
- * 값 눈금(옅은 가로선 + 오른쪽 숫자). 세로 범위가 선수마다 그 선수 최저·최고 ±10이라 같은 높이 차가 선수마다 다른 wRC+ 차다.
+ * 값 눈금(옅은 가로선 + 오른쪽 숫자). 세로 범위가 선수마다 그 선수 최저·최고 ±10이라 같은 높이 차가 선수마다 다른 평균 대비 % 차다(값은 wRC+ 점수 차 = % 차).
  * 100(리그 평균) 점선 위아래 20씩만 그어 '20이 이만큼'을 읽게 한다(사용자 11-17 '추천대로'). 범위 밖이면 긋지 않는다
  */
 const GRID = [80, 120];
 /**
- * 눈금 숫자끼리 이만큼(px)은 떨어져야 그린다. 범위가 아주 넓으면 80·120이 100 숫자에 붙는다.
+ * 눈금 숫자끼리 이만큼(px)은 떨어져야 그린다. 범위가 아주 넓으면 80·120(눈금 −20%·+20%)이 100(0) 글자에 붙는다.
  * 일부러 낮은 쪽 높이(H = 150px, 휴대폰)로 잰다. 640px 이상 그래프(180px)는 1.2배 여유가 있지만, 같은 선수는 휴대폰·PC에서
  * 같은 눈금을 보이고, 높이마다 따로 재면 큰 글씨 숫자 크기(tickGap)도 높이마다 달라져야 한다. PC에서만 더 그을 수 있는 경우는
  * 세로 범위(hi − lo)가 187.5~225일 때뿐이다(2026 타자 4명은 77~152).
  * 1배 숫자(11px) 기준이라, 큰 글씨에서는 숫자 크기를 눈금 사이 간격까지만 키운다(아래 tickGap)
  */
 const MIN_GRID_GAP_PX = 16;
+
+/** 눈금 글자: 평균(100)은 '0', 위아래는 평균 대비 퍼센트('+20%'·'−20%', 11-21 지표 이름 wRC+ 대신). 말('평균보다 12% 잘 침')과 같은 단위 */
+function tickText(v: number): string {
+  const d = Math.round(v - 100);
+  return d === 0 ? "0" : `${d > 0 ? "+" : "−"}${Math.abs(d)}%`;
+}
 
 /** 점의 달(1~12). 한국 날짜 기준 */
 function monthOf(p: TrendPoint): number {
@@ -58,16 +65,8 @@ function monthTicks(points: TrendPoint[]): MonthTick[] {
   return kept;
 }
 
-/** wRC+를 쉬운 말로(100 = 리그 평균) */
-function words(v: number): string {
-  if (v >= 120) return "리그 평균보다 크게 높아요";
-  if (v >= 105) return "리그 평균보다 높아요";
-  if (v >= 95) return "리그 평균과 비슷해요";
-  return "리그 평균보다 낮아요";
-}
-
 /**
- * 타격 흐름 그래프: 시즌 처음부터 그날까지 누적 wRC+ 선 하나와 리그 평균(100) 점선.
+ * 타격 흐름 그래프: 시즌 처음부터 그날까지 누적 wRC+(리그 평균 = 100, 화면에는 평균 대비 말·%로) 선 하나와 평균 점선.
  * 토스증권 차트처럼 손가락으로 훑으면 그날까지의 값이 위에 보이고, 날이 바뀔 때마다 고르기 틱(앱 안).
  * 손가락은 떼면 그 자리에 머물고, 마우스는 그래프를 떠나면 시즌 전체 값으로 돌아간다. 키보드는 ←→로 하루씩, Home/End로 처음·마지막.
  * 가로축은 경기 순서라 한 달 넘게 쉰 곳(정규시즌 안 30일 초과)도 점 하나 간격이다. 그대로 이으면 쉬는 동안 뛴 것처럼 보여서
@@ -116,7 +115,7 @@ export default function WrcTrend({ points, moves }: { points: TrendPoint[]; move
   };
 
   const p = points[active];
-  const value = Math.round(p.value);
+  const verdict = leagueWords(p.value, false);
   const date = formatShortDate(p.startTimeKst);
   const ticks = monthTicks(points);
   // 지금 점이 끊긴 뒤 첫 점이면 그 사실: '부상 뒤 첫 경기', 이유를 모르면 '38일 만의 경기'
@@ -132,29 +131,24 @@ export default function WrcTrend({ points, moves }: { points: TrendPoint[]; move
 
   return (
     <div className="@container card px-4 pb-3 pt-4">
-      {/* 큰 글씨에서 말('리그 평균보다 크게 높아요')이 8rem도 못 받으면 wRC+ 숫자를 다음 줄 오른쪽으로 내린다(이슈 #264) */}
-      <div className="mb-2 flex flex-wrap items-end justify-between gap-x-3">
-        <div className="min-w-0 flex-1 basis-[8rem]">
-          <p className="text-caption text-muted tabular-nums">{active === last ? "시즌 전체" : `${date}까지`}
-            {afterGap && ` · ${afterGap}`}
-          </p>
-          <p className={`text-label ${value >= 105 ? "text-accent-ink" : "text-muted"}`}>{words(value)}</p>
-        </div>
-        <p className="ml-auto shrink-0 text-stat tabular-nums">
-          <span className="mr-1 text-caption text-muted">wRC+</span>
-          {value}
+      {/* 판정 말('평균보다 12% 잘 침')이 이 카드의 큰 글자다(사용자 11-21: 지표 이름 wRC+·숫자는 화면에 쓰지 않고 ⓘ로).
+          예전에는 말(작게)과 'wRC+ 112'(크게)가 같은 뜻을 두 번 했다. 큰 글씨에서는 날짜와 말이 칸 폭 안에서 줄을 바꾼다 */}
+      <div className="mb-2">
+        <p className="text-caption text-muted tabular-nums">{active === last ? "시즌 전체" : `${date}까지`}
+          {afterGap && ` · ${afterGap}`}
         </p>
+        <p className={`text-heading ${verdict.tone === "up" ? "text-accent-ink" : "text-muted"}`}>{verdict.text}</p>
       </div>
       <div
         ref={boxRef}
         role="slider"
         tabIndex={0}
-        aria-label="타격 흐름(누적 wRC+)"
+        aria-label="타격 흐름(누적, 리그 평균 대비)"
         aria-valuemin={0}
         aria-valuemax={last}
         aria-valuenow={active}
         // 마지막 점만 MLB 공식 값이고 중간은 어림값이다(제목 옆 ⓘ 안 설명과 같은 뜻)
-        aria-valuetext={`${date}까지 wRC+ ${value}${active === last ? "" : "(어림)"}${afterGap ? `, ${afterGap}` : ""}`}
+        aria-valuetext={`${date}까지 ${verdict.text}${active === last ? "" : "(어림)"}${afterGap ? `, ${afterGap}` : ""}`}
         onPointerDown={(e) => {
           e.currentTarget.setPointerCapture(e.pointerId);
           fromPointer(e);
@@ -221,7 +215,7 @@ export default function WrcTrend({ points, moves }: { points: TrendPoint[]; move
             <line x1={x(active)} x2={x(active)} y1="0" y2={H} stroke="var(--accent)" strokeOpacity="0.35" vectorEffect="non-scaling-stroke" />
           </svg>
           {/* 눈금 숫자: SVG 안 글자는 그래프와 함께 가로로 늘어나 찌그러져서, 점처럼 % 자리의 글자로 그래프 오른쪽 밖(mr-8 자리)에
-              둔다. 오른쪽 끝을 카드 안쪽 끝(위 wRC+ 숫자와 같은 세로줄)에 맞추면 세 자리 숫자도 마지막 점(지름 13px, 그래프 끝에서
+              둔다. 오른쪽 끝을 카드 안쪽 끝에 맞추면 세 글자 눈금도 마지막 점(지름 13px, 그래프 끝에서
               반쯤 나옴)과 5px 넘게 떨어진다. 마우스가 숫자 위에 가면 그래프를 떠난 것으로.
               크기는 Micro지만 큰 글씨에서는 눈금 사이 간격까지만 커진다(trend-tick) */}
           {[...grid, 100].map((v) => (
@@ -230,7 +224,7 @@ export default function WrcTrend({ points, moves }: { points: TrendPoint[]; move
               className="trend-tick pointer-events-none absolute -right-8 -translate-y-1/2 text-muted tabular-nums"
               style={{ top: `${(y(v) / H) * 100}%` }}
             >
-              {v}
+              {tickText(v)}
             </span>
           ))}
           {/* 점선 이름표 '평균': 점선 왼쪽 끝 바로 위. SVG 안 글자는 그래프와 함께 가로로 늘어나 찌그러지므로(위 눈금 숫자와 같은 이유)

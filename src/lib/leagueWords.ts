@@ -19,7 +19,8 @@ export interface LeagueWords {
 
 /** 100 = 리그 평균인 값을 말로. 평균 위는 '평균보다 12% 잘 침'(투수 '잘 막음'), 아래는 꾸밈 없이 '평균보다 22% 아래' */
 export function leagueWords(plus: number, pitcher: boolean): LeagueWords {
-  const v = Math.round(plus);
+  // 값이 0 아래(몇 타수 무안타)나 300 위로 가도 '평균보다 213% 아래'가 나오지 않게 가둔다
+  const v = Math.max(0, Math.min(300, Math.round(plus)));
   if (v >= SAME_TO) {
     const num = `${v - 100}%`;
     const tail = pitcher ? " 잘 막음" : " 잘 침";
@@ -32,7 +33,8 @@ export function leagueWords(plus: number, pitcher: boolean): LeagueWords {
 
 /** 평균 대비 부호 있는 퍼센트: 123 → '+23%', 78 → '−22%'(성적표 창 제목·달별 그래프 최고·최저) */
 export function signedPct(v: number): string {
-  const d = v - 100;
+  // leagueWords와 같이 0~300으로 가둔다(한 달 wRC+가 0 아래여도 '−108%'가 나오지 않게: 아래쪽 끝은 −100%)
+  const d = Math.max(0, Math.min(300, Math.round(v))) - 100;
   return d === 0 ? "0%" : `${d > 0 ? "+" : "−"}${Math.abs(d)}%`;
 }
 
@@ -42,10 +44,10 @@ export function signedPct(v: number): string {
  */
 export function leagueFlow(text: string): string {
   // 서버 글은 두 번째 숫자에 지표 이름이 없다('6월까지 wRC+ 123 → 7월부터 78'): 앞 숫자에만 '평균'을 붙이고 둘 다 바꾼다
-  const half = /^(.*?)(?:wRC\+|ERA\+) ?(\d+)( → \d+월부터 )(\d+)$/.exec(text);
+  const half = /^(.*?)(?:wRC\+|ERA\+) ?(-?\d+)( → \d+월부터 )(-?\d+)$/.exec(text);
   if (half) return `${half[1]}평균 ${signedPct(Number(half[2]))}${half[3]}${signedPct(Number(half[4]))}`;
   let first = true;
-  return text.replace(/(?:wRC\+|ERA\+) ?(\d+)/g, (_m, n: string) => {
+  return text.replace(/(?:wRC\+|ERA\+) ?(-?\d+)/g, (_m, n: string) => {
     const out = first ? `평균 ${signedPct(Number(n))}` : signedPct(Number(n));
     first = false;
     return out;

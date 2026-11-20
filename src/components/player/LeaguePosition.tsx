@@ -3,6 +3,7 @@ import InfoTip from "@/components/InfoTip";
 import Section from "@/components/Section";
 import PositionBar from "@/components/player/PositionBar";
 import { formatInningsOuts } from "@/lib/format";
+import { leagueWords } from "@/lib/leagueWords";
 // 이보다 적으면 '참고용'(타자 100타석, 투수 30이닝 = 90아웃). 시즌 성적 한 줄·홈 성적표 작은 판과 같은 값을 한 곳에서 가져온다
 import { STEADY_OUTS, STEADY_PA } from "@/lib/seasonStats";
 import { cacheLife } from "next/cache";
@@ -26,14 +27,16 @@ function signed(value: number | null, digits = 1): string | null {
   return `${value < 0 && Number(fixed) !== 0 ? "−" : "+"}${fixed}`;
 }
 
-/** 막대 네 줄(맨 앞이 '종합'). 표본이 적어 서버가 위치를 매기지 않았으면 null. 홈 성적표 작은 판(LeaguePositionCompact)도 쓴다 */
+/**
+ * 막대 네 줄(맨 앞이 '종합'). 타격·실점 억제의 실제 값은 지표 이름(wRC+·ERA-) 대신 리그 대비 말로 쓴다(사용자 11-21).
+ * ERA-는 낮을수록 좋아서 ERA+ 꼴(100 ÷ ERA- × 100)로 바꿔 말한다. 표본이 적어 서버가 위치를 매기지 않았으면 null. 홈 성적표 작은 판(LeaguePositionCompact)도 쓴다 */
 export function rowsOf(saber: PlayerSaber): Row[] | null {
   if (saber.kind === "hitter") {
     const p = saber.percentiles;
     if (!p) return null;
     return [
       { label: "종합", pct: p.overall, raw: saber.war == null ? null : `종합 WAR ${signed(saber.war)}` },
-      { label: "타격", pct: p.batting, raw: saber.wrcPlus == null ? null : `타격 wRC+ ${Math.round(saber.wrcPlus)}` },
+      { label: "타격", pct: p.batting, raw: saber.wrcPlus == null ? null : `타격 ${leagueWords(saber.wrcPlus, false).text}` },
       { label: "주루", pct: p.baseRunning, raw: saber.baseRunning == null ? null : `주루 ${signed(saber.baseRunning)}점` },
       { label: "수비", pct: p.fielding, raw: saber.fielding == null ? null : `수비 ${signed(saber.fielding)}점` },
     ];
@@ -42,7 +45,7 @@ export function rowsOf(saber: PlayerSaber): Row[] | null {
   if (!p) return null;
   return [
     { label: "종합", pct: p.overall, raw: saber.war == null ? null : `종합 WAR ${signed(saber.war)}` },
-    { label: "실점 억제", pct: p.runPrevention, raw: saber.eraMinus == null ? null : `실점 억제 ERA- ${Math.round(saber.eraMinus)}` },
+    { label: "실점 억제", pct: p.runPrevention, raw: saber.eraMinus == null || saber.eraMinus <= 0 ? null : `실점 억제 ${leagueWords(10000 / saber.eraMinus, true).text}` },
     { label: "삼진", pct: p.strikeouts, raw: saber.strikeoutRate == null ? null : `삼진 비율 ${saber.strikeoutRate.toFixed(1)}%` },
     // '볼넷 상위 10%'는 볼넷을 많이 준다로 읽혀 '실점 억제'처럼 '볼넷 억제'(볼넷을 적게 줄수록 위). 이름 칸(4.25rem)에 그대로 든다
     { label: "볼넷 억제", pct: p.walks, raw: saber.walkRate == null ? null : `볼넷 비율 ${saber.walkRate.toFixed(1)}%` },
@@ -85,7 +88,9 @@ export default async function LeaguePosition({ saber }: { saber: PlayerSaber }) 
   // ⓘ 안 줄(이슈 #327): 예전 카드 아래 각주와 '참고용' 문장. WAR 풀이는 시즌별 기록 표 설명(낭독)과 달리 보이는 곳은 여기 한 곳뿐이다
   const tips = [
     "WAR는 대체 선수보다 더 번 승수(0이 평균 아님)",
-    hitter ? "득점은 리그 평균 대비(수비는 포지션 난도 포함)" : "ERA-는 100이 평균, 낮을수록 좋아요",
+    hitter
+      ? "타격은 리그 평균 타자를 100으로 놓은 값(wRC+ 112 = 평균보다 12% 잘 침)을 말로 풀었어요. 수비는 포지션 난도 포함"
+      : "실점 억제는 ERA-(100이 평균, 낮을수록 좋아요)를 평균 대비 말로 풀었어요(ERA- 80 = 평균보다 25% 잘 막음, 100 ÷ ERA-로 어림)",
     `MLB 공식 세이버 지표 · ${sample}`,
     ...(steady ? [] : [`${sample}뿐이라 더 ${hitter ? "뛰면" : "던지면"} 크게 바뀔 수 있어요`]),
   ];
