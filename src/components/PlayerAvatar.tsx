@@ -1,7 +1,8 @@
 "use client"; // 사진이 안 뜰 때(onError) 대신 보여 줄 모양으로 바꿔야 해서 클라이언트 컴포넌트다.
 
-import { smallPhoto } from "@/lib/photo";
-import { teamColor, textColorOn } from "@/lib/teams";
+import type { CSSProperties } from "react";
+import { parsePhotoPath, smallPhoto } from "@/lib/photo";
+import { teamColor, teamFill, textColorOn } from "@/lib/teams";
 import { useImageFailed } from "@/lib/useImageFailed";
 
 /** 원 지름(px). 24 표·순위 / 28 시즌 1위 / 44 경기 카드 / 56 선수 목록 / 96 선수 페이지 */
@@ -41,6 +42,8 @@ interface Props {
  * 원형 선수 사진. api가 주는 사진은 배경을 지운 MLB 사진(정사각형)이라,
  * 원 안에 조금 작게 아래쪽에 붙여 얼굴 둘레에 여백을 둔다.
  * 사진이 없거나 안 뜨면 팀 색 원 + 이름 첫 글자로 대신한다.
+ * 배경 없는 MLB 사진(/photos/mlb-…)은 원 바탕을 사진 속 유니폼 팀 색으로 칠한다(11-21 사용자 결정). 배경이 있는 사진(KBO)과
+ * 흰 바탕 편집본(posting-…)은 칠하면 지저분해서 기존 중립 바탕을 쓴다. 다크 모드는 teamFill이 어두운 팀만 밝힌다
  */
 export default function PlayerAvatar({
   nameKo,
@@ -58,7 +61,24 @@ export default function PlayerAvatar({
   const box = { width: size, height: size };
   const ringClass = ring ? "border-4 border-surface shadow-[0_1px_4px_rgb(0_0_0/0.14)]" : "";
 
+  const fill = teamFill(teamAbbr);
+  // 밝은·어두운 색을 변수로 넘기고 클래스가 모드를 고른다(이니셜 원도 같은 색)
+  const fillStyle = fill
+    ? ({ "--fill-l": fill.light, "--fill-d": fill.dark, "--ink-l": fill.lightText, "--ink-d": fill.darkText } as CSSProperties)
+    : undefined;
+
   if (!photoUrl || failed) {
+    if (fill) {
+      return (
+        <span
+          aria-hidden
+          className={`inline-flex shrink-0 items-center justify-center rounded-full bg-(--fill-l) font-extrabold text-(--ink-l) dark:bg-(--fill-d) dark:text-(--ink-d) ${INITIAL_TEXT[size]} ${ringClass}`}
+          style={{ ...box, ...fillStyle }}
+        >
+          {nameKo.charAt(0)}
+        </span>
+      );
+    }
     const color = teamColor(teamAbbr);
     return (
       <span
@@ -71,10 +91,12 @@ export default function PlayerAvatar({
     );
   }
 
+  // 사진 속 팀 색 바탕: 배경 없는 MLB 사진일 때만
+  const teamBg = fill !== null && parsePhotoPath(photoUrl)?.key.startsWith("mlb-") === true;
   return (
     <span
-      className={`inline-block shrink-0 overflow-hidden rounded-full bg-avatar-bg ${ringClass}`}
-      style={box}
+      className={`inline-block shrink-0 overflow-hidden rounded-full ${teamBg ? "bg-(--fill-l) dark:bg-(--fill-d)" : "bg-avatar-bg"} ${ringClass}`}
+      style={teamBg ? { ...box, ...fillStyle } : box}
     >
       {/* 사진은 우리가 호스팅한다(/photos/…, api가 원본을 한 번 받아 저장). 크기를 고정한 작은 사진이라 next/image는 쓰지 않는다. */}
       {/* eslint-disable-next-line @next/next/no-img-element -- 우리가 호스팅하는 작은 사진 */}
