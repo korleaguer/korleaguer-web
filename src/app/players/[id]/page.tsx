@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
-import { getPlayer } from "@/lib/api";
+import { Suspense } from "react";
+import { getPlayer, getRecords } from "@/lib/api";
 import { formatAsOf } from "@/lib/format";
 import { parseId } from "@/lib/ids";
 import { playerShareImage, shareMeta } from "@/lib/share";
+import { pickRankRows } from "@/lib/koreanRank";
 import { readMyPlayers } from "@/lib/myPlayers";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import DataBanners from "@/components/DataBanners";
@@ -12,6 +14,7 @@ import InfoTip from "@/components/InfoTip";
 import CareerSeasons from "@/components/player/CareerSeasons";
 import GameLog from "@/components/player/GameLog";
 import JumpNav, { type JumpTarget } from "@/components/player/JumpNav";
+import KoreanRecords from "@/components/player/KoreanRecords";
 import LeaguePosition from "@/components/player/LeaguePosition";
 import PlayerHeader from "@/components/player/PlayerHeader";
 import PlayerNews from "@/components/player/PlayerNews";
@@ -62,6 +65,12 @@ export default function PlayerPage({ params }: Props) {
   );
 }
 
+/** '한국인 통산 기록' 칸. 기록을 못 받았으면 줄 없이 '역대 기록' 줄만 둔다 */
+async function PlayerKoreanRecords({ playerId }: { playerId: number }) {
+  const records = await getRecords();
+  return <KoreanRecords rows={records.ok ? pickRankRows(records.data.next, playerId) : []} />;
+}
+
 // 없는 선수는 notFound() 대신 안내를 직접 그린다.
 // (Suspense 안에서 notFound()를 부르면 서버 HTML에는 안내가 없고 브라우저 JS가 나중에 그린다.)
 // 주소를 바로 열면 src/proxy.ts가 먼저 확인해 HTTP 404(공통 404 화면)를 준다. 이 안내는 앱 안 이동(RSC 요청)과
@@ -110,7 +119,7 @@ async function PlayerContent({ params }: Pick<Props, "params">) {
       <DataBanners dataMode={dataMode} statsAvailable={statsAvailable} />
       <PlayerHeader player={player} isMine={myIds.includes(player.id)} />
       <JumpNav targets={jumps} />
-      {/* 넓은 화면: 왼쪽 시즌 성적·MLB 중 위치(백분위)·흐름·경기 기록·시즌별 기록 | 오른쪽 기사·이동 기록.
+      {/* 넓은 화면: 왼쪽 시즌 성적·MLB 중 위치(백분위)·한국인 통산 기록·흐름·경기 기록·시즌별 기록 | 오른쪽 기사·이동 기록.
           선수 정보(투타·키·생년월일·데뷔)는 머리 카드 알약 아래 한 줄이다(이슈 #236) */}
       <div className="space-y-7 pt-2 lg:grid lg:grid-cols-[minmax(0,1fr)_21.25rem] lg:items-start lg:gap-x-4 lg:space-y-0">
         <div className="min-w-0 space-y-7">
@@ -125,6 +134,10 @@ async function PlayerContent({ params }: Pick<Props, "params">) {
             asOf={generatedAt ? formatAsOf(generatedAt) : undefined}
           />
           {saber && <LeaguePosition saber={saber} />}
+          {/* 보조 칸이라 기록(/api/records)이 늦어도 본문이 기다리지 않게 따로 그린다 */}
+          <Suspense fallback={null}>
+            <PlayerKoreanRecords playerId={player.id} />
+          </Suspense>
           {trend && (
             <Section
               id="trend-title"
