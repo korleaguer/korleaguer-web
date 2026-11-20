@@ -118,3 +118,27 @@ export function trendGaps(points: TrendPoint[], moves: RosterMove[]): TrendGap[]
   }
   return gaps;
 }
+
+/**
+ * 한 기간(내 선수 카드의 최근 7·14·30일)의 wRC+(100 = 리그 평균). 위 누적 그래프와 같은 표준 가중치로 계산하되,
+ * 그래프와 달리 공식 시즌 값에 맞춰 옮기지 않는다(기간 하나라 맞출 마지막 점이 없다). 경기별 세부 칸(2루타·타석 등)이 없는 경기가
+ * 2할을 넘으면(옛 데이터) 근거가 모자라 null이다. 메이저 리그 평균을 기준으로 하므로 마이너 기록에는 쓰지 않는다
+ */
+export function periodWrcPlus(games: GameLine[]): number | null {
+  const batted = games.filter((g) => g.played && g.batting);
+  const full = batted.filter((g) => g.batting!.doubles != null && g.batting!.triples != null);
+  if (full.length === 0 || full.length < batted.length * 0.8) return null;
+  let num = 0;
+  let den = 0;
+  for (const g of full) {
+    const b = g.batting!;
+    const doubles = b.doubles ?? 0;
+    const triples = b.triples ?? 0;
+    const hbp = b.hitByPitch ?? 0;
+    const singles = b.hits - doubles - triples - b.homeRuns;
+    num += W.bb * b.walks + W.hbp * hbp + W.single * singles + W.double * doubles + W.triple * triples + W.hr * b.homeRuns;
+    den += b.atBats + b.walks + (b.sacFlies ?? 0) + hbp;
+  }
+  if (den === 0) return null;
+  return (((num / den - LEAGUE_WOBA) / WOBA_SCALE + RUNS_PER_PA) / RUNS_PER_PA) * 100;
+}

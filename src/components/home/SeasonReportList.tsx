@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Fragment, type ReactNode } from "react";
 import type { CardStatus, CardStatusKind, MyPlayer, NewsHeadline, SeasonReport, SeasonTier } from "@/lib/api";
 import { formatEra, formatRate, kstDayKey } from "@/lib/format";
+import { leagueFlow, leagueWords, type LeagueWords } from "@/lib/leagueWords";
 import { newsHref } from "@/lib/news";
 import ExternalLinkIcon from "@/components/ExternalLinkIcon";
 import MyPlayerToggle from "@/components/my/MyPlayerToggle";
@@ -43,12 +44,18 @@ const LINKED_IN_LINE = 2;
 const SECOND_LINE =
   "truncate py-1 text-caption @max-[16rem]:my-1 @max-[16rem]:line-clamp-3 @max-[16rem]:whitespace-normal @max-[16rem]:py-0";
 
-/** 목록 줄 숫자 하나: '143경기'(games), 'wRC+ 102'(plus), '타율 .276'(rate). 숫자만 굵게 쓰려고 이름표와 값을 나눠 둔다 */
+/**
+ * 목록 줄 숫자 하나: '143경기'(games), '평균보다 12% 잘 침'(plus, 리그 대비 말), '타율 .276'(rate).
+ * 숫자만 굵게 쓰려고 이름표와 값을 나눠 둔다
+ */
 interface Stat {
   kind: "games" | "plus" | "rate";
-  /** '경기'·'등판'(값 뒤), 'wRC+'·'ERA+'·'타율'·'평균자책점'(값 앞) */
+  /** '경기'·'등판'(값 뒤), '타율'·'평균자책점'(값 앞). plus는 쓰지 않는다(words가 말한다) */
   label: string;
   value: string;
+  /** plus만: 리그 대비 말(사용자 11-21: 지표 이름 wRC+·ERA+는 화면에 쓰지 않는다). said는 흐름 제목이 같은 말을 되풀이하는지 견줄 서버 쪽 글 */
+  words?: LeagueWords;
+  said?: string;
   /** 마이너 합계일 때 맨 앞 칸에 한 번 붙이는 단계 이름('트리플A'). 없으면 null */
   level: string | null;
 }
@@ -146,9 +153,19 @@ function buildRow(entry: MyPlayer, report: SeasonReport | null, isMine: boolean,
               {i > 0 && "\u00a0· "}
               <span className="whitespace-nowrap">
                 {s.level && `${s.level} `}
-                {s.kind !== "games" && `${s.label} `}
-                <span className="font-bold text-foreground">{s.value}</span>
-                {s.kind === "games" && s.label}
+                {s.words ? (
+                  <>
+                    {s.words.lead}
+                    {s.words.num && <span className="font-bold text-foreground">{s.words.num}</span>}
+                    {s.words.tail}
+                  </>
+                ) : (
+                  <>
+                    {s.kind !== "games" && `${s.label} `}
+                    <span className="font-bold text-foreground">{s.value}</span>
+                    {s.kind === "games" && s.label}
+                  </>
+                )}
               </span>
             </Fragment>
           ))}
@@ -174,7 +191,7 @@ function buildRow(entry: MyPlayer, report: SeasonReport | null, isMine: boolean,
 
   const panel = (
     <>
-      {flow && <p className="text-heading">{flow}</p>}
+      {flow && <p className="text-heading">{leagueFlow(flow)}</p>}
       {/* 달별 꺾은선과 MLB 안 위치: 아래 창·오른쪽 칸 안이라 늘 위아래로 쌓는다(화면 폭 기준 두 칸은 좁은 칸에서 찌그러진다, 이슈 #325) */}
       {(months.length > 0 || position) && (
         <div>
@@ -232,11 +249,12 @@ function buildRow(entry: MyPlayer, report: SeasonReport | null, isMine: boolean,
 }
 
 /**
- * 목록 줄 숫자: 선수마다 같은 세 칸, 경기 수 먼저(카드 통일). 타자 '143경기 · wRC+ 102 · 타율 .276',
- * 투수 '36등판 · ERA+ 105 · 평균자책점 3.91'. 타율 하나로 시즌을 판단하지 않게 리그 대비(wRC+·ERA+)를 함께 둔다(사용자 11-13·11-17).
+ * 목록 줄 숫자: 선수마다 같은 세 칸, 경기 수 먼저(카드 통일). 타자 '143경기 · 평균보다 12% 잘 침 · 타율 .276',
+ * 투수 '36등판 · 평균보다 5% 잘 막음 · 평균자책점 3.91'. 타율 하나로 시즌을 판단하지 않게 리그 대비(wRC+·ERA+)를 말로 풀어 함께 둔다
+ * (사용자 11-13·11-17, 지표 이름은 화면에서 빼고 ⓘ로: 11-21).
  * 숫자는 서버가 정한 단계(report.level)의 시즌 합계이고, wRC+·ERA+도 같은 단계다(korleaguer-server#179). 값이 없으면 그 칸만 뺀다.
  * 마이너 합계면 어느 단계 기록인지 붙인다(이름표가 그냥 '타율'이면 메이저 기록으로 읽힌다). 다만 판정이 이미 단계를 말하면
- * ('트리플A에서 보낸 시즌') 붙이지 않는다(같은 말 두 번 금지). 붙일 때는 첫 칸에 한 번만: '트리플A 85경기 · wRC+ 75 · 타율 .262'
+ * ('트리플A에서 보낸 시즌') 붙이지 않는다(같은 말 두 번 금지). 붙일 때는 첫 칸에 한 번만: '트리플A 85경기 · 평균보다 25% 아래 · 타율 .262'
  */
 function statsOf(entry: MyPlayer, report: SeasonReport | null, pitcher: boolean): Stat[] {
   const totals = entry.seasonTotals;
@@ -245,7 +263,16 @@ function statsOf(entry: MyPlayer, report: SeasonReport | null, pitcher: boolean)
   const rate = main ? (pitcher ? main.era : main.avg) : null;
   const stats: Stat[] = [];
   if (main) stats.push({ kind: "games", label: pitcher ? "등판" : "경기", value: String(main.games), level: null });
-  if (plus != null) stats.push({ kind: "plus", label: pitcher ? "ERA+" : "wRC+", value: String(plus), level: null });
+  if (plus != null) {
+    stats.push({
+      kind: "plus",
+      label: "",
+      value: String(plus),
+      level: null,
+      words: leagueWords(plus, pitcher),
+      said: `${pitcher ? "ERA+" : "wRC+"} ${plus}`,
+    });
+  }
   if (rate != null) {
     stats.push({ kind: "rate", label: pitcher ? "평균자책점" : "타율", value: pitcher ? formatEra(rate) : formatRate(rate), level: null });
   }
@@ -264,7 +291,7 @@ function statsOf(entry: MyPlayer, report: SeasonReport | null, pitcher: boolean)
 function flowOf(report: SeasonReport | null, stats: Stat[]): string | null {
   if (!report) return null;
   if (report.reason) return report.reason;
-  const said = stats.map((s) => (s.kind === "games" ? `${s.value}${s.label}` : s.kind === "plus" ? `${s.label} ${s.value}` : s.value));
+  const said = stats.map((s) => (s.kind === "games" ? `${s.value}${s.label}` : s.kind === "plus" ? (s.said ?? s.value) : s.value));
   return said.some((text) => report.headline.includes(text)) ? null : report.headline;
 }
 

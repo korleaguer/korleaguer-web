@@ -6,6 +6,7 @@ import ApiErrorNotice from "@/components/ApiErrorNotice";
 import Section from "@/components/Section";
 import FormCard from "@/components/my/FormCard";
 import SeasonReportList from "@/components/home/SeasonReportList";
+import LeagueInfo from "@/components/LeagueInfo";
 import MyPlayersLink from "@/components/home/MyPlayersLink";
 
 /** 비시즌 카드는 시즌 합계라 기간이 뜻이 없다. /api/my가 요구하는 기간만 채운다 */
@@ -99,6 +100,7 @@ export default async function OffseasonPlayers({
       id="offseason-title"
       title={hasReport ? `${offseason.season} 시즌 성적표` : `${offseason.season} 시즌 끝`}
       aside={aside}
+      info={hasReport ? <LeagueInfo title="시즌 성적표" /> : undefined}
     >
       {/* 큰 글씨에서 둘이 한 줄에 못 들어가면 '내 선수 n명'이 다음 줄 오른쪽으로 내려간다 */}
       <div className="-mt-0.5 mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-1">

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { PlayerSummary, RosterMove, Timeline, TimelineKind, TimelinePlayer } from "@/lib/api";
 import { formatEra, formatRate, teamLabel } from "@/lib/format";
+import { leagueWords } from "@/lib/leagueWords";
 import { bandDays, bandSummary, buildFacts, buildMarkers, dayIndex, koDate, monthTicks } from "@/lib/timeline";
 import MyPlayerToggle from "@/components/my/MyPlayerToggle";
 import MovePill from "@/components/player/MovePill";
@@ -17,15 +18,15 @@ export const BAND_CLASS: Record<TimelineKind, string> = {
 
 const pct = (days: number, total: number) => `${(days / total) * 100}%`;
 
-/** 숫자 한 줄: '85경기 · wRC+ 78 · 타율 .262', 투수는 '36경기 · ERA+ 127 · 평균자책점 3.91', 마이너면 앞에 단계('트리플A 85경기') */
+/** 숫자 한 줄: '85경기 · 평균보다 22% 아래 · 타율 .262', 투수는 '36경기 · 평균보다 27% 잘 막음 · 평균자책점 3.91', 마이너면 앞에 단계('트리플A 85경기'). 지표 이름은 쓰지 않는다(11-21) */
 function statLine(stat: NonNullable<TimelinePlayer["stat"]>, role: PlayerSummary["role"]): string {
   const games = `${stat.level === "MINORS" && stat.levelKo ? `${stat.levelKo} ` : ""}${stat.games}경기`;
   if (role === "PITCHER") {
-    return [games, stat.eraPlus != null ? `ERA+ ${stat.eraPlus}` : null, stat.era != null ? `평균자책점 ${formatEra(stat.era)}` : null]
+    return [games, stat.eraPlus != null ? leagueWords(stat.eraPlus, true).text : null, stat.era != null ? `평균자책점 ${formatEra(stat.era)}` : null]
       .filter(Boolean)
       .join(" · ");
   }
-  return [games, stat.wrcPlus != null ? `wRC+ ${stat.wrcPlus}` : null, stat.avg != null ? `타율 ${formatRate(stat.avg)}` : null]
+  return [games, stat.wrcPlus != null ? leagueWords(stat.wrcPlus, false).text : null, stat.avg != null ? `타율 ${formatRate(stat.avg)}` : null]
     .filter(Boolean)
     .join(" · ");
 }

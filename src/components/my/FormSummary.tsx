@@ -108,6 +108,13 @@ export function SummaryLines({ entry }: { entry: MyPlayer }) {
       )}
       {pitcher && <p className="mt-2 text-meta text-muted tabular-nums">{pitcher}</p>}
       {status && <p className="mt-1 text-meta text-muted">{status}</p>}
+      {/* 출전 줄도 상태 줄도 없는 카드는 한 줄 자리를 비워 둔다: 같은 줄 카드끼리 큰 숫자 칸의 높이가 같게(사용자 11-16·11-21 '들쭉날쭉').
+          한 칸으로 쌓이는 휴대폰(sm 미만)은 비교할 옆 카드가 없어 두지 않는다(카드마다 약 24px 길어진다) */}
+      {!hitter && !pitcher && !status && (
+        <p aria-hidden className="mt-1 hidden text-meta sm:block">
+          {"\u00a0"}
+        </p>
+      )}
       {/* 시즌 합계 카드(비시즌·FA)에는 한 줄 소식을 두지 않는다: 운영 6명 모두 '시즌 최장 N경기 연속 안타' 같은 주황 소식이라
           부진한 시즌도 '좋은 일' 색이었고, 모두 같은 말이면 아무것도 가르지 못한다(11-17 점검, 홈 자랑 알약을 뺀 것과 같은 판단) */}
       {entry.fact && entry.basis !== "SEASON" && <FactPill fact={entry.fact} />}
@@ -156,7 +163,10 @@ export function SeasonNumbers({ totals, pitcher }: { totals: SeasonTotals; pitch
   return (
     <>
       <Numbers label={label} value={pitcher ? formatEra(main.era) : formatRate(main.avg)} small={small} />
-      {other && <p className="mt-2.5 text-meta text-muted tabular-nums">{otherTotalsLine(other, pitcher)}</p>}
+      {/* 다른 단계 줄('트리플A 85경기 · …')은 선수마다 있다 없다 한다: 없는 카드도 한 줄 자리를 둬서 같은 줄 카드 높이가 같게(11-21, 휴대폰 한 칸은 제외) */}
+      <p aria-hidden={other ? undefined : true} className={`mt-2.5 text-meta text-muted tabular-nums ${other ? "" : "hidden sm:block"}`}>
+        {other ? otherTotalsLine(other, pitcher) : "\u00a0"}
+      </p>
     </>
   );
 }
