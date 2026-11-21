@@ -816,6 +816,13 @@
     }
   }
 
+  /* 옆 칸(BottomSheet side): PC에서는 오른쪽 가장자리에서 24px 들어오며 나타난다(이슈 #407) */
+  @media (min-width: 64rem) {
+    .game-sheet[data-side] {
+      animation: sheet-side 240ms var(--ease-sheet);
+    }
+  }
+
   /*
    * 창을 담은 <dialog>는 스크롤 상자가 아니게 한다(이슈 #321). 브라우저 기본값이 overflow: auto라, 창이 아래(translateY 100%)에서
    * 올라오는 동안 넘친 부분이 스크롤 영역이 되고, showModal이 닫기 버튼에 포커스를 주며(지금은 바로 창 자체로 옮긴다, 이슈 #354) 그 버튼이 보이게 dialog를 수백 px 스크롤했다.
@@ -838,6 +845,7 @@
 
     /* 아래 창은 미끄러지지 않고 창·덮개가 150ms 흐려졌다 나타난다 */
     .game-sheet,
+    .game-sheet[data-side],
     dialog:has(> .game-sheet) {
       animation: sheet-fade 150ms linear;
     }
@@ -1109,6 +1117,17 @@
 @keyframes sheet-fade {
   from {
     opacity: 0;
+  }
+}
+
+@keyframes sheet-side {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
 }
 
