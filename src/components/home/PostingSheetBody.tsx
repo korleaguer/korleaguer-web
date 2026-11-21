@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 import type { PostingPlayer, PostingStatus, PostingSummary } from "@/lib/api";
 import { formatDate, withAndParticle } from "@/lib/format";
-import { dDayText, derivePosting, formatUsd, historyRank, isOpen, STATUS_LABEL, type Signing } from "@/lib/posting";
+import { dDayText, daysLeftSpoken, derivePosting, formatUsd, historyRank, isOpen, STATUS_LABEL, type Signing } from "@/lib/posting";
 import { kboTeamColor } from "@/lib/teams";
 import HistorySheetRow from "@/components/home/HistorySheetRow";
 import LinkedTeams from "@/components/home/LinkedTeams";
@@ -221,9 +221,9 @@ function PlayerHead({ player: p }: { player: PostingPlayer }) {
             <div className="shrink-0">
               <p className="text-caption text-muted">협상 마감까지</p>
               <p className="text-stat-form tabular-nums">
-                {/* 'D-19'는 화면 낭독기가 'D 하이픈 19'로 읽을 수 있어 '19일 남음'을 따로 읽힌다 */}
+                {/* 'D-19'는 화면 낭독기가 'D 하이픈 19'로 읽을 수 있어 '마감까지 19일'을 따로 읽힌다 */}
                 <span aria-hidden>{dDayText(p.daysLeft)}</span>
-                <span className="sr-only">{p.daysLeft === 0 ? "오늘 마감" : `${p.daysLeft}일 남음`}</span>
+                <span className="sr-only">{daysLeftSpoken(p.daysLeft)}</span>
               </p>
             </div>
             <p className="text-right text-label tabular-nums @max-[15.5rem]:text-left">

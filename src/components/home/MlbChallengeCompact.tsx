@@ -5,7 +5,7 @@ import HistorySheetRow from "@/components/home/HistorySheetRow";
 import KboAvatar from "@/components/home/KboAvatar";
 import PostingSheetBody from "@/components/home/PostingSheetBody";
 import PostingNews from "@/components/home/PostingNews";
-import { dDayText, derivePosting, formatUsd, isOpen, STATUS_LABEL } from "@/lib/posting";
+import { dDayText, daysLeftSpoken, derivePosting, formatUsd, isOpen, STATUS_LABEL } from "@/lib/posting";
 
 /** 첫 화면 줄 오른쪽에 두는 기사 수(PC 오른쪽 칸). 휴대폰은 창 안에서 본다 */
 const NEWS_SHOWN = 2;
@@ -115,7 +115,7 @@ function PlayerLine({ player: p, place, total, first }: { player: PostingPlayer;
         <div className={RIGHT}>
           <p className="text-stat leading-none tabular-nums">
             <span aria-hidden>{dDayText(p.daysLeft)}</span>
-            <span className="sr-only">{p.daysLeft === 0 ? "오늘 마감" : `마감까지 ${p.daysLeft}일`}</span>
+            <span className="sr-only">{daysLeftSpoken(p.daysLeft)}</span>
           </p>
           <p className="mt-1 text-micro text-muted tabular-nums">{kstMonthDay(p.deadlineAt)} 마감</p>
         </div>
