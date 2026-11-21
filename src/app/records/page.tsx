@@ -8,8 +8,8 @@ import { RecordsSkeleton } from "@/components/PageSkeleton";
 import PageSuspense from "@/components/PageSuspense";
 import PillNav from "@/components/PillNav";
 import Section from "@/components/Section";
-import ShowMore from "@/components/ShowMore";
 import StateNotice from "@/components/StateNotice";
+import MoreSheet from "@/components/records/MoreSheet";
 import { BestRow, groupPassed, LeaderRow, NextRow, PassedRow } from "@/components/records/RecordRows";
 
 /**
@@ -32,14 +32,14 @@ export const metadata: Metadata = {
 
 type Props = PageProps<"/records">;
 
-/** 순위표에서 처음 보이는 줄 수. 나머지는 '더 보기' */
+/** 순위표에서 처음 보이는 줄 수. 전체는 '전체 보기' 창(휴대폰 아래 창·PC 옆 칸)에 */
 const TOP = 10;
 /**
  * '넘은 기록'에 넣는 기록의 하한(넘은 선수의 통산 값). 도루 1개·타점 5개처럼 잠깐 뛴 선수를 넘은 것은 이야기가 안 된다
  * (2026 운영 데이터: 21번 중 값 10 미만 8번을 빼면 13번, 남는 것은 강정호 233안타·이대호 14홈런 같은 것)
  */
 const PASSED_MIN = 10;
-/** '넘은 기록'에서 처음 보이는 묶음 수. 나머지는 '더 보기' */
+/** '넘은 기록'에서 처음 보이는 묶음 수. 전체는 '전체 보기' 창에 */
 const PASSED_SHOWN = 6;
 /** 남은 것이 이만큼 이하면 버튼을 두지 않고 처음부터 모두 보인다(1~2개를 위해 버튼 하나를 누르게 하지 않는다, 이슈 #326) */
 const PASSED_REST_MIN = 3;
@@ -151,13 +151,11 @@ async function RecordsContent({ searchParams }: Pick<Props, "searchParams">) {
           ))}
         </ul>
         {passed.length > shownPassed && (
-          <ShowMore moreLabel={`${passed.length - shownPassed}개 더 보기`}>
-            <ul className="card mt-2 divide-y divide-line overflow-hidden">
-              {passed.slice(shownPassed).map((g) => (
-                <PassedRow key={g.key} group={g} teamAbbr={teamOf(g.first.playerId)} />
-              ))}
-            </ul>
-          </ShowMore>
+          <MoreSheet label={`전체 ${passed.length}개 보기`} sheetTitle={`${records.season}년에 넘은 기록`} stateKey="korleaguerRecordsPassed">
+            {passed.map((g) => (
+              <PassedRow key={g.key} group={g} teamAbbr={teamOf(g.first.playerId)} />
+            ))}
+          </MoreSheet>
         )}
       </Section>
     ) : null;
@@ -177,13 +175,11 @@ async function RecordsContent({ searchParams }: Pick<Props, "searchParams">) {
         ))}
       </ul>
       {category.leaders.length > TOP && (
-        <ShowMore moreLabel={`${category.leaders.length - TOP}명 더 보기`}>
-          <ul className="card mt-2 divide-y divide-line overflow-hidden">
-            {category.leaders.slice(TOP).map((l) => (
-              <LeaderRow key={l.nameKo} leader={l} unit={category.unit} teamAbbr={teamOf(l.playerId)} />
-            ))}
-          </ul>
-        </ShowMore>
+        <MoreSheet label={`전체 ${category.leaders.length}명 보기`} sheetTitle={`통산 ${category.label} 순위`} stateKey="korleaguerRecordsRanking">
+          {category.leaders.map((l) => (
+            <LeaderRow key={l.nameKo} leader={l} unit={category.unit} teamAbbr={teamOf(l.playerId)} />
+          ))}
+        </MoreSheet>
       )}
     </Section>
   );

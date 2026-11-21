@@ -152,6 +152,11 @@ function newsOf(players: PostingPlayer[]) {
  * 줄인 카드(MlbChallengeCompact)와 그 창 본문(PostingSheetBody)이 같이 쓰는 포스팅 상태 계산.
  * 두 곳이 따로 계산하면 줄에는 있는데 창에는 없는 말이 생긴다(#384 리뷰).
  */
+/** 남은 날을 화면 낭독기가 읽는 말(줄 카드·창 본문 공통). 'D-19'는 'D 하이픈 19'로 읽혀 따로 읽힌다 */
+export function daysLeftSpoken(daysLeft: number): string {
+  return daysLeft === 0 ? "오늘 마감" : `마감까지 ${daysLeft}일`;
+}
+
 export function derivePosting(posting: PostingSummary) {
   const players = [...posting.players].sort((a, b) => rank(a) - rank(b) || (a.daysLeft ?? 99) - (b.daysLeft ?? 99));
   // 보장액 순위. 같으면 최근 계약이 위

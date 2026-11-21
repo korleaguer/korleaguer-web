@@ -89,10 +89,11 @@ function Line({ h, bone }: { h: string; bone: string }) {
  * 성적표 목록 한 줄(SeasonReportList): 사진 44px | 이름·판정·상태·숫자 줄(lines: 둘째 줄부터 막대 폭) | 작은 달별 막대 84×30.
  * second가 있으면 사진만큼 들인 둘째 줄(거론 구단·이번 겨울 기사). 막대는 늘 보인다(이슈 #325: 펼침 없이 아래 창·PC 오른쪽 칸으로 본다)
  */
-function ReportRowSkeleton({ lines, second = false }: { lines: string[]; second?: boolean }) {
+function ReportRowSkeleton({ lines, second = false, h }: { lines: string[]; second?: boolean; h: string }) {
+  // h: 줄 전체 높이(위 구분선 1px 포함). 운영 줄은 글줄 수·기사 줄 유무에 따라 106·125·127px라 값으로 맞춘다
   return (
-    <div>
-      <div className={`grid grid-cols-[44px_minmax(0,1fr)_84px] items-center gap-x-3 pt-3 ${second ? "pb-1" : "pb-3"}`}>
+    <div className={`flex flex-col ${h}`}>
+      <div className={`grid flex-1 grid-cols-[44px_minmax(0,1fr)_84px] items-center gap-x-3 pt-3 ${second ? "pb-1" : "pb-3"}`}>
         <Circle className="size-11" />
         <div>
           <Line h="h-[1.375rem]" bone="h-4 w-[4.5rem]" />
@@ -156,7 +157,7 @@ function ReportPanelSkeleton() {
 /**
  * 홈: 줄인 카드 하나(비시즌 MLB 도전·시즌 중 층 자리) + 비시즌 성적표(흰 카드 한 장 안 줄 목록, 펼친 줄 없음).
  * 성적표 자리는 예전 '내 선수' 무대 카드 격자였는데, 성적표가 줄 목록으로 바뀌어(#286) 모양·높이가 달랐다(전수조사 L253).
- * 375px에서 성적표 섹션 전체(제목·요약 줄 포함) 699px, 그중 흰 카드 629px다. 운영(선수 여섯 명)은 790px·720px로 줄마다 13~18px 더 높다(11-22 측정).
+ * 375px에서 성적표 섹션 전체(제목·요약 줄 포함) 790px, 그중 흰 카드 720px로 운영(선수 여섯 명)과 맞춘다(11-22 측정, 이슈 #406). 줄 높이 기준은 운영 줄이다: 기사 한 줄 있는 줄 106px(글줄 둘)·127px(글줄 셋), 기사 없는 줄 125px(글줄 넷). 줄 위 구분선 1px 포함.
  * 첫 묶음(MLB 도전, 제목 포함)은 줄인 카드(이슈 #379, 선수 한 명 카드 131px, 묶음 167px)에 맞춘다. 큰 카드 때(688px, 이슈 #303)보다 훨씬 낮다.
  * 포스팅 선수가 여러 명이면 한 줄(69px)씩, 0명이면 이 묶음이 없어 성적표가 맨 위로 올라온다(그만큼 밀린다).
  * 이 뼈대는 getHome()보다 먼저 그리는 Suspense fallback이라 시즌 여부를 모른다. 그래서 시즌 중 홈(층)과는 모양·높이가 다르다
@@ -215,16 +216,15 @@ export function HomeSkeleton() {
           <Bone onPage className="h-3.5 w-20" />
         </div>
         <div className="card px-4 pb-1">
-          <div className="pt-1" />
           {/* 휴대폰은 펼친 줄 없는 목록, PC는 왼쪽 목록 + 오른쪽 고른 선수 칸(SeasonReportRows) */}
           <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:items-start lg:gap-x-6">
           <div className="divide-y divide-line">
-            <ReportRowSkeleton lines={["w-40"]} second />
-            <ReportRowSkeleton lines={["w-28", "w-40"]} second />
-            <ReportRowSkeleton lines={["w-32", "w-24", "w-36"]} />
-            <ReportRowSkeleton lines={["w-28", "w-20", "w-40"]} />
-            <ReportRowSkeleton lines={["w-36"]} second />
-            <ReportRowSkeleton lines={["w-24", "w-40"]} second />
+            <ReportRowSkeleton h="h-[106px]" lines={["w-40"]} second />
+            <ReportRowSkeleton h="h-[127px]" lines={["w-28", "w-40"]} second />
+            <ReportRowSkeleton h="h-[125px]" lines={["w-32", "w-24", "w-36"]} />
+            <ReportRowSkeleton h="h-[125px]" lines={["w-28", "w-20", "w-40"]} />
+            <ReportRowSkeleton h="h-[106px]" lines={["w-36"]} second />
+            <ReportRowSkeleton h="h-[127px]" lines={["w-24", "w-40"]} second />
           </div>
           <div className="mb-4 mt-3 hidden rounded-2xl border border-line p-4 lg:block">
             <div className="flex items-start gap-3">
