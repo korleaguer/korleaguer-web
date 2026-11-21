@@ -3,8 +3,9 @@ import Section from "@/components/Section";
 import Words from "@/components/Words";
 import HistorySheetRow from "@/components/home/HistorySheetRow";
 import KboAvatar from "@/components/home/KboAvatar";
-import MlbChallenge, { formatUsd, historyRank, newsOf, pastSignings, isOpen, rank, thisYearSignings } from "@/components/home/MlbChallenge";
+import PostingSheetBody from "@/components/home/PostingSheetBody";
 import PostingNews from "@/components/home/PostingNews";
+import { dDayText, derivePosting, formatUsd, isOpen, STATUS_LABEL } from "@/lib/posting";
 
 /** 첫 화면 줄 오른쪽에 두는 기사 수(PC 오른쪽 칸). 휴대폰은 창 안에서 본다 */
 const NEWS_SHOWN = 2;
@@ -13,38 +14,28 @@ const DAY = "Asia/Seoul";
 const kstMonthDay = (iso: string) =>
   new Intl.DateTimeFormat("ko-KR", { timeZone: DAY, month: "long", day: "numeric" }).format(new Date(iso));
 
-const TONE: Record<string, { label: string; text: string; dot: string }> = {
-  UPCOMING: { label: "협상 시작 전", text: "text-fa-fg", dot: "bg-fa-fg" },
-  NEGOTIATING: { label: "협상 중", text: "text-fa-fg", dot: "bg-fa-fg" },
-  SIGNED: { label: "계약", text: "text-success-fg", dot: "bg-success-fg" },
-  NO_DEAL: { label: "결렬", text: "text-foreground", dot: "bg-muted" },
-  CLOSED: { label: "결과 확인 중", text: "text-foreground", dot: "bg-muted" },
+const TONE: Record<string, { text: string; dot: string }> = {
+  UPCOMING: { text: "text-fa-fg", dot: "bg-fa-fg" },
+  NEGOTIATING: { text: "text-fa-fg", dot: "bg-fa-fg" },
+  SIGNED: { text: "text-success-fg", dot: "bg-success-fg" },
+  NO_DEAL: { text: "text-foreground", dot: "bg-muted" },
+  CLOSED: { text: "text-foreground", dot: "bg-muted" },
 };
 
 /**
  * 비시즌 홈 맨 위 '이번 겨울 MLB 도전'의 첫 화면 모양(사용자 11-21 아침 시안 3안).
  * 휴대폰 첫 화면이 한 선수의 큰 카드로 다 차 우리 선수 성적표가 둘째 화면으로 밀렸다(UX-DIRECTION §1·§3).
  * 그래서 선수마다 한 줄(사진 · 이름 · 상태 · 남은 날 또는 계약 금액)과 '포스팅 소식 · 거론 구단 · 기사' 줄만 두고,
- * 줄을 누르면 아래 창(640px 이상은 가운데 창)에 기존 카드 본문(MlbChallenge inSheet)을 보인다.
+ * 줄을 누르면 아래 창(640px 이상은 가운데 창)에 본문(PostingSheetBody)을 보인다.
  * PC는 매일 바뀌는 기사 두 건을 오른쪽에 그대로 둔다. 포스팅 선수가 없으면 그리지 않는다(성적표가 맨 위).
  */
 export default function MlbChallengeCompact({ posting, asOf }: { posting: PostingSummary; asOf?: string }) {
   if (posting.players.length === 0) return null;
-  const players = [...posting.players].sort((a, b) => rank(a) - rank(b) || (a.daysLeft ?? 99) - (b.daysLeft ?? 99));
+  const { players, single, signings, signedNow, rankOf, news } = derivePosting(posting);
   const multi = players.length > 1;
-  const news = newsOf(players);
-  const single = players.length === 1 ? players[0] : null;
   // 거론 구단은 창 본문이 보여 주는 경우(한 명이고 협상 중·시작 전)에만 줄에 쓴다. 안 그러면 줄에는 있는데 창에서 볼 길이 없다
   const teams =
     single && isOpen(single) ? (single.linkedTeams?.teams.filter((t) => t.linked > 0) ?? []).sort((a, b) => b.linked - a.linked) : [];
-  const signings = [...thisYearSignings(players), ...pastSignings(posting.history)].sort(
-    (a, b) => b.amount - a.amount || b.season - a.season,
-  );
-  const signedNow = signings.some((s) => s.thisYear);
-  const rankOf = (nameKo: string) => {
-    const s = signings.find((x) => x.thisYear && x.nameKo === nameKo);
-    return s ? historyRank(signings, s.amount) : null;
-  };
   // 줄 둘째 줄: 이름은 위 줄에 있어 다시 쓰지 않는다. PC는 기사 제목이 오른쪽에 있어 건수를 빼고, 휴대폰만 건수를 쓴다
   const lead = [
     teams[0] ? `거론 ${teams[0].nameKo} ${teams[0].linked}건${teams.length > 1 ? ` 외 ${teams.length - 1}곳` : ""}` : null,
@@ -78,7 +69,7 @@ export default function MlbChallengeCompact({ posting, asOf }: { posting: Postin
             hint={hint}
             className="border-t border-line"
           >
-            <MlbChallenge posting={posting} inSheet />
+            <PostingSheetBody posting={posting} />
           </HistorySheetRow>
           )}
         </div>
@@ -111,7 +102,7 @@ function PlayerLine({ player: p, place, total, first }: { player: PostingPlayer;
           <h3 className="whitespace-nowrap text-heading">{p.nameKo}</h3>
           <span className={`whitespace-nowrap text-label ${tone.text}`}>
             <span aria-hidden className={`mr-1 inline-block size-[7px] rounded-full align-middle ${tone.dot}`} />
-            {tone.label}
+            {STATUS_LABEL[p.status] ?? STATUS_LABEL.CLOSED}
           </span>
         </div>
         <p className="mt-0.5 truncate text-caption text-muted @max-[15rem]:overflow-visible @max-[15rem]:whitespace-normal">
@@ -123,7 +114,7 @@ function PlayerLine({ player: p, place, total, first }: { player: PostingPlayer;
       ) : p.status === "NEGOTIATING" && p.daysLeft != null ? (
         <div className={RIGHT}>
           <p className="text-stat leading-none tabular-nums">
-            <span aria-hidden>{p.daysLeft === 0 ? "오늘" : `D-${p.daysLeft}`}</span>
+            <span aria-hidden>{dDayText(p.daysLeft)}</span>
             <span className="sr-only">{p.daysLeft === 0 ? "오늘 마감" : `마감까지 ${p.daysLeft}일`}</span>
           </p>
           <p className="mt-1 text-micro text-muted tabular-nums">{kstMonthDay(p.deadlineAt)} 마감</p>
