@@ -277,52 +277,52 @@ function RankLine({ rank, total }: { rank: number; total: number }) {
 function SigningList({ signings }: { signings: Signing[] }) {
   const scale = barScale(signings.map((s) => s.amount));
   const list = (
-      <ul className="money-flip-pause divide-y divide-line">
-        {signings.map((s) => {
-          const share = scale.share(s.amount);
-          return (
-            <li key={s.key} className="flex items-center gap-3 py-2.5">
-              {/* 두 자리(10위)도 한 줄에 들어가는 폭 */}
-              <span
-                className={`w-5 shrink-0 text-right text-label tabular-nums ${s.thisYear ? "text-accent-ink" : "text-muted"}`}
-              >
-                {historyRank(signings, s.amount)}
-                <span className="sr-only">위</span>
-              </span>
-              <PostingDot nameKo={s.nameKo} photoUrl={s.photoUrl} size={30} />
-              <div className="min-w-0 flex-1">
-                <p className="flex items-baseline gap-1.5">
-                  <span className="shrink-0 text-summary">{s.nameKo}</span>
-                  {s.thisYear && (
-                    <span className="shrink-0 self-center rounded-full bg-success-bg px-1.5 py-0.5 text-badge text-success-fg">
-                      올해
-                    </span>
-                  )}
-                  <span className="truncate text-caption text-muted tabular-nums">
-                    {s.season}
-                    {s.teamKo ? ` · ${s.teamKo}` : ""}
+    <ul className="money-flip-pause divide-y divide-line">
+      {signings.map((s) => {
+        const share = scale.share(s.amount);
+        return (
+          <li key={s.key} className="flex items-center gap-3 py-2.5">
+            {/* 두 자리(10위)도 한 줄에 들어가는 폭 */}
+            <span
+              className={`w-5 shrink-0 text-right text-label tabular-nums ${s.thisYear ? "text-accent-ink" : "text-muted"}`}
+            >
+              {historyRank(signings, s.amount)}
+              <span className="sr-only">위</span>
+            </span>
+            <PostingDot nameKo={s.nameKo} photoUrl={s.photoUrl} size={30} />
+            <div className="min-w-0 flex-1">
+              <p className="flex items-baseline gap-1.5">
+                <span className="shrink-0 text-summary">{s.nameKo}</span>
+                {s.thisYear && (
+                  <span className="shrink-0 self-center rounded-full bg-success-bg px-1.5 py-0.5 text-badge text-success-fg">
+                    올해
                   </span>
-                  <span className="ml-auto shrink-0 text-caption text-muted tabular-nums">
-                    {/* '마감 22일 전'은 위 'D-20'(남은 날)과 같은 축으로 읽혀서, 계약 시점임을 문장으로 쓴다(11-12 PC 평가) */}
-                    {s.days === 0 ? "마감 당일 계약" : `${s.days}일 남기고 계약`}
-                  </span>
-                </p>
-                <div className="mt-1.5 flex items-center gap-2">
-                  {/* 끊긴 막대도 금액은 옆 글자와 화면 낭독기가 그대로 읽는다 */}
-                  <i
-                    aria-hidden
-                    className={scale.cut(s.amount) ? "ink-bar ink-bar-cut" : "ink-bar"}
-                    style={{ "--share": share.toFixed(4) } as CSSProperties}
-                  />
-                  <span className="text-label tabular-nums">
-                    <DealMoney years={s.years} usd={s.usd} krw={s.krw} />
-                  </span>
-                </div>
+                )}
+                <span className="truncate text-caption text-muted tabular-nums">
+                  {s.season}
+                  {s.teamKo ? ` · ${s.teamKo}` : ""}
+                </span>
+                <span className="ml-auto shrink-0 text-caption text-muted tabular-nums">
+                  {/* '마감 22일 전'은 위 'D-20'(남은 날)과 같은 축으로 읽혀서, 계약 시점임을 문장으로 쓴다(11-12 PC 평가) */}
+                  {s.days === 0 ? "마감 당일 계약" : `${s.days}일 남기고 계약`}
+                </span>
+              </p>
+              <div className="mt-1.5 flex items-center gap-2">
+                {/* 끊긴 막대도 금액은 옆 글자와 화면 낭독기가 그대로 읽는다 */}
+                <i
+                  aria-hidden
+                  className={scale.cut(s.amount) ? "ink-bar ink-bar-cut" : "ink-bar"}
+                  style={{ "--share": share.toFixed(4) } as CSSProperties}
+                />
+                <span className="text-label tabular-nums">
+                  <DealMoney years={s.years} usd={s.usd} krw={s.krw} />
+                </span>
               </div>
-            </li>
-          );
-        })}
-      </ul>
+            </div>
+          </li>
+        );
+      })}
+    </ul>
   );
   return (
     <div>
