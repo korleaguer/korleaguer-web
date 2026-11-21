@@ -264,7 +264,7 @@ export default function WrcTrend({ points, moves }: { points: TrendPoint[]; move
           />
           {/* 훑을 수 있다는 표시: 세로선 아래 끝의 ‹ › 손잡이(글로 '옆으로 훑으면…'을 쓰던 자리, 이슈 #327) */}
           <span
-            className="pointer-events-none absolute bottom-1 inline-flex h-5 -translate-x-1/2 items-center whitespace-nowrap rounded-full border border-accent bg-surface px-1.5 text-micro leading-none text-accent"
+            className="pointer-events-none absolute bottom-1 inline-flex h-5 -translate-x-1/2 items-center whitespace-nowrap rounded-full border border-accent bg-surface px-1.5 text-micro leading-none text-accent-ink"
             style={{ left: `${(x(active) / W) * 100}%` }}
           >
             ‹ ›
