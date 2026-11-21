@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { GameLine, HomeResponse, MyPlayer } from "@/lib/api";
+import type { GameBuzz, GameLine, HomeResponse, MyPlayer } from "@/lib/api";
 import { getMyPlayers, getPlayers } from "@/lib/api";
 import { formatLineup, formatScore, formatSummary, formatTime, kstDayKey, kstPrevDayKey, teamLabel } from "@/lib/format";
 import { readMyPlayers } from "@/lib/myPlayers";
@@ -12,6 +12,7 @@ import ScoreText from "@/components/ScoreText";
 import Section from "@/components/Section";
 import TeamMark from "@/components/TeamMark";
 import RecentGames from "./RecentGames";
+import FloorBuzz, { type FloorBuzzItem } from "./FloorBuzz";
 import MyPlayersLink from "@/components/home/MyPlayersLink";
 import StarIcon from "@/components/my/StarIcon";
 import Words from "@/components/Words";
@@ -112,6 +113,46 @@ export function findDerby(players: MyPlayer[], today: string | null): [GameLine,
  */
 function shownGame(entry: MyPlayer): GameLine | null {
   return entry.games.find((g) => g.gameStatus !== "scheduled" && g.gameStatus !== "postponed") ?? entry.games[0] ?? null;
+}
+
+/** 화제 카드에 두는 줄 수. 많으면 첫 화면이 길어져 우선순위 위에서부터 이만큼만 둔다 */
+const FLOOR_BUZZ_MAX = 3;
+/** 화제로 치는 시간: 경기가 시작한 지 이만큼 안이다('최근 24시간' 경기 카드와 같은 기준) */
+const FLOOR_BUZZ_WINDOW_MS = 24 * 60 * 60 * 1000;
+/** 서버 우선순위: 넘은 기록 > 데뷔·시즌 첫 > 연속 기록 > 시즌 최고 경기 */
+const BUZZ_RANK: Record<GameBuzz["kind"], number> = { PASSED: 0, FIRST: 1, STREAK: 2, SEASON_BEST: 3 };
+
+/**
+ * 층 화면 맨 위 화제 카드에 둘 줄(11-21 B안). 선수마다 층에 보이는 경기(shownGame) 하나만 보고, 그 경기가 최근 24시간 안에 시작했고
+ * 서버가 문구를 줬을 때만 줄이 된다(선수당 한 줄). 순서는 내 선수 먼저, 그다음 우선순위, 같으면 명단 순이고 세 줄까지다.
+ * 옛 api(buzz 칸 없음)·화제 없는 날은 빈 목록이라 카드가 없다.
+ */
+export function pickFloorBuzz(
+  players: MyPlayer[],
+  buzz: GameBuzz[],
+  mine: readonly number[],
+  generatedAt: string,
+): FloorBuzzItem[] {
+  const now = Date.parse(generatedAt);
+  if (Number.isNaN(now) || buzz.length === 0) return [];
+  const rows: { item: FloorBuzzItem; mine: boolean; rank: number; order: number }[] = [];
+  players.forEach((entry, order) => {
+    const game = shownGame(entry);
+    if (!game || !game.played) return;
+    const started = Date.parse(game.startTimeKst);
+    if (Number.isNaN(started) || started > now || now - started > FLOOR_BUZZ_WINDOW_MS) return;
+    const found = buzz.find((b) => b.playerId === entry.player.id && b.gameId === game.gameId);
+    if (found) {
+      rows.push({
+        item: { buzz: found, nameKo: entry.player.nameKo },
+        mine: mine.includes(entry.player.id),
+        rank: BUZZ_RANK[found.kind] ?? 9,
+        order,
+      });
+    }
+  });
+  rows.sort((a, b) => Number(b.mine) - Number(a.mine) || a.rank - b.rank || a.order - b.order);
+  return rows.slice(0, FLOOR_BUZZ_MAX).map((r) => r.item);
 }
 
 /** "2026-07-07" → "7월 7일". 달과 날 사이는 줄바꿈 없는 공백이라 Words로 그리면 큰 글씨에서도 '7월'/'7일'로 갈리지 않는다 */
@@ -259,6 +300,7 @@ export default async function SeasonFloors({ recent, asOf }: Props) {
   // '오늘'의 기준일: 지금 시각(new Date)이 아니라 경기 목록을 만든 응답 시각의 한국 날짜다. 캐시된 화면에서도 날짜 말이 목록과 맞는다
   const today = kstDayKey(myResult.data.generatedAt);
   const derby = findDerby(players, today);
+  const buzzItems = pickFloorBuzz(players, myResult.data.buzz, mine, myResult.data.generatedAt);
 
   return (
     <Section id="floors-title" title="지금 어디서 뛰나" aside={asOf}>
@@ -266,6 +308,8 @@ export default async function SeasonFloors({ recent, asOf }: Props) {
       <div className="-mt-1 mb-2 flex justify-end px-1">
         <MyPlayersLink count={myCount} />
       </div>
+      {/* 그날 화제 문구를 모은 카드. 화제가 없으면 카드 자체가 없다(11-21 B안) */}
+      {buzzItems.length > 0 && <FloorBuzz items={buzzItems} />}
       {derby && <DerbyCard pair={derby} />}
       {/* 층 순서가 곧 순위라 PC에서도 층은 위에서 아래로 한 줄씩 두고 세로선으로 잇는다. 층 안 선수만 PC에서 두 칸으로
           나눠 한 줄이 화면 끝까지 늘어나지 않게 한다(사용자 11-17 '추천대로', 전수조사 L307). 예전처럼 층을 두 칸에 흘리면
