@@ -9,7 +9,7 @@ import { Notice, Numbers, SeasonNumbers, StatusBadge, StatusSrText, SummaryLines
 import GameBars from "./GameBars";
 import MyPlayerToggle from "./MyPlayerToggle";
 import { barSlots } from "./columns";
-import { metaLine, periodLabel, periodNote, statusLine } from "./formLabels";
+import { levelKo, metaLine, periodLabel, periodNote, statusLine } from "./formLabels";
 import { cacheLife } from "next/cache";
 
 interface Props {
@@ -111,10 +111,10 @@ export default async function FormCard({
         ) : period ? (
           <>
             {entry.hitting && (
-              <HitterNumbers period={periodLabel(basis, level, days, entry.isFallback)} hitting={entry.hitting} minors={minors} />
+              <HitterNumbers period={periodLabel(basis, level, days, entry.isFallback)} hitting={entry.hitting} />
             )}
             {entry.pitching && (
-              <PitcherNumbers period={periodLabel(basis, level, days, entry.isFallback)} pitching={entry.pitching} minors={minors} />
+              <PitcherNumbers period={periodLabel(basis, level, days, entry.isFallback)} pitching={entry.pitching} />
             )}
             {/* 기간이 바뀌면 막대 자리도 바뀌므로 고른 막대를 처음부터 다시 정한다(key).
                 막대 사이 빈틈을 잘못 눌러 페이지가 바뀌지 않게 그래프 묶음 전체를 링크 위에 둔다 */}
@@ -155,7 +155,7 @@ export default async function FormCard({
   );
 }
 
-function HitterNumbers({ period, hitting, minors }: { period: string; hitting: HitterPeriod; minors: boolean }) {
+function HitterNumbers({ period, hitting }: { period: string; hitting: HitterPeriod }) {
   return (
     <Numbers
       label={`${period} 타율`}
@@ -166,7 +166,7 @@ function HitterNumbers({ period, hitting, minors }: { period: string; hitting: H
           atBats={hitting.atBats}
           played={hitting.games > 0}
           hasAvg={hitting.avg != null}
-          minors={minors}
+          plusLevel={hitting.plusLevel ?? null}
         />
       }
       // 경기를 먼저 쓴다: '안타·홈런·타점'만으로는 몇 경기 기록인지 몰랐다(11-17 점검, 비시즌 시즌 합계 카드와 같은 순서). 투수는 등판 먼저
@@ -179,7 +179,7 @@ function HitterNumbers({ period, hitting, minors }: { period: string; hitting: H
   );
 }
 
-function PitcherNumbers({ period, pitching, minors }: { period: string; pitching: PitcherPeriod; minors: boolean }) {
+function PitcherNumbers({ period, pitching }: { period: string; pitching: PitcherPeriod }) {
   return (
     <Numbers
       label={`${period} 평균자책점`}
@@ -191,7 +191,7 @@ function PitcherNumbers({ period, pitching, minors }: { period: string; pitching
           outs={pitching.outs}
           inningsText={pitching.inningsText}
           played={pitching.games > 0}
-          minors={minors}
+          plusLevel={pitching.plusLevel ?? null}
         />
       }
       small={[
@@ -214,7 +214,8 @@ const MIN_AT_BATS_FOR_DELTA = 20;
 /**
  * 큰 숫자(타율) 아래 판정 한 줄: 기간 기록을 리그 평균과 견준 말('평균보다 30% 잘 침', 사용자 11-21). 시즌 타율과 견줘 ▲▼로 말하던 것을 대신한다.
  * 타율 하나로 좋아졌는지 말하지 않는다(볼넷·장타가 빠진다). 말은 서버가 낸 기간 wRC+(hitting.wrcPlus)에서 나온다.
- * 마이너 기록은 그 단계 리그 평균이 화면에 없어(메이저 평균으로 재면 높게 나온다) 견주지 않는다.
+ * 마이너·재활 기록은 서버가 그 단계(plusLevel) 리그 평균과 견준 값을 주고, 말 앞에 단계를 붙인다('트리플A 평균보다 12% 잘 침', 11-22).
+ * 단계가 섞인 기간이라 값이 없으면 빈 줄이다. 표본이 적을 때 말은 메이저와 같다.
  * 평균 위만 주황(좋은 활약 색), 아래는 색 없이 본문 글자. 카드마다 이 줄은 한 줄 자리를 늘 가진다(같은 줄 카드 높이를 맞추려고)
  */
 function RateDelta({
@@ -222,21 +223,20 @@ function RateDelta({
   atBats,
   played,
   hasAvg,
-  minors,
+  plusLevel,
 }: {
   plus: number | null;
   atBats: number;
   played: boolean;
   hasAvg: boolean;
-  minors: boolean;
+  plusLevel: string | null;
 }) {
   if (!played) return <>이 기간 출전 없음</>;
   if (!hasAvg) return <>이 기간 타수 없음</>;
-  if (minors) return <>마이너라 평균 비교 없음</>;
   // 표본 문턱을 먼저 본다: 경기 세부 칸이 없어 값을 못 만든 카드도 '참고용'은 말해야 한다
   if (atBats < MIN_AT_BATS_FOR_DELTA) return <>{`${atBats}타수라 참고용`}</>;
   if (plus == null) return <>&nbsp;</>;
-  return <Verdict plus={plus} pitcher={false} />;
+  return <Verdict plus={plus} pitcher={false} plusLevel={plusLevel} />;
 }
 
 /**
@@ -252,27 +252,27 @@ function EraDelta({
   outs,
   inningsText,
   played,
-  minors,
+  plusLevel,
 }: {
   era: number | null;
   plus: number | null;
   outs: number;
   inningsText: string;
   played: boolean;
-  minors: boolean;
+  plusLevel: string | null;
 }) {
   if (!played) return <>이 기간 등판 없음</>;
-  if (minors) return <>마이너라 평균 비교 없음</>;
   if (outs < MIN_OUTS_FOR_DELTA) return <>{`${inningsText}이닝이라 참고용`}</>;
   if (era == null || plus == null) return <>&nbsp;</>;
   // 자책점이 없으면 ERA+가 상한(300)에 붙어 '평균보다 200%'가 되니 퍼센트 대신 사실만
   if (era <= 0) return <span className="font-semibold text-hot-ink">자책점 없음</span>;
-  return <Verdict plus={plus} pitcher />;
+  return <Verdict plus={plus} pitcher plusLevel={plusLevel} />;
 }
 
 /** 리그 대비 말 한 줄. 평균 위만 주황 굵게(좋은 활약 색), 비슷·아래는 색 없이 본문 글자. 숫자는 굵게 */
-function Verdict({ plus, pitcher }: { plus: number; pitcher: boolean }) {
-  const w = leagueWords(plus, pitcher);
+function Verdict({ plus, pitcher, plusLevel }: { plus: number; pitcher: boolean; plusLevel: string | null }) {
+  // 메이저(또는 단계를 모름)는 단계 이름을 붙이지 않는다
+  const w = leagueWords(plus, pitcher, plusLevel && plusLevel !== "MLB" ? levelKo(plusLevel) : undefined);
   return (
     <span className={w.tone === "up" ? "font-semibold text-hot-ink" : "text-foreground"}>
       {w.lead}
