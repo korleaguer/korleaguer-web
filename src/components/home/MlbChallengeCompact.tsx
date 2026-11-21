@@ -93,29 +93,35 @@ export default function MlbChallengeCompact({ posting, asOf }: { posting: Postin
   );
 }
 
+/** 오른쪽 칸: 줄이 넓으면 셋째 칸 오른쪽 맞춤, 좁으면(큰 글씨) 이름 블록 아래 왼쪽 맞춤 */
+const RIGHT = "col-start-2 mt-1.5 text-left @min-[15rem]:col-start-3 @min-[15rem]:row-start-1 @min-[15rem]:mt-0 @min-[15rem]:text-right";
+
 /** 선수 한 줄: 사진 · 이름 + 상태 · 구단·포지션(계약이면 '원소속 → 새 구단') | 남은 날과 마감일(계약이면 금액과 역대 순위) */
 function PlayerLine({ player: p, place, total, first }: { player: PostingPlayer; place: number | null; total: number; first: boolean }) {
   const tone = TONE[p.status] ?? TONE.CLOSED;
   const deal = p.deal && p.deal.years != null && p.deal.guaranteedUsd != null ? p.deal : null;
   return (
-    <li className="flex items-center gap-3 py-3">
+    <li className="@container py-3">
+      {/* 줄 폭이 15rem보다 좁으면(앱 큰 글씨·브라우저 확대) 오른쪽 칸(남은 날·금액)을 이름 블록 아래로 내려 이름·상태·소속이 읽히게 한다.
+          rem 조건이라 글자 배율을 따라간다(375px 1배는 줄 폭이 약 19rem이라 모양이 그대로다) */}
+      <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 @min-[15rem]:grid-cols-[auto_minmax(0,1fr)_auto]">
       <KboAvatar nameKo={p.nameKo} photoUrl={p.photoUrl} size={44} eager fetchPriority={first ? "high" : undefined} />
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0">
         <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
           <h3 className="whitespace-nowrap text-heading">{p.nameKo}</h3>
-          <span className={`text-label ${tone.text}`}>
+          <span className={`whitespace-nowrap text-label ${tone.text}`}>
             <span aria-hidden className={`mr-1 inline-block size-[7px] rounded-full align-middle ${tone.dot}`} />
             {tone.label}
           </span>
         </div>
-        <p className="mt-0.5 truncate text-caption text-muted">
-          {p.status === "SIGNED" && deal?.mlbTeamKo ? `${p.kboTeam} → ${deal.mlbTeamKo}` : `${p.kboTeam} · ${p.positionKo}`}
+        <p className="mt-0.5 truncate text-caption text-muted @max-[15rem]:overflow-visible @max-[15rem]:whitespace-normal">
+          <Words text={p.status === "SIGNED" && deal?.mlbTeamKo ? `${p.kboTeam} → ${deal.mlbTeamKo}` : `${p.kboTeam} · ${p.positionKo}`} />
         </p>
       </div>
       {p.status === "NEGOTIATING" && p.daysLeft == null ? (
-        <p className="shrink-0 text-right text-micro text-muted tabular-nums">{kstMonthDay(p.deadlineAt)} 마감</p>
+        <p className={`${RIGHT} text-micro text-muted tabular-nums`}>{kstMonthDay(p.deadlineAt)} 마감</p>
       ) : p.status === "NEGOTIATING" && p.daysLeft != null ? (
-        <div className="shrink-0 text-right">
+        <div className={RIGHT}>
           <p className="text-stat leading-none tabular-nums">
             <span aria-hidden>{p.daysLeft === 0 ? "오늘" : `D-${p.daysLeft}`}</span>
             <span className="sr-only">{p.daysLeft === 0 ? "오늘 마감" : `마감까지 ${p.daysLeft}일`}</span>
@@ -123,9 +129,9 @@ function PlayerLine({ player: p, place, total, first }: { player: PostingPlayer;
           <p className="mt-1 text-micro text-muted tabular-nums">{kstMonthDay(p.deadlineAt)} 마감</p>
         </div>
       ) : p.status === "UPCOMING" ? (
-        <p className="shrink-0 text-right text-micro text-muted tabular-nums">{kstMonthDay(p.windowOpensAt)} 시작</p>
+        <p className={`${RIGHT} text-micro text-muted tabular-nums`}>{kstMonthDay(p.windowOpensAt)} 시작</p>
       ) : p.status === "SIGNED" && deal ? (
-        <div className="shrink-0 text-right">
+        <div className={RIGHT}>
           <p className="text-label tabular-nums">
             <Words text={`${deal.years}년 ${formatUsd(deal.guaranteedUsd!)}`} />
           </p>
@@ -136,6 +142,7 @@ function PlayerLine({ player: p, place, total, first }: { player: PostingPlayer;
           )}
         </div>
       ) : null}
+      </div>
     </li>
   );
 }
