@@ -18,6 +18,7 @@ export default function BottomSheet({
   children,
   bodyClassName = "px-4",
   widthClassName = "sm:max-w-lg",
+  side = false,
 }: {
   title: string;
   onClose: () => void;
@@ -26,6 +27,8 @@ export default function BottomSheet({
   bodyClassName?: string;
   /** 가운데 창(640px 이상) 최대 폭 */
   widthClassName?: string;
+  /** PC(1024px 이상)에서는 가운데 창이 아니라 오른쪽에 붙은 옆 칸으로 연다(기록 화면 '전체 보기', 이슈 #407). 휴대폰·태블릿은 그대로 */
+  side?: boolean;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -45,11 +48,12 @@ export default function BottomSheet({
       onClick={(e) => {
         if (e.target === dialogRef.current) close();
       }}
-      className="fixed inset-0 m-0 h-full max-h-none w-full max-w-none border-0 bg-black/40 p-0 text-foreground open:flex open:items-end open:justify-center sm:open:items-center"
+      className={`fixed inset-0 m-0 h-full max-h-none w-full max-w-none border-0 bg-black/40 p-0 text-foreground open:flex open:items-end open:justify-center sm:open:items-center${side ? " lg:open:items-stretch lg:open:justify-end" : ""}`}
     >
       <div
         ref={panelRef}
-        className={`game-sheet flex max-h-[84dvh] w-full flex-col overflow-hidden rounded-t-2xl bg-surface shadow-[var(--shadow-card-hover)] sm:max-h-[80dvh] sm:rounded-2xl ${widthClassName}`}
+        data-side={side ? "" : undefined}
+        className={`game-sheet flex max-h-[84dvh] w-full flex-col overflow-hidden rounded-t-2xl bg-surface shadow-[var(--shadow-card-hover)] sm:max-h-[80dvh] sm:rounded-2xl ${side ? "lg:h-full lg:max-h-none lg:rounded-none lg:rounded-l-2xl " : ""}${widthClassName}`}
       >
         {/* 끌어 닫는 머리: 앱 안에서도 길게 눌러 글자가 잡히지 않게 select-none */}
         <div
