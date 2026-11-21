@@ -159,7 +159,7 @@ function GameCard({
       </div>
 
       <div className="mt-3 flex items-start gap-3 px-0.5">
-        <PlayerAvatar size={44} nameKo={line.nameKo} photoUrl={line.photoUrl} teamAbbr={line.teamAbbr} />
+        <PlayerAvatar size={44} nameKo={line.nameKo} photoUrl={line.photoUrl} teamAbbr={line.teamAbbr} photoTeamAbbr={line.photoTeamAbbr} />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
             <Link
