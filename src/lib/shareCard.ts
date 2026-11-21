@@ -1,6 +1,6 @@
 import { getHome, getPlayer, getRecords } from "@/lib/api";
 import { pickRankRows } from "@/lib/koreanRank";
-import { formatUsd } from "@/components/home/MlbChallenge";
+import { formatUsd } from "@/lib/posting";
 
 /** 순위 카드 한 줄 */
 export interface ShareCardRow {
