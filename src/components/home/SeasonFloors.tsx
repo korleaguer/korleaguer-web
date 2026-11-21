@@ -123,8 +123,8 @@ const FLOOR_BUZZ_WINDOW_MS = 24 * 60 * 60 * 1000;
 const BUZZ_RANK: Record<GameBuzz["kind"], number> = { PASSED: 0, FIRST: 1, STREAK: 2, SEASON_BEST: 3 };
 
 /**
- * 층 화면 맨 위 화제 카드에 둘 줄(11-21 B안). 선수마다 층에 보이는 경기(shownGame) 하나만 보고, 그 경기가 최근 24시간 안에 시작했고
- * 서버가 문구를 줬을 때만 줄이 된다(선수당 한 줄). 순서는 내 선수 먼저, 그다음 우선순위, 같으면 명단 순이고 세 줄까지다.
+ * 층 화면 맨 위 화제 카드에 둘 줄(11-21 B안). 선수마다 최근 24시간 안에 시작한 경기 중 서버가 문구를 준 가장 최근 경기 하나만
+ * 줄이 된다(선수당 한 줄). 순서는 내 선수 먼저, 그다음 우선순위, 같으면 명단 순이고 세 줄까지다.
  * 옛 api(buzz 칸 없음)·화제 없는 날은 빈 목록이라 카드가 없다.
  */
 export function pickFloorBuzz(
@@ -137,18 +137,20 @@ export function pickFloorBuzz(
   if (Number.isNaN(now) || buzz.length === 0) return [];
   const rows: { item: FloorBuzzItem; mine: boolean; rank: number; order: number }[] = [];
   players.forEach((entry, order) => {
-    const game = shownGame(entry);
-    if (!game || !game.played) return;
-    const started = Date.parse(game.startTimeKst);
-    if (Number.isNaN(started) || started > now || now - started > FLOOR_BUZZ_WINDOW_MS) return;
-    const found = buzz.find((b) => b.playerId === entry.player.id && b.gameId === game.gameId);
-    if (found) {
+    // 최신 경기부터 보며 24시간 안에 뛴 경기 중 문구가 있는 첫 경기를 쓴다(마이너 경기 줄이 맨 앞에 와도 메이저 화제를 놓치지 않는다)
+    for (const game of entry.games) {
+      if (!game.played) continue;
+      const started = Date.parse(game.startTimeKst);
+      if (Number.isNaN(started) || started > now || now - started > FLOOR_BUZZ_WINDOW_MS) continue;
+      const found = buzz.find((b) => b.playerId === entry.player.id && b.gameId === game.gameId);
+      if (!found) continue;
       rows.push({
         item: { buzz: found, nameKo: entry.player.nameKo },
         mine: mine.includes(entry.player.id),
         rank: BUZZ_RANK[found.kind] ?? 9,
         order,
       });
+      return;
     }
   });
   rows.sort((a, b) => Number(b.mine) - Number(a.mine) || a.rank - b.rank || a.order - b.order);

@@ -27,7 +27,7 @@ export default function FloorBuzz({ items }: { items: FloorBuzzItem[] }) {
           </span>
         );
         return (
-          <li key={buzz.playerId}>
+          <li key={`${buzz.playerId}-${buzz.gameId}`}>
             <Link
               href={`/players/${buzz.playerId}`}
               className="press-soft flex min-h-11 items-start px-3.5 py-2.5 text-summary"
