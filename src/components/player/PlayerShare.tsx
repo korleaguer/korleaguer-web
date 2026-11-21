@@ -67,6 +67,8 @@ function ShareSheet({ playerId, nameKo, version, onClose }: { playerId: number; 
   const cardPath = `/players/${playerId}/og/card/${version}`;
   // 이 값으로 바뀌는 '그림 보내기'는 그림을 받은 뒤(브라우저에서만)에 그려지므로 렌더 중에 앱 정보를 읽어도 서버 HTML과 어긋나지 않는다
   const appImageShare = appHas("share-image");
+  /** 보내는 선수 페이지 주소(링크 복사와 그림 보내기가 같은 주소를 쓴다) */
+  const pageUrl = () => `${window.location.origin}/players/${playerId}`;
 
   // 창을 열 때 그림을 한 번 받아 미리보기와 보내기에 같이 쓴다(보내는 순간 기다리면 사용자 동작 시간이 지나 공유 창이 막힌다)
   useEffect(() => {
@@ -101,8 +103,7 @@ function ShareSheet({ playerId, nameKo, version, onClose }: { playerId: number; 
     if (card.state !== "ready") return;
     // 그림 공유를 아는 앱(아이폰 앱): 웹뷰는 파일 공유가 안 되므로 앱이 같은 그림을 받아 기기 공유 창에 링크와 함께 붙인다
     if (appImageShare) {
-      const { origin } = window.location;
-      postToApp({ type: "share-image", imageUrl: `${origin}${cardPath}`, url: `${origin}/players/${playerId}`, title: `${nameKo} 한국인 순위` });
+      postToApp({ type: "share-image", imageUrl: `${window.location.origin}${cardPath}`, url: pageUrl(), title: `${nameKo} 한국인 순위` });
       return;
     }
     const file = new File([card.blob], fileName, { type: "image/png" });
@@ -126,7 +127,7 @@ function ShareSheet({ playerId, nameKo, version, onClose }: { playerId: number; 
   }
 
   async function copyLink() {
-    const url = `${window.location.origin}/players/${playerId}`;
+    const url = pageUrl();
     try {
       await navigator.clipboard.writeText(url);
       toast("링크를 복사했어요", { tone: "success" });
