@@ -642,6 +642,8 @@ export type PlayerSaber =
       /** 이닝을 아웃 수로(50⅔이닝 = 152) */
       inningsOuts: number | null;
       eraMinus: number | null;
+      /** ERA-를 뒤집은 ERA+(100 = 리그 평균, 높을수록 잘함). 서버가 준다 */
+      eraPlus: number | null;
       fipMinus: number | null;
       /** 퍼센트 값(22.7 = 22.7%) */
       strikeoutRate: number | null;
@@ -810,6 +812,8 @@ export interface HitterPeriod {
   avg: number | null;
   /** 이번 정규시즌 타율(비교용) */
   seasonAvg: number | null;
+  /** 기간 wRC+(그 시즌 메이저 리그 평균 = 100, 0~300). 서버가 계산한다. 마이너·재활 기록이거나 근거가 모자라면 null */
+  wrcPlus: number | null;
 }
 
 /** 내 선수 카드의 기간 합계(투수). era는 이닝이 없으면 null */
@@ -825,6 +829,8 @@ export interface PitcherPeriod {
   saves: number;
   /** 이번 정규시즌 평균자책점(비교용) */
   seasonEra: number | null;
+  /** 기간 ERA+(그 시즌 메이저 리그 평균 = 100, 높을수록 잘함, 300까지). 서버가 계산한다. 마이너·재활 기록이거나 아웃이 없으면 null */
+  eraPlus: number | null;
 }
 
 /** 내 선수 한 명: 선수 정보 + 기간 합계 + 연속 기록 + 기간 안 경기(최신부터) */
@@ -1324,6 +1330,7 @@ function normalizeSaber(raw: unknown): PlayerSaber | null {
       ...common,
       inningsOuts: num(r.inningsOuts),
       eraMinus: num(r.eraMinus),
+      eraPlus: num(r.eraPlus),
       fipMinus: num(r.fipMinus),
       strikeoutRate: num(r.strikeoutRate),
       walkRate: num(r.walkRate),

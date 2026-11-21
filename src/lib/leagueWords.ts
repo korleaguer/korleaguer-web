@@ -53,11 +53,3 @@ export function leagueFlow(text: string): string {
     return out;
   });
 }
-
-/** 투수 기간 ERA+의 리그 평균 평균자책점(어림). 서버가 기간 값을 주지 않아 ERA+ = 리그 ERA ÷ 평균자책점 × 100으로 어림한다 */
-export const LEAGUE_ERA = 4.2;
-
-/** 기간 평균자책점 → ERA+(100 = 평균). 자책점이 없으면(ERA 0) 300(서버 ERA+의 상한과 같다) */
-export function periodEraPlus(era: number): number {
-  return era <= 0 ? 300 : Math.min(300, (LEAGUE_ERA / era) * 100);
-}

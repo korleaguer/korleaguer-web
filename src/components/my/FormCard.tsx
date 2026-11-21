@@ -1,9 +1,8 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
-import type { GameLine, HitterPeriod, MyPlayer, PitcherPeriod } from "@/lib/api";
+import type { HitterPeriod, MyPlayer, PitcherPeriod } from "@/lib/api";
 import { formatEra, formatRate } from "@/lib/format";
-import { leagueWords, periodEraPlus } from "@/lib/leagueWords";
-import { periodWrcPlus } from "@/lib/wrcTrend";
+import { leagueWords } from "@/lib/leagueWords";
 import { teamColor } from "@/lib/teams";
 import BandPhoto from "./BandPhoto";
 import { Notice, Numbers, SeasonNumbers, StatusBadge, StatusSrText, SummaryLines } from "./FormSummary";
@@ -112,7 +111,7 @@ export default async function FormCard({
         ) : period ? (
           <>
             {entry.hitting && (
-              <HitterNumbers period={periodLabel(basis, level, days, entry.isFallback)} hitting={entry.hitting} games={games} minors={minors} />
+              <HitterNumbers period={periodLabel(basis, level, days, entry.isFallback)} hitting={entry.hitting} minors={minors} />
             )}
             {entry.pitching && (
               <PitcherNumbers period={periodLabel(basis, level, days, entry.isFallback)} pitching={entry.pitching} minors={minors} />
@@ -156,14 +155,14 @@ export default async function FormCard({
   );
 }
 
-function HitterNumbers({ period, hitting, games, minors }: { period: string; hitting: HitterPeriod; games: GameLine[]; minors: boolean }) {
+function HitterNumbers({ period, hitting, minors }: { period: string; hitting: HitterPeriod; minors: boolean }) {
   return (
     <Numbers
       label={`${period} 타율`}
       value={formatRate(hitting.avg)}
       note={
         <RateDelta
-          plus={periodWrcPlus(games)}
+          plus={hitting.wrcPlus ?? null}
           atBats={hitting.atBats}
           played={hitting.games > 0}
           hasAvg={hitting.avg != null}
@@ -188,6 +187,7 @@ function PitcherNumbers({ period, pitching, minors }: { period: string; pitching
       note={
         <EraDelta
           era={pitching.era}
+          plus={pitching.eraPlus ?? null}
           outs={pitching.outs}
           inningsText={pitching.inningsText}
           played={pitching.games > 0}
@@ -213,7 +213,7 @@ const MIN_AT_BATS_FOR_DELTA = 20;
 
 /**
  * 큰 숫자(타율) 아래 판정 한 줄: 기간 기록을 리그 평균과 견준 말('평균보다 30% 잘 침', 사용자 11-21). 시즌 타율과 견줘 ▲▼로 말하던 것을 대신한다.
- * 타율 하나로 좋아졌는지 말하지 않는다(볼넷·장타가 빠진다). 말은 기간 wRC+(lib/wrcTrend periodWrcPlus)에서 나온다.
+ * 타율 하나로 좋아졌는지 말하지 않는다(볼넷·장타가 빠진다). 말은 서버가 낸 기간 wRC+(hitting.wrcPlus)에서 나온다.
  * 마이너 기록은 그 단계 리그 평균이 화면에 없어(메이저 평균으로 재면 높게 나온다) 견주지 않는다.
  * 평균 위만 주황(좋은 활약 색), 아래는 색 없이 본문 글자. 카드마다 이 줄은 한 줄 자리를 늘 가진다(같은 줄 카드 높이를 맞추려고)
  */
@@ -248,12 +248,14 @@ const MIN_OUTS_FOR_DELTA = 9;
 /** 투수 판정 한 줄: 기간 평균자책점을 리그 평균 평균자책점과 견준 말('평균보다 30% 잘 막음'). 기준은 타자 RateDelta와 같다 */
 function EraDelta({
   era,
+  plus,
   outs,
   inningsText,
   played,
   minors,
 }: {
   era: number | null;
+  plus: number | null;
   outs: number;
   inningsText: string;
   played: boolean;
@@ -262,10 +264,10 @@ function EraDelta({
   if (!played) return <>이 기간 등판 없음</>;
   if (minors) return <>마이너라 평균 비교 없음</>;
   if (outs < MIN_OUTS_FOR_DELTA) return <>{`${inningsText}이닝이라 참고용`}</>;
-  if (era == null) return <>&nbsp;</>;
+  if (era == null || plus == null) return <>&nbsp;</>;
   // 자책점이 없으면 ERA+가 상한(300)에 붙어 '평균보다 200%'가 되니 퍼센트 대신 사실만
   if (era <= 0) return <span className="font-semibold text-hot-ink">자책점 없음</span>;
-  return <Verdict plus={periodEraPlus(era)} pitcher />;
+  return <Verdict plus={plus} pitcher />;
 }
 
 /** 리그 대비 말 한 줄. 평균 위만 주황 굵게(좋은 활약 색), 비슷·아래는 색 없이 본문 글자. 숫자는 굵게 */
