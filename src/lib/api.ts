@@ -954,6 +954,8 @@ export interface MyPlayersResponse {
   isFallback: boolean;
   /** 고른 순서대로. 없는 선수는 빠진다 */
   players: MyPlayer[];
+  /** 선수 줄(games) 중 화제 문구가 붙은 메이저 경기(선수 id·경기 id로 짝짓는다). 옛 api는 이 칸이 없다 */
+  buzz: GameBuzz[];
 }
 
 // ---- 응답 보정 ----
@@ -1385,6 +1387,7 @@ function normalizeMy(raw: MyPlayersResponse): MyPlayersResponse {
   return {
     ...raw,
     isFallback: raw.isFallback ?? false,
+    buzz: raw.buzz ?? [],
     players: (raw.players ?? []).map((p) => ({
       ...p,
       // 선수별 기간이 없으면(오래된 api) 모두 맨 위 기간을 같이 쓴다(당겼는지도 맨 위 값)
