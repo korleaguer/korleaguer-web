@@ -25,7 +25,7 @@ export interface ReportRow {
   id: number;
   /** 버튼 왼쪽 44px 사진에 쓸 값(요소가 아닌 까닭은 위 칸 규칙) */
   /** eager: 첫 화면 안 줄이면 사진을 바로 받는다(성적표가 홈 맨 위일 때 앞 줄들, SeasonReportList) */
-  photo: { nameKo: string; photoUrl: string | null; teamAbbr: string | null; eager: boolean };
+  photo: { nameKo: string; photoUrl: string | null; teamAbbr: string | null; photoTeamAbbr?: string | null; eager: boolean };
   /** 버튼 가운데: 이름·판정·상태와 숫자 한 줄(버튼 안이라 span만) */
   head: ReactNode;
   /** 버튼 오른쪽 작은 달별 꺾은선(늘 보인다). 달별 기록이 없으면 null */
@@ -261,7 +261,7 @@ const RowList = memo(function RowList({ rows, listHeader }: { rows: ReportRow[];
           className="mb-4 mt-3 hidden rounded-2xl border border-line p-4 lg:sticky lg:top-4 lg:block in-app:lg:top-20"
         >
           <div className="flex items-start gap-3">
-            <PlayerAvatar size={44} nameKo={selected.photo.nameKo} photoUrl={selected.photo.photoUrl} teamAbbr={selected.photo.teamAbbr} eager={false} />
+            <PlayerAvatar size={44} nameKo={selected.photo.nameKo} photoUrl={selected.photo.photoUrl} teamAbbr={selected.photo.teamAbbr} photoTeamAbbr={selected.photo.photoTeamAbbr} eager={false} />
             <div className="min-w-0 flex-1">{selected.head}</div>
           </div>
           <div key={selected.id} className="mt-3">
@@ -337,7 +337,7 @@ function Row({
           className={`press-soft -mx-2 grid w-[calc(100%+1rem)] cursor-pointer grid-cols-[44px_minmax(0,1fr)_84px_0.75rem] items-center gap-x-3 rounded-xl px-2 pt-3 text-left hover:bg-surface-2 @max-[19.5rem]:grid-cols-[44px_minmax(0,1fr)] @max-[19.5rem]:items-start ${second ? "pb-1" : "pb-3 lg:pb-1"}`}
         >
           {/* 서버 요소 칸(head·spark)은 감싸개 안에 혼자 둔다(ReportRow 칸 규칙: 다른 자식과 나란히 두면 key 경고) */}
-          <PlayerAvatar size={44} nameKo={row.photo.nameKo} photoUrl={row.photo.photoUrl} teamAbbr={row.photo.teamAbbr} eager={row.photo.eager} />
+          <PlayerAvatar size={44} nameKo={row.photo.nameKo} photoUrl={row.photo.photoUrl} teamAbbr={row.photo.teamAbbr} photoTeamAbbr={row.photo.photoTeamAbbr} eager={row.photo.eager} />
           <span className="min-w-0">{row.head}</span>
           {row.spark ? (
             <span className="justify-self-end @max-[19.5rem]:col-start-2 @max-[19.5rem]:mt-1.5 @max-[19.5rem]:justify-self-start">
@@ -446,7 +446,7 @@ function ReportSheet({
         >
           <div aria-hidden className="mx-auto mt-2 h-1.5 w-10 rounded-full bg-line sm:hidden" />
           <div className="flex items-center gap-3 pb-1 pl-4 pr-2 pt-3 sm:pt-4">
-            <PlayerAvatar size={44} nameKo={row.photo.nameKo} photoUrl={row.photo.photoUrl} teamAbbr={row.photo.teamAbbr} eager />
+            <PlayerAvatar size={44} nameKo={row.photo.nameKo} photoUrl={row.photo.photoUrl} teamAbbr={row.photo.teamAbbr} photoTeamAbbr={row.photo.photoTeamAbbr} eager />
             {/* 창 안에서 다른 선수로 넘기면 화면 낭독기가 새 선수를 읽게 한다(제목만 바뀌고 알림이 없었다) */}
             <div id={titleId} aria-live="polite" className="min-w-0 flex-1">
               {row.head}

@@ -43,7 +43,7 @@ export default function PlayerCard({
     // 이름 링크를 카드 전체로 넓혀서(after:absolute) 카드 전체가 링크가 된다. 화면 낭독기는 이름만 읽는다.
     <li className="card card-link relative flex flex-col p-4 has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-accent">
       <div className="flex items-center gap-3">
-        <PlayerAvatar size={56} nameKo={player.nameKo} photoUrl={player.photoUrl} teamAbbr={player.teamAbbr} eager={eagerPhoto} />
+        <PlayerAvatar size={56} nameKo={player.nameKo} photoUrl={player.photoUrl} teamAbbr={player.teamAbbr} photoTeamAbbr={player.photoTeamAbbr} eager={eagerPhoto} />
         <div className="min-w-0 flex-1">
           {/* 이름은 카드의 제목(h2, 페이지 제목 '선수' h1 아래)이라 화면 낭독기가 제목 목록으로 선수를 건너뛸 수 있다(이슈 #277).
               h2는 글꼴을 물려받기만 해서 줄 높이·모양은 그대로이고, 글자 역할은 링크가 그대로 맡는다 */}

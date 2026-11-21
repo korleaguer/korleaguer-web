@@ -62,7 +62,7 @@ export default function PitcherTable({
   };
   const nameCell = (p: PitcherSeason) => (
     <RowHeader>
-      <PlayerLink playerId={p.playerId} nameKo={p.nameKo} photoUrl={p.photoUrl} teamAbbr={p.teamAbbr} />
+      <PlayerLink playerId={p.playerId} nameKo={p.nameKo} photoUrl={p.photoUrl} teamAbbr={p.teamAbbr} photoTeamAbbr={p.photoTeamAbbr} />
     </RowHeader>
   );
 

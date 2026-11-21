@@ -183,7 +183,7 @@ export function buildTimelineRow({
     line: (
       <>
         <span className="flex items-center gap-2 pr-9">
-          <PlayerAvatar nameKo={player.nameKo} photoUrl={player.photoUrl} teamAbbr={player.teamAbbr} size={28} eager={eagerPhoto} />
+          <PlayerAvatar nameKo={player.nameKo} photoUrl={player.photoUrl} teamAbbr={player.teamAbbr} photoTeamAbbr={player.photoTeamAbbr} size={28} eager={eagerPhoto} />
           <span className="text-body font-bold">{player.nameKo}</span>
           <span className="min-w-0 flex-1 truncate text-meta text-muted">{team}</span>
         </span>

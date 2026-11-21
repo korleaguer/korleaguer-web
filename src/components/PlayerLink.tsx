@@ -6,6 +6,8 @@ interface Props {
   nameKo: string;
   photoUrl: string | null;
   teamAbbr: string | null;
+  /** 사진 속 유니폼 팀 약어(사진 원 바탕색). 없으면 teamAbbr */
+  photoTeamAbbr?: string | null;
   /** 사진 크기. 표·순위는 24, 시즌 1위 카드는 28 */
   avatarSize?: Extract<AvatarSize, 24 | 28>;
   /** 글자 굵기·너비 등. 링크 전체(사진 + 이름)에 붙는다 */
@@ -18,6 +20,7 @@ export default function PlayerLink({
   nameKo,
   photoUrl,
   teamAbbr,
+  photoTeamAbbr,
   avatarSize = 24,
   className = "",
 }: Props) {
@@ -26,7 +29,7 @@ export default function PlayerLink({
       href={`/players/${playerId}`}
       className={`press group inline-flex min-w-0 items-center gap-2 ${className}`}
     >
-      <PlayerAvatar size={avatarSize} nameKo={nameKo} photoUrl={photoUrl} teamAbbr={teamAbbr} />
+      <PlayerAvatar size={avatarSize} nameKo={nameKo} photoUrl={photoUrl} teamAbbr={teamAbbr} photoTeamAbbr={photoTeamAbbr} />
       <span className="truncate group-hover:text-accent-ink group-hover:underline">{nameKo}</span>
     </Link>
   );

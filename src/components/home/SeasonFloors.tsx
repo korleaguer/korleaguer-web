@@ -368,6 +368,7 @@ function FloorRow({ entry, starred, today }: { entry: MyPlayer; starred: boolean
             nameKo={entry.player.nameKo}
             photoUrl={entry.player.photoUrl}
             teamAbbr={entry.player.teamAbbr}
+            photoTeamAbbr={entry.player.photoTeamAbbr}
             size={44}
           />
         </span>
@@ -472,7 +473,7 @@ function DerbyPlayer({ line }: { line: GameLine }) {
       href={`/players/${line.playerId}`}
       className="press-soft flex min-w-0 flex-col items-center gap-1 text-center"
     >
-      <PlayerAvatar nameKo={line.nameKo} photoUrl={line.photoUrl} teamAbbr={line.teamAbbr} size={44} />
+      <PlayerAvatar nameKo={line.nameKo} photoUrl={line.photoUrl} teamAbbr={line.teamAbbr} photoTeamAbbr={line.photoTeamAbbr} size={44} />
       <span className="text-heading">{line.nameKo}</span>
       <span className="text-caption text-muted">
         <Words text={formatSummary(line.summary)} />
