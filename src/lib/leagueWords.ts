@@ -18,17 +18,19 @@ export interface LeagueWords {
 }
 
 /** 100 = 리그 평균인 값을 말로. 평균 위는 '평균보다 12% 잘 침'(투수 '잘 막음'), 아래는 꾸밈 없이 '평균보다 22% 아래' */
-export function leagueWords(plus: number, pitcher: boolean): LeagueWords {
+export function leagueWords(plus: number, pitcher: boolean, scope?: string): LeagueWords {
+  // scope: 마이너 단계 이름('트리플A'). 있으면 '트리플A 평균보다 12% 잘 침'처럼 어느 평균인지 앞에 붙인다(11-22). 메이저는 붙이지 않는다
+  const at = scope ? `${scope} ` : "";
   // 값이 0 아래(몇 타수 무안타)나 300 위로 가도 '평균보다 213% 아래'가 나오지 않게 가둔다
   const v = Math.max(0, Math.min(300, Math.round(plus)));
   if (v >= SAME_TO) {
     const num = `${v - 100}%`;
     const tail = pitcher ? " 잘 막음" : " 잘 침";
-    return { tone: "up", lead: "평균보다 ", num, tail, text: `평균보다 ${num}${tail}` };
+    return { tone: "up", lead: `${at}평균보다 `, num, tail, text: `${at}평균보다 ${num}${tail}` };
   }
-  if (v >= SAME_FROM) return { tone: "same", lead: "평균과 비슷", num: "", tail: "", text: "평균과 비슷" };
+  if (v >= SAME_FROM) return { tone: "same", lead: `${at}평균과 비슷`, num: "", tail: "", text: `${at}평균과 비슷` };
   const num = `${100 - v}%`;
-  return { tone: "down", lead: "평균보다 ", num, tail: " 아래", text: `평균보다 ${num} 아래` };
+  return { tone: "down", lead: `${at}평균보다 `, num, tail: " 아래", text: `${at}평균보다 ${num} 아래` };
 }
 
 /** 평균 대비 부호 있는 퍼센트: 123 → '+23%', 78 → '−22%'(성적표 창 제목·달별 그래프 최고·최저) */

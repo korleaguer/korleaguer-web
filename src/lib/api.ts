@@ -812,8 +812,10 @@ export interface HitterPeriod {
   avg: number | null;
   /** 이번 정규시즌 타율(비교용) */
   seasonAvg: number | null;
-  /** 기간 wRC+(그 시즌 메이저 리그 평균 = 100, 0~300). 서버가 계산한다. 마이너·재활 기록이거나 근거가 모자라면 null */
+  /** 기간 wRC+(plusLevel 단계의 그 시즌 리그 평균 = 100, 0~300). 서버가 계산한다. 기간이 한 단계가 아니거나 근거가 모자라면 null */
   wrcPlus: number | null;
+  /** wrcPlus가 견준 리그 단계: "MLB" 또는 마이너 약어("AAA" 등). 값이 없으면 null. 옛 api면 없다 */
+  plusLevel?: string | null;
 }
 
 /** 내 선수 카드의 기간 합계(투수). era는 이닝이 없으면 null */
@@ -829,8 +831,10 @@ export interface PitcherPeriod {
   saves: number;
   /** 이번 정규시즌 평균자책점(비교용) */
   seasonEra: number | null;
-  /** 기간 ERA+(그 시즌 메이저 리그 평균 = 100, 높을수록 잘함, 300까지). 서버가 계산한다. 마이너·재활 기록이거나 아웃이 없으면 null */
+  /** 기간 ERA+(plusLevel 단계의 그 시즌 리그 평균 = 100, 높을수록 잘함, 300까지). 서버가 계산한다. 단계가 섞였거나 아웃이 없으면 null */
   eraPlus: number | null;
+  /** eraPlus가 견준 리그 단계(HitterPeriod.plusLevel과 같다) */
+  plusLevel?: string | null;
 }
 
 /** 내 선수 한 명: 선수 정보 + 기간 합계 + 연속 기록 + 기간 안 경기(최신부터) */
