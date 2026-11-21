@@ -45,7 +45,7 @@ export function rowsOf(saber: PlayerSaber): Row[] | null {
   if (!p) return null;
   return [
     { label: "종합", pct: p.overall, raw: saber.war == null ? null : `종합 WAR ${signed(saber.war)}` },
-    { label: "실점 억제", pct: p.runPrevention, raw: saber.eraMinus == null || saber.eraMinus <= 0 ? null : `실점 억제 ${leagueWords(10000 / saber.eraMinus, true).text}` },
+    { label: "실점 억제", pct: p.runPrevention, raw: saber.eraPlus == null ? null : `실점 억제 ${leagueWords(saber.eraPlus, true).text}` },
     { label: "삼진", pct: p.strikeouts, raw: saber.strikeoutRate == null ? null : `삼진 비율 ${saber.strikeoutRate.toFixed(1)}%` },
     // '볼넷 상위 10%'는 볼넷을 많이 준다로 읽혀 '실점 억제'처럼 '볼넷 억제'(볼넷을 적게 줄수록 위). 이름 칸(4.25rem)에 그대로 든다
     { label: "볼넷 억제", pct: p.walks, raw: saber.walkRate == null ? null : `볼넷 비율 ${saber.walkRate.toFixed(1)}%` },
