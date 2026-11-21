@@ -26,6 +26,11 @@ interface Props {
   nameKo: string;
   photoUrl: string | null;
   teamAbbr: string | null;
+  /**
+   * 사진 속 유니폼 팀 약어. 사진 원 바탕만 이 팀 색으로 칠한다(11-22). 트레이드·복귀 직후 MLB 사진이 아직 옛 팀이면 teamAbbr과 다르다.
+   * 모르면(옛 api, 값 없음) teamAbbr로 대신한다. 이니셜 원(사진 없음)은 늘 teamAbbr(지금 팀)이다
+   */
+  photoTeamAbbr?: string | null;
   size: AvatarSize;
   /** 이름이 바로 옆에 있어서 사진을 읽어 줄 필요가 없으면 true. 기본은 96보다 작으면 true */
   decorative?: boolean;
@@ -42,13 +47,14 @@ interface Props {
  * 원형 선수 사진. api가 주는 사진은 배경을 지운 MLB 사진(정사각형)이라,
  * 원 안에 조금 작게 아래쪽에 붙여 얼굴 둘레에 여백을 둔다.
  * 사진이 없거나 안 뜨면 팀 색 원 + 이름 첫 글자로 대신한다.
- * 배경 없는 MLB 사진(/photos/mlb-…)은 원 바탕을 사진 속 유니폼 팀 색으로 칠한다(11-21 사용자 결정). 배경이 있는 사진(KBO)과
+ * 배경 없는 MLB 사진(/photos/mlb-…)은 원 바탕을 사진 속 유니폼 팀(photoTeamAbbr) 색으로 칠한다(11-21·11-22 사용자 결정). 배경이 있는 사진(KBO)과
  * 흰 바탕 편집본(posting-…)은 칠하면 지저분해서 기존 중립 바탕을 쓴다. 다크 모드는 teamFill이 어두운 팀만 밝힌다
  */
 export default function PlayerAvatar({
   nameKo,
   photoUrl,
   teamAbbr,
+  photoTeamAbbr,
   size,
   decorative = size < 96,
   ring = false,
@@ -91,12 +97,16 @@ export default function PlayerAvatar({
     );
   }
 
-  // 사진 속 팀 색 바탕: 배경 없는 MLB 사진일 때만
-  const teamBg = fill !== null && isMlbPhoto(photoUrl);
+  // 사진 속 팀 색 바탕: 배경 없는 MLB 사진일 때만. 팀은 사진 속 유니폼 팀(없으면 지금 팀)
+  const photoFill = photoTeamAbbr ? teamFill(photoTeamAbbr) : fill;
+  const photoFillStyle = photoFill
+    ? ({ "--fill-l": photoFill.light, "--fill-d": photoFill.dark } as CSSProperties)
+    : undefined;
+  const teamBg = photoFill !== null && isMlbPhoto(photoUrl);
   return (
     <span
       className={`inline-block shrink-0 overflow-hidden rounded-full ${teamBg ? "bg-(--fill-l) dark:bg-(--fill-d)" : "bg-avatar-bg"} ${ringClass}`}
-      style={teamBg ? { ...box, ...fillStyle } : box}
+      style={teamBg ? { ...box, ...photoFillStyle } : box}
     >
       {/* 사진은 우리가 호스팅한다(/photos/…, api가 원본을 한 번 받아 저장). 크기를 고정한 작은 사진이라 next/image는 쓰지 않는다. */}
       {/* eslint-disable-next-line @next/next/no-img-element -- 우리가 호스팅하는 작은 사진 */}

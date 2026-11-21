@@ -186,7 +186,7 @@ function PickerRow({ player, initialOn }: { player: PlayerSummary; initialOn: bo
         onClick={toggle}
         className={`press-soft flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-left transition duration-150 hover:bg-surface-2 ${pending ? "opacity-70" : ""}`}
       >
-        <PlayerAvatar size={28} nameKo={player.nameKo} photoUrl={player.photoUrl} teamAbbr={player.teamAbbr} />
+        <PlayerAvatar size={28} nameKo={player.nameKo} photoUrl={player.photoUrl} teamAbbr={player.teamAbbr} photoTeamAbbr={player.photoTeamAbbr} />
         <span className="min-w-0 flex-1">
           {/* 별은 이름 바로 뒤(뉴스 선수 고르기와 같은 '사진 이름 ★', 사용자 11-15). 줄 끝에 두면 PC 세 칸에서
               옆 칸 선수 이름에 더 가까워 어느 선수 별인지 헷갈렸다(11-17 점검) */}

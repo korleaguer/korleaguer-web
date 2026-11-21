@@ -93,6 +93,7 @@ function LeaderCard({
               nameKo={first.row.nameKo}
               photoUrl={first.row.photoUrl}
               teamAbbr={first.row.teamAbbr}
+              photoTeamAbbr={first.row.photoTeamAbbr}
               avatarSize={28}
               className="after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none"
             />

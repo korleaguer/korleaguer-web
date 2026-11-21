@@ -243,7 +243,7 @@ function buildRow(entry: MyPlayer, report: SeasonReport | null, isMine: boolean,
 
   return {
     id: player.id,
-    photo: { nameKo: player.nameKo, photoUrl: player.photoUrl, teamAbbr: player.teamAbbr, eager: eagerPhoto },
+    photo: { nameKo: player.nameKo, photoUrl: player.photoUrl, teamAbbr: player.teamAbbr, photoTeamAbbr: player.photoTeamAbbr, eager: eagerPhoto },
     head,
     spark: months.length > 0 ? <MonthSpark months={months} pitcher={pitcher} /> : null,
     second,

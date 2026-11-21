@@ -40,6 +40,8 @@ export interface GameLine {
   teamAbbr: string | null;
   /** 선수 사진 주소(우리가 호스팅, /photos/mlb-808982). 없으면 null */
   photoUrl: string | null;
+  /** 사진 속 유니폼 팀 약어(사진 원 바탕색). 트레이드·복귀 직후에는 teamAbbr과 다를 수 있다. 옛 api면 없음(teamAbbr로 대신) */
+  photoTeamAbbr?: string | null;
   opponentKo: string;
   /** 상대 팀 약어. 상대 팀 로고를 찾을 때 쓴다 */
   opponentAbbr: string | null;
@@ -102,6 +104,8 @@ export interface HitterSeason {
   teamKo: string | null;
   teamAbbr: string | null;
   photoUrl: string | null;
+  /** 사진 속 유니폼 팀 약어(사진 원 바탕색). 트레이드·복귀 직후에는 teamAbbr과 다를 수 있다. 옛 api면 없음(teamAbbr로 대신) */
+  photoTeamAbbr?: string | null;
   games: number;
   /** 같은 시즌 마이너(트리플A ~ 루키)에서 뛴 경기 수. 모르거나 오래된 api면 0 */
   minorGames: number;
@@ -131,6 +135,8 @@ export interface PitcherSeason {
   teamKo: string | null;
   teamAbbr: string | null;
   photoUrl: string | null;
+  /** 사진 속 유니폼 팀 약어(사진 원 바탕색). 트레이드·복귀 직후에는 teamAbbr과 다를 수 있다. 옛 api면 없음(teamAbbr로 대신) */
+  photoTeamAbbr?: string | null;
   games: number;
   /** 같은 시즌 마이너(트리플A ~ 루키) 등판 경기 수. 모르거나 오래된 api면 0 */
   minorGames: number;
@@ -481,6 +487,8 @@ export interface PlayerSummary {
   teamKo: string | null;
   teamAbbr: string | null;
   photoUrl: string | null;
+  /** 사진 속 유니폼 팀 약어(사진 원 바탕색). 트레이드·복귀 직후에는 teamAbbr과 다를 수 있다. 옛 api면 없음(teamAbbr로 대신) */
+  photoTeamAbbr?: string | null;
   /** 만 나이 */
   age: number | null;
   /** 등번호. 숫자가 아닐 수도 있어서 문자열 */
@@ -1670,12 +1678,13 @@ export const getPlayers = cache(async () => {
 });
 
 /**
- * 선수 번호 → 지금 팀 약어(명단 선수만). 기록·뉴스처럼 응답에 팀이 없는 화면이 사진 원을 팀 색으로 칠하려고 쓴다.
+ * 선수 번호 → 사진 속 유니폼 팀 약어(없으면 지금 팀, 명단 선수만). 기록·뉴스처럼 응답에 팀이 없는 화면이 사진 원을 팀 색으로 칠하려고 쓴다.
  * getPlayers는 React cache라 같은 요청 안의 다른 호출과 한 번만 부른다. 못 받으면 빈 표(회색 원)
  */
 export async function getTeamAbbrById(): Promise<Record<number, string | null>> {
   const result = await getPlayers();
-  return result.ok ? Object.fromEntries(result.data.map((p) => [p.id, p.teamAbbr])) : {};
+  // 이 표는 사진 원 바탕색에만 쓴다. 사진 속 유니폼 팀(photoTeamAbbr)을 먼저, 옛 api면 지금 팀
+  return result.ok ? Object.fromEntries(result.data.map((p) => [p.id, p.photoTeamAbbr ?? p.teamAbbr])) : {};
 }
 
 /** GET /api/players/timeline: 선수 탭 연표. season 0이면 서버가 지금 시즌을 고른다. 옛 api면 notFound(선수 목록으로 대신 그린다) */

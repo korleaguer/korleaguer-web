@@ -69,7 +69,7 @@ export default function HitterTable({
   };
   const nameCell = (h: HitterSeason) => (
     <RowHeader>
-      <PlayerLink playerId={h.playerId} nameKo={h.nameKo} photoUrl={h.photoUrl} teamAbbr={h.teamAbbr} />
+      <PlayerLink playerId={h.playerId} nameKo={h.nameKo} photoUrl={h.photoUrl} teamAbbr={h.teamAbbr} photoTeamAbbr={h.photoTeamAbbr} />
     </RowHeader>
   );
 

@@ -239,7 +239,7 @@ export default function OrderList({ players }: { players: PlayerSummary[] }) {
               <span aria-hidden className="w-4 shrink-0 text-center text-caption font-bold tabular-nums text-muted @max-[300px]:hidden">
                 {index + 1}
               </span>
-              <PlayerAvatar size={28} nameKo={player.nameKo} photoUrl={player.photoUrl} teamAbbr={player.teamAbbr} />
+              <PlayerAvatar size={28} nameKo={player.nameKo} photoUrl={player.photoUrl} teamAbbr={player.teamAbbr} photoTeamAbbr={player.photoTeamAbbr} />
               <span className="min-w-0 flex-1 truncate text-summary">{player.nameKo}</span>
               {/* ▲▼는 한 묶음(사이 간격 없음): 큰 글씨에서도 이름 칸이 남게(이슈 #257) */}
               <span className="flex shrink-0">
