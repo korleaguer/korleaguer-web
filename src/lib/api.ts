@@ -824,6 +824,8 @@ export interface HitterPeriod {
   wrcPlus: number | null;
   /** wrcPlus가 견준 리그 단계: "MLB" 또는 마이너 약어("AAA" 등). 값이 없으면 null. 옛 api면 없다 */
   plusLevel?: string | null;
+  /** 기간 경기가 둘 이상의 마이너 단계에 걸쳐 있어 한 평균과 견주지 못했다(이때 wrcPlus는 null). 옛 api면 없다 */
+  mixedLevels?: boolean;
 }
 
 /** 내 선수 카드의 기간 합계(투수). era는 이닝이 없으면 null */
@@ -843,6 +845,8 @@ export interface PitcherPeriod {
   eraPlus: number | null;
   /** eraPlus가 견준 리그 단계(HitterPeriod.plusLevel과 같다) */
   plusLevel?: string | null;
+  /** HitterPeriod.mixedLevels와 같다 */
+  mixedLevels?: boolean;
 }
 
 /** 내 선수 한 명: 선수 정보 + 기간 합계 + 연속 기록 + 기간 안 경기(최신부터) */
