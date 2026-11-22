@@ -1,6 +1,6 @@
 import Link from "next/link";
-import type { GameBuzz, GameLine, HomeResponse, MyPlayer } from "@/lib/api";
-import { getMyPlayers, getPlayers } from "@/lib/api";
+import type { GameBuzz, GameLine, HomeResponse, MyPlayer, SamePair } from "@/lib/api";
+import { getMyPlayers, getPlayers, getSameGames } from "@/lib/api";
 import { formatLineup, formatScore, formatSummary, formatTime, kstDayKey, kstPrevDayKey, teamLabel } from "@/lib/format";
 import { readMyPlayers } from "@/lib/myPlayers";
 import { teamColor, teamLogoUrl } from "@/lib/teams";
@@ -16,6 +16,9 @@ import FloorBuzz, { type FloorBuzzItem } from "./FloorBuzz";
 import MyPlayersLink from "@/components/home/MyPlayersLink";
 import StarIcon from "@/components/my/StarIcon";
 import Words from "@/components/Words";
+import Chevron from "@/components/Chevron";
+import SheetOpener from "@/components/SheetOpener";
+import { SameGamesSheetBody, sameGamesRecord, sameGamesStateKey, sameGamesTitle } from "@/components/compare/SameGames";
 
 /**
  * 시즌 중 홈 맨 위: 선수들이 지금 어디서 뛰나를 층으로 묶는다(이슈 #245, 11-16·17 개편 결정).
@@ -302,6 +305,7 @@ export default async function SeasonFloors({ recent, asOf }: Props) {
   // '오늘'의 기준일: 지금 시각(new Date)이 아니라 경기 목록을 만든 응답 시각의 한국 날짜다. 캐시된 화면에서도 날짜 말이 목록과 맞는다
   const today = kstDayKey(myResult.data.generatedAt);
   const derby = findDerby(players, today);
+  const derbySeries = derby ? await findDerbySeries(derby) : null;
   const buzzItems = pickFloorBuzz(players, myResult.data.buzz, mine, myResult.data.generatedAt);
 
   return (
@@ -312,7 +316,7 @@ export default async function SeasonFloors({ recent, asOf }: Props) {
       </div>
       {/* 그날 화제 문구를 모은 카드. 화제가 없으면 카드 자체가 없다(11-21 B안) */}
       {buzzItems.length > 0 && <FloorBuzz items={buzzItems} />}
-      {derby && <DerbyCard pair={derby} />}
+      {derby && <DerbyCard pair={derby} series={derbySeries} />}
       {/* 층 순서가 곧 순위라 PC에서도 층은 위에서 아래로 한 줄씩 두고 세로선으로 잇는다. 층 안 선수만 PC에서 두 칸으로
           나눠 한 줄이 화면 끝까지 늘어나지 않게 한다(사용자 11-17 '추천대로', 전수조사 L307). 예전처럼 층을 두 칸에 흘리면
           2위 층(트리플A)이 1위(메이저) 옆, 3위 층이 다음 줄 왼쪽에 놓였다 */}
@@ -436,33 +440,80 @@ function derbyScoreLabel(away: GameLine, home: GameLine): string {
   return `${away.teamKo} ${away.teamScore}, ${home.teamKo} ${home.teamScore}`;
 }
 
-/** 맞대결 카드: 같은 경기에서 뛴 두 선수와 점수 */
-function DerbyCard({ pair: [a, b] }: { pair: [GameLine, GameLine] }) {
+/** 맞대결 두 선수의 이번 시즌 같은 경기 묶음: 화면 왼쪽(원정) 선수 기준 */
+interface DerbySeries {
+  /** 왼쪽(원정) 선수 이름. 전적은 이 선수 팀 것이다 */
+  nameKo: string;
+  pair: SamePair;
+  /** 오늘 경기가 올해 몇 번째 같은 경기인지 */
+  nth: number;
+}
+
+/**
+ * 오늘 맞대결 두 선수가 올해 같은 경기에 나온 묶음(GET /api/players/{id}/same-games). 카드 맨 아래 '올해 n번째 · 팀 전적 ›' 줄과
+ * 그 줄이 여는 창에 쓴다. 못 받았거나(옛 api) 묶음에 오늘 경기가 없으면 null이라 줄이 없다.
+ */
+async function findDerbySeries([a, b]: [GameLine, GameLine]): Promise<DerbySeries | null> {
+  const [home, away] = a.home ? [a, b] : [b, a];
+  const same = await getSameGames(away.playerId);
+  if (!same.ok) return null;
+  const pair = same.data.pairs.find((p) => p.other.playerId === home.playerId);
+  const index = pair?.meetings.findIndex((m) => m.mine.gameId === away.gameId) ?? -1;
+  return pair && index >= 0 ? { nameKo: away.nameKo, pair, nth: index + 1 } : null;
+}
+
+/**
+ * 맞대결 카드: 같은 경기에서 뛴 두 선수와 점수. 올해 같은 경기 묶음을 받았으면 맨 아래 '올해 6번째 · 샌프란시스코 4승 2패 ›' 한 줄을
+ * 두고, 누르면 그 짝의 경기 목록 창(선수 페이지 '같은 경기에 나온 선수'와 같은 창)을 연다(사용자 11-22 시안 2A, 이슈 #420)
+ */
+function DerbyCard({ pair: [a, b], series }: { pair: [GameLine, GameLine]; series: DerbySeries | null }) {
   const [home, away] = a.home ? [a, b] : [b, a];
   return (
-    <div className="card mb-3 p-3.5">
-      <div className="flex items-baseline justify-between">
-        {/* 빨강은 위기(부상·DFA) 뜻이라 쓰지 않고 본문 글자를 한 단계 굵게(700) 둔다('오늘 새 기사'처럼, 전수조사 L306) */}
-        <span className="text-label font-bold">오늘 맞대결</span>
-        <span className="text-caption text-muted tabular-nums">{formatTime(a.startTimeKst)} 시작</span>
-      </div>
-      {/* 문서 순서도 화면과 같은 원정 선수 → 점수 → 홈 선수다. 예전에는 grid order로 점수만 가운데로 옮겨서, 화면 낭독기가
-          두 선수를 다 읽은 뒤 팀 이름 없는 '3 : 2'를 읽었다(전수조사 L303) */}
-      <div className="mt-2.5 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
-        <DerbyPlayer line={away} />
-        <div className="text-center">
-          <span aria-hidden className="flex items-center justify-center gap-1.5">
-            <TeamMark logoUrl={teamLogoUrl(away.teamAbbr)} color={teamColor(away.teamAbbr)} size="sm" />
-            <span className="text-score tabular-nums">
-              {away.teamScore ?? "-"} : {home.teamScore ?? "-"}
-            </span>
-            <TeamMark logoUrl={teamLogoUrl(home.teamAbbr)} color={teamColor(home.teamAbbr)} size="sm" />
-          </span>
-          {/* 로고는 그림이라 낭독에는 팀 이름을 붙인다 */}
-          <span className="sr-only">{derbyScoreLabel(away, home)}</span>
+    <div className="card mb-3 overflow-hidden">
+      <div className="p-3.5">
+        <div className="flex items-baseline justify-between">
+          {/* 빨강은 위기(부상·DFA) 뜻이라 쓰지 않고 본문 글자를 한 단계 굵게(700) 둔다('오늘 새 기사'처럼, 전수조사 L306) */}
+          <span className="text-label font-bold">오늘 맞대결</span>
+          <span className="text-caption text-muted tabular-nums">{formatTime(a.startTimeKst)} 시작</span>
         </div>
-        <DerbyPlayer line={home} />
+        {/* 문서 순서도 화면과 같은 원정 선수 → 점수 → 홈 선수다. 예전에는 grid order로 점수만 가운데로 옮겨서, 화면 낭독기가
+            두 선수를 다 읽은 뒤 팀 이름 없는 '3 : 2'를 읽었다(전수조사 L303) */}
+        <div className="mt-2.5 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
+          <DerbyPlayer line={away} />
+          <div className="text-center">
+            <span aria-hidden className="flex items-center justify-center gap-1.5">
+              <TeamMark logoUrl={teamLogoUrl(away.teamAbbr)} color={teamColor(away.teamAbbr)} size="sm" />
+              <span className="text-score tabular-nums">
+                {away.teamScore ?? "-"} : {home.teamScore ?? "-"}
+              </span>
+              <TeamMark logoUrl={teamLogoUrl(home.teamAbbr)} color={teamColor(home.teamAbbr)} size="sm" />
+            </span>
+            {/* 로고는 그림이라 낭독에는 팀 이름을 붙인다 */}
+            <span className="sr-only">{derbyScoreLabel(away, home)}</span>
+          </div>
+          <DerbyPlayer line={home} />
+        </div>
       </div>
+      {series && (
+        <div className="border-t border-line">
+          <SheetOpener
+            stateKey={sameGamesStateKey(series.pair.other.playerId)}
+            sheetTitle={sameGamesTitle(series.nameKo, series.pair)}
+            className="press-soft flex min-h-11 w-full cursor-pointer items-center justify-between gap-2 px-4 py-2.5 text-left text-button text-accent-ink"
+            label={
+              <>
+                <span>
+                  {`올해 ${series.nth}번째`}
+                  <span className="font-normal text-muted">{` · ${sameGamesRecord(series.pair, series.nameKo)}`}</span>
+                </span>
+                <Chevron small />
+              </>
+            }
+          >
+            <SameGamesSheetBody pair={series.pair} nameKo={series.nameKo} />
+          </SheetOpener>
+        </div>
+      )}
     </div>
   );
 }
