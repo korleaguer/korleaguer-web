@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { getPlayer, getRecords } from "@/lib/api";
+import { getPlayer, getRecords, getSameGames } from "@/lib/api";
 import { formatAsOf } from "@/lib/format";
 import { parseId } from "@/lib/ids";
 import { playerShareImage, shareMeta } from "@/lib/share";
@@ -11,6 +11,7 @@ import DataBanners from "@/components/DataBanners";
 import { PlayerSkeleton } from "@/components/PageSkeleton";
 import NotFoundNotice from "@/components/NotFoundNotice";
 import InfoTip from "@/components/InfoTip";
+import SameGames from "@/components/compare/SameGames";
 import CareerSeasons from "@/components/player/CareerSeasons";
 import GameLog from "@/components/player/GameLog";
 import JumpNav, { type JumpTarget } from "@/components/player/JumpNav";
@@ -69,6 +70,12 @@ export default function PlayerPage({ params }: Props) {
 async function PlayerKoreanRecords({ playerId }: { playerId: number }) {
   const records = await getRecords();
   return <KoreanRecords rows={records.ok ? pickRankRows(records.data.next, playerId) : []} />;
+}
+
+/** '같은 경기에 나온 선수' 칸. 짝이 없거나 못 받았으면(옛 api 포함) 칸이 없다 */
+async function PlayerSameGames({ playerId, nameKo }: { playerId: number; nameKo: string }) {
+  const same = await getSameGames(playerId);
+  return same.ok ? <SameGames season={same.data.season} nameKo={nameKo} pairs={same.data.pairs} /> : null;
 }
 
 // 없는 선수는 notFound() 대신 안내를 직접 그린다.
@@ -137,6 +144,10 @@ async function PlayerContent({ params }: Pick<Props, "params">) {
           {/* 보조 칸이라 기록(/api/records)이 늦어도 본문이 기다리지 않게 따로 그린다 */}
           <Suspense fallback={null}>
             <PlayerKoreanRecords playerId={player.id} />
+          </Suspense>
+          {/* 같은 경기에 나온 우리 선수(11-22 시안 2B). 위 칸과 같은 까닭으로 따로 그린다 */}
+          <Suspense fallback={null}>
+            <PlayerSameGames playerId={player.id} nameKo={player.nameKo} />
           </Suspense>
           {trend && (
             <Section

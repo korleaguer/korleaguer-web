@@ -1402,6 +1402,32 @@ function normalizeRecords(raw: RecordsResponse): RecordsResponse {
   };
 }
 
+function normalizeSameGames(raw: SameGamesResponse): SameGamesResponse {
+  const pairs = (Array.isArray(raw?.pairs) ? raw.pairs : []).flatMap((p): SamePair[] => {
+    const meetings = (Array.isArray(p?.meetings) ? p.meetings : [])
+      .filter((m) => m?.mine && m?.other)
+      .map((m) => ({ mine: normalizeLine(m.mine), other: normalizeLine(m.other) }));
+    if (!p?.other || meetings.length === 0) return [];
+    return [
+      {
+        other: {
+          playerId: p.other.playerId,
+          nameKo: p.other.nameKo,
+          photoUrl: photoUrl(p.other.photoUrl),
+          photoTeamAbbr: p.other.photoTeamAbbr ?? null,
+          teamAbbr: p.other.teamAbbr ?? null,
+        },
+        games: meetings.length,
+        wins: num(p.wins) ?? 0,
+        losses: num(p.losses) ?? 0,
+        teamKo: p.teamKo ?? null,
+        meetings,
+      },
+    ];
+  });
+  return { season: raw.season, playerId: raw.playerId, pairs };
+}
+
 function normalizeMy(raw: MyPlayersResponse): MyPlayersResponse {
   return {
     ...raw,
@@ -1508,6 +1534,34 @@ export interface RecordBest {
   group: RecordGroup;
   unit: string;
   rows: { rank: number; playerId: number | null; nameKo: string; season: number; value: number; active: boolean }[];
+}
+
+/** 같은 경기에 나온 상대 선수 한 명과의 묶음(GET /api/players/{id}/same-games의 pairs) */
+export interface SamePair {
+  other: {
+    playerId: number;
+    nameKo: string;
+    photoUrl: string | null;
+    /** 사진 속 유니폼 팀(사진 원 바탕색) */
+    photoTeamAbbr: string | null;
+    teamAbbr: string | null;
+  };
+  /** 같이 나온 경기 수(= meetings 길이) */
+  games: number;
+  /** 이 선수(요청한 선수) 팀이 그 경기들에서 거둔 승·패(끝난 경기만) */
+  wins: number;
+  losses: number;
+  /** 그 경기들에서 이 선수 팀 이름. 시즌 중 팀을 옮겨 둘 이상이면 null */
+  teamKo: string | null;
+  /** 경기마다 두 사람 줄, 오래된 경기부터(더블헤더는 경기마다 한 줄) */
+  meetings: { mine: GameLine; other: GameLine }[];
+}
+
+/** GET /api/players/{id}/same-games: 그 시즌 메이저 경기 중 다른 우리 선수와 같이 나온 경기. 많이 만난 순 */
+export interface SameGamesResponse {
+  season: number;
+  playerId: number;
+  pairs: SamePair[];
 }
 
 /** 호출 실패 이유. 화면은 이 값을 보고 안내 문구를 고른다. */
@@ -1644,6 +1698,13 @@ async function recordsFromApi() {
   return result;
 }
 
+async function sameGamesFromApi(playerId: number) {
+  "use cache";
+  const result = await requestApi(`/api/players/${playerId}/same-games`, normalizeSameGames);
+  cacheLife(result.ok ? { stale: 30, revalidate: 30, expire: 300 } : { stale: 0, revalidate: 1, expire: 2 });
+  return result;
+}
+
 // 경기 상세는 처음 열 때 api가 MLB에서 받아(요청 2번, 1초 간격) 조금 오래 걸린다
 const DETAIL_TIMEOUT_MS = 15_000;
 
@@ -1760,6 +1821,12 @@ export async function getMyPlayers(ids: readonly number[], days: number): Promis
 export const getRecords = cache(async () => {
   await connection();
   return recordsFromApi();
+});
+
+/** GET /api/players/{id}/same-games: 같은 경기에 나온 우리 선수(선수 페이지 칸·홈 맞대결 카드). 옛 api면 notFound */
+export const getSameGames = cache(async (playerId: number) => {
+  await connection();
+  return sameGamesFromApi(playerId);
 });
 
 /** GET /api/players/{id}/games/{gamePk}: 경기 상세(타석별 기록·하이라이트). 옛 api면 notFound */
