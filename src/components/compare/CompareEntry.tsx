@@ -1,11 +1,11 @@
 "use client"; // 누르면 창을 열고, 창 안에서 상대를 고르는 상태가 있어서 클라이언트 컴포넌트다.
 
-import { useRef, useState, type KeyboardEvent } from "react";
+import { useRef, useState } from "react";
 import type { CompareLine, SamePair } from "@/lib/api";
 import BottomSheet from "@/components/BottomSheet";
 import Chevron from "@/components/Chevron";
 import InfoTip from "@/components/InfoTip";
-import PlayerAvatar from "@/components/PlayerAvatar";
+import { PairAvatar, PairHeads, PairTable, PillPicker, type PairPerson, type PairRow } from "@/components/compare/PairTable";
 import SheetOpener from "@/components/SheetOpener";
 import { SameGamesSheetBody, sameGamesRecord, sameGamesTitle } from "@/components/compare/SameGames";
 import { COMPARE_ROWS, leads, sampleNote, type CompareKey } from "@/lib/compare";
@@ -55,8 +55,8 @@ export default function CompareEntry({
         className="card press-soft flex min-h-14 w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-left"
       >
         <span className="flex shrink-0 -space-x-2">
-          <Avatar line={me} size={28} />
-          <Avatar line={first} size={28} />
+          <PairAvatar person={person(me)} size={28} />
+          <PairAvatar person={person(first)} size={28} />
         </span>
         <span className="min-w-0 flex-1 text-button">{`${withAndParticle(first.player.nameKo)} 비교`}</span>
         <Chevron small />
@@ -70,9 +70,10 @@ export default function CompareEntry({
   );
 }
 
-function Avatar({ line, size }: { line: CompareLine; size: 28 | 44 }) {
+/** 비교 줄의 선수를 공통 머리 모양으로: 이름 아래는 팀('전 애틀랜타') */
+function person(line: CompareLine): PairPerson {
   const p = line.player;
-  return <PlayerAvatar nameKo={p.nameKo} photoUrl={p.photoUrl} teamAbbr={p.teamAbbr} photoTeamAbbr={p.photoTeamAbbr} size={size} eager />;
+  return { nameKo: p.nameKo, photoUrl: p.photoUrl, teamAbbr: p.teamAbbr, photoTeamAbbr: p.photoTeamAbbr, sub: teamLabel(p) };
 }
 
 function CompareBody({
@@ -92,60 +93,54 @@ function CompareBody({
 }) {
   const pair = pairs.find((p) => p.other.playerId === picked.player.id) ?? null;
   const notes = [sampleNote(me), sampleNote(picked)].filter((n): n is string => n != null);
-  const showPlus = me.wrcPlus != null && picked.wrcPlus != null;
+  const rows: PairRow[] = COMPARE_ROWS.map((row) => ({
+    key: row.key,
+    label: row.label,
+    a: value(me, row.key, row.rate),
+    b: value(picked, row.key, row.rate),
+    leadA: leads(row.key, me, picked),
+    leadB: leads(row.key, picked, me),
+  }));
+  if (me.wrcPlus != null && picked.wrcPlus != null) {
+    rows.unshift({
+      key: "plus",
+      tight: true,
+      label: (
+        <span className="inline-flex items-center gap-0.5">
+          평균 대비
+          <InfoTip
+            title="평균 대비"
+            lines={[
+              "'+2%'는 리그 평균 타자를 100으로 놓고 견준 값(wRC+ 102)이에요. 안타뿐 아니라 볼넷과 장타까지 담았어요.",
+              "파란 숫자가 앞선 쪽이에요. 한쪽이 100타석이 안 되면 칠하지 않고, 경기 수가 1.5배 넘게 다르면 홈런·타점·도루는 칠하지 않아요.",
+              "평균 대비는 평균보다 잘 친 쪽만 칠해요.",
+            ]}
+          />
+        </span>
+      ),
+      a: signedPct(me.wrcPlus),
+      b: signedPct(picked.wrcPlus),
+      leadA: leads("plus", me, picked),
+      leadB: leads("plus", picked, me),
+    });
+  }
   return (
     <div>
-      {others.length > 1 && <Picker others={others} pickedId={picked.player.id} onPick={onPick} />}
-      {/* 큰 글씨로 줄이 좁아지면(18rem 미만) 사진을 이름 위로 올려 이름이 글자마다 갈리지 않게 한다 */}
-      <div className="@container grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 pt-3">
-        <Head line={me} />
-        <span aria-hidden className="text-caption text-muted">
-          vs
-        </span>
-        <Head line={picked} right />
-      </div>
-      <div className="mt-3 overflow-hidden rounded-xl border border-line">
-        <table className="w-full table-fixed text-center">
-          <caption className="sr-only">{`${me.player.nameKo}, ${picked.player.nameKo} ${season} 시즌 메이저 기록`}</caption>
-          <thead className="sr-only">
-            <tr>
-              <th scope="col">{me.player.nameKo}</th>
-              <th scope="col">항목</th>
-              <th scope="col">{picked.player.nameKo}</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-line">
-            {showPlus && (
-              <tr>
-                <Cell lead={leads("plus", me, picked)}>{signedPct(me.wrcPlus!)}</Cell>
-                <th scope="row" className="py-1 text-caption font-normal text-muted">
-                  <span className="inline-flex items-center gap-0.5">
-                    평균 대비
-                    <InfoTip
-                      title="평균 대비"
-                      lines={[
-                        "'+2%'는 리그 평균 타자를 100으로 놓고 견준 값(wRC+ 102)이에요. 안타뿐 아니라 볼넷과 장타까지 담았어요.",
-                        "파란 숫자가 앞선 쪽이에요. 한쪽이 100타석이 안 되면 칠하지 않고, 경기 수가 1.5배 넘게 다르면 홈런·타점·도루는 칠하지 않아요.",
-                        "평균 대비는 평균보다 잘 친 쪽만 칠해요.",
-                      ]}
-                    />
-                  </span>
-                </th>
-                <Cell lead={leads("plus", picked, me)}>{signedPct(picked.wrcPlus!)}</Cell>
-              </tr>
-            )}
-            {COMPARE_ROWS.map((row) => (
-              <tr key={row.key}>
-                <Cell lead={leads(row.key, me, picked)}>{value(me, row.key, row.rate)}</Cell>
-                <th scope="row" className="py-2.5 text-caption font-normal text-muted">
-                  {row.label}
-                </th>
-                <Cell lead={leads(row.key, picked, me)}>{value(picked, row.key, row.rate)}</Cell>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {others.length > 1 && (
+        <PillPicker
+          label="비교할 선수"
+          options={others.map((o) => ({ key: String(o.player.id), label: o.player.nameKo }))}
+          picked={String(picked.player.id)}
+          onPick={(key) => onPick(Number(key))}
+        />
+      )}
+      <PairHeads a={person(me)} b={person(picked)} />
+      <PairTable
+        caption={`${me.player.nameKo}, ${picked.player.nameKo} ${season} 시즌 메이저 기록`}
+        aName={me.player.nameKo}
+        bName={picked.player.nameKo}
+        rows={rows}
+      />
       {notes.length > 0 && <p className="mt-2 text-center text-meta text-muted tabular-nums">{notes.join(" · ")}</p>}
       {pair && (
         <div className="-mx-4 mt-3 border-t border-line">
@@ -174,78 +169,4 @@ function CompareBody({
 function value(line: CompareLine, key: Exclude<CompareKey, "plus">, rate: boolean): string {
   const v = line[key];
   return rate ? formatRate(v) : String(v ?? "-");
-}
-
-/** 숫자 칸. 앞선 쪽만 진한 파랑 굵게(기록 표 '1위 숫자'와 같은 규칙), 낭독기에는 '앞섬'을 붙인다 */
-function Cell({ lead, children }: { lead: boolean; children: string }) {
-  return (
-    <td className={`w-[36%] px-1 py-2.5 tabular-nums ${lead ? "text-heading text-accent-ink" : "text-body"}`}>
-      {children}
-      {lead && <span className="sr-only"> 앞섬</span>}
-    </td>
-  );
-}
-
-/** 두 사람 머리: 사진 원(사진 속 팀 색) · 이름 · 팀('전 애틀랜타'). 오른쪽 사람은 사진이 바깥쪽에 오게 뒤집는다 */
-function Head({ line, right = false }: { line: CompareLine; right?: boolean }) {
-  return (
-    <div
-      className={`flex min-w-0 items-center gap-2.5 @max-[18rem]:flex-col @max-[18rem]:gap-1 @max-[18rem]:text-center ${right ? "flex-row-reverse text-right" : ""}`}
-    >
-      <Avatar line={line} size={44} />
-      <div className="min-w-0 break-keep [overflow-wrap:anywhere]">
-        <p className="text-heading">{line.player.nameKo}</p>
-        <p className="text-meta text-muted">{teamLabel(line.player)}</p>
-      </div>
-    </div>
-  );
-}
-
-/**
- * 상대 고르기: 누르는 알약(하나만 고르는 라디오 묶음). 고른 알약은 연파랑 + 굵게(색만으로 구분하지 않는다). 많으면 옆으로 민다.
- * 화살표 키로 옮기면 바로 고른다(라디오 묶음 관례), Tab은 고른 알약에만 멈춘다
- */
-function Picker({ others, pickedId, onPick }: { others: CompareLine[]; pickedId: number; onPick: (id: number) => void }) {
-  const groupRef = useRef<HTMLDivElement>(null);
-  function onKey(e: KeyboardEvent) {
-    const step = e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : e.key === "ArrowLeft" || e.key === "ArrowUp" ? -1 : 0;
-    if (step === 0) return;
-    e.preventDefault();
-    const index = others.findIndex((o) => o.player.id === pickedId);
-    const next = others[(index + step + others.length) % others.length];
-    onPick(next.player.id);
-    groupRef.current?.querySelector<HTMLElement>(`[data-player="${next.player.id}"]`)?.focus();
-  }
-  return (
-    <div
-      ref={groupRef}
-      role="radiogroup"
-      aria-label="비교할 선수"
-      onKeyDown={onKey}
-      // 알약의 누름 영역(44px)이 스크롤 상자에 잘리지 않게 위아래를 띄운다(news/NewsPlayerPicker와 같다)
-      className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto overflow-y-hidden px-4 py-[max(0.25rem,calc(22px-1rem))]"
-    >
-      {others.map((o) => {
-        const on = o.player.id === pickedId;
-        return (
-          <button
-            key={o.player.id}
-            type="button"
-            role="radio"
-            aria-checked={on}
-            tabIndex={on ? 0 : -1}
-            data-player={o.player.id}
-            onClick={() => onPick(o.player.id)}
-            className={`press tap-target inline-flex min-h-8 shrink-0 items-center rounded-full px-3 text-label ${
-              on ? "bg-accent-soft text-accent-ink" : "bg-surface-2 text-muted hover:text-foreground"
-            }`}
-          >
-            <span className={`bold-reserve whitespace-nowrap ${on ? "font-extrabold" : ""}`} data-text={o.player.nameKo}>
-              {o.player.nameKo}
-            </span>
-          </button>
-        );
-      })}
-    </div>
-  );
 }

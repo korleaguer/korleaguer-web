@@ -19,6 +19,8 @@ import Words from "@/components/Words";
 import Chevron from "@/components/Chevron";
 import SheetOpener from "@/components/SheetOpener";
 import { SameGamesSheetBody, sameGamesRecord, sameGamesStateKey, sameGamesTitle } from "@/components/compare/SameGames";
+import WeekPair from "./WeekPair";
+import { formatWeekLabel, weekHitters, weekPair, weekRange, type WeekHitter, type WeekSame } from "@/lib/week";
 
 /**
  * 시즌 중 홈 맨 위: 선수들이 지금 어디서 뛰나를 층으로 묶는다(이슈 #245, 11-16·17 개편 결정).
@@ -307,48 +309,75 @@ export default async function SeasonFloors({ recent, asOf }: Props) {
   const derby = findDerby(players, today);
   const derbySeries = derby ? await findDerbySeries(derby) : null;
   const buzzItems = pickFloorBuzz(players, myResult.data.buzz, mine, myResult.data.generatedAt);
+  // 이번 주(한국 날짜 월~일) 10타석 이상 친 타자가 둘 이상일 때만 층 아래에 '이번 주 두 선수' 카드를 둔다(11-22 시안 3B)
+  const week = today ? weekHitters(players, today, mine) : [];
+  const weekSames = today && week.length >= 2 ? await findWeekSames(week, today) : [];
+  const weekDays = today ? weekRange(today) : null;
 
   return (
-    <Section id="floors-title" title="지금 어디서 뛰나" aside={asOf}>
-      {/* '내 선수'(/my)로 가는 입구(이슈 #262). 내 선수는 층마다 먼저 놓이고 사진 파란 고리와 이름 끝 ★로 보인다 */}
-      <div className="-mt-1 mb-2 flex justify-end px-1">
-        <MyPlayersLink count={myCount} />
-      </div>
-      {/* 그날 화제 문구를 모은 카드. 화제가 없으면 카드 자체가 없다(11-21 B안) */}
-      {buzzItems.length > 0 && <FloorBuzz items={buzzItems} />}
-      {derby && <DerbyCard pair={derby} series={derbySeries} />}
-      {/* 층 순서가 곧 순위라 PC에서도 층은 위에서 아래로 한 줄씩 두고 세로선으로 잇는다. 층 안 선수만 PC에서 두 칸으로
-          나눠 한 줄이 화면 끝까지 늘어나지 않게 한다(사용자 11-17 '추천대로', 전수조사 L307). 예전처럼 층을 두 칸에 흘리면
-          2위 층(트리플A)이 1위(메이저) 옆, 3위 층이 다음 줄 왼쪽에 놓였다 */}
-      <div className="space-y-3">
-        {floors.map((floor, index) => (
-          // 층은 이름 붙은 영역(section)으로 두지 않는다: 층 수만큼 랜드마크가 늘어 '지금 어디서 뛰나' 하나만 남긴다(전수조사 L304).
-          // 층 이름과 사람 수는 제목 하나에 넣어, 제목으로 훑으면 '메이저 3명'으로 읽힌다
-          <div key={floor.key} className="relative pl-6">
-            {/* 층을 잇는 세로선과 층 점 */}
-            {index < floors.length - 1 && (
-              <span aria-hidden className="absolute top-2.5 bottom-[-0.75rem] left-[0.4375rem] w-0.5 bg-line" />
-            )}
-            <span
-              aria-hidden
-              className={`absolute top-1 left-0 size-4 rounded-full border-4 border-background ${DOT[floor.tone]}`}
-            />
-            {/* PC는 층이 화면 폭 전체라 'n명'을 오른쪽 끝 대신 제목 바로 옆에 둔다(제목과 1,000px 가까이 떨어지지 않게) */}
-            <h3 className="mb-1.5 flex items-baseline justify-between px-0.5 text-label lg:justify-start lg:gap-x-2">
-              <span className={TITLE[floor.tone]}>{floor.title}</span>{" "}
-              <span className="text-caption text-muted tabular-nums">{floor.players.length}명</span>
-            </h3>
-            {/* PC 두 칸: 휴대폰의 줄 사이 선(divide-y)을 끄고, 줄마다 둘째 줄부터 위 선·왼쪽 칸에 세로 선을 긋는다(FloorRow) */}
-            <ul className="card divide-y divide-line overflow-hidden lg:grid lg:grid-cols-2 lg:divide-y-0">
-              {floor.players.map((entry) => (
-                <FloorRow key={entry.player.id} entry={entry} starred={mine.includes(entry.player.id)} today={today} />
-              ))}
-            </ul>
-          </div>
-        ))}
-      </div>
-    </Section>
+    <>
+      <Section id="floors-title" title="지금 어디서 뛰나" aside={asOf}>
+        {/* '내 선수'(/my)로 가는 입구(이슈 #262). 내 선수는 층마다 먼저 놓이고 사진 파란 고리와 이름 끝 ★로 보인다 */}
+        <div className="-mt-1 mb-2 flex justify-end px-1">
+          <MyPlayersLink count={myCount} />
+        </div>
+        {/* 그날 화제 문구를 모은 카드. 화제가 없으면 카드 자체가 없다(11-21 B안) */}
+        {buzzItems.length > 0 && <FloorBuzz items={buzzItems} />}
+        {derby && <DerbyCard pair={derby} series={derbySeries} />}
+        {/* 층 순서가 곧 순위라 PC에서도 층은 위에서 아래로 한 줄씩 두고 세로선으로 잇는다. 층 안 선수만 PC에서 두 칸으로
+            나눠 한 줄이 화면 끝까지 늘어나지 않게 한다(사용자 11-17 '추천대로', 전수조사 L307). 예전처럼 층을 두 칸에 흘리면
+            2위 층(트리플A)이 1위(메이저) 옆, 3위 층이 다음 줄 왼쪽에 놓였다 */}
+        <div className="space-y-3">
+          {floors.map((floor, index) => (
+            // 층은 이름 붙은 영역(section)으로 두지 않는다: 층 수만큼 랜드마크가 늘어 '지금 어디서 뛰나' 하나만 남긴다(전수조사 L304).
+            // 층 이름과 사람 수는 제목 하나에 넣어, 제목으로 훑으면 '메이저 3명'으로 읽힌다
+            <div key={floor.key} className="relative pl-6">
+              {/* 층을 잇는 세로선과 층 점 */}
+              {index < floors.length - 1 && (
+                <span aria-hidden className="absolute top-2.5 bottom-[-0.75rem] left-[0.4375rem] w-0.5 bg-line" />
+              )}
+              <span
+                aria-hidden
+                className={`absolute top-1 left-0 size-4 rounded-full border-4 border-background ${DOT[floor.tone]}`}
+              />
+              {/* PC는 층이 화면 폭 전체라 'n명'을 오른쪽 끝 대신 제목 바로 옆에 둔다(제목과 1,000px 가까이 떨어지지 않게) */}
+              <h3 className="mb-1.5 flex items-baseline justify-between px-0.5 text-label lg:justify-start lg:gap-x-2">
+                <span className={TITLE[floor.tone]}>{floor.title}</span>{" "}
+                <span className="text-caption text-muted tabular-nums">{floor.players.length}명</span>
+              </h3>
+              {/* PC 두 칸: 휴대폰의 줄 사이 선(divide-y)을 끄고, 줄마다 둘째 줄부터 위 선·왼쪽 칸에 세로 선을 긋는다(FloorRow) */}
+              <ul className="card divide-y divide-line overflow-hidden lg:grid lg:grid-cols-2 lg:divide-y-0">
+                {floor.players.map((entry) => (
+                  <FloorRow key={entry.player.id} entry={entry} starred={mine.includes(entry.player.id)} today={today} />
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </Section>
+      {weekDays && week.length >= 2 && (
+        <WeekPair label={formatWeekLabel(weekDays.from, weekDays.to)} hitters={week} sames={weekSames} />
+      )}
+    </>
   );
+}
+
+/**
+ * 이번 주 카드의 타자들이 이번 주 같은 경기에 나온 짝(앞 선수 기준). 창 맨 아래 '같은 경기 n번 · 팀 전적 ›' 줄에 쓴다.
+ * 선수마다 시즌 같은 경기 묶음을 받아(마지막 선수는 앞 선수들 묶음에 다 나온다) 이번 주 경기만 남긴다. 못 받으면 그 짝은 줄이 없다
+ */
+async function findWeekSames(hitters: WeekHitter[], today: string): Promise<WeekSame[]> {
+  const results = await Promise.all(hitters.slice(0, -1).map((h) => getSameGames(h.playerId)));
+  const sames: WeekSame[] = [];
+  results.forEach((result, i) => {
+    if (!result.ok) return;
+    for (const b of hitters.slice(i + 1)) {
+      const season = result.data.pairs.find((p) => p.other.playerId === b.playerId);
+      const pair = season ? weekPair(season, today) : null;
+      if (pair) sames.push({ aId: hitters[i].playerId, bId: b.playerId, pair });
+    }
+  });
+  return sames;
 }
 
 function FloorRow({ entry, starred, today }: { entry: MyPlayer; starred: boolean; today: string | null }) {
