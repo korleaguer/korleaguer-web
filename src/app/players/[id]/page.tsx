@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { getPlayer, getRecords, getSameGames } from "@/lib/api";
+import { getCompare, getPlayer, getRecords, getSameGames } from "@/lib/api";
+import { pickDefaultOpponent } from "@/lib/compare";
 import { formatAsOf } from "@/lib/format";
 import { parseId } from "@/lib/ids";
 import { playerShareImage, shareMeta } from "@/lib/share";
@@ -11,6 +12,7 @@ import DataBanners from "@/components/DataBanners";
 import { PlayerSkeleton } from "@/components/PageSkeleton";
 import NotFoundNotice from "@/components/NotFoundNotice";
 import InfoTip from "@/components/InfoTip";
+import CompareEntry from "@/components/compare/CompareEntry";
 import SameGames from "@/components/compare/SameGames";
 import CareerSeasons from "@/components/player/CareerSeasons";
 import GameLog from "@/components/player/GameLog";
@@ -72,10 +74,24 @@ async function PlayerKoreanRecords({ playerId }: { playerId: number }) {
   return <KoreanRecords rows={records.ok ? pickRankRows(records.data.next, playerId) : []} />;
 }
 
-/** '같은 경기에 나온 선수' 칸. 짝이 없거나 못 받았으면(옛 api 포함) 칸이 없다 */
-async function PlayerSameGames({ playerId, nameKo }: { playerId: number; nameKo: string }) {
-  const same = await getSameGames(playerId);
-  return same.ok ? <SameGames season={same.data.season} nameKo={nameKo} pairs={same.data.pairs} /> : null;
+/**
+ * '○○○과 비교 ›' 줄(두 선수 비교 창)과 '같은 경기에 나온 선수' 칸. 둘 다 못 받았거나(옛 api 포함) 재료가 없으면 그 조각이 없다:
+ * 비교 줄은 투수·메이저 타석 없는 선수·견줄 타자가 없을 때, 같은 경기 칸은 짝이 없을 때. 같은 경기 묶음은 비교 창 맨 아래 줄도 쓴다
+ */
+async function PlayerCompare({ playerId, nameKo, mine }: { playerId: number; nameKo: string; mine: number[] }) {
+  const [compare, same] = await Promise.all([getCompare(playerId), getSameGames(playerId)]);
+  const pairs = same.ok ? same.data.pairs : [];
+  const me = compare.ok ? compare.data.me : null;
+  const others = compare.ok ? compare.data.others : [];
+  const first = me ? pickDefaultOpponent(others, mine) : null;
+  return (
+    <>
+      {compare.ok && me && first && (
+        <CompareEntry me={me} others={others} initialId={first.player.id} pairs={pairs} season={compare.data.season} />
+      )}
+      {same.ok && <SameGames season={same.data.season} nameKo={nameKo} pairs={pairs} />}
+    </>
+  );
 }
 
 // 없는 선수는 notFound() 대신 안내를 직접 그린다.
@@ -145,9 +161,9 @@ async function PlayerContent({ params }: Pick<Props, "params">) {
           <Suspense fallback={null}>
             <PlayerKoreanRecords playerId={player.id} />
           </Suspense>
-          {/* 같은 경기에 나온 우리 선수(11-22 시안 2B). 위 칸과 같은 까닭으로 따로 그린다 */}
+          {/* 두 선수 비교 줄(11-22 시안 1B)과 같은 경기에 나온 우리 선수(시안 2B). 위 칸과 같은 까닭으로 따로 그린다 */}
           <Suspense fallback={null}>
-            <PlayerSameGames playerId={player.id} nameKo={player.nameKo} />
+            <PlayerCompare playerId={player.id} nameKo={player.nameKo} mine={myIds} />
           </Suspense>
           {trend && (
             <Section
