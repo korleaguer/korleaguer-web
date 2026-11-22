@@ -1432,6 +1432,27 @@ function normalizeSameGames(raw: SameGamesResponse): SameGamesResponse {
   return { season: raw.season, playerId: raw.playerId, pairs };
 }
 
+function normalizeCompareLine(l: CompareLine): CompareLine | null {
+  if (!l?.player) return null;
+  return {
+    player: normalizeSummary(l.player),
+    games: num(l.games) ?? 0,
+    plateAppearances: num(l.plateAppearances) ?? 0,
+    avg: num(l.avg),
+    homeRuns: num(l.homeRuns) ?? 0,
+    rbi: num(l.rbi) ?? 0,
+    stolenBases: num(l.stolenBases) ?? 0,
+    ops: num(l.ops),
+    wrcPlus: num(l.wrcPlus),
+  };
+}
+
+function normalizeCompare(raw: CompareResponse): CompareResponse {
+  const me = raw?.me ? normalizeCompareLine(raw.me) : null;
+  const others = (Array.isArray(raw?.others) ? raw.others : []).flatMap((l) => normalizeCompareLine(l) ?? []);
+  return { season: raw.season, playerId: raw.playerId, me, others: me ? others : [] };
+}
+
 function normalizeMy(raw: MyPlayersResponse): MyPlayersResponse {
   return {
     ...raw,
@@ -1566,6 +1587,28 @@ export interface SameGamesResponse {
   season: number;
   playerId: number;
   pairs: SamePair[];
+}
+
+/** 두 선수 비교의 타자 한 줄(GET /api/players/{id}/compare). 숫자는 그 시즌 메이저 정규시즌 것이다 */
+export interface CompareLine {
+  player: PlayerSummary;
+  games: number;
+  plateAppearances: number;
+  avg: number | null;
+  homeRuns: number;
+  rbi: number;
+  stolenBases: number;
+  ops: number | null;
+  /** MLB 공식 시즌 wRC+(리그 평균 = 100). 선수 페이지 saber와 같은 값. 없으면 null */
+  wrcPlus: number | null;
+}
+
+/** GET /api/players/{id}/compare: 이 선수(me)와 견줄 수 있는 다른 우리 타자(others, 타석 많은 순). 투수·메이저 타석 없음이면 me가 null */
+export interface CompareResponse {
+  season: number;
+  playerId: number;
+  me: CompareLine | null;
+  others: CompareLine[];
 }
 
 /** 호출 실패 이유. 화면은 이 값을 보고 안내 문구를 고른다. */
@@ -1709,6 +1752,13 @@ async function sameGamesFromApi(playerId: number) {
   return result;
 }
 
+async function compareFromApi(playerId: number) {
+  "use cache";
+  const result = await requestApi(`/api/players/${playerId}/compare`, normalizeCompare);
+  cacheLife(result.ok ? { stale: 30, revalidate: 30, expire: 300 } : { stale: 0, revalidate: 1, expire: 2 });
+  return result;
+}
+
 // 경기 상세는 처음 열 때 api가 MLB에서 받아(요청 2번, 1초 간격) 조금 오래 걸린다
 const DETAIL_TIMEOUT_MS = 15_000;
 
@@ -1831,6 +1881,12 @@ export const getRecords = cache(async () => {
 export const getSameGames = cache(async (playerId: number) => {
   await connection();
   return sameGamesFromApi(playerId);
+});
+
+/** GET /api/players/{id}/compare: 두 선수 비교에 쓸 타자 시즌 성적 묶음(선수 페이지 비교 창). 옛 api면 notFound */
+export const getCompare = cache(async (playerId: number) => {
+  await connection();
+  return compareFromApi(playerId);
 });
 
 /** GET /api/players/{id}/games/{gamePk}: 경기 상세(타석별 기록·하이라이트). 옛 api면 notFound */
