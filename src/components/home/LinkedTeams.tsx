@@ -388,6 +388,10 @@ function MoreTeams({ teams, onPick }: { teams: Team[]; onPick: (t: Team, from: H
     const next = e.relatedTarget;
     if (!open || !(next instanceof Node)) return;
     if (boxRef.current?.contains(next) || listRef.current?.contains(next)) return;
+    // WebKit(아이폰·사파리)은 버튼을 눌러도 버튼이 아니라 가까운 포커스 가능한 조상에 포커스를 준다. 창 안에서는 그 조상이
+    // <dialog tabindex="-1">(useModalDialog)이라, 목록의 구단을 누르는 순간 여기서 목록을 지워 click이 사라졌다(이슈 #428).
+    // 목록을 품은 조상으로 간 포커스는 밖으로 나간 것이 아니다(Tab은 그런 조상에 서지 않는다). 창 빈 곳 누름은 아래 pointerdown이 닫는다
+    if (boxRef.current && next.contains(boxRef.current)) return;
     hide();
   };
 
