@@ -1,4 +1,5 @@
-// 우리가 호스팅하는 선수 사진. api(GET /api/photos/{이름})가 원본을 처음 한 번만 받아 저장해 두고, 여기서는 그 사진을 그대로 전달한다.
+// 우리가 호스팅하는 선수 사진. api(GET /api/photos/{이름})는 서버 주기 작업이 받아 DB에 둔 사진만 준다(요청 중에 원본을 받지 않는다,
+// 아직 없으면 404). 여기서는 그 사진을 그대로 전달한다.
 // api는 바깥에 열려 있지 않아서 웹이 이 주소(/photos/mlb-808982, /photos/kbo-si-hwan-roh)로 내보낸다.
 // 브라우저는 하루 동안 저장해 두고, 그 뒤에는 ETag로 바뀌었는지만 묻는다(바뀌지 않았으면 304).
 // 주소에 내용 버전(?v=)이 붙고 현재 내용과 같으면 api가 1년 immutable로 답한다(옛 api의 버전 없는 주소는 위 하루 그대로).
@@ -8,8 +9,8 @@ import { apiUrl } from "@/lib/apiUrl";
 import { PHOTO_KEY as KEY, photoVersion } from "@/lib/photo";
 
 // 이름 규칙(KEY)은 lib/photo에 둔다: mlb-…, kbo-…, posting-…, career-…
-// 처음 요청이면 api가 원본을 받는 동안 기다린다(원본 연결 5초 + 읽기 10초 + 간격)
-const TIMEOUT_MS = 20_000;
+// api는 DB에 저장된 사진만 읽으므로 오래 기다릴 일이 없다. 서버가 멈췄을 때 화면 요청을 붙잡아 두지 않을 만큼만 기다린다
+const TIMEOUT_MS = 5_000;
 const PASS_HEADERS = ["content-type", "etag", "cache-control", "content-length"];
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ key: string }> }) {
