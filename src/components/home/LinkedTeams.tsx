@@ -93,6 +93,11 @@ export default function LinkedTeams({
    * router.refresh()가 Next 16에서 우리 표시를 지워서(이슈 #256), 그 뒤 닫으면 쌓은 기록이 빈 채로 남았다
    */
   const ownsEntryRef = useRef(false);
+  /**
+   * 그려진 '외 n개 구단'(휴대폰 알약 줄·PC 막대 줄)마다 '이 구단 줄로 목록을 다시 띄우기'. 띄웠으면 true.
+   * 목록에서 연 창을 닫으면 목록으로 돌아오게 한다(이슈 #430)
+   */
+  const moreLists = useRef(new Set<(team: string) => boolean>());
 
   // 뒤로·앞으로 가기: 주소 기록의 표시에 맞춰 창을 열고 닫는다(경기 상세 창과 같은 방식).
   // 창에서 기사로 갔다가 돌아오면 그 기록 위라서 창이 다시 열린다
@@ -127,7 +132,9 @@ export default function LinkedTeams({
   });
 
   // 창이 닫히면 연 버튼으로 포커스를 돌려준다(WAI-ARIA APG Dialog). 창은 부품째 지워지며 닫혀서 브라우저가 돌려주지 못한다.
-  // 연 버튼이 없으면(돌아와서 다시 열린 창) 그 구단 알약, 그것도 없으면(목록 안 구단) '외 n개 구단'으로
+  // 연 버튼이 없으면(돌아와서 다시 열린 창) 그 구단 알약으로.
+  // 목록 안 구단이면 목록을 다시 띄우고 그 구단 줄에 포커스를 둔다(이슈 #430): 창을 연 것은 그 줄이고(닫으면 연 곳으로),
+  // 목록이 닫힌 채면 다른 구단을 볼 때마다 '외 n개 구단'부터 다시 눌러야 했다. 목록을 못 띄우면 '외 n개 구단'으로
   useEffect(() => {
     if (openTeam) {
       shownRef.current = openTeam;
@@ -140,8 +147,12 @@ export default function LinkedTeams({
     returnRef.current = null;
     // 창이 지워지며 포커스를 잃었을 때만(body). 다른 화면에서 '홈' 메뉴로 돌아와 숨겨 둔 홈이 되살아나며 닫힌 경우처럼
     // 포커스가 이미 다른 곳(메뉴 링크)에 있으면 빼앗지 않는다(빼앗으면 페이지가 알약 쪽으로 스크롤된다)
+    // 포커스가 이 칸을 품은 조상에 있는 것도 잃은 것으로 본다: 창 안에서 연 창을 닫으면 브라우저가 포커스를 바깥 창(<dialog>)에
+    // 돌려놓는다(WebKit은 구단을 누를 때 이미 그 창으로 옮겨 둔다, 이슈 #428)
     const focused = document.activeElement;
-    if (focused && focused !== document.body) return;
+    const lost = !focused || focused === document.body || (rootRef.current != null && focused.contains(rootRef.current));
+    if (!lost) return;
+    for (const reopen of moreLists.current) if (reopen(team)) return;
     const all = (selector: string) => [...(rootRef.current?.querySelectorAll<HTMLElement>(selector) ?? [])];
     [back, ...all(`[data-team="${CSS.escape(team)}"]`), ...all("[data-more-teams]")].find(isShown)?.focus();
   }, [openTeam]);
@@ -170,6 +181,12 @@ export default function LinkedTeams({
   const close = () => {
     if (ownsEntryRef.current) window.history.back();
     else setOpenTeam(null);
+  };
+  const registerMore = (reopen: (team: string) => boolean) => {
+    moreLists.current.add(reopen);
+    return () => {
+      moreLists.current.delete(reopen);
+    };
   };
   const sheetTeam = linked.find((t) => t.abbreviation === openTeam && canOpen(t));
   return (
@@ -227,7 +244,7 @@ export default function LinkedTeams({
           })}
           {rest.length > 0 && (
             <li className="pl-7 pt-0.5">
-              <MoreTeams teams={rest} onPick={open} />
+              <MoreTeams teams={rest} onPick={open} register={registerMore} />
             </li>
           )}
         </ul>
@@ -274,7 +291,7 @@ export default function LinkedTeams({
         })}
         {rest.length > 0 && (
           <li className="px-1">
-            <MoreTeams teams={rest} onPick={open} />
+            <MoreTeams teams={rest} onPick={open} register={registerMore} />
           </li>
         )}
       </ul>
@@ -349,7 +366,16 @@ function placeList(
  * 목록은 DOM에서 버튼 바로 뒤에 두고 popover로 맨 위 층에 띄운다(이슈 #248): Tab·화면 낭독기 순서가 버튼 다음이 되고
  * (WAI-ARIA APG Disclosure), 성적표 카드(overflow-hidden)에 잘리거나 다음 카드에 가리지 않는다.
  */
-function MoreTeams({ teams, onPick }: { teams: Team[]; onPick: (t: Team, from: HTMLElement | null) => void }) {
+function MoreTeams({
+  teams,
+  onPick,
+  register,
+}: {
+  teams: Team[];
+  onPick: (t: Team, from: HTMLElement | null) => void;
+  /** '이 구단 줄로 목록을 다시 띄우기'를 여는 쪽에 알린다(목록에서 연 창을 닫으면 목록으로 돌아온다). 돌려주는 함수로 지운다 */
+  register: (reopen: (team: string) => boolean) => () => void;
+}) {
   const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null);
   const open = pos != null;
   const boxRef = useRef<HTMLDivElement>(null);
@@ -360,6 +386,8 @@ function MoreTeams({ teams, onPick }: { teams: Team[]; onPick: (t: Team, from: H
   const byHover = useRef(false);
   /** 눌러서 열었나(목록이 뜨면 첫 구단으로 포커스를 옮긴다) */
   const focusFirst = useRef(false);
+  /** 목록이 뜨면 첫 구단 대신 포커스를 줄 구단 약어(창을 닫고 돌아온 구단) */
+  const focusTeam = useRef<string | null>(null);
   const listId = useId();
 
   const cancelClose = () => {
@@ -402,7 +430,10 @@ function MoreTeams({ teams, onPick }: { teams: Team[]; onPick: (t: Team, from: H
     if (supportsPopover() && !list.matches(":popover-open")) list.showPopover();
     if (focusFirst.current) {
       focusFirst.current = false;
-      list.querySelector<HTMLElement>("button")?.focus();
+      const team = focusTeam.current;
+      focusTeam.current = null;
+      const row = team ? list.querySelector<HTMLElement>(`[data-list-team="${CSS.escape(team)}"]`) : null;
+      (row ?? list.querySelector<HTMLElement>("button"))?.focus();
     }
   }, [open]);
 
@@ -462,6 +493,16 @@ function MoreTeams({ teams, onPick }: { teams: Team[]; onPick: (t: Team, from: H
 
   useEffect(() => cancelClose, []);
 
+  // 목록에서 연 창이 닫히면 여는 쪽이 부른다. 그려진 쪽(휴대폰 알약 줄·PC 막대 줄 중 하나)만, 이 목록의 구단일 때만 띄운다
+  useEffect(() =>
+    register((team) => {
+      if (!isShown(buttonRef.current) || !teams.some((t) => t.abbreviation === team)) return false;
+      focusTeam.current = team;
+      show(false);
+      return true;
+    }),
+  );
+
   const list = pos && (
     <div
       ref={listRef}
@@ -498,9 +539,10 @@ function MoreTeams({ teams, onPick }: { teams: Team[]; onPick: (t: Team, from: H
                 <button
                   type="button"
                   aria-haspopup="dialog"
+                  data-list-team={t.abbreviation}
                   onClick={() => {
                     hide();
-                    // 목록은 닫히니 창을 닫으면 '외 n개 구단'으로 돌아온다
+                    // 목록은 닫아 두고(창 뒤에서 스크롤·바깥 누름을 따라다니지 않게) 창을 닫으면 이 줄로 다시 띄운다(위 register)
                     onPick(t, buttonRef.current);
                   }}
                   className="press-soft flex min-h-[max(2.75rem,44px)] w-full cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-left text-label hover:bg-surface-2"
