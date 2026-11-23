@@ -11,8 +11,8 @@ import sharp from "sharp";
 import { apiUrl } from "@/lib/apiUrl";
 import { PHOTO_KEY, SMALL_PHOTO_WIDTHS, photoVersion } from "@/lib/photo";
 
-/** 처음 요청이면 api가 원본을 받는 동안 기다린다(원본 사진 경로와 같다) */
-const TIMEOUT_MS = 20_000;
+/** api는 DB에 저장된 사진만 읽으므로 짧게 기다린다(원본 사진 경로와 같다) */
+const TIMEOUT_MS = 5_000;
 
 export async function GET(request: Request, { params }: RouteContext<"/photos/[key]/[w]">) {
   const { key, w } = await params;
