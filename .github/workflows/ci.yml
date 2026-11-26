@@ -36,6 +36,13 @@ jobs:
       - name: lint
         run: npm run lint
 
+      # 서버 응답 타입(src/lib/api-schema.d.ts)은 저장소의 서버 명세(openapi/server.json)에서 만든다. 손으로 고쳤거나
+      # 명세만 바꾸고 다시 만들지 않았으면 실패한다(npm run api:types로 다시 만든다)
+      - name: 서버 응답 타입이 명세와 같은지
+        run: |
+          npm run api:types
+          git diff --exit-code -- src/lib/api-schema.d.ts
+
       # LayoutProps·PageProps 같은 라우트 타입은 next가 만들어 준다. 먼저 만들어야 tsc가 통과한다.
       - name: 라우트 타입 생성 + 타입 검사
         run: |
@@ -44,3 +51,15 @@ jobs:
 
       - name: 빌드
         run: npm run build
+
+      # 서버 develop의 최신 명세로 타입을 다시 만들어 검사한다. 서버가 웹이 쓰는 응답 필드를 바꾸거나 지웠으면 여기서 깨진다.
+      # PR에서만 돈다(배포는 막지 않는다). 명세가 바뀌기만 하고 타입은 맞으면 경고만 남긴다(npm run api:sync로 맞춘다)
+      - name: 서버 최신 응답 명세로 타입 검사
+        if: github.event_name == 'pull_request'
+        run: |
+          cp openapi/server.json "$RUNNER_TEMP/server.json"
+          npm run api:sync
+          npx tsc --noEmit
+          if ! cmp -s openapi/server.json "$RUNNER_TEMP/server.json"; then
+            echo "::warning::서버 develop의 응답 명세가 이 저장소의 openapi/server.json과 다르다. npm run api:sync로 맞추는 PR을 올린다"
+          fi
