@@ -146,7 +146,7 @@ function GameCard({
     >
       {/* 점수 띠: 우리 팀 | 점수 + 상태 | 상대 팀 */}
       <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 rounded-xl bg-surface-2 px-3 py-2.5">
-        <TeamSide teamKo={line.teamKo} teamAbbr={line.teamAbbr} />
+        <TeamSide teamKo={line.teamKo ?? ""} teamAbbr={line.teamAbbr} />
         <div className="text-center">
           {line.teamScore != null && line.opponentScore != null ? (
             <ScoreText line={line} className="block text-score" />
@@ -155,7 +155,7 @@ function GameCard({
           )}
           <span className="block whitespace-nowrap text-micro text-muted tabular-nums">{meta}</span>
         </div>
-        <TeamSide teamKo={line.opponentKo} teamAbbr={line.opponentAbbr} end />
+        <TeamSide teamKo={line.opponentKo ?? ""} teamAbbr={line.opponentAbbr} end />
       </div>
 
       <div className="mt-3 flex items-start gap-3 px-0.5">

@@ -7,7 +7,7 @@ import ExternalLinkIcon from "@/components/ExternalLinkIcon";
 import NewsThumb from "@/components/news/NewsThumb";
 import Words from "@/components/Words";
 
-export interface NewsTitleItem extends NewsHeadline {
+export interface NewsTitleItem extends Omit<NewsHeadline, "lead" | "summary"> {
   /** 여러 선수의 기사를 모았을 때 누구 기사인지. 한 명이면 null */
   who?: string | null;
   /** 그 기사 선수의 사진(우리가 호스팅). 기사 사진이 없거나 안 뜨면 썸네일 자리에 대신 보인다 */

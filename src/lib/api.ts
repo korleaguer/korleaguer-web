@@ -1,14 +1,18 @@
-// api 서버와 주고받는 데이터 모양(스펙 2절 'API 계약' v2.1)과 호출 함수를 모아 둔 파일.
+// api 서버 응답 모양(서버 명세 openapi/server.json에서 만든 타입의 별칭), 받은 응답을 다듬는 함수, 호출 함수를 모아 둔 파일.
 import { cache } from "react";
 import { cacheLife } from "next/cache";
 import { connection } from "next/server";
 import { apiUrl } from "@/lib/apiUrl";
 import { PHOTO_PATH } from "@/lib/photo";
+import type { components } from "@/lib/api-schema";
+
+/** 서버 응답 모양(서버 저장소 openapi.json에서 만든 타입, npm run api:types). 아래 타입은 모두 이것의 별칭이다 */
+type S = components["schemas"];
 
 /** mlb: MLB 공식 Stats API에서 받은 실제 데이터, sample: 테스트·오프라인용 지어낸 데이터 */
-export type DataMode = "sample" | "mlb";
-export type Role = "HITTER" | "PITCHER";
-export type GameResult = "W" | "L" | "T" | null;
+export type DataMode = S["HomeResponse"]["dataMode"];
+export type Role = S["PlayerSummary"]["role"];
+export type GameResult = S["GameLine"]["result"];
 
 /**
  * 경기 카드 안 화제 문구 한 줄(선수 × 경기마다 최대 하나, 서버가 우선순위로 골라 준다).
@@ -16,969 +20,197 @@ export type GameResult = "W" | "L" | "T" | null;
  * stat은 문구가 이미 말하는 활약(homeRuns·hits·rbi·stolenBases·wins·saves·strikeouts)이라 같은 뜻의 활약 배지는 카드에서 뺀다.
  * 활약을 말하지 않는 문구(연속·최고 경기)는 null이다.
  */
-export interface GameBuzz {
-  playerId: number;
-  gameId: number;
-  kind: "PASSED" | "FIRST" | "STREAK" | "SEASON_BEST";
-  stat: BuzzStat | null;
-  text: string;
-}
+export type GameBuzz = S["GameBuzz"];
 
 /** 활약 배지(Highlights)가 있는 기록 이름. 서버 GameBuzz.stat과 배지의 stat이 같으면 같은 뜻이라 배지를 뺀다 */
-export type BuzzStat = "homeRuns" | "hits" | "rbi" | "stolenBases" | "wins" | "saves" | "strikeouts";
+export type BuzzStat = NonNullable<S["GameBuzz"]["stat"]>;
 
 /** 선수 × 경기 한 줄 */
-export interface GameLine {
-  playerId: number;
-  nameKo: string;
-  role: Role;
-  gameId: number;
-  /** ISO-8601, +09:00 오프셋 */
-  startTimeKst: string;
-  teamKo: string;
-  /** 팀 약어(SF, LAD ...). 팀 색·로고를 찾을 때 쓴다 */
-  teamAbbr: string | null;
-  /** 선수 사진 주소(우리가 호스팅, /photos/mlb-808982). 없으면 null */
-  photoUrl: string | null;
-  /** 사진 속 유니폼 팀 약어(사진 원 바탕색). 트레이드·복귀 직후에는 teamAbbr과 다를 수 있다. 옛 api면 없음(teamAbbr로 대신) */
-  photoTeamAbbr?: string | null;
-  opponentKo: string;
-  /** 상대 팀 약어. 상대 팀 로고를 찾을 때 쓴다 */
-  opponentAbbr: string | null;
-  home: boolean;
-  /** 경기 전이면 null */
-  teamScore: number | null;
-  opponentScore: number | null;
-  /** 경기 전·중이면 null */
-  result: GameResult;
-  /** 경기 상태 (scheduled, in_progress, final, postponed ...) */
-  gameStatus: string;
-  played: boolean;
-  /** api가 만든 한국어 한 줄 기록. 안 뛰었으면 이유("결장", "경기 전" ...) */
-  summary: string;
-  /** 이 경기 타격 숫자. 안 뛰었거나 기록을 못 받았으면 null */
-  batting: GameBatting | null;
-  /** 이 경기 투구 숫자. 안 던졌거나 기록을 못 받았으면 null */
-  pitching: GamePitching | null;
-  /** 선발(STARTER)인지 교체(SUB)로 나왔는지. 안 뛰었거나 모르면 null (MLB 공식 박스스코어 기준) */
-  lineup: Lineup | null;
-  /** 그 경기가 정규시즌인지 포스트시즌인지(결장 줄도, korleaguer-server#192). 옛 api(칸 없음)·모르는 값이면 null */
-  seasonType: SeasonType | null;
-}
+export type GameLine = S["GameLine"];
 
-export type Lineup = "STARTER" | "SUB";
-export type SeasonType = "REGULAR" | "POSTSEASON";
+export type Lineup = NonNullable<S["GameLine"]["lineup"]>;
+export type SeasonType = NonNullable<S["GameLine"]["seasonType"]>;
 
-export interface GameBatting {
-  atBats: number;
-  hits: number;
-  homeRuns: number;
-  rbi: number;
-  walks: number;
-  stolenBases: number;
-  /** 아래 여섯 칸은 선수 화면 타격 흐름 그래프(누적 wRC+)에 쓴다. MLB가 주지 않았거나 옛 API면 null(korleaguer-server#133) */
-  doubles: number | null;
-  triples: number | null;
-  hitByPitch: number | null;
-  sacFlies: number | null;
-  plateAppearances: number | null;
-  strikeouts: number | null;
-}
+export type GameBatting = S["GameBatting"];
 
-export interface GamePitching {
-  /** 잡은 아웃 수. 모르면 null */
-  outs: number | null;
-  /** "1⅔". 아웃 수를 모르면 null */
-  inningsText: string | null;
-  runs: number;
-  earnedRuns: number;
-  strikeouts: number;
-  win: boolean;
-  loss: boolean;
-  save: boolean;
-}
+export type GamePitching = S["GamePitching"];
 
-export interface HitterSeason {
-  playerId: number;
-  nameKo: string;
-  teamKo: string | null;
-  teamAbbr: string | null;
-  photoUrl: string | null;
-  /** 사진 속 유니폼 팀 약어(사진 원 바탕색). 트레이드·복귀 직후에는 teamAbbr과 다를 수 있다. 옛 api면 없음(teamAbbr로 대신) */
-  photoTeamAbbr?: string | null;
-  games: number;
-  /** 같은 시즌 마이너(트리플A ~ 루키)에서 뛴 경기 수. 모르거나 오래된 api면 0 */
-  minorGames: number;
-  /** 올해 마이너 경기가 메이저 경기(games)보다 많다. 표에서 따로 묶고 1위 비교에서 뺀다 */
-  mainlyMinors: boolean;
-  /** 마이너 시즌 성적 줄이면 단계("트리플A" 등, teamKo는 마지막 마이너 팀). 메이저 줄이면 null */
-  levelKo: string | null;
-  /** 타석. 순위 기준(RankingMinimums)과 비교한다 */
-  plateAppearances: number;
-  atBats: number;
-  hits: number;
-  doubles: number;
-  homeRuns: number;
-  rbi: number;
-  walks: number;
-  strikeouts: number;
-  stolenBases: number;
-  avg: number | null;
-  obp: number | null;
-  slg: number | null;
-  ops: number | null;
-}
+export type HitterSeason = S["HitterSeason"];
 
-export interface PitcherSeason {
-  playerId: number;
-  nameKo: string;
-  teamKo: string | null;
-  teamAbbr: string | null;
-  photoUrl: string | null;
-  /** 사진 속 유니폼 팀 약어(사진 원 바탕색). 트레이드·복귀 직후에는 teamAbbr과 다를 수 있다. 옛 api면 없음(teamAbbr로 대신) */
-  photoTeamAbbr?: string | null;
-  games: number;
-  /** 같은 시즌 마이너(트리플A ~ 루키) 등판 경기 수. 모르거나 오래된 api면 0 */
-  minorGames: number;
-  /** 올해 마이너 등판이 메이저 등판(games)보다 많다. 표에서 따로 묶고 1위 비교에서 뺀다 */
-  mainlyMinors: boolean;
-  /** 마이너 시즌 성적 줄이면 단계("트리플A" 등, teamKo는 마지막 마이너 팀). 메이저 줄이면 null */
-  levelKo: string | null;
-  outs: number;
-  /** "5⅔" 처럼 api가 만든 이닝 표기 */
-  inningsText: string;
-  era: number | null;
-  wins: number;
-  losses: number;
-  saves: number;
-  strikeouts: number;
-  walks: number;
-  hitsAllowed: number;
-}
+export type PitcherSeason = S["PitcherSeason"];
 
 /**
  * 시즌 순위(타율·OPS·평균자책점)에 넣는 최소 표본. 몇 타석만 뛴 선수가 1위가 되지 않게 거른다.
  * 타자는 팀 경기 수 × 0.5타석(최소 10), 투수는 팀 경기 수 × 0.2이닝(최소 5이닝). 홈런·타점처럼 쌓이는 기록에는 쓰지 않는다.
  */
-export interface RankingMinimums {
-  /** 시즌이 얼마나 지났는지(우리 선수 구단 중 끝난 정규시즌 경기가 가장 많은 구단의 경기 수) */
-  teamGames: number;
-  minPlateAppearances: number;
-  minOuts: number;
-  /** "32⅔" 처럼 api가 만든 이닝 표기 */
-  minInningsText: string;
-}
+export type RankingMinimums = S["RankingMinimums"];
 
 /** GET /api/home */
-export interface HomeResponse {
-  dataMode: DataMode;
-  statsAvailable: boolean;
-  season: number;
-  generatedAt: string;
-  recent: {
-    isFallback: boolean;
-    /** 한국 날짜 "2026-09-27". DB에 경기가 하나도 없으면 null */
-    dateKst: string | null;
-    /** 선수당 한 줄 */
-    lines: GameLine[];
-    /** 줄마다 화제 문구(선수 id·경기 id로 줄과 짝짓는다, 없는 줄은 빠진다). 옛 api는 이 칸이 없다 */
-    buzz: GameBuzz[];
-  };
-  /** 순위 기준. 없으면(오래된 api) null이고, 그때는 거르지 않는다 */
-  ranking: RankingMinimums | null;
-  /** 주로 메이저인 선수 먼저(주로 마이너는 맨 아래). 묶음 안에서는 순위 기준을 채운 선수 먼저 타율 순, 그다음 못 채운 선수 타율 순 */
-  hitters: HitterSeason[];
-  /** 주로 메이저인 투수 먼저(주로 마이너는 맨 아래). 묶음 안에서는 순위 기준을 채운 투수 먼저 평균자책점 낮은 순 */
-  pitchers: PitcherSeason[];
-  /** 마이너 시즌 성적(마이너 경기별 기록 합산), 마이너 경기 많은 순. 오래된 api면 빈 배열 */
-  minorHitters: HitterSeason[];
-  minorPitchers: PitcherSeason[];
-  /** 비시즌일 때만 있다(다음 개막일 등). 시즌 중이거나 오래된 api면 null */
-  offseason: OffSeason | null;
-  /** 이번 겨울 KBO 포스팅(MLB 도전). 비시즌일 때만 있다. 시즌 중이거나 오래된 api면 null */
-  posting: PostingSummary | null;
-}
+export type HomeResponse = S["HomeResponse"];
 
 /** 포스팅 선수 상태: 협상 시작 전·협상 중·계약·결렬·마감 지남(결과 확인 중) */
-export type PostingStatus = "UPCOMING" | "NEGOTIATING" | "SIGNED" | "NO_DEAL" | "CLOSED";
+export type PostingStatus = S["PostingSummaryPlayer"]["status"];
 
-export interface PostingDeal {
-  mlbTeamId: number | null;
-  mlbTeamKo: string | null;
-  /** 합의가 처음 보도된 미국 날짜 */
-  agreedOn: string | null;
-  years: number | null;
-  /** 보장액(달러). 옵션·인센티브 제외 */
-  guaranteedUsd: number | null;
-  /** 합의일 원/달러 환율(1달러당 원, ECB 기준 환율). 화면이 보장액을 원화로 어림한다. 없으면 null */
-  krwPerUsd: number | null;
-}
+export type PostingDeal = S["PostingSummaryDeal"];
 
-export interface NewsHeadline {
-  /** 우리 기사 번호. 제목을 누르면 우리 기사 페이지(/news/{id})로 간다. 옛 API면 null(원문을 새 탭으로 연다) */
-  id: number | null;
-  /** 언론사가 붙인 원래 제목(영어 기사면 영어) */
-  title: string;
-  /** 원문(언론사) 주소 */
-  url: string;
-  publisher: string;
-  publishedAt: string;
-  /** 아래 넷은 옛 API·요약 전이면 null */
-  /** 영어 기사 제목을 Claude가 한국어로 옮긴 것 */
-  titleKo: string | null;
-  /** 기사 첫머리(언론사 피드가 준 글자 200자 안팎) */
-  lead: string | null;
-  /** Claude가 쓴 한국어 요약(줄마다 한 문장) */
-  summary: string | null;
-  /** 기사 대표 사진 원본 주소(언론사 서버) */
-  imageUrl: string | null;
-  /**
-   * 같은 글을 실은 다른 언론사(낸 순, 이 기사의 언론사는 빼고). 서버가 언론사만 다른 같은 기사를 한 줄로 묶고
-   * 이 기사를 대표로 보낸다(korleaguer-server#113). 묶인 사본이 없거나 옛 API면 빈 목록
-   */
-  alsoBy: string[];
-}
+export type NewsHeadline = S["PostingSummaryHeadline"];
 
 /** GET /api/news/{id}: 우리 기사 페이지 한 건. 원문은 url(언론사)에 있고, 우리는 제목·대표 사진·요약과 출처만 보여 준다 */
-export interface NewsPage {
-  id: number;
-  /** 이 기사의 선수(한글 이름) */
-  player: string;
-  /** 그 선수 사진(우리가 호스팅). 기사 사진이 없거나 안 뜨면 대신 보인다. 이번 겨울 포스팅 선수가 아니면 null */
-  playerPhotoUrl: string | null;
-  /** 언론사가 붙인 원래 제목(영어 기사면 영어) */
-  title: string;
-  /** 영어 기사 제목을 Claude가 한국어로 옮긴 것. 한국어 기사면 null */
-  titleKo: string | null;
-  /** 원문(언론사) 주소 */
-  url: string;
-  publisher: string;
-  publishedAt: string;
-  /** 기사 대표 사진 원본 주소(언론사 서버, https). 없으면 null */
-  imageUrl: string | null;
-  /** Claude가 쓴 한국어 요약(줄마다 한 문장). 아직 없으면 null */
-  summary: string | null;
-  /** 기사 첫머리(언론사 피드가 준 글자 200자 안팎). 요약이 없을 때 쓴다. 없으면 null */
-  lead: string | null;
-  /**
-   * 같은 글을 실은 다른 언론사(낸 순, 이 기사의 언론사는 빼고). 출처 줄 아래 '같은 기사' 줄에 쓴다(이슈 #277).
-   * 기사 상세 응답에는 korleaguer-server#180부터 들어 있다. 그 전 api면 빈 목록이고, 그때는 그 줄을 그리지 않는다
-   */
-  alsoBy: string[];
-  /** 같은 선수의 다른 기사(늦은 순 5건, 이 기사는 빼고) */
-  more: NewsHeadline[];
-}
+export type NewsPage = S["NewsPageResponse"];
 
 /** GET /api/news의 선수 고르기 한 칸(korleaguer-server#153) */
-export interface NewsListPlayer {
-  nameKo: string;
-  /** 우리가 호스팅하는 선수 사진. 포스팅 선수는 KBO 구단 사진(배경 있음), 명단 선수는 배경을 지운 MLB 사진. 없으면 null */
-  photoUrl: string | null;
-  /** 명단 선수의 번호(선수 화면 /players/{id}). 포스팅 선수처럼 명단에 없으면 null */
-  playerId: number | null;
-  /** 이번 겨울 포스팅 선수(아직 KBO 선수) */
-  posting: boolean;
-  /** 이 선수의 보일 기사 중 가장 최근 발행 시각(korleaguer-server#155). '새 기사' 점에 쓴다. 옛 api면 null */
-  latestAt: string | null;
-}
+export type NewsListPlayer = S["NewsListResponseSubject"];
 
 /** 뉴스 탭 기사 한 줄. 목록에는 요약을 보이지 않아 서버가 요약·첫머리를 싣지 않는다(lead·summary는 늘 null) */
-export interface NewsListItem extends NewsHeadline {
-  /** 누구 기사인지(한글 이름). 같은 기사가 여러 선수에 걸렸으면 모두 */
-  who: string[];
-}
+export type NewsListItem = S["NewsListResponseItem"];
 
 /** GET /api/news: 뉴스 탭 한 쪽 */
-export interface NewsList {
-  /** 기사가 있는 선수(포스팅 선수 먼저, 그다음 명단 순) */
-  players: NewsListPlayer[];
-  /** 이 쪽을 거른 선수. 전체이거나 모르는 선수면 null */
-  player: string | null;
-  /** 기사(늦은 순, 최대 20줄) */
-  items: NewsListItem[];
-  /** 다음 쪽 커서(그대로 before로 넘긴다). 더 없으면 null */
-  next: string | null;
-  /** 이 쪽을 거른 검색어. 없으면 null */
-  query: string | null;
-  /**
-   * 그 검색어로 나오는 줄 수(지금 범위 전체, 같은 기사는 한 줄. 알약 숫자와 같은 셈). 첫 쪽이고 검색어가 있을 때만 온다.
-   * 세어 주지 않는 api면 null이고, 화면은 알약 숫자나 받은 줄 수로 대신한다(뉴스 탭 page.tsx)
-   */
-  queryCount: number | null;
-  /** 지금 범위의 최근 기사에 많이 나온 말(검색창 바로가기, korleaguer-server#158). 첫 쪽에만(검색어가 있어도 온다, #165) */
-  topics: NewsTopic[];
-}
+export type NewsList = S["NewsListResponse"];
 
-export interface NewsTopic {
-  word: string;
-  /** 최근 기사 묶음 가운데 제목에 이 말이 있는 수 */
-  count: number;
-}
+export type NewsTopic = S["NewsTopic"];
 
-export interface PostingPlayer {
-  nameKo: string;
-  kboTeam: string;
-  positionKo: string;
-  birthYear: number | null;
-  /** 프로필 사진(현 소속 KBO 구단 공식 사진). 없으면 null */
-  photoUrl: string | null;
-  status: PostingStatus;
-  windowOpensAt: string;
-  deadlineAt: string;
-  /** 한국 날짜로 마감일까지 남은 날(마감 당일 0). 협상 시작 전·협상 중일 때만 */
-  daysLeft: number | null;
-  /** 협상 기간 중 지난 비율 0~1 */
-  elapsedRatio: number;
-  deal: PostingDeal | null;
-  /** 관련 기사(늦은 순, 최대 12건. 옛 api는 5건) */
-  news: NewsHeadline[];
-  /** 최근 며칠 기사에서 이 선수의 행선지로 거론된 MLB 구단(AI가 기사마다 고른 것). 옛 api면 없다 */
-  linkedTeams?: LinkedTeams | null;
-}
+export type PostingPlayer = S["PostingSummaryPlayer"];
 
 /** 최근 days일(한국 날짜, 오늘 포함) 기사에서 행선지로 거론된 구단. teams는 거론이 많은 순 → 오늘 → 최근 순 */
-export interface LinkedTeams {
-  days: number;
-  teams: LinkedTeam[];
-}
+export type LinkedTeams = S["PostingSummaryLinkedTeams"];
 
-export interface LinkedTeam {
-  /** MLB 대표 약어(NYM) */
-  abbreviation: string;
-  /** 한글 이름(뉴욕 메츠) */
-  nameKo: string;
-  /** 갈 수 있다·관심 있다는 거론이 나온 기사 수 */
-  linked: number;
-  /** 필요 없다·안 갈 것이라는 전망이 나온 기사 수 */
-  doubted: number;
-  /** 오늘(한국 날짜) 나온 기사에서 거론됐나 */
-  today: boolean;
-  /** 거론으로 센 기사(같은 글은 대표 한 줄, 최근 순). 건수가 linked와 같다. 옛 api면 없다 */
-  articles?: LinkedArticle[];
-}
+export type LinkedTeam = S["PostingSummaryLinkedTeam"];
 
 /** 구단을 행선지로 거론한 기사 한 건 */
-export interface LinkedArticle {
-  id: number;
-  title: string;
-  titleKo: string | null;
-  publisher: string;
-  publishedAt: string;
-  imageUrl: string | null;
-  alsoBy: string[];
-  /** AI 요약에서 그 구단 이름이 처음 나온 문장. 없으면 null(제목을 보인다) */
-  reason: string | null;
-  /** reason(없으면 제목)에서 찾은 구단 이름 그대로. 화면이 강조한다 */
-  reasonName: string | null;
-}
+export type LinkedArticle = S["PostingSummaryLinkedArticle"];
 
 /** 지금 포스팅 제도(2018~)의 지난 기록. 결렬이면 deal·daysBeforeDeadline이 null */
-export interface PostingPast {
-  nameKo: string;
-  season: number;
-  deadline: string;
-  daysBeforeDeadline: number | null;
-  deal: PostingDeal | null;
-  /** 계약 구단 시절 MLB 사진의 흰 바탕 편집본(/photos/posting-673490-2024), 없으면 포스팅 당시 KBO 공식 사진(/photos/kbo-…). 없으면 null */
-  photoUrl: string | null;
-}
+export type PostingPast = S["PostingSummaryPast"];
 
-export interface PostingSummary {
-  players: PostingPlayer[];
-  history: PostingPast[];
-}
+export type PostingSummary = S["PostingSummary"];
 
 /**
  * 비시즌 정보(GET /api/home의 offseason). 최근 7일 안에 시작한 우리 선수 구단 경기가 없고
  * 정규시즌 기간도 아니면 api가 채운다(시즌 끝, 스프링캠프, 포스트시즌 탈락).
  */
-export interface OffSeason {
-  /** 끝난 시즌 */
-  season: number;
-  nextSeason: number;
-  /** 다음 정규시즌 개막일, 미국 날짜 "2027-03-25". 발표 전이면 null */
-  nextOpeningDay: string | null;
-  /** 오늘(미국 날짜)부터 개막일까지 남은 날. 개막일을 모르면 null */
-  daysToOpening: number | null;
-  /** 명단의 선수 번호. 이 번호로 /api/my를 불러 선수별 상태·시즌 합계를 받는다 */
-  playerIds: number[];
-  /** 끝난 시즌의 선수별 성적표(잘한 순). 옛 api면 없다 */
-  report?: SeasonReport[];
-}
+export type OffSeason = S["OffSeason"];
 
 /**
  * 시즌 판정. GOOD 좋은 시즌 · SHORT_GOOD 짧았지만 좋았던 시즌 · SOLID 제 몫 한 시즌 · MINORS 트리플A(마이너)에서 보낸 시즌 ·
  * SHORT 출전이 적었던 시즌 · POOR 아쉬운 시즌(혹평 대신, 이유 한 줄과 함께)
  */
-export type SeasonTier = "GOOD" | "SHORT_GOOD" | "SOLID" | "MINORS" | "SHORT" | "POOR";
+export type SeasonTier = S["SeasonReport"]["tier"];
 
 /** 선수 한 명의 시즌 성적표(GET /api/home의 offseason.report) */
-export interface SeasonReport {
-  playerId: number;
-  tier: SeasonTier;
-  /** 판정 이름("제 몫 한 시즌") */
-  label: string;
-  /** 한 줄 제목("143경기 완주, 타격은 리그 평균") */
-  headline: string;
-  /** 사실 이유 한 줄. 없으면 null */
-  reason: string | null;
-  /** 카드 숫자를 어느 단계 시즌 합계로 보일지 */
-  level: "MLB" | "MINORS";
-  /** 메이저 WAR(소수 한 자리). 홈 목록에는 쓰지 않는다(선수끼리 같은 숫자를 두려고 뺐다, 이슈 #276) */
-  war: number | null;
-  /**
-   * 아래 넷은 korleaguer-server#179(옛 api면 없다). 목록 한 줄의 숫자(타자 경기·wRC+·타율, 투수 등판·ERA+·평균자책점)와
-   * 펼친 곳의 MLB 안 위치에 쓴다.
-   * wrcPlus: 타자 시즌 wRC+(리그 평균 = 100). 숫자 칸과 같은 단계 합계다(마이너 시즌이면 마이너 합계를 그 단계 리그 평균과).
-   * 투수거나 50타석 미만이면 null
-   */
-  wrcPlus?: number | null;
-  /** 투수 시즌 ERA+(리그 평균 = 100, 높을수록 잘함). wrcPlus와 같은 단계. 타자거나 10이닝 미만이면 null */
-  eraPlus?: number | null;
-  /** wrcPlus·eraPlus가 마이너 합계일 때 그 단계 이름('트리플A', 섞였으면 '마이너'). 메이저면 null */
-  statLevelKo?: string | null;
-  /** 선수 화면과 같은 MLB 안 위치(백분위). 메이저 기록이 없거나 서버가 위치를 못 읽으면 null, 옛 api면 없다(undefined) */
-  saber?: PlayerSaber | null;
-  /** 정규시즌 달마다 어디서 뛰었나와 타율·평균자책점(카드의 달별 막대, korleaguer-server#170). 옛 api면 없다 */
-  months?: SeasonMonth[];
-  /** 시즌이 끝난 뒤 이동(FA 선언 등), 최근 순 */
-  winterMoves: { date: string; label: string }[];
-  /** 시즌이 끝난 뒤 나온 이 선수 기사(늦은 순, 같은 기사는 한 줄, 12건까지). 옛 api면 없다 */
-  news?: NewsHeadline[];
-  /** FA 선수의 행선지로 거론된 구단(최근 7일, 직전 구단 뺌). FA가 아니거나 거론이 없으면 null, 옛 api면 없다 */
-  linkedTeams?: LinkedTeams | null;
-}
+export type SeasonReport = S["SeasonReport"];
 
 /**
  * 성적표 달 한 칸. kind: MLB 메이저 · MINORS 마이너(levelKo 단계) · INJURED 부상(재활 경기만 뛰었거나 경기 없이 부상자 명단) ·
  * FREE_AGENT 팀 없음 · NONE 기록 없음. 기록(avg·era)은 MLB·MINORS에만 있다
  */
-export interface SeasonMonth {
-  /** 4~9. 개막 직후 며칠(3월 말)은 4월 칸에 들어 있다 */
-  month: number;
-  kind: "MLB" | "MINORS" | "INJURED" | "FREE_AGENT" | "NONE";
-  /** 마이너 단계 이름("트리플A"). MINORS가 아니면 null */
-  levelKo: string | null;
-  /** 기록을 낸 경기 수(타자 경기, 투수 등판). 재활 경기는 세지 않는다 */
-  games: number;
-  /** 타자 타율. 투수거나 타수가 없으면 null */
-  avg: number | null;
-  /** 타자 wRC+(그 단계 리그 평균 = 100, 메이저 달은 공식 시즌 값에 맞춤, korleaguer-server#175). 막대 높이. 옛 api면 없다 */
-  wrcPlus?: number | null;
-  /** 투수 평균자책점. 타자거나 아웃이 없으면 null */
-  era: number | null;
-  /** 투수 ERA+(그 단계 리그 평균 = 100, 높을수록 잘함, 300까지). 막대 높이. 옛 api면 없다 */
-  eraPlus?: number | null;
-  /** 경기가 적은 달(타자 10경기·투수 5등판 미만). 막대를 옅게 */
-  few: boolean;
-  /** 아주 잘한 달(메이저 타자 15경기 wRC+ 130 이상, 투수 15이닝 ERA+ 143 이상). 숫자를 주황으로 */
-  hot: boolean;
-}
+export type SeasonMonth = S["SeasonReportMonth"];
 
 /** GET /api/players 의 한 항목. 매칭 전 선수는 이름(한글)·역할 말고는 null일 수 있다 */
-export interface PlayerSummary {
-  id: number;
-  nameKo: string;
-  nameEn: string | null;
-  role: Role;
-  position: string | null;
-  /** api가 번역한 포지션. 모르는 포지션이면 영어 원문 */
-  positionKo: string | null;
-  teamKo: string | null;
-  teamAbbr: string | null;
-  photoUrl: string | null;
-  /** 사진 속 유니폼 팀 약어(사진 원 바탕색). 트레이드·복귀 직후에는 teamAbbr과 다를 수 있다. 옛 api면 없음(teamAbbr로 대신) */
-  photoTeamAbbr?: string | null;
-  /** 만 나이 */
-  age: number | null;
-  /** 등번호. 숫자가 아닐 수도 있어서 문자열 */
-  jersey: string | null;
-  /** 지금 메이저인지 마이너인지(MLB 공식 API 기준). 소속이 없거나 모르면 null */
-  level: Level | null;
-  /** MLB 공식 API가 알려 준 지금 소속 팀 이름. 마이너면 "St. Paul Saints"처럼 영어 */
-  levelTeam: string | null;
-  /** MLB 이동 기록상 FA(마지막 'FA 선언' 뒤 새 팀 기록 없음). 그러면 level·levelTeam은 null이고 팀 칸은 마지막 팀이다 */
-  freeAgent: boolean;
-  /** 국내 리그로 돌아간 팀(명단에 사람이 적은 값, 예: "LG 트윈스"). 해외에서 뛰면 null. 있으면 FA·단계 알약 대신 '… 복귀' */
-  returnedKo: string | null;
-}
+export type PlayerSummary = S["PlayerSummary"];
 
-export type Level = "MLB" | "MINORS";
+export type Level = S["SeasonReport"]["level"];
 
 /** 선수 이동 기록 한 줄(콜업, 마이너 강등, 부상자 명단 등) */
-export interface RosterMove {
-  /** "2026-08-30" */
-  date: string;
-  /** MLB 거래 종류 코드(OPT, CU, OUT ...) */
-  typeCode: string;
-  /** "마이너 강등(옵션)"처럼 api가 만든 짧은 한국어 */
-  labelKo: string;
-  fromTeam: string | null;
-  toTeam: string | null;
-  /** 옮겨 간 곳이 메이저인지 마이너인지. 모르면 null */
-  toLevel: Level | null;
-}
+export type RosterMove = S["MoveEntry"];
 
 /** 이동 연표 띠 구간 종류: 메이저 · 마이너 · 부상(재활 경기만 뛰었거나 경기 없이 부상자 명단) · 팀 없음(방출·FA) */
-export type TimelineKind = "MLB" | "MINORS" | "INJURED" | "NO_TEAM";
+export type TimelineKind = S["TimelineSegment"]["kind"];
 
 /** 띠 한 구간(양 끝 날짜 포함). 같은 종류가 이어지면 서버가 합쳐 준다 */
-export interface TimelineSegment {
-  /** "2026-03-01" */
-  from: string;
-  to: string;
-  kind: TimelineKind;
-  /** 마이너면 단계("트리플A"), 아니면 null */
-  levelKo: string | null;
-  teamKo: string | null;
-}
+export type TimelineSegment = S["TimelineSegment"];
 
 /** 그 시즌 선수 숫자(경기 수·wRC+·타율, 투수는 ERA+·평균자책점). 보이는 단계(level)의 합계 */
-export interface TimelineStat {
-  level: Level;
-  /** 마이너면 단계("트리플A", 섞였으면 "마이너") */
-  levelKo: string | null;
-  games: number;
-  wrcPlus: number | null;
-  avg: number | null;
-  eraPlus: number | null;
-  era: number | null;
-}
+export type TimelineStat = S["PlayerTimelineResponseStat"];
 
-export interface TimelinePlayer {
-  playerId: number;
-  segments: TimelineSegment[];
-  /** 그 시즌 이동(날짜 오름차순) */
-  moves: RosterMove[];
-  /** 가장 최근 이동 날짜. 이동이 없으면 null */
-  lastMoveOn: string | null;
-  stat: TimelineStat | null;
-}
+export type TimelinePlayer = S["PlayerTimelineResponsePlayerTimeline"];
 
 /** GET /api/players/timeline?season=: 선수 탭 '어디서 뛰었나' 연표. 옛 api면 notFound */
-export interface Timeline {
-  season: number;
-  /** 고를 수 있는 시즌(오래된 순) */
-  seasons: number[];
-  /** 띠가 덮는 날짜(양 끝 포함) */
-  from: string;
-  to: string;
-  /** 오늘(미국 날짜) */
-  today: string;
-  /** 지금이 이 시즌 중인가(그러면 띠에 '오늘' 표시) */
-  inSeason: boolean;
-  players: TimelinePlayer[];
-}
+export type Timeline = S["PlayerTimelineResponse"];
 
-export interface PlayerDetail extends PlayerSummary {
-  teamEn: string | null;
-  birthPlace: string | null;
-  /** MLB 공식 선수 페이지 */
-  mlbUrl: string | null;
-  /** "1998-08-20" */
-  birthDate: string | null;
-  heightCm: number | null;
-  weightKg: number | null;
-  /** "우투좌타" */
-  batsThrowsKo: string | null;
-  debutYear: number | null;
-  /** 한국 시절 소속. 예: "넥센·키움 히어로즈 (2017–2023)" */
-  careerKo: string | null;
-  /** 과거 소속팀(KBO) 시절 공식 사진(오래된 팀부터). 없으면 빈 배열 */
-  careerPhotos: CareerPhoto[];
-}
+export type PlayerDetail = S["PlayerPageResponsePlayerInfo"];
 
 /** 과거 소속팀 시절 사진 한 장(그 팀 마지막 시즌 KBO 공식 사진, 우리가 호스팅하는 주소) */
-export interface CareerPhoto {
-  /** "키움 히어로즈" */
-  teamKo: string;
-  /** "2017–2023" */
-  years: string | null;
-  /** "/photos/career-67341-2023"(MLB 사진과 같은 틀의 편집본). 옛 api는 "/photos/kbo-67341-2023"(배경 있는 KBO 원본) */
-  photoUrl: string;
-}
+export type CareerPhoto = S["PastTeamPhoto"];
 
 /**
  * 선수 화면 'MLB 타자(투수) 중에서'의 백분위(1~99, 높을수록 좋다): 같은 시즌 MLB 선수(타자 100타석·투수 30이닝 이상) 중
  * 이 선수보다 값이 나쁜 비율. 견줄 선수가 아직 없거나(시즌 초) 이 선수의 그 값이 없으면 null
  */
-export interface HitterPercentiles {
-  /** 종합: 타석당 WAR */
-  overall: number | null;
-  /** 타격: wRC+ */
-  batting: number | null;
-  /** 주루: 타석당 주루 득점 */
-  baseRunning: number | null;
-  /** 수비: 타석당 수비 득점(포지션 난도 포함) */
-  fielding: number | null;
-}
+export type HitterPercentiles = S["PlayerSaberHitterPercentiles"];
 
-export interface PitcherPercentiles {
-  /** 종합: 아웃당 WAR */
-  overall: number | null;
-  /** 실점 억제: ERA-(낮을수록 좋다) */
-  runPrevention: number | null;
-  /** 삼진: 상대 타자 중 삼진 비율 */
-  strikeouts: number | null;
-  /** 볼넷: 상대 타자 중 볼넷 비율(낮을수록 좋다) */
-  walks: number | null;
-}
+export type PitcherPercentiles = S["PlayerSaberPitcherPercentiles"];
 
 /**
  * GET /api/players/{id}의 saber(korleaguer-server#133): 지금 시즌 MLB 공식 세이버 지표와 MLB 선수 중 위치(백분위).
  * 득점(batting·baseRunning·fielding)은 리그 평균 대비(+면 평균보다 낫다). percentiles는 표본이 적으면(타자 50타석·투수 10이닝 미만) null
  */
-export type PlayerSaber =
-  | {
-      kind: "hitter";
-      season: number;
-      war: number | null;
-      /** 견준 MLB 선수 수. 견줄 선수가 없으면 0 */
-      poolSize: number;
-      plateAppearances: number | null;
-      wrcPlus: number | null;
-      batting: number | null;
-      baseRunning: number | null;
-      fielding: number | null;
-      percentiles: HitterPercentiles | null;
-    }
-  | {
-      kind: "pitcher";
-      season: number;
-      war: number | null;
-      poolSize: number;
-      /** 이닝을 아웃 수로(50⅔이닝 = 152) */
-      inningsOuts: number | null;
-      eraMinus: number | null;
-      /** ERA-를 뒤집은 ERA+(100 = 리그 평균, 높을수록 잘함). 서버가 준다 */
-      eraPlus: number | null;
-      fipMinus: number | null;
-      /** 퍼센트 값(22.7 = 22.7%) */
-      strikeoutRate: number | null;
-      walkRate: number | null;
-      percentiles: PitcherPercentiles | null;
-    };
+export type PlayerSaber = S["PlayerSaber"];
 
 /** 지난 시즌 표 한 줄(MLB 정규시즌, 최신부터). 한 시즌 여러 팀이면 합친 한 줄이고 teamKo는 "탬파베이·애틀랜타" */
-export type CareerSeason =
-  | {
-      kind: "hitter";
-      season: number;
-      teamKo: string | null;
-      games: number | null;
-      plateAppearances: number | null;
-      avg: number | null;
-      homeRuns: number | null;
-      ops: number | null;
-      wrcPlus: number | null;
-      war: number | null;
-    }
-  | {
-      kind: "pitcher";
-      season: number;
-      teamKo: string | null;
-      games: number | null;
-      inningsOuts: number | null;
-      era: number | null;
-      strikeouts: number | null;
-      eraMinus: number | null;
-      war: number | null;
-    };
+export type CareerSeason = S["CareerSeason"];
 
 /** GET /api/players/{id} */
-export interface PlayerResponse {
-  dataMode: DataMode;
-  statsAvailable: boolean;
-  season: number;
-  /**
-   * 이 응답을 만든 시각(ISO). 시즌 성적 제목 옆 '기준 …'(이슈 #277). 서버가 아직 주지 않아(korleaguer-server에 더할 일)
-   * 옛 api면 null이고, 그때는 기준 글을 빼고 그린다
-   */
-  generatedAt: string | null;
-  player: PlayerDetail;
-  hitting: HitterSeason | null;
-  pitching: PitcherSeason | null;
-  /** 같은 시즌 마이너 기록(경기별 기록을 더한 것, 단계는 levelKo). 마이너 경기가 없거나 오래된 api면 null */
-  minorHitting: HitterSeason | null;
-  minorPitching: PitcherSeason | null;
-  /** 최신 경기부터 */
-  games: GameLine[];
-  /** 이동 기록, 최신부터. 이동 기록을 주지 않는 오래된 api면 null(없다고 단정하지 않는다) */
-  moves: RosterMove[] | null;
-  /** 아래 셋은 korleaguer-server#133. 옛 API·아직 받지 않았으면 null / 빈 목록 */
-  /** 지금 시즌 MLB 선수 중 위치(백분위). 그 시즌 MLB 기록이 없으면 null */
-  saber: PlayerSaber | null;
-  /** MLB 시즌별 기록(최신부터) */
-  seasons: CareerSeason[];
-  /** 이 선수 기사(늦은 순, 최대 10건) */
-  news: NewsHeadline[];
-  /** 이번 시즌 마이너리그 경기(최신부터). 옛 API·마이너 경기가 없으면 빈 목록 */
-  minorGames: MinorGameLine[];
-}
+export type PlayerResponse = S["PlayerPageResponse"];
 
 /**
  * 선수의 마이너리그 경기 한 번(GET /api/players/{id}의 minorGames). 경기 기록에서 메이저 경기와 날짜순으로 섞어 보여 준다.
  * 팀 이름은 한국어 도시 이름(모르는 팀이면 영어 지명), 로고는 teamId·opponentId로 MLB 공식 로고 주소에서 받는다.
  */
-export interface MinorGameLine {
-  gamePk: number;
-  /** ISO-8601 +09:00. 시작 시각을 모르면 공식 날짜 다음 날 08:00으로 어림한 값 */
-  startTimeKst: string;
-  /** "AAA" | "AA" | "A+" | "A" | "ROK" */
-  level: string;
-  /** "트리플A" 등 */
-  levelKo: string;
-  teamId: number | null;
-  teamKo: string;
-  opponentId: number | null;
-  opponentKo: string;
-  home: boolean | null;
-  teamScore: number | null;
-  opponentScore: number | null;
-  result: GameResult;
-  /** 메이저 GameLine.summary와 같은 규칙의 한국어 한 줄 기록 */
-  summary: string;
-  batting: GameBatting | null;
-  pitching: GamePitching | null;
-  /** GameLine.seasonType과 같은 칸. 서버가 정규시즌 줄만 저장해 늘 REGULAR다. 옛 api(칸 없음)·모르는 값이면 null */
-  seasonType: SeasonType | null;
-}
+export type MinorGameLine = S["MinorGameLine"];
 
 /**
  * 선수 한 명의 경기 한 개 상세(GET /api/players/{id}/games/{gamePk}, korleaguer-server#159).
  * 경기 달력에서 날짜를 누르면 뜨는 창에 쓴다. 옛 api면(404) 창이 '불러오지 못했어요'를 보인다.
  */
-export interface GameDetail {
-  playerId: number;
-  gamePk: number;
-  role: Role;
-  /** 타석 기록을 받았는지. false면 MLB에서 아직 못 받았다(잠시 뒤 다시) */
-  available: boolean;
-  /** 타석마다 공 영상(Baseball Savant)을 물을 수 있는지(메이저 경기이고 영상이 켜져 있을 때) */
-  clips: boolean;
-  /** 타석(투수면 상대 타자) 순서대로 */
-  plays: GamePlay[];
-  /** 그 선수가 나온 MLB 하이라이트 영상(올라온 순서) */
-  highlights: GameHighlight[];
-}
+export type GameDetail = S["GameDetail"];
 
-export interface GamePlay {
-  inning: number;
-  /** 초(원정 공격)면 true */
-  top: boolean;
-  /** 한국어 결과("홈런", "중견수 뜬공", "헛스윙 삼진", "우전 안타" …) */
-  resultKo: string;
-  /** MLB 결과 종류(home_run, single, strikeout, field_out …) */
-  eventType: string;
-  /**
-   * 그 타석 타자의 타점(MLB play-by-play rbi). 투수 화면에서도 같은 값이다. 투수가 책임지는 실점과는 다르다:
-   * 앞 투수가 내보낸 주자의 득점(승계 주자)·실책·폭투 점수는 타점과 어긋난다(공식 야구 규칙 9.16)
-   */
-  rbi: number;
-  /** 상대(타자면 투수, 투수면 타자) 영어 이름 */
-  opponentName: string | null;
-  balls: number | null;
-  strikes: number | null;
-  /** 그 타석 공 수 */
-  pitches: number;
-  /** 마지막 공 구종("직구", "슬라이더" …) */
-  pitchKo: string | null;
-  /** 마지막 공 구속(km/h) */
-  pitchKmh: number | null;
-  /** 타구 속도(km/h). 치지 않았으면 null */
-  exitKmh: number | null;
-  launchAngle: number | null;
-  /** 비거리(m) */
-  distanceM: number | null;
-  /** 마지막 공 번호(공 영상을 물을 때 쓴다) */
-  playId: string | null;
-}
+export type GamePlay = S["GameDetailGamePlay"];
 
-export interface GameHighlight {
-  /** 영어 제목("Jung Hoo Lee's solo home run (10)") */
-  title: string;
-  /** 서버가 AI로 한 번 옮긴 한국어 제목("솔로 홈런 (시즌 10호)"). 아직 없거나 못 옮겼으면 null */
-  titleKo: string | null;
-  durationSec: number | null;
-  /** MLB 서버 mp4 주소 */
-  mp4Url: string | null;
-  /** MLB 서버 HLS(.m3u8) 주소 */
-  hlsUrl: string | null;
-  /** 대표 사진(MLB 서버) */
-  imageUrl: string | null;
-}
+export type GameHighlight = S["GameDetailGameHighlight"];
 
 /** 내 선수 카드의 기간 합계(타자). avg는 타수가 없으면 null */
-export interface HitterPeriod {
-  games: number;
-  atBats: number;
-  hits: number;
-  homeRuns: number;
-  rbi: number;
-  walks: number;
-  stolenBases: number;
-  avg: number | null;
-  /** 이번 정규시즌 타율(비교용) */
-  seasonAvg: number | null;
-  /** 기간 wRC+(plusLevel 단계의 그 시즌 리그 평균 = 100, 0~300). 서버가 계산한다. 기간이 한 단계가 아니거나 근거가 모자라면 null */
-  wrcPlus: number | null;
-  /** wrcPlus가 견준 리그 단계: "MLB" 또는 마이너 약어("AAA" 등). 값이 없으면 null. 옛 api면 없다 */
-  plusLevel?: string | null;
-  /** 기간 경기가 둘 이상의 마이너 단계에 걸쳐 있어 한 평균과 견주지 못했다(이때 wrcPlus는 null). 옛 api면 없다 */
-  mixedLevels?: boolean;
-}
+export type HitterPeriod = S["PeriodHitting"];
 
 /** 내 선수 카드의 기간 합계(투수). era는 이닝이 없으면 null */
-export interface PitcherPeriod {
-  games: number;
-  outs: number;
-  inningsText: string;
-  earnedRuns: number;
-  era: number | null;
-  strikeouts: number;
-  wins: number;
-  losses: number;
-  saves: number;
-  /** 이번 정규시즌 평균자책점(비교용) */
-  seasonEra: number | null;
-  /** 기간 ERA+(plusLevel 단계의 그 시즌 리그 평균 = 100, 높을수록 잘함, 300까지). 서버가 계산한다. 단계가 섞였거나 아웃이 없으면 null */
-  eraPlus: number | null;
-  /** eraPlus가 견준 리그 단계(HitterPeriod.plusLevel과 같다) */
-  plusLevel?: string | null;
-  /** HitterPeriod.mixedLevels와 같다 */
-  mixedLevels?: boolean;
-}
+export type PitcherPeriod = S["PeriodPitching"];
 
 /** 내 선수 한 명: 선수 정보 + 기간 합계 + 연속 기록 + 기간 안 경기(최신부터) */
-export interface MyPlayer {
-  player: PlayerSummary;
-  /** 이 선수 카드의 기간 첫날·마지막 날(한국 날짜). 보통은 맨 위 기간과 같다 */
-  fromKst: string;
-  toKst: string;
-  /** 최근 기간에 구단 경기도 본인 출전도 없어(구단 시즌 끝·마이너) 마지막으로 뛴 날까지로 당겼으면 true */
-  isFallback: boolean;
-  hitting: HitterPeriod | null;
-  pitching: PitcherPeriod | null;
-  /** 타자는 연속 안타, 투수는 연속 무실점 경기 수. 기록을 못 받았으면 null */
-  streak: number | null;
-  games: GameLine[];
-  /** 상태 배지. 메이저에서 평소대로 뛰면 null */
-  status: CardStatus | null;
-  /** 출전 줄. 메이저에 있을 때만 */
-  play: PlayLine | null;
-  /** 한 줄 소식(사실만). 눈에 띄는 일이 없으면 null */
-  fact: FormFact | null;
-  /** 큰 숫자·막대(hitting·pitching·games)가 어떤 기간인지 */
-  basis: CardBasis;
-  /** 그 기록의 단계: "MLB" 또는 마이너 약어("AAA" 등). 시즌 합계·기록 없음이면 null */
-  level: string | null;
-  /** FA·시즌 끝일 때 시즌 합계 */
-  seasonTotals: SeasonTotals | null;
-}
+export type MyPlayer = S["MyPlayersResponseMyPlayer"];
 
 /**
  * 상태 배지 종류. IL 부상자 명단 · RETURNED 부상 복귀(7일 안) · CALLED_UP 콜업(7일 안) · MINORS 마이너 ·
  * MINORS_IL 마이너 부상자 명단 · SUSPENDED 출장 정지 · DFA 지명 할당 · FA · SEASON_OVER 시즌 끝 ·
  * KBO 국내 리그로 돌아감(teamName에 그 팀, lastGameDate·lastGameLevel은 해외 마지막 경기)
  */
-export type CardStatusKind =
-  | "IL"
-  | "RETURNED"
-  | "CALLED_UP"
-  | "MINORS"
-  | "MINORS_IL"
-  | "SUSPENDED"
-  | "DFA"
-  | "FA"
-  | "SEASON_OVER"
-  | "KBO";
+export type CardStatusKind = S["CardStatus"]["kind"];
 
-export interface CardStatus {
-  kind: CardStatusKind;
-  /** 그 상태가 시작된 미국 날짜("2026-09-20", 이동 기록 날짜라 시각이 없다). 모르면 null */
-  since: string | null;
-  /** since부터 며칠째인지. 모르면 null */
-  days: number | null;
-  /** 마이너 단계 약어("AAA" 등) */
-  level: string | null;
-  /** 마이너 팀 이름(영어) */
-  teamName: string | null;
-  /**
-   * FA·시즌 끝·국내 복귀(KBO)일 때 마지막 경기의 날짜와 단계("MLB" 또는 마이너 약어). 날짜는 그 경기 시작 시각의 한국 날짜다
-   * (korleaguer-server #185부터, 선수 화면 경기 달력이 그 경기를 놓는 날과 같다. 예전에는 미국 날짜였다). since는 미국 날짜 그대로다
-   */
-  lastGameDate: string | null;
-  lastGameLevel: string | null;
-}
+export type CardStatus = S["CardStatus"];
 
 /** 팀 경기 하나에서의 출전: 선발 · 교체 · 출전(선발·교체 모름) · 결장 */
-export type PlayCode = "STARTER" | "SUB" | "PLAYED" | "ABSENT";
+export type PlayCode = NonNullable<S["CardPlay"]["recent"]>[number];
 
 /**
  * 출전 줄. 타자는 recent(지금 단계 기간이 시작된 뒤 팀 최근 10경기, 오래된 것부터)와
  * after(10경기가 안 되고 복귀·콜업 뒤면 그 시작), 투수는 최근 14일 등판 수와 마지막 등판이 며칠 전인지.
  */
-export interface PlayLine {
-  recent: PlayCode[] | null;
-  after: "RETURNED" | "CALLED_UP" | null;
-  appearances14: number | null;
-  daysSinceLast: number | null;
-}
+export type PlayLine = S["CardPlay"];
 
 /** 한 줄 소식. HOT은 좋은 일(주황), COLD는 안 좋은 일(본문 글자, 파랑은 쓰지 않는다) */
-export interface FormFact {
-  tone: "HOT" | "COLD";
-  text: string;
-}
+export type FormFact = S["CardFact"];
 
 /**
  * RECENT 오늘까지 · LAST_PLAYED 마지막으로 뛴 날까지 · BEFORE_INJURY 다치기 전 ·
  * SEASON 시즌 합계(seasonTotals) · NONE 보여 줄 기록 없음
  */
-export type CardBasis = "RECENT" | "LAST_PLAYED" | "BEFORE_INJURY" | "REHAB" | "SEASON" | "NONE";
+export type CardBasis = S["MyPlayersResponseMyPlayer"]["basis"];
 
 /** 한 단계의 시즌 합계. 타자는 atBats·hits·homeRuns·avg, 투수는 outs·inningsText·era·strikeouts·saves·holds */
-export interface LevelTotals {
-  /** "MLB", 마이너 약어("AAA" 등), 여러 마이너 단계면 "MINORS" */
-  level: string;
-  games: number;
-  atBats: number;
-  hits: number;
-  homeRuns: number;
-  avg: number | null;
-  outs: number;
-  inningsText: string | null;
-  era: number | null;
-  strikeouts: number;
-  saves: number;
-  holds: number;
-}
+export type LevelTotals = S["LevelTotals"];
 
-export interface SeasonTotals {
-  season: number;
-  /** 크게 보일 쪽 */
-  primary: "MLB" | "MINORS" | null;
-  mlb: LevelTotals | null;
-  minors: LevelTotals | null;
-}
+export type SeasonTotals = S["MyPlayersResponseSeasonTotals"];
 
 /** GET /api/my?ids=1,2&days=7 */
-export interface MyPlayersResponse {
-  dataMode: DataMode;
-  statsAvailable: boolean;
-  season: number;
-  generatedAt: string;
-  days: number;
-  /** 최근 days일의 첫날·마지막 날(한국 날짜, "2026-09-21"). 선수마다 기간은 MyPlayer에 있다 */
-  fromKst: string;
-  toKst: string;
-  /** 한 명이라도 마지막으로 뛴 날까지로 기간을 당겼으면 true */
-  isFallback: boolean;
-  /** 고른 순서대로. 없는 선수는 빠진다 */
-  players: MyPlayer[];
-  /** 선수 줄(games) 중 화제 문구가 붙은 메이저 경기(선수 id·경기 id로 짝짓는다). 옛 api는 이 칸이 없다 */
-  buzz: GameBuzz[];
-}
+export type MyPlayersResponse = S["MyPlayersResponse"];
 
 // ---- 응답 보정 ----
 // api가 계약과 조금 다르게 보내도(필드 빠짐, 배열 대신 null) 화면이 죽지 않게 빈 값을 채운다.
@@ -1104,14 +336,17 @@ function normalizeReport(r: SeasonReport): SeasonReport {
     wrcPlus: num(r.wrcPlus),
     eraPlus: num(r.eraPlus),
     statLevelKo: typeof r.statLevelKo === "string" && r.statLevelKo.trim() !== "" ? r.statLevelKo : null,
-    saber: r.saber === undefined ? undefined : normalizeSaber(r.saber),
+    saber: normalizeSaber(r.saber),
     winterMoves: Array.isArray(r.winterMoves) ? r.winterMoves : [],
     news: r.news == null ? r.news : r.news.flatMap((n) => normalizeHeadline(n) ?? []),
   };
 }
 
-/** 관련 기사 한 건. 옛 API는 번호·요약 칸을 주지 않는다. 원문 주소가 http(s)가 아니면 링크로 쓸 수 없어 뺀다(null) */
-function normalizeHeadline(n: NewsHeadline): NewsHeadline | null {
+/**
+ * 기사 한 건(관련 기사, 뉴스 탭 목록 한 줄). 원문 주소가 http(s)가 아니면 링크로 쓸 수 없어 뺀다(null).
+ * 뉴스 탭 목록 한 줄은 첫머리·요약 칸이 없어 그 둘은 받은 그대로 둔다
+ */
+function normalizeHeadline<T extends Omit<NewsHeadline, "lead" | "summary">>(n: T): T | null {
   const url = httpUrl(n.url);
   if (!url) return null;
   return {
@@ -1119,8 +354,6 @@ function normalizeHeadline(n: NewsHeadline): NewsHeadline | null {
     id: typeof n.id === "number" ? n.id : null,
     url,
     titleKo: n.titleKo ?? null,
-    lead: n.lead ?? null,
-    summary: n.summary ?? null,
     // 기사 사진은 언론사 서버에서 브라우저가 직접 받는다. https 주소만 쓴다
     imageUrl: n.imageUrl?.startsWith("https://") ? n.imageUrl : null,
     alsoBy: alsoByOf(n.alsoBy),
@@ -1332,7 +565,7 @@ function num(value: unknown): number | null {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
-/** 서버는 타자·투수를 키로만 나눈다(타자 모양엔 투수 칸이 아예 없다). 화면이 고르기 쉽게 kind를 붙인다 */
+/** 서버는 타자·투수를 키로만 나눈다(타자 모양엔 투수 칸이 아예 없다). 화면은 isHitterSaber(saber.ts)로 가른다 */
 function normalizeSaber(raw: unknown): PlayerSaber | null {
   if (!raw || typeof raw !== "object") return null;
   const r = raw as Record<string, unknown>;
@@ -1342,7 +575,6 @@ function normalizeSaber(raw: unknown): PlayerSaber | null {
   const common = { season, war: num(r.war), poolSize: num(r.poolSize) ?? 0 };
   if ("inningsOuts" in r) {
     return {
-      kind: "pitcher",
       ...common,
       inningsOuts: num(r.inningsOuts),
       eraMinus: num(r.eraMinus),
@@ -1356,7 +588,6 @@ function normalizeSaber(raw: unknown): PlayerSaber | null {
     };
   }
   return {
-    kind: "hitter",
     ...common,
     plateAppearances: num(r.plateAppearances),
     wrcPlus: num(r.wrcPlus),
@@ -1376,10 +607,9 @@ function normalizeCareerSeason(raw: unknown): CareerSeason | null {
   if (season == null) return null;
   const common = { season, teamKo: typeof r.teamKo === "string" ? r.teamKo : null, games: num(r.games), war: num(r.war) };
   if ("inningsOuts" in r) {
-    return { kind: "pitcher", ...common, inningsOuts: num(r.inningsOuts), era: num(r.era), strikeouts: num(r.strikeouts), eraMinus: num(r.eraMinus) };
+    return { ...common, inningsOuts: num(r.inningsOuts), era: num(r.era), strikeouts: num(r.strikeouts), eraMinus: num(r.eraMinus) };
   }
   return {
-    kind: "hitter",
     ...common,
     plateAppearances: num(r.plateAppearances),
     avg: num(r.avg),
@@ -1483,133 +713,31 @@ function normalizeMy(raw: MyPlayersResponse): MyPlayersResponse {
 // ---- 호출 ----
 
 /** 한국인 메이저리거 역대 기록(GET /api/records, 기록 화면). 모두 MLB 정규시즌 기록 */
-export interface RecordsResponse {
-  dataMode: DataMode;
-  season: number;
-  generatedAt: string;
-  /** 통산 순위. 타자(HITTING) 안타·홈런·경기·도루·타점, 투수(PITCHING) 승·탈삼진·세이브 */
-  categories: RecordCategory[];
-  /** 현역 선수마다·기록마다 바로 위 선수. 넘기 쉬운 순 */
-  next: RecordNext[];
-  /** 이번 시즌 현역이 현역 아닌 선배의 통산 값을 넘은 경기. 최근 것부터 */
-  passed: RecordPassed[];
-  /** 한 시즌 최다(안타·홈런·도루·승·탈삼진·세이브) 10위까지 */
-  singleSeason: RecordBest[];
-}
+export type RecordsResponse = S["RecordsResponse"];
 
-export type RecordGroup = "HITTING" | "PITCHING";
+export type RecordGroup = S["RecordCategory"]["group"];
 
-export interface RecordCategory {
-  key: string;
-  label: string;
-  group: RecordGroup;
-  /** 숫자 뒤에 붙이는 말: 336 + "안타" */
-  unit: string;
-  leaders: RecordLeader[];
-}
+export type RecordCategory = S["RecordCategory"];
 
-export interface RecordLeader {
-  /** 같은 값이면 같은 등수 */
-  rank: number;
-  /** 명단 선수만(선수 화면 링크) */
-  playerId: number | null;
-  nameKo: string;
-  photoUrl: string | null;
-  value: number;
-  firstSeason: number;
-  lastSeason: number;
-  /** 지금 명단에 있고 국내로 돌아가지 않은 선수 */
-  active: boolean;
-}
+export type RecordLeader = S["RecordLeader"];
 
-export interface RecordNext {
-  playerId: number | null;
-  nameKo: string;
-  photoUrl: string | null;
-  category: string;
-  label: string;
-  unit: string;
-  value: number;
-  rank: number;
-  targetNameKo: string;
-  targetValue: number;
-  targetActive: boolean;
-  /** 넘으려면 남은 수 */
-  toPass: number;
-  /** 넘으면 오르는 등수 */
-  rankAfter: number;
-}
+export type RecordNext = S["RecordNext"];
 
-export interface RecordPassed {
-  playerId: number | null;
-  nameKo: string;
-  photoUrl: string | null;
-  category: string;
-  label: string;
-  unit: string;
-  /** 넘은 경기의 한국 날짜 "2026-05-17" */
-  dateKst: string;
-  passedNameKo: string;
-  passedValue: number;
-}
+export type RecordPassed = S["RecordPassed"];
 
-export interface RecordBest {
-  key: string;
-  label: string;
-  group: RecordGroup;
-  unit: string;
-  rows: { rank: number; playerId: number | null; nameKo: string; season: number; value: number; active: boolean }[];
-}
+export type RecordBest = S["RecordBest"];
 
 /** 같은 경기에 나온 상대 선수 한 명과의 묶음(GET /api/players/{id}/same-games의 pairs) */
-export interface SamePair {
-  other: {
-    playerId: number;
-    nameKo: string;
-    photoUrl: string | null;
-    /** 사진 속 유니폼 팀(사진 원 바탕색) */
-    photoTeamAbbr: string | null;
-    teamAbbr: string | null;
-  };
-  /** 같이 나온 경기 수(= meetings 길이) */
-  games: number;
-  /** 이 선수(요청한 선수) 팀이 그 경기들에서 거둔 승·패(끝난 경기만) */
-  wins: number;
-  losses: number;
-  /** 그 경기들에서 이 선수 팀 이름. 시즌 중 팀을 옮겨 둘 이상이면 null */
-  teamKo: string | null;
-  /** 경기마다 두 사람 줄, 오래된 경기부터(더블헤더는 경기마다 한 줄) */
-  meetings: { mine: GameLine; other: GameLine }[];
-}
+export type SamePair = S["SameGamesResponsePair"];
 
 /** GET /api/players/{id}/same-games: 그 시즌 메이저 경기 중 다른 우리 선수와 같이 나온 경기. 많이 만난 순 */
-export interface SameGamesResponse {
-  season: number;
-  playerId: number;
-  pairs: SamePair[];
-}
+export type SameGamesResponse = S["SameGamesResponse"];
 
 /** 두 선수 비교의 타자 한 줄(GET /api/players/{id}/compare). 숫자는 그 시즌 메이저 정규시즌 것이다 */
-export interface CompareLine {
-  player: PlayerSummary;
-  games: number;
-  plateAppearances: number;
-  avg: number | null;
-  homeRuns: number;
-  rbi: number;
-  stolenBases: number;
-  ops: number | null;
-  /** MLB 공식 시즌 wRC+(리그 평균 = 100). 선수 페이지 saber와 같은 값. 없으면 null */
-  wrcPlus: number | null;
-}
+export type CompareLine = S["CompareResponseLine"];
 
 /** GET /api/players/{id}/compare: 이 선수(me)와 견줄 수 있는 다른 우리 타자(others, 타석 많은 순). 투수·메이저 타석 없음이면 me가 null */
-export interface CompareResponse {
-  season: number;
-  playerId: number;
-  me: CompareLine | null;
-  others: CompareLine[];
-}
+export type CompareResponse = S["CompareResponse"];
 
 /** 호출 실패 이유. 화면은 이 값을 보고 안내 문구를 고른다. */
 export type ApiFailure = "unreachable" | "notFound" | "badResponse";
