@@ -229,6 +229,9 @@ function photoUrl(value: string | null | undefined): string | null {
 function normalizeLine(line: GameLine): GameLine {
   return {
     ...line,
+    // 팀 이름은 서버에서 빌 수 있다(팀 표에 이름이 없을 때). 글자 틀에 'null'이 들어가지 않게 빈 글자로 둔다
+    teamKo: line.teamKo ?? "",
+    opponentKo: line.opponentKo ?? "",
     teamAbbr: line.teamAbbr ?? null,
     photoUrl: photoUrl(line.photoUrl),
     opponentAbbr: line.opponentAbbr ?? null,
@@ -324,9 +327,7 @@ function normalizeHome(raw: HomeResponse): HomeResponse {
 }
 
 /**
- * 성적표 한 장. 시즌 wRC+·ERA+·단계·MLB 안 위치(korleaguer-server#179)는 옛 api면 없다.
- * MLB 안 위치는 선수 화면처럼 kind(타자·투수)를 붙인다(서버는 키로만 나눈다). 칸이 아예 없으면(옛 api) undefined로 남겨
- * 화면이 위치 줄을 그리지 않는다. null은 메이저 기록이 없거나 서버가 위치를 못 읽은 것이라, 화면은 메이저 경기가 없을 때만
+ * 성적표 한 장. MLB 안 위치가 null이면 메이저 기록이 없거나 서버가 위치를 못 읽은 것이라, 화면은 메이저 경기가 없을 때만
  * '위치는 없어요'를 쓰고 메이저에서 뛴 선수면 줄을 뺀다(SeasonReportList).
  * 기사는 관련 기사와 같은 규칙으로 다듬는다(원문 주소가 http(s)가 아닌 기사는 링크로 쓸 수 없어 뺀다)
  */

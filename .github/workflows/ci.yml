@@ -58,7 +58,12 @@ jobs:
         if: github.event_name == 'pull_request'
         run: |
           cp openapi/server.json "$RUNNER_TEMP/server.json"
-          npm run api:sync
+          # 명세를 못 받으면(GitHub 일시 장애 등) 이 검사만 건너뛴다. 웹 코드 탓이 아니다
+          if ! curl -fsSL --retry 2 https://raw.githubusercontent.com/korleaguer/korleaguer-server/develop/openapi.json -o openapi/server.json; then
+            echo "::warning::서버 응답 명세를 받지 못해 최신 명세 타입 검사를 건너뛴다"
+            exit 0
+          fi
+          npm run api:types
           npx tsc --noEmit
           if ! cmp -s openapi/server.json "$RUNNER_TEMP/server.json"; then
             echo "::warning::서버 develop의 응답 명세가 이 저장소의 openapi/server.json과 다르다. npm run api:sync로 맞추는 PR을 올린다"
