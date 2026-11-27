@@ -9,7 +9,7 @@ import { teamColor, teamColorById, teamLogoUrl, teamLogoUrlById } from "@/lib/te
 import TeamMark from "@/components/TeamMark";
 import GameRow from "./GameRow";
 import GameDetailSheet, { gamePkOf } from "./GameDetailSheet";
-import MovePill from "./MovePill";
+import MovePill from "@/components/MovePill";
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 

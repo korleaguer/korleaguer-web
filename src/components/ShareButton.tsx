@@ -5,8 +5,7 @@
 // - 공유를 아는 앱(features에 "share"): 앱이 기기 공유 창을 연다
 // - 옛 앱: 기기 공유(navigator.share), 그것도 없으면 주소를 복사하고 알림 띠로 알린다(복사하지 못해도 알린다)
 import { usePathname } from "next/navigation";
-import { appHas, postToApp } from "@/lib/app";
-import { OPEN_PLAYER_SHARE } from "@/components/player/PlayerShare";
+import { appHas, OPEN_PLAYER_SHARE, postToApp } from "@/lib/app";
 import { toast } from "@/lib/toast";
 
 /** 공유할 것이 없는 화면(사람마다 다른 '내 선수') */

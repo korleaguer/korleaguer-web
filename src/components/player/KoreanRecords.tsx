@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { RecordNext } from "@/lib/api";
 import Chevron from "@/components/Chevron";
 import Section from "@/components/Section";
-import { count } from "@/components/records/RecordRows";
+import { formatCount } from "@/lib/format";
 
 /** 한국인 메이저리거 역대 기록 화면으로 가는 줄. 칸이 있든 없든 선수 페이지에 늘 하나 남는다 */
 function RecordsLink() {
@@ -40,17 +40,17 @@ export default function KoreanRecords({ rows }: { rows: RecordNext[] }) {
                 <p className="min-w-0 flex-1 basis-[8rem]">
                   <span className="text-heading">{n.label}</span>{" "}
                   <span className="whitespace-nowrap text-meta text-muted tabular-nums">
-                    통산 {count(n.value)} · 한국인 {n.rank}위
+                    통산 {formatCount(n.value)} · 한국인 {n.rank}위
                   </span>
                 </p>
                 <p className="ml-auto shrink-0 text-stat text-accent-ink tabular-nums">
-                  {count(n.toPass)}
+                  {formatCount(n.toPass)}
                   {n.unit}
                   <span className="sr-only"> 남음</span>
                 </p>
               </div>
               <p className="mt-0.5 text-meta text-muted">
-                {`${n.targetNameKo} ${count(n.targetValue)}${n.unit} 넘으면 한국인 ${n.rankAfter}위`}
+                {`${n.targetNameKo} ${formatCount(n.targetValue)}${n.unit} 넘으면 한국인 ${n.rankAfter}위`}
               </p>
             </li>
           ))}

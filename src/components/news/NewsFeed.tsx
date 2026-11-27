@@ -8,7 +8,7 @@ import { formatDate, kstDayKey, kstPrevDayKey } from "@/lib/format";
 import { isNewArticle, type SeenMap } from "@/lib/newsSeen";
 import LoadingDots from "@/components/LoadingDots";
 import { useReload } from "@/components/ReloadButton";
-import NewsTitleList from "@/components/news/NewsTitleList";
+import NewsTitleList from "@/components/NewsTitleList";
 
 /**
  * 뉴스 탭 기사 목록. 서버가 그린 첫 쪽(20줄) 아래 '기사 더 보기'를 누르면 다음 쪽을 받아 이어 붙인다.

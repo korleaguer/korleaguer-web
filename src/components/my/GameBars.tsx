@@ -9,7 +9,7 @@ import { radioKeyIndex } from "@/lib/radioKeys";
 import ResultPill from "@/components/ResultPill";
 import Highlights from "@/components/Highlights";
 import ScoreText from "@/components/ScoreText";
-import { PostseasonLine } from "@/components/player/GameRow";
+import PostseasonLine from "@/components/PostseasonLine";
 import StepButton from "@/components/StepButton";
 import type { BarSlot } from "./columns";
 import Words from "@/components/Words";
