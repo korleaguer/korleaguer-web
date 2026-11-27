@@ -12,6 +12,7 @@ import { barSlots } from "./columns";
 import { levelKo } from "@/lib/playerStatus";
 import { metaLine, periodLabel, periodNote, statusLine } from "./formLabels";
 import { cacheLife } from "next/cache";
+import LinkArrow from "@/components/LinkArrow";
 
 interface Props {
   entry: MyPlayer;
@@ -144,9 +145,7 @@ export default async function FormCard({
             >
               <span className="sr-only">{`${player.nameKo} `}</span>
               경기 기록
-              <svg aria-hidden viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="size-3.5">
-                <path d="m6 4 4 4-4 4" />
-              </svg>
+              <LinkArrow />
             </Link>
           </div>
         )}

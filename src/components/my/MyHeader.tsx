@@ -10,6 +10,7 @@ import OrderList from "./OrderList";
 import StarIcon from "@/components/StarIcon";
 import { useFocusAfterRemove } from "./useFocusAfterRemove";
 import { useMyPlayerToggle } from "@/lib/useMyPlayerToggle";
+import LinkArrow from "@/components/LinkArrow";
 
 interface Props {
   /**
@@ -93,18 +94,7 @@ export default function MyHeader({ subtitle, players, selectedIds }: Props) {
             className="inline-flex shrink-0 items-center gap-1 rounded-full bg-surface px-3.5 py-1.5 text-label shadow-[var(--shadow-card)] transition duration-150 hover:shadow-[var(--shadow-card-hover)] press tap-target"
           >
             {label}
-            <svg
-              aria-hidden
-              viewBox="0 0 16 16"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.75"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="size-3.5 text-muted"
-            >
-              <path d="m6 4 4 4-4 4" />
-            </svg>
+            <LinkArrow muted />
           </button>
         )}
       </div>

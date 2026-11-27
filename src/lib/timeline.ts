@@ -1,6 +1,7 @@
 // 선수 탭 '어디서 뛰었나' 연표의 표시 계산. 띠 구간 자체는 서버(GET /api/players/timeline)가 만든 것을 그대로 쓰고,
 // 여기서는 날짜를 띠 위 자리로 바꾸고, 띠 위 표시를 묶고, 사실 한 줄과 화면 낭독기용 요약 글을 만든다.
 import type { RosterMove, TimelineKind, TimelineSegment } from "./api";
+import { formatMonthDay } from "./format";
 
 const DAY = 86_400_000;
 const dayNum = (date: string) => Math.round(Date.parse(`${date}T00:00:00Z`) / DAY);
@@ -15,16 +16,11 @@ export function dayIndex(from: string, to: string, date: string): number {
   return Math.min(bandDays(from, to) - 1, Math.max(0, dayNum(date) - dayNum(from)));
 }
 
-/** "2026-11-02" → "11월 2일" */
-export function koDate(date: string): string {
-  return `${Number(date.slice(5, 7))}월 ${Number(date.slice(8, 10))}일`;
-}
-
 export const KIND_NAME: Record<TimelineKind, string> = { MLB: "메이저", MINORS: "마이너", INJURED: "부상", NO_TEAM: "팀 없음" };
 
 /** 띠 요약(화면 낭독기용): '마이너 3월 1일~4월 4일, 메이저 4월 5일~5월 28일, …' */
 export function bandSummary(segments: TimelineSegment[]): string {
-  return segments.map((g) => `${KIND_NAME[g.kind]} ${koDate(g.from)}~${koDate(g.to)}`).join(", ");
+  return segments.map((g) => `${KIND_NAME[g.kind]} ${formatMonthDay(g.from)}~${formatMonthDay(g.to)}`).join(", ");
 }
 
 export interface Marker {
@@ -87,7 +83,7 @@ export function buildFacts(moves: RosterMove[], segments: TimelineSegment[], pla
   } else if (injured > 0) {
     out.push(`부상자 명단 ${injured}번`);
   }
-  if (fa) out.push(plainFa ? "FA" : `${koDate(fa.date)} FA`);
+  if (fa) out.push(plainFa ? "FA" : `${formatMonthDay(fa.date)} FA`);
   return out;
 }
 
@@ -108,4 +104,3 @@ export function monthTicks(from: string, to: string) {
   }
   return ticks;
 }
-

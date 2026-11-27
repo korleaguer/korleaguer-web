@@ -1,6 +1,8 @@
 // 같은 경기 창: 두 선수가 같이 나온 경기 목록(창 몸)과 그 창의 제목·전적 문구. 선수 페이지, 홈 층·맞대결 카드, 이번 주 두 선수, 비교 창이 같이 쓴다.
 import type { GameLine, SamePair } from "@/lib/api";
+import Chevron from "@/components/Chevron";
 import ResultPill from "@/components/ResultPill";
+import SheetOpener from "@/components/SheetOpener";
 import Words from "@/components/Words";
 import { formatShortDate, formatSummary, formatWeekday, kstDayKey } from "@/lib/format";
 
@@ -69,5 +71,30 @@ export function SameGamesSheetBody({ pair, nameKo }: { pair: SamePair; nameKo: s
         })}
       </ul>
     </div>
+  );
+}
+
+/**
+ * 카드 맨 아래 '같은 경기 n번 · 샌프란시스코 4승 2패 ›' 줄. 누르면 그 짝의 같은 경기 창을 연다.
+ * 홈 맞대결 카드('올해 n번째'), 홈 이번 주 두 선수, 비교 창이 같은 모양으로 쓴다. lead는 줄 앞 글자, stateKey는 창 주소 기록 표시
+ */
+export function SameGamesLine({ stateKey, nameKo, pair, lead }: { stateKey: string; nameKo: string; pair: SamePair; lead: string }) {
+  return (
+    <SheetOpener
+      stateKey={stateKey}
+      sheetTitle={sameGamesTitle(nameKo, pair)}
+      className="press-soft flex min-h-11 w-full cursor-pointer items-center justify-between gap-2 px-4 py-2.5 text-left text-button text-accent-ink"
+      label={
+        <>
+          <span>
+            {lead}
+            <span className="font-normal text-muted">{` · ${sameGamesRecord(pair, nameKo)}`}</span>
+          </span>
+          <Chevron small />
+        </>
+      }
+    >
+      <SameGamesSheetBody pair={pair} nameKo={nameKo} />
+    </SheetOpener>
   );
 }

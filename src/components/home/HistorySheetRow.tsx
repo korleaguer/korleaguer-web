@@ -3,6 +3,7 @@
 import { useRef, type ReactNode } from "react";
 import BottomSheet from "@/components/BottomSheet";
 import { useHistorySheet } from "@/lib/useHistorySheet";
+import LinkArrow from "@/components/LinkArrow";
 
 /** 창을 열며 쌓은 주소 기록 표시(history.state의 키). 다른 창들의 표시와 다르다 */
 const HISTORY_STATE = "korleaguerHistorySheet";
@@ -52,9 +53,7 @@ export default function HistorySheetRow({
         </span>
         <span className="inline-flex shrink-0 items-center gap-0.5 text-label text-accent-ink">
           보기
-          <svg aria-hidden viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="size-3.5">
-            <path d="m6 4 4 4-4 4" />
-          </svg>
+          <LinkArrow />
         </span>
       </button>
       {open && (

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Fragment, type ReactNode } from "react";
 import type { CardStatus, CardStatusKind, MyPlayer, NewsHeadline, SeasonReport, SeasonTier } from "@/lib/api";
-import { formatEra, formatRate, kstDayKey } from "@/lib/format";
+import { formatEra, formatMonthDay, formatRate, kstDayKey } from "@/lib/format";
 import { leagueFlow, leagueWords, type LeagueWords } from "@/lib/leagueWords";
 import { newsHref } from "@/lib/news";
 import ExternalLinkIcon from "@/components/ExternalLinkIcon";
@@ -13,6 +13,7 @@ import MonthLine, { MonthSpark } from "@/components/home/MonthLine";
 import StatLine from "@/components/StatLine";
 import SeasonReportRows, { type ReportRow } from "@/components/SeasonReportRows";
 import LeaguePositionCompact from "@/components/home/LeaguePositionCompact";
+import LinkArrow from "@/components/LinkArrow";
 
 /** 잘한 시즌 판정. 판정 글자를 주황으로(좋은 활약 색, The Hot Is Earned Rule) */
 const HOT_TIERS: ReadonlySet<SeasonTier> = new Set(["GOOD", "SHORT_GOOD"]);
@@ -218,7 +219,7 @@ function buildRow(entry: MyPlayer, report: SeasonReport | null, isMine: boolean,
             <Fragment key={`${m.date}-${m.label}`}>
               {i > 0 && " · "}
               <span className="whitespace-nowrap">
-                {monthDay(m.date)}
+                {formatMonthDay(m.date)}
                 {moves.length > 1 ? "" : "(미국)"} <span className="font-semibold text-foreground">{m.label}</span>
               </span>
             </Fragment>
@@ -311,7 +312,7 @@ function NewsLine({ news }: { news: NewsHeadline }) {
   const body = (
     <>
       <span className="font-semibold text-muted">이번 겨울</span>{" "}
-      {day && <span className="text-muted tabular-nums">{monthDay(day)}</span>}{" "}
+      {day && <span className="text-muted tabular-nums">{formatMonthDay(day)}</span>}{" "}
       <span className="group-hover:underline">{news.titleKo ?? news.title}</span>
     </>
   );
@@ -360,15 +361,7 @@ function TextLink({ href, children }: { href: string; children: ReactNode }) {
       className="press inline-flex min-h-11 items-center gap-0.5 whitespace-nowrap text-label text-accent-ink hover:underline"
     >
       {children}
-      <svg aria-hidden viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="size-3.5">
-        <path d="m6 4 4 4-4 4" />
-      </svg>
+      <LinkArrow />
     </Link>
   );
-}
-
-/** "2026-11-03" → "11월 3일" */
-function monthDay(date: string): string {
-  const [, m, d] = date.split("-");
-  return `${Number(m)}월 ${Number(d)}일`;
 }

@@ -1,14 +1,15 @@
 import Link from "next/link";
 import type { PlayerSummary, RosterMove, Timeline, TimelineKind, TimelinePlayer } from "@/lib/api";
-import { formatEra, formatRate, teamLabel } from "@/lib/format";
+import { formatEra, formatMonthDay, formatRate, teamLabel } from "@/lib/format";
 import { leagueWords } from "@/lib/leagueWords";
-import { bandDays, bandSummary, buildFacts, buildMarkers, dayIndex, koDate, monthTicks } from "@/lib/timeline";
+import { bandDays, bandSummary, buildFacts, buildMarkers, dayIndex, monthTicks } from "@/lib/timeline";
 import MyPlayerToggle from "@/components/MyPlayerToggle";
 import MovePill from "@/components/MovePill";
 import Chevron from "@/components/Chevron";
 import StatLine from "@/components/StatLine";
 import PlayerAvatar from "@/components/PlayerAvatar";
 import type { ReportRow } from "@/components/SeasonReportRows";
+import LinkArrow from "@/components/LinkArrow";
 
 /** 구간 색(토큰이라 라이트·다크가 따라간다): 메이저 파랑 · 마이너 회색 · 부상 빨강 · 팀 없음 보라. 범례도 같이 쓴다 */
 export const BAND_CLASS: Record<TimelineKind, string> = {
@@ -135,7 +136,7 @@ function MoveList({ moves }: { moves: RosterMove[] }) {
       {[...moves].reverse().map((m, i) => (
         <li key={`${m.date}-${m.typeCode}-${i}`} className="flex items-start gap-3">
           <time dateTime={m.date} className="w-[4.5rem] shrink-0 pt-0.5 text-meta tabular-nums text-muted">
-            {koDate(m.date)}
+            {formatMonthDay(m.date)}
           </time>
           <div className="min-w-0 flex-1">
             <MovePill move={m} className="px-2.5" />
@@ -226,9 +227,7 @@ export function buildTimelineRow({
         >
           <span className="sr-only">{`${player.nameKo} `}</span>
           선수 페이지
-          <svg aria-hidden viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="size-3.5">
-            <path d="m6 4 4 4-4 4" />
-          </svg>
+          <LinkArrow />
         </Link>
       </div>
     ),
