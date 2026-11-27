@@ -2,8 +2,8 @@ import type { CSSProperties } from "react";
 import type { PlayerSaber } from "@/lib/api";
 import { isHitterSaber } from "@/lib/saber";
 import { formatInningsOuts } from "@/lib/format";
-import { type Row, rowsOf } from "@/components/player/LeaguePosition";
-import PositionBar from "@/components/player/PositionBar";
+import { type Row, rowsOf } from "@/lib/leaguePosition";
+import PositionBar from "@/components/PositionBar";
 import { STEADY_OUTS, STEADY_PA } from "@/lib/seasonStats";
 
 /** 서버가 위치를 매기는 최소 표본(타자 50타석, 투수 10이닝 = 30아웃). 이보다 적으면 percentiles가 null이다 */
