@@ -9,22 +9,10 @@ const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), selec
 interface Props {
   /** 접혀 있을 때 버튼 글자. 예: "4건 더 보기" */
   moreLabel: string;
-  /** 펼친 뒤 버튼 글자 */
-  lessLabel?: string;
   /** 펼치면 버튼 위에 나타날 내용. 서버에서 그린 그대로 받아 접혀 있는 동안 숨겨 둔다 */
   children: ReactNode;
   /** 놓이는 자리에 맞춘 버튼 여백·선 */
   buttonClassName?: string;
-  /**
-   * 화면 낭독기에만 버튼 이름 앞에 붙여 읽을 말(예: 선수 이름 → '이정후 경기 기록 모두 보기'). 보이는 글자는 그대로다.
-   * 내 선수 카드마다 같은 '경기 기록 모두 보기'가 여럿이라 버튼 목록에서 어느 선수 것인지 갈리지 않았다
-   */
-  srContext?: string;
-  /**
-   * true면 내용을 처음 펼칠 때 그린다(그 전에는 서버 HTML에도 없다). 긴 목록을 서버에서 다 그려 보내지 않으려고 쓴다.
-   * 한 번 펼친 뒤로는 접어도 그려 둔다. 내용은 브라우저에서 만들어야 하므로 클라이언트 컴포넌트 안에서 넘긴다.
-   */
-  lazy?: boolean;
 }
 
 /**
@@ -35,14 +23,12 @@ interface Props {
  * 펼친 줄을 건너뛰고 지나쳤다(전수조사). 줄 안에 누를 것(선수 링크)이 있으면 그 첫 링크, 없으면(이동 기록·경기 기록) 내용 상자.
  * 화면은 움직이지 않는다(새 첫 줄은 버튼이 있던 자리에 나온다). 마우스로 눌렀으면 포커스 테두리도 보이지 않는다.
  */
-export default function ShowMore({ moreLabel, lessLabel = "접기", children, buttonClassName = "", srContext, lazy = false }: Props) {
+export default function ShowMore({ moreLabel, children, buttonClassName = "" }: Props) {
   const [open, setOpen] = useState(false);
-  // lazy일 때 한 번이라도 펼쳤나(펼친 뒤로는 내용을 계속 그려 둔다)
-  const [rendered, setRendered] = useState(!lazy);
   const contentId = useId();
   const buttonRef = useRef<HTMLButtonElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  // 버튼으로 막 펼쳤나. 펼친 내용이 그려진 뒤(lazy면 처음 그린 뒤) 한 번만 포커스를 옮긴다
+  // 버튼으로 막 펼쳤나. 펼친 내용이 그려진 뒤 한 번만 포커스를 옮긴다
   const focusAfterOpen = useRef(false);
 
   useEffect(() => {
@@ -53,15 +39,12 @@ export default function ShowMore({ moreLabel, lessLabel = "접기", children, bu
     const first = box.querySelector<HTMLElement>(FOCUSABLE);
     if (first) first.focus({ preventScroll: true });
     else focusContainer(box, { preventScroll: true });
-  }, [open, rendered]);
+  }, [open]);
 
   function toggle() {
     const closing = open;
     setOpen(!closing);
-    if (!closing) {
-      setRendered(true);
-      focusAfterOpen.current = true;
-    }
+    if (!closing) focusAfterOpen.current = true;
     if (closing) {
       // 접힌 화면이 그려진 뒤 버튼이 화면 밖이면 보이는 곳까지만 옮긴다(이미 보이면 그대로)
       requestAnimationFrame(() => buttonRef.current?.scrollIntoView({ block: "nearest" }));
@@ -74,7 +57,7 @@ export default function ShowMore({ moreLabel, lessLabel = "접기", children, bu
           누를 것이 없는 줄(이동 기록 등)을 펼치면 이 상자가 포커스를 받는다. tabIndex는 그때만 붙인다(focusContainer):
           늘 두면 펼친 줄의 글자·빈 곳을 마우스로 누를 때마다 상자가 포커스를 받았다 */}
       <div ref={contentRef} id={contentId} hidden={!open} className="reveal">
-        {rendered ? children : null}
+        {children}
       </div>
       <button
         ref={buttonRef}
@@ -82,11 +65,9 @@ export default function ShowMore({ moreLabel, lessLabel = "접기", children, bu
         aria-expanded={open}
         aria-controls={contentId}
         onClick={toggle}
-        // 보이는 글자를 그대로 이름 끝에 둔다(음성 제어로 '경기 기록 모두 보기'라고 말해도 눌린다, WCAG 2.5.3)
-        aria-label={srContext ? `${srContext} ${open ? lessLabel : moreLabel}` : undefined}
         className={`press-soft flex min-h-11 w-full cursor-pointer items-center justify-center gap-1 text-label text-accent-ink ${buttonClassName}`}
       >
-        {open ? lessLabel : moreLabel}
+        {open ? "접기" : moreLabel}
         <svg
           aria-hidden
           viewBox="0 0 16 16"

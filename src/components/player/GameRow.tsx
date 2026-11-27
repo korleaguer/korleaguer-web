@@ -8,7 +8,7 @@ import PostseasonLine from "@/components/PostseasonLine";
 import Words from "@/components/Words";
 
 /**
- * 경기 한 줄(선수 페이지 경기 기록, 내 선수 카드의 '모두 보기'가 같이 쓴다).
+ * 경기 한 줄(선수 페이지 경기 달력에서 고른 날의 경기).
  * 서버에서도, 브라우저에서도(경기 달력 GameCalendar) 그린다. 서버 전용 기능을 쓰지 않는다.
  * 마이너 경기면 levelKo('트리플A')를 상대 팀 앞에 작게 붙이고, 상대 로고는 opponentId(팀 번호)로 찾는다.
  * 포스트시즌 경기면 경기 정보 줄 위에 PostseasonLine.
