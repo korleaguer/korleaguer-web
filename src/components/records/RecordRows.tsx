@@ -11,7 +11,6 @@ function years(first: number, last: number): string {
   return first === last ? String(first) : `${first}–${String(last).slice(-2)}`;
 }
 
-
 /**
  * 명단 선수면 선수 화면으로, 아니면 그냥 줄.
  * 큰 글씨(앱 2배)에서는 한 줄에 다 들어가지 않는다. 그때 이름 칸이 한두 글자 폭으로 찌그러지지 않게 줄을 접어

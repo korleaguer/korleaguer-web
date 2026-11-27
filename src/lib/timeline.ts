@@ -16,7 +16,6 @@ export function dayIndex(from: string, to: string, date: string): number {
   return Math.min(bandDays(from, to) - 1, Math.max(0, dayNum(date) - dayNum(from)));
 }
 
-
 export const KIND_NAME: Record<TimelineKind, string> = { MLB: "메이저", MINORS: "마이너", INJURED: "부상", NO_TEAM: "팀 없음" };
 
 /** 띠 요약(화면 낭독기용): '마이너 3월 1일~4월 4일, 메이저 4월 5일~5월 28일, …' */
@@ -105,4 +104,3 @@ export function monthTicks(from: string, to: string) {
   }
   return ticks;
 }
-

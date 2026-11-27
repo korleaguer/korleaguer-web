@@ -11,7 +11,6 @@ export function metaLine(entry: MyPlayer): string {
   return parts.filter(Boolean).join(" · ");
 }
 
-
 /**
  * 상태 줄(출전 줄 자리에 한 줄): 마이너면 소속 팀, 메이저 부상자 명단에서 재활 중이면 재활 팀, FA면 마지막 경기,
  * 국내 리그로 돌아갔으면 미국에서 뛴 마지막 경기.
