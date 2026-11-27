@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { GameLine, HomeResponse, MyPlayer } from "@/lib/api";
 import { getMyPlayers, getPlayers, getSameGames } from "@/lib/api";
-import { formatLineup, formatScore, formatSummary, kstDayKey, kstPrevDayKey, teamLabel } from "@/lib/format";
+import { formatLineup, formatMonthDay, formatScore, formatSummary, kstDayKey, kstPrevDayKey, teamLabel } from "@/lib/format";
 import { readMyPlayers } from "@/lib/myPlayers";
 import { teamColor, teamLogoUrl } from "@/lib/teams";
 import { levelKo, statusBadge } from "@/lib/playerStatus";
@@ -118,11 +118,6 @@ function shownGame(entry: MyPlayer): GameLine | null {
   return entry.games.find((g) => g.gameStatus !== "scheduled" && g.gameStatus !== "postponed") ?? entry.games[0] ?? null;
 }
 
-/** "2026-07-07" → "7월 7일". 달과 날 사이는 줄바꿈 없는 공백이라 Words로 그리면 큰 글씨에서도 '7월'/'7일'로 갈리지 않는다 */
-function monthDay(date: string): string {
-  const [, m, d] = date.split("-");
-  return `${Number(m)}월\u00a0${Number(d)}일`;
-}
 
 /**
  * 경기 한 줄 앞에 붙는 날짜(전수조사 L425): 오늘(today, 한국 날짜)이면 없음, 하루 전이면 '어제', 그보다 전이면 '7월 15일'.
@@ -131,7 +126,7 @@ function monthDay(date: string): string {
 function dayLabel(game: GameLine, today: string | null): string | null {
   const day = kstDayKey(game.startTimeKst);
   if (!day || !today || day === today) return null;
-  return day === kstPrevDayKey(today) ? "어제" : monthDay(day);
+  return day === kstPrevDayKey(today) ? "어제" : formatMonthDay(day);
 }
 
 /** 이름 아래 한 줄: 마지막 경기 한 줄 기록(부상이면 재활 경기, FA면 마지막 경기) */
@@ -144,7 +139,7 @@ function lineOf(entry: MyPlayer): { text: string; game: GameLine | null } {
   }
   if (status?.kind === "FA" || status?.kind === "SEASON_OVER" || status?.kind === "KBO") {
     return {
-      text: status.lastGameDate ? `마지막 경기 ${monthDay(status.lastGameDate)} ${levelKo(status.lastGameLevel)}` : "경기 없음",
+      text: status.lastGameDate ? `마지막 경기 ${formatMonthDay(status.lastGameDate)} ${levelKo(status.lastGameLevel)}` : "경기 없음",
       game: null,
     };
   }
@@ -209,7 +204,7 @@ function sideText(entry: MyPlayer, game: GameLine | null): { text: string; srPre
 function moveText(entry: MyPlayer): { text: string; color: string } | null {
   const status = entry.status;
   if (!status?.since) return null;
-  const day = `${monthDay(status.since)}(미국)`;
+  const day = `${formatMonthDay(status.since)}(미국)`;
   if (status.kind === "CALLED_UP") return { text: `↑\u00a0${day} 메이저로 올라옴`, color: "text-accent-ink" };
   if (status.kind === "RETURNED") return { text: `↑\u00a0${day} 부상에서 돌아옴`, color: "text-success-fg" };
   return null;
