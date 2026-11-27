@@ -45,7 +45,7 @@ export function buildMarkers(moves: RosterMove[], from: string, to: string): Mar
   const out: Marker[] = [];
   for (const m of moves) {
     if (m.date < from || m.date > to) continue;
-    const label = m.typeCode === "DFA" ? "FA 선언" : MARKED[m.typeCode];
+    const label = m.typeCode === "DFA" ? "FA 선언" : m.typeCode ? MARKED[m.typeCode] : undefined;
     if (!label) continue;
     const day = dayIndex(from, to, m.date);
     const text = `${label} ${Number(m.date.slice(5, 7))}/${Number(m.date.slice(8, 10))}`;

@@ -1,4 +1,5 @@
 import type { PlayerSaber } from "@/lib/api";
+import { isHitterSaber } from "@/lib/saber";
 import InfoTip from "@/components/InfoTip";
 import Section from "@/components/Section";
 import PositionBar from "@/components/player/PositionBar";
@@ -31,7 +32,7 @@ function signed(value: number | null, digits = 1): string | null {
  * 막대 네 줄(맨 앞이 '종합'). 타격·실점 억제의 실제 값은 지표 이름(wRC+·ERA-) 대신 리그 대비 말로 쓴다(사용자 11-21).
  * ERA-는 낮을수록 좋아서 ERA+ 꼴(100 ÷ ERA- × 100)로 바꿔 말한다. 표본이 적어 서버가 위치를 매기지 않았으면 null. 홈 성적표 작은 판(LeaguePositionCompact)도 쓴다 */
 export function rowsOf(saber: PlayerSaber): Row[] | null {
-  if (saber.kind === "hitter") {
+  if (isHitterSaber(saber)) {
     const p = saber.percentiles;
     if (!p) return null;
     return [
@@ -66,7 +67,7 @@ export default async function LeaguePosition({ saber }: { saber: PlayerSaber }) 
   "use cache";
   cacheLife({ stale: 30, revalidate: 30, expire: 300 });
 
-  const hitter = saber.kind === "hitter";
+  const hitter = isHitterSaber(saber);
   const who = hitter ? "타자" : "투수";
   const count = hitter ? (saber.plateAppearances ?? 0) : (saber.inningsOuts ?? 0);
   const sample = hitter ? `${count}타석` : `${formatInningsOuts(count)}이닝`;

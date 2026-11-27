@@ -528,7 +528,8 @@ function DetailContent({
 
 /** 하이라이트 제목: 한국어가 있으면 한국어가 주 글자고 영어 원제는 둘째 줄(original), 없으면 영어 한 줄 */
 function highlightTitle(h: GameHighlight): { main: string; original: string | null } {
-  return h.titleKo ? { main: h.titleKo, original: h.title } : { main: h.title, original: null };
+  // 영어 제목은 서버에서 빌 수 있다(받을 때 api.ts가 빈 글자로 바꾼다)
+  return h.titleKo ? { main: h.titleKo, original: h.title } : { main: h.title ?? "", original: null };
 }
 
 function highlightSub(sec: number | null): string | null {
