@@ -3,9 +3,6 @@ import Section from "@/components/Section";
 import GameCalendar from "./GameCalendar";
 import { cacheLife } from "next/cache";
 
-// 내 선수 카드(FormCard)가 이 경로로 가져다 쓴다
-export { default as GameRow } from "./GameRow";
-
 /**
  * 경기 기록: 달 칸 + 월 달력 + 고른 날 경기 줄(GameCalendar, 사용자 11-15 시안 D).
  * 예전에는 최신 경기부터 한 줄씩 쌓고 '더 보기'를 누르면 안쪽 상자에서 스크롤했는데, 시즌 초 경기를 보려면
