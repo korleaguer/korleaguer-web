@@ -28,8 +28,8 @@ export const TREND_MIN_PA = 50;
  * 마지막 점을 정규시즌 공식 값에 맞춰 선 전체가 어긋났다. 경기 줄의 seasonType(korleaguer-server#192)이 REGULAR인 경기만 쓰고,
  * 모르는 종류(서버가 null로 준 값)는 정규시즌이라고 단정하지 않고 뺀다.
  *
- * regularGames: 이 시즌 정규시즌에 뛴 경기 수(선수 응답 hitting.games). 뛴 경기 줄에 seasonType이 하나도 없을 때(옛 api: api를
- * korleaguer-server#192 전으로 되돌렸을 때)만 쓰는 어림으로, 뛴 경기를 앞에서부터 그만큼만 쓴다(포스트시즌은 정규시즌이 끝난 뒤라서).
+ * regularGames: 이 시즌 정규시즌에 뛴 경기 수(선수 응답 hitting.games). 뛴 경기 줄에 seasonType이 하나도 없을 때(서버가 경기
+ * 종류를 모를 때)만 쓰는 어림으로, 뛴 경기를 앞에서부터 그만큼만 쓴다(포스트시즌은 정규시즌이 끝난 뒤라서).
  * 이 수는 서버가 이 경기 목록과 같은 출전 기록(appearance)에서 정규시즌 것만 센 수라 목록의 뛴 줄과 1:1이다. 이것도 없으면 다 쓴다.
  */
 export function buildWrcTrend(games: GameLine[], seasonWrc: number, regularGames: number | null = null): TrendPoint[] | null {

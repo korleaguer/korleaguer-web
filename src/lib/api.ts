@@ -215,7 +215,7 @@ export type MyPlayersResponse = S["MyPlayersResponse"];
 // ---- 응답 다듬기 ----
 // 응답 모양은 서버 명세가 보장한다(타입이 곧 명세다). 여기서는 표시·보안 규칙만 적용한다:
 // 링크·사진으로 쓸 수 없는 주소 거르기, https 사진만 쓰기, 빈 이름·빈 글자 거르기. 모양이 아예 틀리면 예외가 나고
-// requestApi가 badResponse로 바꾼다.
+// requestApi가 badResponse로 바꾼다. 다듬을 것이 없는 응답(선수 연표)은 받은 그대로 쓴다.
 
 /** http(s) 주소만 통과시킨다. 사진·링크 주소로 쓰므로 javascript: 같은 것은 버린다 */
 function httpUrl(value: string | null | undefined): string | null {
