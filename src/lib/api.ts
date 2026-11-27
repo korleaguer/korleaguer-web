@@ -254,7 +254,9 @@ function normalizeHome(raw: HomeResponse): HomeResponse {
     posting: raw.posting && {
       players: raw.posting.players.map((p) => ({
         ...p,
+        photoUrl: photoUrl(p.photoUrl),
         news: p.news.flatMap((n) => normalizeHeadline(n) ?? []),
+        linkedTeams: p.linkedTeams && normalizeLinkedTeams(p.linkedTeams),
       })),
       history: raw.posting.history.map((h) => ({ ...h, photoUrl: photoUrl(h.photoUrl) })),
     },
@@ -270,6 +272,7 @@ function normalizeReport(r: SeasonReport): SeasonReport {
   return {
     ...r,
     statLevelKo: r.statLevelKo?.trim() ? r.statLevelKo : null,
+    linkedTeams: r.linkedTeams && normalizeLinkedTeams(r.linkedTeams),
     news: r.news.flatMap((n) => normalizeHeadline(n) ?? []),
   };
 }
@@ -287,6 +290,17 @@ function normalizeHeadline<T extends Omit<NewsHeadline, "lead" | "summary">>(n: 
     // 기사 사진은 언론사 서버에서 브라우저가 직접 받는다. https 주소만 쓴다
     imageUrl: n.imageUrl?.startsWith("https://") ? n.imageUrl : null,
     alsoBy: alsoByOf(n.alsoBy),
+  };
+}
+
+/** 거론 구단마다의 기사. 기사 사진은 언론사 서버에서 브라우저가 직접 받으므로 https 주소만 쓴다 */
+function normalizeLinkedTeams(linked: LinkedTeams): LinkedTeams {
+  return {
+    ...linked,
+    teams: linked.teams.map((t) => ({
+      ...t,
+      articles: t.articles.map((a) => ({ ...a, imageUrl: a.imageUrl?.startsWith("https://") ? a.imageUrl : null })),
+    })),
   };
 }
 
@@ -380,8 +394,11 @@ function normalizePlayer(raw: PlayerResponse): PlayerResponse {
     player: {
       ...normalizeSummary(p),
       mlbUrl: httpUrl(p.mlbUrl),
-      // 팀 이름이 빈 사진은 이름표를 달 수 없어 뺀다
-      careerPhotos: p.careerPhotos.filter((c) => c.teamKo),
+      // 팀 이름이 빈 사진은 이름표를 달 수 없어, 쓸 수 없는 주소의 사진은 그릴 수 없어 뺀다
+      careerPhotos: p.careerPhotos.flatMap((c) => {
+        const url = photoUrl(c.photoUrl);
+        return c.teamKo && url ? [{ ...c, photoUrl: url }] : [];
+      }),
     },
     hitting: raw.hitting && normalizeSeason(raw.hitting),
     pitching: raw.pitching && normalizeSeason(raw.pitching),
