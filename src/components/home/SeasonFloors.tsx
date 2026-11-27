@@ -16,9 +16,7 @@ import FloorBuzz, { type FloorBuzzItem } from "./FloorBuzz";
 import MyPlayersLink from "@/components/home/MyPlayersLink";
 import StarIcon from "@/components/StarIcon";
 import Words from "@/components/Words";
-import Chevron from "@/components/Chevron";
-import SheetOpener from "@/components/SheetOpener";
-import { SameGamesSheetBody, sameGamesRecord, sameGamesStateKey, sameGamesTitle } from "@/components/SameGamesSheet";
+import { SameGamesLine, sameGamesStateKey } from "@/components/SameGamesSheet";
 import WeekPair from "./WeekPair";
 import { formatWeekLabel, weekHitters, weekPair, weekRange, type WeekHitter, type WeekSame } from "@/lib/week";
 
@@ -525,22 +523,7 @@ function DerbyCard({ pair: [a, b], series }: { pair: [GameLine, GameLine]; serie
       </div>
       {series && (
         <div className="border-t border-line">
-          <SheetOpener
-            stateKey={sameGamesStateKey(series.pair.other.playerId)}
-            sheetTitle={sameGamesTitle(series.nameKo, series.pair)}
-            className="press-soft flex min-h-11 w-full cursor-pointer items-center justify-between gap-2 px-4 py-2.5 text-left text-button text-accent-ink"
-            label={
-              <>
-                <span>
-                  {`올해 ${series.nth}번째`}
-                  <span className="font-normal text-muted">{` · ${sameGamesRecord(series.pair, series.nameKo)}`}</span>
-                </span>
-                <Chevron small />
-              </>
-            }
-          >
-            <SameGamesSheetBody pair={series.pair} nameKo={series.nameKo} />
-          </SheetOpener>
+          <SameGamesLine stateKey={sameGamesStateKey(series.pair.other.playerId)} nameKo={series.nameKo} pair={series.pair} lead={`올해 ${series.nth}번째`} />
         </div>
       )}
     </div>

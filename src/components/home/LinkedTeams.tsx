@@ -197,13 +197,7 @@ export default function LinkedTeams({
                     style={{ "--share": Math.max(0.04, t.linked / top).toFixed(4) } as CSSProperties}
                   />
                   <span className="shrink-0 font-bold tabular-nums">{t.linked}건</span>
-                  {t.today && (
-                    <>
-                      {/* 오늘 나온 기사에서도 거론됨: 뉴스 탭 선수 알약의 '새 기사' 점과 같은 뜻 표시(글자 '새'는 뜻을 몰랐다) */}
-                      <span aria-hidden className="inline-block size-1.5 shrink-0 rounded-full bg-accent" />
-                      <span className="sr-only">오늘 새 기사</span>
-                    </>
-                  )}
+                  {t.today && <TodayDot />}
                 </span>
               </>
             );
@@ -242,13 +236,7 @@ export default function LinkedTeams({
               <TeamMark logoUrl={teamLogoUrl(t.abbreviation)} color={teamColor(t.abbreviation)} size="sm" />
               {t.nameKo}
               <span className="font-bold tabular-nums">{t.linked}건</span>
-              {t.today && (
-                <>
-                  {/* 뉴스 탭 선수 알약의 '새 기사' 점과 같은 뜻 표시 */}
-                  <span aria-hidden className="inline-block size-1.5 shrink-0 rounded-full bg-accent" />
-                  <span className="sr-only">오늘 새 기사</span>
-                </>
-              )}
+              {t.today && <TodayDot />}
             </>
           );
           return (
@@ -508,13 +496,7 @@ function MoreTeams({
               <TeamMark logoUrl={teamLogoUrl(t.abbreviation)} color={teamColor(t.abbreviation)} size="sm" />
               <span className="min-w-0 flex-1 truncate">{t.nameKo}</span>
               <span className="font-bold tabular-nums">{t.linked}건</span>
-              {t.today && (
-                <>
-                  {/* 뉴스 탭 선수 알약의 '새 기사' 점과 같은 뜻 표시 */}
-                  <span aria-hidden className="inline-block size-1.5 shrink-0 rounded-full bg-accent" />
-                  <span className="sr-only">오늘 새 기사</span>
-                </>
-              )}
+              {t.today && <TodayDot />}
             </>
           );
           return (
@@ -572,5 +554,15 @@ function MoreTeams({
       </button>
       {list && (supportsPopover() ? list : createPortal(list, document.body))}
     </div>
+  );
+}
+
+/** 오늘 나온 기사에서도 거론된 구단 표시. 뉴스 탭 선수 알약의 '새 기사' 점과 같은 뜻이다(글자 '새'는 뜻을 몰랐다) */
+function TodayDot() {
+  return (
+    <>
+      <span aria-hidden className="inline-block size-1.5 shrink-0 rounded-full bg-accent" />
+      <span className="sr-only">오늘 새 기사</span>
+    </>
   );
 }
