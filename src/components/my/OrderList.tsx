@@ -1,7 +1,7 @@
 "use client"; // 끌어서 옮기기(pointer 이벤트)와 버튼·키보드 옮기기가 있어서 클라이언트 컴포넌트다.
 
 import { useEffect, useLayoutEffect, useOptimistic, useRef, useState, useTransition, type KeyboardEvent, type PointerEvent } from "react";
-import { setMyPlayersOrder } from "@/app/my/actions";
+import { setMyPlayersOrder } from "@/lib/actions/myPlayers";
 import type { PlayerSummary } from "@/lib/api";
 import { haptic } from "@/lib/app";
 import { callAction } from "@/lib/callAction";

@@ -1,5 +1,5 @@
 import { useOptimistic, useRef, useTransition } from "react";
-import { setMyPlayer } from "@/app/my/actions";
+import { setMyPlayer } from "@/lib/actions/myPlayers";
 import { haptic } from "@/lib/app";
 import { callAction } from "@/lib/callAction";
 import { moveFocus } from "@/lib/focus";

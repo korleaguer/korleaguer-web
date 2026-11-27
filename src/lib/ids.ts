@@ -8,6 +8,9 @@ export const PLAYER_ID = /^[1-9]\d{0,9}$/;
 /** 기사 번호: 앞자리 0 없는 1~15자리 숫자 */
 export const NEWS_ID = /^[1-9]\d{0,14}$/;
 
+/** MLB 공 번호(playId): 소문자 UUID. 공 영상 주소(GET)가 api에 넘기기 전에 본다 */
+export const PLAY_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
 /** 선수·경기 번호 글자 → 숫자. 모양이 맞지 않으면 null */
 export function parseId(raw: string): number | null {
   return PLAYER_ID.test(raw) ? Number(raw) : null;
