@@ -7,9 +7,10 @@ import { teamColor } from "@/lib/teams";
 import BandPhoto from "./BandPhoto";
 import { Notice, Numbers, SeasonNumbers, StatusBadge, StatusSrText, SummaryLines } from "./FormSummary";
 import GameBars from "./GameBars";
-import MyPlayerToggle from "./MyPlayerToggle";
+import MyPlayerToggle from "@/components/MyPlayerToggle";
 import { barSlots } from "./columns";
-import { levelKo, metaLine, periodLabel, periodNote, statusLine } from "./formLabels";
+import { levelKo } from "@/lib/playerStatus";
+import { metaLine, periodLabel, periodNote, statusLine } from "./formLabels";
 import { cacheLife } from "next/cache";
 
 interface Props {

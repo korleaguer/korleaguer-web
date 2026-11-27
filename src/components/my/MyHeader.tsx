@@ -9,7 +9,7 @@ import { useHistorySheet } from "@/lib/useHistorySheet";
 import OrderList from "./OrderList";
 import StarIcon from "@/components/StarIcon";
 import { useFocusAfterRemove } from "./useFocusAfterRemove";
-import { useMyPlayerToggle } from "./useMyPlayerToggle";
+import { useMyPlayerToggle } from "@/lib/useMyPlayerToggle";
 
 interface Props {
   /**

@@ -7,7 +7,7 @@ import ExternalLinkIcon from "@/components/ExternalLinkIcon";
 import LevelChip from "@/components/LevelChip";
 import PlayerSubline from "@/components/PlayerSubline";
 import TeamName from "@/components/TeamName";
-import MyPlayerToggle from "@/components/my/MyPlayerToggle";
+import MyPlayerToggle from "@/components/MyPlayerToggle";
 import PlayerShare from "@/components/player/PlayerShare";
 import PhotoStage, { type Shot } from "@/components/player/PhotoStage";
 import Words from "@/components/Words";

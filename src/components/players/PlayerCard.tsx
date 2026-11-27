@@ -4,7 +4,7 @@ import { mainSeasonStats } from "@/lib/seasonStats";
 import InfoChips from "@/components/InfoChips";
 import PlayerSubline from "@/components/PlayerSubline";
 import PlayerAvatar from "@/components/PlayerAvatar";
-import MyPlayerToggle from "@/components/my/MyPlayerToggle";
+import MyPlayerToggle from "@/components/MyPlayerToggle";
 
 interface Props {
   player: PlayerSummary;

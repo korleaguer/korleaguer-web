@@ -4,7 +4,7 @@ import { getMyPlayers, getPlayers, getSameGames } from "@/lib/api";
 import { formatLineup, formatScore, formatSummary, formatTime, kstDayKey, kstPrevDayKey, teamLabel } from "@/lib/format";
 import { readMyPlayers } from "@/lib/myPlayers";
 import { teamColor, teamLogoUrl } from "@/lib/teams";
-import { levelKo, statusBadge } from "@/components/my/formLabels";
+import { levelKo, statusBadge } from "@/lib/playerStatus";
 import PlayerAvatar from "@/components/PlayerAvatar";
 import ResultPill from "@/components/ResultPill";
 import PostseasonLine from "@/components/PostseasonLine";

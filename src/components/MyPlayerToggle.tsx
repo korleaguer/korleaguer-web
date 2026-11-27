@@ -1,7 +1,7 @@
 "use client"; // 누르는 즉시 별 모양을 바꾸고 서버 함수를 불러야 해서 클라이언트 컴포넌트다.
 
 import StarIcon from "@/components/StarIcon";
-import { useMyPlayerToggle } from "./useMyPlayerToggle";
+import { useMyPlayerToggle } from "@/lib/useMyPlayerToggle";
 
 interface Props {
   playerId: number;

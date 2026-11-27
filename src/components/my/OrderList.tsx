@@ -8,7 +8,7 @@ import { callAction } from "@/lib/callAction";
 import { moveFocus } from "@/lib/focus";
 import { dismissToastOf, type ToastPress } from "@/lib/toast";
 import PlayerAvatar from "@/components/PlayerAvatar";
-import { toastSaveFailed } from "./toastSaveFailed";
+import { toastSaveFailed } from "@/lib/toastSaveFailed";
 
 /** 줄을 옮기는 버튼: 위로·아래로·손잡이(끌기·화살표) */
 type Control = "up" | "down" | "handle";
