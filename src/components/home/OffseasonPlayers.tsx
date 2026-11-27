@@ -4,6 +4,8 @@ import { formatUsDate } from "@/lib/format";
 import { readMyPlayers } from "@/lib/myPlayers";
 import ApiErrorNotice from "@/components/ApiErrorNotice";
 import Section from "@/components/Section";
+// 예외: 서버가 성적표를 만들지 못할 때만 내 선수 카드로 대신 그린다(그 카드는 딸린 파일이 많아 옮기지 않는다, #453)
+// eslint-disable-next-line no-restricted-imports
 import FormCard from "@/components/my/FormCard";
 import SeasonReportList from "@/components/home/SeasonReportList";
 import LeagueInfo from "@/components/LeagueInfo";
