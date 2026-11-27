@@ -4,9 +4,8 @@ import { useRef, useState } from "react";
 import BottomSheet from "@/components/BottomSheet";
 import Chevron from "@/components/Chevron";
 import Section from "@/components/Section";
-import SheetOpener from "@/components/SheetOpener";
 import { PairAvatar, PairHeads, PairTable, PillPicker, type PairPerson, type PairRow } from "@/components/PairTable";
-import { SameGamesSheetBody, sameGamesRecord, sameGamesTitle } from "@/components/SameGamesSheet";
+import { SameGamesLine } from "@/components/SameGamesSheet";
 import { formatRate } from "@/lib/format";
 import { useHistorySheet } from "@/lib/useHistorySheet";
 import type { WeekHitter, WeekSame } from "@/lib/week";
@@ -139,22 +138,7 @@ function WeekBody({
       <PairTable caption={`${a.nameKo}, ${b.nameKo} 이번 주 메이저 기록`} aName={a.nameKo} bName={b.nameKo} rows={rows} />
       {same && (
         <div className="-mx-4 mt-3 border-t border-line">
-          <SheetOpener
-            stateKey={sameStateKey(a.playerId, b.playerId)}
-            sheetTitle={sameGamesTitle(a.nameKo, same.pair)}
-            className="press-soft flex min-h-11 w-full cursor-pointer items-center justify-between gap-2 px-4 py-2.5 text-left text-button text-accent-ink"
-            label={
-              <>
-                <span>
-                  {`같은 경기 ${same.pair.games}번`}
-                  <span className="font-normal text-muted">{` · ${sameGamesRecord(same.pair, a.nameKo)}`}</span>
-                </span>
-                <Chevron small />
-              </>
-            }
-          >
-            <SameGamesSheetBody pair={same.pair} nameKo={a.nameKo} />
-          </SheetOpener>
+          <SameGamesLine stateKey={sameStateKey(a.playerId, b.playerId)} nameKo={a.nameKo} pair={same.pair} lead={`같은 경기 ${same.pair.games}번`} />
         </div>
       )}
     </div>

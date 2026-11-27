@@ -6,8 +6,7 @@ import BottomSheet from "@/components/BottomSheet";
 import Chevron from "@/components/Chevron";
 import InfoTip from "@/components/InfoTip";
 import { PairAvatar, PairHeads, PairTable, PillPicker, type PairPerson, type PairRow } from "@/components/PairTable";
-import SheetOpener from "@/components/SheetOpener";
-import { SameGamesSheetBody, sameGamesRecord, sameGamesTitle } from "@/components/SameGamesSheet";
+import { SameGamesLine } from "@/components/SameGamesSheet";
 import { COMPARE_ROWS, leads, sampleNote, type CompareKey } from "@/lib/compare";
 import { formatRate, teamLabel, withAndParticle } from "@/lib/format";
 import { signedPct } from "@/lib/leagueWords";
@@ -144,22 +143,7 @@ function CompareBody({
       {notes.length > 0 && <p className="mt-2 text-center text-meta text-muted tabular-nums">{notes.join(" · ")}</p>}
       {pair && (
         <div className="-mx-4 mt-3 border-t border-line">
-          <SheetOpener
-            stateKey={sameStateKey(picked.player.id)}
-            sheetTitle={sameGamesTitle(me.player.nameKo, pair)}
-            className="press-soft flex min-h-11 w-full cursor-pointer items-center justify-between gap-2 px-4 py-2.5 text-left text-button text-accent-ink"
-            label={
-              <>
-                <span>
-                  {`같은 경기 ${pair.games}번`}
-                  <span className="font-normal text-muted">{` · ${sameGamesRecord(pair, me.player.nameKo)}`}</span>
-                </span>
-                <Chevron small />
-              </>
-            }
-          >
-            <SameGamesSheetBody pair={pair} nameKo={me.player.nameKo} />
-          </SheetOpener>
+          <SameGamesLine stateKey={sameStateKey(picked.player.id)} nameKo={me.player.nameKo} pair={pair} lead={`같은 경기 ${pair.games}번`} />
         </div>
       )}
     </div>

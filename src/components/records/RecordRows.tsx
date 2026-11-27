@@ -3,18 +3,12 @@ import type { ReactNode } from "react";
 import type { RecordBest, RecordLeader, RecordNext, RecordPassed } from "@/lib/api";
 import Chevron from "@/components/Chevron";
 import PlayerAvatar from "@/components/PlayerAvatar";
-import { formatCount } from "@/lib/format";
+import { formatCount, formatMonthDay } from "@/lib/format";
 
 /** 뛴 시즌: "2005–20", 한 시즌이면 "2016" */
 function years(first: number, last: number): string {
   if (!first) return "";
   return first === last ? String(first) : `${first}–${String(last).slice(-2)}`;
-}
-
-/** "2026-05-17" → "5월 17일" */
-export function monthDay(date: string): string {
-  const [, m, d] = date.split("-");
-  return `${Number(m)}월 ${Number(d)}일`;
 }
 
 /**
@@ -142,7 +136,7 @@ export function groupPassed(passed: RecordPassed[]): PassedGroup[] {
 }
 
 function when(items: RecordPassed[]): string {
-  if (items.length === 1) return monthDay(items[0].dateKst);
+  if (items.length === 1) return formatMonthDay(items[0].dateKst);
   const months = [...new Set(items.map((p) => Number(p.dateKst.split("-")[1])))].sort((a, b) => a - b);
   return months.length === 1 ? `${months[0]}월` : `${months[0]}–${months[months.length - 1]}월`;
 }

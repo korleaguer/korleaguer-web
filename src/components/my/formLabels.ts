@@ -1,6 +1,6 @@
 // '내 선수' 카드의 최근 폼 요약 문구(이슈 #13). 숫자·종류는 서버가 주고, 화면 문장은 여기서 만든다.
 import type { CardBasis, LevelTotals, MyPlayer, PlayCode, PlayLine } from "@/lib/api";
-import { formatDateRange, formatEra, formatRate } from "@/lib/format";
+import { formatDateRange, formatEra, formatMonthDay, formatRate } from "@/lib/format";
 import { levelKo } from "@/lib/playerStatus";
 
 /** 이름 아래 팀 줄: FA면 '전 마지막 팀'(선수 페이지 알약·선수 정보와 같은 말), 국내 리그로 돌아갔으면 그 팀 */
@@ -9,12 +9,6 @@ export function metaLine(entry: MyPlayer): string {
   const team = status?.kind === "KBO" && status.teamName ? status.teamName : entry.player.teamKo;
   const parts = [status?.kind === "FA" && team ? `전 ${team}` : team, entry.player.positionKo];
   return parts.filter(Boolean).join(" · ");
-}
-
-/** "2026-08-27" → "8월 27일"(다른 화면과 같은 표기, 슬래시는 쓰지 않는다) */
-function monthDay(date: string): string {
-  const [, m, d] = date.split("-");
-  return `${Number(m)}월 ${Number(d)}일`;
 }
 
 /**
@@ -32,10 +26,10 @@ export function statusLine(entry: MyPlayer): string | null {
     return `${status.teamName}${status.level ? `(${levelKo(status.level)})` : ""}에서 재활 경기`;
   }
   if (status.kind === "FA" && status.lastGameDate) {
-    return `마지막 경기 ${monthDay(status.lastGameDate)} ${levelKo(status.lastGameLevel)}`;
+    return `마지막 경기 ${formatMonthDay(status.lastGameDate)} ${levelKo(status.lastGameLevel)}`;
   }
   if (status.kind === "KBO" && status.lastGameDate) {
-    return `미국 마지막 경기 ${monthDay(status.lastGameDate)} ${levelKo(status.lastGameLevel)}`;
+    return `미국 마지막 경기 ${formatMonthDay(status.lastGameDate)} ${levelKo(status.lastGameLevel)}`;
   }
   return null;
 }

@@ -224,3 +224,9 @@ export function kstPrevDayKey(day: string): string | null {
 export function formatCount(value: number): string {
   return value.toLocaleString("ko-KR");
 }
+
+/** 날짜 글자 "2026-11-03" → "11월 3일"(요일·연도 없이). 성적표, 내 선수 카드, 기록 화면, 선수 탭 연표가 같이 쓴다 */
+export function formatMonthDay(date: string): string {
+  const [, m, d] = date.split("-");
+  return `${Number(m)}월 ${Number(d)}일`;
+}
