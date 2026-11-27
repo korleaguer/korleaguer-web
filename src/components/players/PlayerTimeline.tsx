@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { PlayerSummary, Timeline } from "@/lib/api";
 import { bandDays, KIND_NAME, monthTicks } from "@/lib/timeline";
-import SeasonReportRows from "@/components/home/SeasonReportRows";
+import SeasonReportRows from "@/components/SeasonReportRows";
 import { BAND_CLASS, buildTimelineRow } from "./PlayerTimelineRow";
 
 const LEGEND = ["MLB", "MINORS", "INJURED", "NO_TEAM"] as const;

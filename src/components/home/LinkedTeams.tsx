@@ -17,34 +17,18 @@ import { withTopicParticle } from "@/lib/format";
 import Chevron from "@/components/Chevron";
 import TeamMark from "@/components/TeamMark";
 import LinkedTeamSheet from "@/components/home/LinkedTeamSheet";
+import { SHEET_STATE, teamInHistory } from "@/lib/linkedTeams";
 import { teamColor, teamLogoUrl } from "@/lib/teams";
 
 /** 거론 구단 알약을 몇 개까지 보이나(나머지는 '외 n개 구단') */
 const LINKED_SHOWN = 3;
 /** 반대 전망 한 줄: 한 구단의 반대 전망이 이보다 많고 거론의 절반 이상일 때만 */
 const DOUBT_MIN = 3;
-/** 기사 창을 열며 쌓은 주소 기록 표시(history.state의 키). 값은 '<sheetKey>:<구단 약어>' */
-const SHEET_STATE = "korleaguerTeamSheet";
 
 type Team = LinkedTeamCounts["teams"][number];
 
 /** 기사 목록이 있으면 눌러서 창을 연다. 기사가 없는 구단은 누를 수 없는 알약 */
 const canOpen = (t: Team) => t.articles.length > 0;
-
-/** 주소 기록 표시가 이 칸(sheetKey)의 것이면 그 구단 약어 */
-function teamInHistory(state: unknown, sheetKey: string): string | null {
-  const mark = (state as Record<string, unknown> | null)?.[SHEET_STATE];
-  const prefix = `${sheetKey}:`;
-  return typeof mark === "string" && mark.startsWith(prefix) ? mark.slice(prefix.length) : null;
-}
-
-/**
- * 이 칸(sheetKey)의 기사 창이 지금 주소 기록에서 열려 있나. 홈 성적표 목록이 창이 든 줄을 펼쳐 두려고 쓴다:
- * 기사를 보고 뒤로 오거나 새로 고쳐 창이 다시 열릴 때 그 줄이 접혀 있으면 창을 닫은 뒤 포커스를 돌려줄 알약이 숨어 있다
- */
-export function linkedSheetOpen(sheetKey: string): boolean {
-  return teamInHistory(window.history.state, sheetKey) !== null;
-}
 
 /** 지금 화면에 그려진 요소인가(휴대폰 알약·PC 막대 중 숨긴 쪽 버튼은 아니다) */
 function isShown(el: Element | null | undefined): el is HTMLElement {

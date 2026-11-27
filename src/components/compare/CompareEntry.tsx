@@ -7,7 +7,7 @@ import Chevron from "@/components/Chevron";
 import InfoTip from "@/components/InfoTip";
 import { PairAvatar, PairHeads, PairTable, PillPicker, type PairPerson, type PairRow } from "@/components/PairTable";
 import SheetOpener from "@/components/SheetOpener";
-import { SameGamesSheetBody, sameGamesRecord, sameGamesTitle } from "@/components/compare/SameGames";
+import { SameGamesSheetBody, sameGamesRecord, sameGamesTitle } from "@/components/SameGamesSheet";
 import { COMPARE_ROWS, leads, sampleNote, type CompareKey } from "@/lib/compare";
 import { formatRate, teamLabel, withAndParticle } from "@/lib/format";
 import { signedPct } from "@/lib/leagueWords";

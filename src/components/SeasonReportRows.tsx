@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { memo, useEffect, useId, useRef, useState, useSyncExternalStore, type ReactNode, type TouchEvent as ReactTouchEvent } from "react";
 import { createPortal } from "react-dom";
 import PlayerAvatar from "@/components/PlayerAvatar";
-import { linkedSheetOpen } from "@/components/home/LinkedTeams";
+import { linkedSheetOpen } from "@/lib/linkedTeams";
 import { useModalDialog } from "@/lib/useModalDialog";
 import { useSheetDrag } from "@/lib/useSheetDrag";
 import SheetCloseButton from "@/components/SheetCloseButton";
