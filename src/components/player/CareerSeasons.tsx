@@ -1,4 +1,5 @@
 import type { CareerSeason } from "@/lib/api";
+import { isHitterSeason } from "@/lib/saber";
 import { formatEra, formatInningsOuts, formatRate, formatWar } from "@/lib/format";
 import { STEADY_OUTS, STEADY_PA } from "@/lib/seasonStats";
 import InfoTip from "@/components/InfoTip";
@@ -14,7 +15,7 @@ function whole(value: number | null): string {
  * (사용자 결정 4, 전수조사 L320). 타석·이닝을 모르면(옛 api) 흐리게 두지 않는다
  */
 function smallSample(s: CareerSeason): boolean {
-  return s.kind === "hitter"
+  return isHitterSeason(s)
     ? s.plateAppearances != null && s.plateAppearances < STEADY_PA
     : s.inningsOuts != null && s.inningsOuts < STEADY_OUTS;
 }
@@ -29,8 +30,8 @@ function smallSample(s: CareerSeason): boolean {
 export default function CareerSeasons({ seasons: all }: { seasons: CareerSeason[] }) {
   if (all.length === 0) return null;
   // 표 머리가 한 종류라 최신 시즌과 같은 종류(타자·투수) 줄만 둔다(역할이 바뀐 선수의 옛 줄이 다른 머리 아래 들어가지 않게)
-  const hitter = all[0].kind === "hitter";
-  const seasons = all.filter((s) => s.kind === all[0].kind);
+  const hitter = isHitterSeason(all[0]);
+  const seasons = all.filter((s) => isHitterSeason(s) === hitter);
   const head = hitter ? ["경기", "타율", "홈런", "OPS", "wRC+", "WAR"] : ["등판", "이닝", "평균자책점", "탈삼진", "ERA-", "WAR"];
   const small = seasons.filter(smallSample).map((s) => s.season);
   // '100타석이 안 돼', '30이닝이 안 돼'(문턱은 seasonStats 한 곳)
@@ -70,7 +71,7 @@ export default function CareerSeasons({ seasons: all }: { seasons: CareerSeason[
           <tbody className="divide-y divide-line">
             {seasons.map((s) => {
               const cells =
-                s.kind === "hitter"
+                isHitterSeason(s)
                   ? [whole(s.games), formatRate(s.avg), whole(s.homeRuns), formatRate(s.ops), whole(s.wrcPlus), formatWar(s.war)]
                   : [whole(s.games), formatInningsOuts(s.inningsOuts), formatEra(s.era), whole(s.strikeouts), whole(s.eraMinus), formatWar(s.war)];
               const dim = smallSample(s) ? "text-muted" : "";

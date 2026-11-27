@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import type { PlayerSaber } from "@/lib/api";
+import { isHitterSaber } from "@/lib/saber";
 import { formatInningsOuts } from "@/lib/format";
 import { type Row, rowsOf } from "@/components/player/LeaguePosition";
 import PositionBar from "@/components/player/PositionBar";
@@ -33,9 +34,9 @@ export default function LeaguePositionCompact({
   /** 위에서 이미 메이저 경기 수를 말했으면(한 줄 흐름) 표본이 적어 위치가 없다는 줄을 쓰지 않는다 */
   sampleSaid?: boolean;
 }) {
-  const hitter = saber ? saber.kind === "hitter" : !pitcher;
+  const hitter = saber ? isHitterSaber(saber) : !pitcher;
   const who = hitter ? "타자" : "투수";
-  const count = !saber ? 0 : saber.kind === "hitter" ? (saber.plateAppearances ?? 0) : (saber.inningsOuts ?? 0);
+  const count = !saber ? 0 : isHitterSaber(saber) ? (saber.plateAppearances ?? 0) : (saber.inningsOuts ?? 0);
   const sample = hitter ? `${count}타석` : `${formatInningsOuts(count)}이닝`;
   const rows = saber ? rowsOf(saber)?.slice(1) : null;
 

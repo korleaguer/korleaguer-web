@@ -37,6 +37,8 @@ export function minorAsLine(m: MinorGameLine, base: Pick<GameLine, "playerId" | 
     pitching: m.pitching,
     lineup: null,
     seasonType: m.seasonType,
+    // 사진 원은 base의 지금 사진을 쓴다(마이너 줄에는 사진 속 팀 약어가 없다)
+    photoTeamAbbr: null,
   };
 }
 

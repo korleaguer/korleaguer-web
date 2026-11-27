@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { getCompare, getPlayer, getRecords, getSameGames } from "@/lib/api";
+import { isHitterSaber } from "@/lib/saber";
 import { pickDefaultOpponent } from "@/lib/compare";
 import { formatAsOf } from "@/lib/format";
 import { parseId } from "@/lib/ids";
@@ -128,7 +129,7 @@ async function PlayerContent({ params }: Pick<Props, "params">) {
   } = result.data;
   // 타격 흐름(누적 wRC+)은 타자만. 마지막 점을 MLB 공식 시즌 wRC+에 맞추고 정규시즌 경기만 쌓는다(경기 종류가 없는 옛 api면 정규시즌 경기 수로 어림)
   const trend =
-    saber?.kind === "hitter" && saber.wrcPlus != null ? buildWrcTrend(games, saber.wrcPlus, hitting?.games ?? null) : null;
+    saber && isHitterSaber(saber) && saber.wrcPlus != null ? buildWrcTrend(games, saber.wrcPlus, hitting?.games ?? null) : null;
   // 바로 가기 탭(휴대폰·태블릿): 있는 칸만, 휴대폰에서 쌓이는 순서대로. id는 각 칸 제목(h2)
   const jumps: JumpTarget[] = [
     { id: "season-title", label: "성적" },
