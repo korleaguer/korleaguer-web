@@ -26,10 +26,10 @@ export const TREND_MIN_PA = 50;
  *
  * 정규시즌 경기만 쌓는다. 경기 목록에는 포스트시즌도 섞여 와서(김하성 9.30~10.7, 김혜성 10.8), 그대로 쌓으면 포스트시즌까지 더한
  * 마지막 점을 정규시즌 공식 값에 맞춰 선 전체가 어긋났다. 경기 줄의 seasonType(korleaguer-server#192)이 REGULAR인 경기만 쓰고,
- * 모르는 종류(normalize가 null로 바꾼 값)는 정규시즌이라고 단정하지 않고 뺀다.
+ * 모르는 종류(서버가 null로 준 값)는 정규시즌이라고 단정하지 않고 뺀다.
  *
- * regularGames: 이 시즌 정규시즌에 뛴 경기 수(선수 응답 hitting.games). 뛴 경기 줄에 seasonType이 하나도 없을 때(옛 api: api를
- * korleaguer-server#192 전으로 되돌렸을 때)만 쓰는 어림으로, 뛴 경기를 앞에서부터 그만큼만 쓴다(포스트시즌은 정규시즌이 끝난 뒤라서).
+ * regularGames: 이 시즌 정규시즌에 뛴 경기 수(선수 응답 hitting.games). 뛴 경기 줄에 seasonType이 하나도 없을 때(서버가 경기
+ * 종류를 모를 때)만 쓰는 어림으로, 뛴 경기를 앞에서부터 그만큼만 쓴다(포스트시즌은 정규시즌이 끝난 뒤라서).
  * 이 수는 서버가 이 경기 목록과 같은 출전 기록(appearance)에서 정규시즌 것만 센 수라 목록의 뛴 줄과 1:1이다. 이것도 없으면 다 쓴다.
  */
 export function buildWrcTrend(games: GameLine[], seasonWrc: number, regularGames: number | null = null): TrendPoint[] | null {
@@ -97,7 +97,7 @@ function gapReason(from: number, to: number, moves: RosterMove[]): TrendGap["rea
     const day = dayOf(m.date);
     return day == null ? [] : [{ m, day }];
   });
-  const isIl = (m: RosterMove) => (m.labelKo ?? "").startsWith("부상자 명단");
+  const isIl = (m: RosterMove) => m.labelKo.startsWith("부상자 명단");
   const inside = dated.filter(({ day }) => day >= from - 1 && day <= to + 1);
   if (inside.some(({ m }) => isIl(m))) return "부상";
   // 기간이 시작되기 전 마지막 명단 기록이 해제가 아니면 아직 명단에 있는 중이다

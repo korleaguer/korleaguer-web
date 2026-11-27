@@ -40,7 +40,7 @@ export default function LinkedTeamSheet({
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  const articles = team.articles ?? [];
+  const articles = team.articles;
 
   // 모달로 열고(포커스가 창 안에 머문다) 열린 동안 뒤 페이지 스크롤을 잠근다. 앱 안이면 창이 떠 있는 동안 앱이 아이폰 왼쪽 끝
   // 밀어 닫기와 아래 탭 누름을 막는다(경기 상세 창과 같은 훅)
