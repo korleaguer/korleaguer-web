@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import type { NewsListItem } from "@/lib/api";
-import { loadMoreNews } from "@/app/news/actions";
+import { loadMoreNews } from "@/lib/actions/news";
 import { callAction, type ActionFailure } from "@/lib/callAction";
 import { formatDate, kstDayKey, kstPrevDayKey } from "@/lib/format";
 import { isNewArticle, type SeenMap } from "@/lib/newsSeen";
