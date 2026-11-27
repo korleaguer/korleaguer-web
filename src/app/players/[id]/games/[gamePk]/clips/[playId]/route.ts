@@ -2,8 +2,8 @@
 // 경기 상세와 같은 이유로 서버 함수 대신 GET이다(11-17 전수조사). 그 경기 상세에 나온 공 번호만 api가 MLB에 묻는다.
 import type { NextRequest } from "next/server";
 import { getClip } from "@/lib/api";
-import { parseId } from "@/lib/ids";
-import { failed, PLAY_ID } from "../../../ids";
+import { parseId, PLAY_ID } from "@/lib/ids";
+import { failed } from "../../../ids";
 
 export async function GET(_request: NextRequest, { params }: RouteContext<"/players/[id]/games/[gamePk]/clips/[playId]">) {
   const { id, gamePk, playId } = await params;
