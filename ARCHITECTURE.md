@@ -62,4 +62,6 @@ app(라우트, 서버 컴포넌트) ──▶ components ──▶ lib
 
 ## 6. 지금 상태 (2026-11-27)
 
-- 2절의 방향을 어기는 곳이 아직 있다: 영역 폴더끼리 부르는 곳 약 30곳, 공용 조각이 영역을 부르는 곳 1곳. 화면 조각과 `lib`가 `app`을 부르는 곳은 없다(서버 함수는 `lib/actions/`). 차례로 고치고, 다 고치면 린트(`no-restricted-imports`)로 막는다. 그때 이 절을 고친다.
+- 2절의 폴더 방향은 린트(`eslint.config.mjs`의 `no-restricted-imports`)가 막는다. 어기는 import를 넣으면 `npm run lint`가 실패한다.
+- 예외는 하나다: 비시즌 홈이 서버가 성적표를 만들지 못할 때 내 선수 카드(`my/FormCard`)를 빌려 그린다. 그 줄에 이유와 린트 예외 표시가 있다.
+- 새 화면 영역 폴더를 만들면 `eslint.config.mjs`의 `AREAS`에 더한다.

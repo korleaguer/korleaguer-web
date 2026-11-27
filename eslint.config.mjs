@@ -19,6 +19,32 @@ const DEFAULT_SCALE = String.raw`(^|[\s:!])text-(xs|sm|base|lg|[2-9]?xl)($|[\s!]
 const ROLE_SLASH = String.raw`(^|[\s:!])text-(stat-form|stat-hero|display|title|article-title|stat|score|heading|reading|summary|button|body|label|meta|badge|caption|micro)\x2F`;
 const ROLE_SLASH_MSG = "역할 토큰 뒤에 /줄간격을 붙이면 굵기·자간이 빠진다. 줄 간격은 leading-*로 덮어쓴다.";
 
+
+/*
+ * 폴더 방향 규칙(ARCHITECTURE.md 2절)에 쓰는 import 경로 패턴. AREAS는 src/components 아래 화면 영역 폴더다(새 영역을 만들면 더한다).
+ */
+const AREAS = ["compare", "home", "my", "news", "player", "players", "records"];
+const LIB_UP = {
+  regex: "^@/(components|app)(/|$)",
+  message: "lib는 화면 조각(components)과 라우트(app)를 모른다(ARCHITECTURE.md 2절). 필요한 값은 lib로 옮긴다.",
+};
+const APP_FROM_COMPONENTS = {
+  regex: "^@/app(/|$)",
+  message: "화면 조각은 라우트 폴더(app)를 모른다(ARCHITECTURE.md 2절). 서버 함수는 lib/actions에 둔다.",
+};
+const UP_RELATIVE = {
+  regex: "^\\.\\./",
+  message: "위 폴더로 올라가는 상대 경로 대신 @/ 경로를 쓴다(폴더 방향 규칙이 @/ 경로로 검사한다).",
+};
+const SHARED_TO_AREA = {
+  regex: "^(@/components/|\\./)[^/]+/",
+  message: "공용 조각은 화면 영역 폴더(home·my …)를 모른다(ARCHITECTURE.md 2절). 그 조각도 여러 영역이 쓰면 공용 자리로 옮긴다.",
+};
+const otherArea = (area) => ({
+  regex: `^@/components/(?!${area}/)[^/]+/`,
+  message: `화면 영역 폴더(${area})는 다른 영역 폴더를 모른다(ARCHITECTURE.md 2절). 두 영역이 쓰는 조각은 공용 자리(src/components/ 바로 아래)로 옮긴다.`,
+});
+
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
@@ -40,6 +66,28 @@ const eslintConfig = defineConfig([
       ],
     },
   },
+  // 폴더 방향(ARCHITECTURE.md 2절): app(라우트) → components → lib. lib는 components·app을, components는 app을 모른다.
+  // components 바로 아래 공용 조각은 영역 폴더를, 영역 폴더(home·my …)는 다른 영역 폴더를 모른다. 두 영역이 쓰는 조각은 공용 자리로 옮긴다.
+  // 위 폴더로 올라가는 상대 경로(../)는 쓰지 않는다(@/ 경로로만 부르면 아래 규칙이 빠짐없이 본다).
+  // 같은 파일에 여러 묶음이 걸리면 뒤 묶음의 설정이 앞 묶음을 덮으므로, 묶음마다 필요한 규칙을 모두 적는다.
+  {
+    files: ["src/lib/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": ["error", { patterns: [LIB_UP, UP_RELATIVE] }],
+    },
+  },
+  {
+    files: ["src/components/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": ["error", { patterns: [APP_FROM_COMPONENTS, UP_RELATIVE, SHARED_TO_AREA] }],
+    },
+  },
+  ...AREAS.map((area) => ({
+    files: [`src/components/${area}/**/*.{ts,tsx}`],
+    rules: {
+      "no-restricted-imports": ["error", { patterns: [APP_FROM_COMPONENTS, UP_RELATIVE, otherArea(area)] }],
+    },
+  })),
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:
