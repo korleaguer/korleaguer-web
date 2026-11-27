@@ -5,7 +5,7 @@ import BottomSheet from "@/components/BottomSheet";
 import Chevron from "@/components/Chevron";
 import Section from "@/components/Section";
 import SheetOpener from "@/components/SheetOpener";
-import { PairAvatar, PairHeads, PairTable, PillPicker, type PairPerson, type PairRow } from "@/components/compare/PairTable";
+import { PairAvatar, PairHeads, PairTable, PillPicker, type PairPerson, type PairRow } from "@/components/PairTable";
 import { SameGamesSheetBody, sameGamesRecord, sameGamesTitle } from "@/components/compare/SameGames";
 import { formatRate } from "@/lib/format";
 import { useHistorySheet } from "@/lib/useHistorySheet";

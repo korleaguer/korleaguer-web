@@ -1,20 +1,11 @@
 import type { GameLine } from "@/lib/api";
 import { formatDate, formatLineup, formatShortDate, formatSummary, formatTime, formatWeekday } from "@/lib/format";
-import { isPostseason } from "@/lib/gameLog";
 import ResultPill from "@/components/ResultPill";
 import Highlights from "@/components/Highlights";
 import ScoreText from "@/components/ScoreText";
 import TeamName from "@/components/TeamName";
+import PostseasonLine from "@/components/PostseasonLine";
 import Words from "@/components/Words";
-
-/**
- * 포스트시즌 경기면 경기 정보 줄 위에 두는 '포스트시즌' 한 줄(본문 글자, 알약 아님. 11-17 전수조사 L350).
- * 경기 상세 창의 경기 한 줄도 이것을 써서 두 곳이 같은 모양이다(PR #308 리뷰). 경기 정보 줄 맨 앞에 넣으면 375px에서
- * 줄이 넘쳐 결과 알약만 다음 줄로 밀렸다. 포스트시즌이 아니면(옛 api 포함) 그리지 않는다
- */
-export function PostseasonLine({ game }: { game: GameLine }) {
-  return isPostseason(game) ? <p className="text-meta font-semibold text-foreground">포스트시즌</p> : null;
-}
 
 /**
  * 경기 한 줄(선수 페이지 경기 기록, 내 선수 카드의 '모두 보기'가 같이 쓴다).

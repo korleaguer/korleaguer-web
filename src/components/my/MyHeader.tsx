@@ -7,7 +7,7 @@ import BottomSheet from "@/components/BottomSheet";
 import PlayerAvatar from "@/components/PlayerAvatar";
 import { useHistorySheet } from "@/lib/useHistorySheet";
 import OrderList from "./OrderList";
-import StarIcon from "./StarIcon";
+import StarIcon from "@/components/StarIcon";
 import { useFocusAfterRemove } from "./useFocusAfterRemove";
 import { useMyPlayerToggle } from "./useMyPlayerToggle";
 

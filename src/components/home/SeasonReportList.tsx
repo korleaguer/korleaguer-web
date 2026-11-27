@@ -6,7 +6,7 @@ import { leagueFlow, leagueWords, type LeagueWords } from "@/lib/leagueWords";
 import { newsHref } from "@/lib/news";
 import ExternalLinkIcon from "@/components/ExternalLinkIcon";
 import MyPlayerToggle from "@/components/my/MyPlayerToggle";
-import StarIcon from "@/components/my/StarIcon";
+import StarIcon from "@/components/StarIcon";
 import { type BadgeTone, levelKo, statusBadge } from "@/components/my/formLabels";
 import LinkedTeams from "@/components/home/LinkedTeams";
 import MonthLine, { MonthSpark } from "@/components/home/MonthLine";

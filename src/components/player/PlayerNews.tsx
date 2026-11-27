@@ -1,7 +1,7 @@
 import type { NewsHeadline } from "@/lib/api";
 import Section from "@/components/Section";
-import AllNewsLink from "@/components/news/AllNewsLink";
-import NewsTitleList from "@/components/news/NewsTitleList";
+import AllNewsLink from "@/components/AllNewsLink";
+import NewsTitleList from "@/components/NewsTitleList";
 
 /** 이 화면에 보이는 기사 수. 더 있으면 '전체 기사 보기'로 뉴스 탭에서 본다 */
 const SHOWN = 3;

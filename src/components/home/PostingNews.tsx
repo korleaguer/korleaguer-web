@@ -1,6 +1,6 @@
 import type { NewsHeadline } from "@/lib/api";
-import AllNewsLink from "@/components/news/AllNewsLink";
-import NewsTitleList from "@/components/news/NewsTitleList";
+import AllNewsLink from "@/components/AllNewsLink";
+import NewsTitleList from "@/components/NewsTitleList";
 
 export interface PostingNewsItem extends NewsHeadline {
   /** 여러 선수의 기사를 모았을 때 누구 기사인지. 한 명이면 null */

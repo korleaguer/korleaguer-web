@@ -8,8 +8,8 @@ import { newsHref } from "@/lib/news";
 import { revealInRow } from "@/lib/scroll";
 import LoadingDots from "@/components/LoadingDots";
 import PlayerAvatar from "@/components/PlayerAvatar";
-import KboAvatar from "@/components/home/KboAvatar";
-import StarIcon from "@/components/my/StarIcon";
+import KboAvatar from "@/components/KboAvatar";
+import StarIcon from "@/components/StarIcon";
 
 /**
  * 뉴스 탭의 선수 고르기: '전체'와 기사가 있는 선수(사진 + 이름). 휴대폰은 위에 가로로 한 줄(넘치면 옆으로 밀어 본다),

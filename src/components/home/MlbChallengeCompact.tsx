@@ -2,7 +2,7 @@ import type { PostingPlayer, PostingSummary } from "@/lib/api";
 import Section from "@/components/Section";
 import Words from "@/components/Words";
 import HistorySheetRow from "@/components/home/HistorySheetRow";
-import KboAvatar from "@/components/home/KboAvatar";
+import KboAvatar from "@/components/KboAvatar";
 import PostingSheetBody from "@/components/home/PostingSheetBody";
 import PostingNews from "@/components/home/PostingNews";
 import { dDayText, daysLeftSpoken, derivePosting, formatUsd, isOpen, STATUS_LABEL } from "@/lib/posting";

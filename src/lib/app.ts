@@ -3,6 +3,9 @@
 
 import { useEffect, useSyncExternalStore, type RefObject } from "react";
 
+/** 앱 머리글의 공유 단추(ShareButton)가 선수 페이지에 공유 창(PlayerShare)을 열라고 보내는 신호 */
+export const OPEN_PLAYER_SHARE = "korleaguer:open-player-share";
+
 type AppWindow = Window & {
   /** 옛 앱(0.1.x)에는 features가 없다 */
   KORLeaguerApp?: { features?: unknown };

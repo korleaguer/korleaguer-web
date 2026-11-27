@@ -3,11 +3,7 @@ import type { ReactNode } from "react";
 import type { RecordBest, RecordLeader, RecordNext, RecordPassed } from "@/lib/api";
 import Chevron from "@/components/Chevron";
 import PlayerAvatar from "@/components/PlayerAvatar";
-
-/** 1671 → "1,671" */
-export function count(value: number): string {
-  return value.toLocaleString("ko-KR");
-}
+import { formatCount } from "@/lib/format";
 
 /** 뛴 시즌: "2005–20", 한 시즌이면 "2016" */
 function years(first: number, last: number): string {
@@ -82,7 +78,7 @@ export function LeaderRow({ leader, unit, teamAbbr = null }: { leader: RecordLea
         </span>
         <RowEnd linked={leader.playerId != null}>
           <span className="text-stat tabular-nums">
-            {count(leader.value)}
+            {formatCount(leader.value)}
             <span className="sr-only">{unit}</span>
           </span>
         </RowEnd>
@@ -107,19 +103,19 @@ export function NextRow({ next, teamAbbr = null }: { next: RecordNext; teamAbbr?
               <span className="text-heading">{next.nameKo}</span>{" "}
               {/* '통산 226타점'은 한 덩어리로(큰 글씨에서 '통산/226타점'으로 갈리지 않게) */}
               <span className="whitespace-nowrap text-meta text-muted tabular-nums">
-                통산 {count(next.value)}
+                통산 {formatCount(next.value)}
                 {next.unit}
               </span>
             </span>
             <span className="ml-auto shrink-0 text-stat text-accent-ink tabular-nums">
-              {count(next.toPass)}
+              {formatCount(next.toPass)}
               {next.unit}
               {/* 화면에서는 묶음 머리의 '남은 수'가 이 칸 이름이다. 낭독기는 '통산 336안타 32안타'로 이어 읽어 헷갈려서 '남음'을 붙인다 */}
               <span className="sr-only"> 남음</span>
             </span>
           </span>
           <span className="mt-0.5 block text-meta text-muted">
-            {`${next.targetNameKo} ${count(next.targetValue)}${next.unit} 넘으면 한국인 ${next.rankAfter}위`}
+            {`${next.targetNameKo} ${formatCount(next.targetValue)}${next.unit} 넘으면 한국인 ${next.rankAfter}위`}
           </span>
         </span>
       </RowShell>
@@ -165,7 +161,7 @@ export function PassedRow({ group, teamAbbr = null }: { group: PassedGroup; team
         {/* 기록 이름표는 누르는 것이 아니라 흐린 글자로 둔다(알약은 누르는 것·드문 상태만, 사용자 규칙 11-17) */}
         <span className="shrink-0 text-label text-muted">{first.label}</span>
         <span className="min-w-0 flex-1 text-meta tabular-nums @max-[18rem]:order-last @max-[18rem]:basis-full @max-[18rem]:pl-[calc(28px+0.75rem)]">
-          {names.map((p) => `${p.passedNameKo} ${count(p.passedValue)}`).join(" · ")}
+          {names.map((p) => `${p.passedNameKo} ${formatCount(p.passedValue)}`).join(" · ")}
         </span>
         <span className="shrink-0 text-caption text-muted tabular-nums @max-[18rem]:ml-auto">{when(items)}</span>
       </RowShell>
@@ -196,7 +192,7 @@ export function BestRow({ row, unit }: { row: RecordBest["rows"][number]; unit: 
               <span className="sr-only">시즌</span>
             </span>
             <span className="w-14 text-right text-stat tabular-nums">
-              {count(row.value)}
+              {formatCount(row.value)}
               <span className="sr-only">{unit}</span>
             </span>
           </span>

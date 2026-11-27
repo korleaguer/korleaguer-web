@@ -2,15 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import BottomSheet from "@/components/BottomSheet";
-import { appHas, isInApp, postToApp } from "@/lib/app";
+import { appHas, isInApp, OPEN_PLAYER_SHARE, postToApp } from "@/lib/app";
 import { toast } from "@/lib/toast";
 import { useHistorySheet } from "@/lib/useHistorySheet";
 
 /** 창을 열며 쌓은 주소 기록 표시(history.state의 키). 다른 창들의 표시와 다르다 */
 const SHARE_STATE = "korleaguerPlayerShare";
 
-/** 앱 머리글의 공유 단추(ShareButton)가 선수 페이지에서 이 창을 열라고 보내는 신호 */
-export const OPEN_PLAYER_SHARE = "korleaguer:open-player-share";
 
 /**
  * 선수 페이지 공유 단추와 창(이슈 #381). 단추는 머리 카드 오른쪽에 하나뿐이다. 앱(웹뷰)에서는 앱 머리글의 공유 단추가 이 창을

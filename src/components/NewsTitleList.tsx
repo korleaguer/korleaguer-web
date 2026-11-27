@@ -4,7 +4,7 @@ import type { NewsHeadline } from "@/lib/api";
 import { formatDate, formatTime } from "@/lib/format";
 import { titleLang } from "@/lib/news";
 import ExternalLinkIcon from "@/components/ExternalLinkIcon";
-import NewsThumb from "@/components/news/NewsThumb";
+import NewsThumb from "@/components/NewsThumb";
 import Words from "@/components/Words";
 
 export interface NewsTitleItem extends Omit<NewsHeadline, "lead" | "summary"> {
