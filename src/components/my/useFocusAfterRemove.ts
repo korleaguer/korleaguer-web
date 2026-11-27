@@ -1,23 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, type RefObject } from "react";
 import { moveFocus } from "@/lib/focus";
-
-/**
- * 마지막으로 누른 것이 포커스를 가진 카드 별이면 그 선수 번호와 키보드로 눌렀는지. 다른 것을 누르면 지운다.
- * 훅 밖(모듈)에 두는 까닭: 알림의 '되돌리기'·'다시 시도' 버튼도 카드 별을 대신 누른 것으로 남긴다(noteStarPress).
- * 이 훅은 내 선수 화면 머리(MyHeader)에 하나만 있다
- */
-let pressedStar: { id: number; keyboard: boolean } | null = null;
-
-/**
- * 알림 버튼이 카드 별을 대신 누른 것으로 남긴다. 그 버튼이 포커스를 가진 채 눌렸을 때만 부른다(useMyPlayerToggle): 처음에 카드 별로
- * 눌렀거나, 처음 누른 고르기 줄·알약이 없어져 돌려줄 곳이 없을 때(고르기를 닫음, 선수 화면에서 빼고 이 화면으로 옴).
- * 알림은 누르면 사라져서 그 버튼에 있던 포커스도 문서 처음(body)으로 빠졌다(키보드 사용자가 자리를 잃었다, #288 뒤 점검).
- * 남겨 두면 그 선수 카드가 다시 그려질 때(되돌리기) 되살린 카드의 별로, 빠질 때(다시 빼기) 옆 카드 이름으로 옮긴다.
- * 알림 버튼의 onClick은 아래 문서 잡기 단계(capture) 다음에 돌아서, 그 클릭이 이 기록을 지우지 않는다
- */
-export function noteStarPress(id: number, keyboard: boolean) {
-  pressedStar = { id, keyboard };
-}
+import { starPress } from "@/lib/starPress";
 
 /**
  * 내 선수 카드의 별로 선수를 빼면 카드가 사라지면서 그 안에 있던 포커스도 사라진다. 키보드·화면 낭독기로는 페이지 맨 앞으로
@@ -39,13 +22,13 @@ export function useFocusAfterRemove(ids: readonly number[], title: RefObject<HTM
 
   useEffect(() => {
     // 다른 화면에서 남은 기록은 버린다(이 화면 카드를 누른 것이 아니다)
-    pressedStar = null;
+    starPress.current = null;
     function onClick(e: MouseEvent) {
       const star = e.target instanceof Element ? e.target.closest("[data-my-toggle]") : null;
       const card = star?.closest<HTMLElement>("[data-player-id]");
       const keyboard = e.detail === 0;
       const focused = document.activeElement === star || keyboard;
-      pressedStar = card && focused ? { id: Number(card.dataset.playerId), keyboard } : null;
+      starPress.current = card && focused ? { id: Number(card.dataset.playerId), keyboard } : null;
     }
     // 잡기 단계(capture)로 문서에서 본다: 카드 목록은 서버 컴포넌트라 onClickCapture를 달 곳이 없고,
     // 별의 onClick보다 먼저 그 별이 포커스를 가졌는지 본다
@@ -56,13 +39,13 @@ export function useFocusAfterRemove(ids: readonly number[], title: RefObject<HTM
   useLayoutEffect(() => {
     const before = prev.current;
     prev.current = ids;
-    const press = pressedStar;
+    const press = starPress.current;
     if (press == null) return;
     // 남긴 별의 선수가 이번에 빠졌거나 되살아났을 때만 본다(쿠키에 남은 없는 선수 번호가 빠지는 새로 그리기 등은 그대로 둔다)
     const removed = before.includes(press.id) && !ids.includes(press.id);
     const restored = !before.includes(press.id) && ids.includes(press.id);
     if (!removed && !restored) return;
-    pressedStar = null;
+    starPress.current = null;
     // 잃은 포커스가 없으면 옮기지 않는다. 알림 버튼으로 되돌렸으면, 서버가 빨리 답할 때 포커스가 아직 사라지는 중인 알림에 남아 있다
     const focused = document.activeElement;
     if (focused && focused !== document.body && !focused.closest("[data-toast]")) return;
