@@ -124,7 +124,7 @@ export type TimelineStat = S["PlayerTimelineResponseStat"];
 
 export type TimelinePlayer = S["PlayerTimelineResponsePlayerTimeline"];
 
-/** GET /api/players/timeline?season=: 선수 탭 '어디서 뛰었나' 연표. 옛 api면 notFound */
+/** GET /api/players/timeline?season=: 선수 탭 '어디서 뛰었나' 연표 */
 export type Timeline = S["PlayerTimelineResponse"];
 
 export type PlayerDetail = S["PlayerPageResponsePlayerInfo"];
@@ -160,7 +160,7 @@ export type MinorGameLine = S["MinorGameLine"];
 
 /**
  * 선수 한 명의 경기 한 개 상세(GET /api/players/{id}/games/{gamePk}, korleaguer-server#159).
- * 경기 달력에서 날짜를 누르면 뜨는 창에 쓴다. 옛 api면(404) 창이 '불러오지 못했어요'를 보인다.
+ * 경기 달력에서 날짜를 누르면 뜨는 창에 쓴다. 서버가 404를 주면 창이 '불러오지 못했어요'를 보인다.
  */
 export type GameDetail = S["GameDetail"];
 
@@ -212,9 +212,10 @@ export type SeasonTotals = S["MyPlayersResponseSeasonTotals"];
 /** GET /api/my?ids=1,2&days=7 */
 export type MyPlayersResponse = S["MyPlayersResponse"];
 
-// ---- 응답 보정 ----
-// api가 계약과 조금 다르게 보내도(필드 빠짐, 배열 대신 null) 화면이 죽지 않게 빈 값을 채운다.
-// 모양이 아예 틀리면 여기서 예외가 나고, requestApi가 badResponse로 바꾼다.
+// ---- 응답 다듬기 ----
+// 응답 모양은 서버 명세가 보장한다(타입이 곧 명세다). 여기서는 표시·보안 규칙만 적용한다:
+// 링크·사진으로 쓸 수 없는 주소 거르기, https 사진만 쓰기, 빈 이름·빈 글자 거르기. 모양이 아예 틀리면 예외가 나고
+// requestApi가 badResponse로 바꾼다.
 
 /** http(s) 주소만 통과시킨다. 사진·링크 주소로 쓰므로 javascript: 같은 것은 버린다 */
 function httpUrl(value: string | null | undefined): string | null {
@@ -229,117 +230,47 @@ function photoUrl(value: string | null | undefined): string | null {
 function normalizeLine(line: GameLine): GameLine {
   return {
     ...line,
+    photoUrl: photoUrl(line.photoUrl),
     // 팀 이름은 서버에서 빌 수 있다(팀 표에 이름이 없을 때). 글자 틀에 'null'이 들어가지 않게 빈 글자로 둔다
     teamKo: line.teamKo ?? "",
     opponentKo: line.opponentKo ?? "",
-    teamAbbr: line.teamAbbr ?? null,
-    photoUrl: photoUrl(line.photoUrl),
-    opponentAbbr: line.opponentAbbr ?? null,
-    teamScore: line.teamScore ?? null,
-    opponentScore: line.opponentScore ?? null,
-    result: line.result ?? null,
-    summary: line.summary ?? "",
-    batting: line.batting
-      ? {
-          ...line.batting,
-          doubles: num(line.batting.doubles),
-          triples: num(line.batting.triples),
-          hitByPitch: num(line.batting.hitByPitch),
-          sacFlies: num(line.batting.sacFlies),
-          plateAppearances: num(line.batting.plateAppearances),
-          strikeouts: num(line.batting.strikeouts),
-        }
-      : null,
-    pitching: line.pitching ?? null,
-    lineup: line.lineup === "STARTER" || line.lineup === "SUB" ? line.lineup : null,
-    seasonType: seasonTypeOf(line.seasonType),
   };
-}
-
-/** 경기 종류. 두 값이 아니면(옛 api라 칸이 없을 때 포함) null */
-function seasonTypeOf(value: unknown): SeasonType | null {
-  return value === "REGULAR" || value === "POSTSEASON" ? value : null;
 }
 
 /** 시즌 성적 한 줄(타자·투수 공통) */
-function normalizeSeason<
-  T extends {
-    teamKo: string | null;
-    teamAbbr: string | null;
-    photoUrl: string | null;
-    minorGames: number;
-    mainlyMinors: boolean;
-  /** 마이너 시즌 성적 줄이면 단계("트리플A" 등, teamKo는 마지막 마이너 팀). 메이저 줄이면 null */
-  levelKo: string | null;
-  },
->(row: T): T {
-  return {
-    ...row,
-    teamKo: row.teamKo ?? null,
-    teamAbbr: row.teamAbbr ?? null,
-    photoUrl: photoUrl(row.photoUrl),
-    // 마이너 경기 수를 주지 않는 오래된 api면 모두 메이저 선수로 본다(지금처럼 한 묶음)
-    minorGames: row.minorGames ?? 0,
-    mainlyMinors: row.mainlyMinors === true,
-    levelKo: row.levelKo ?? null,
-  };
+function normalizeSeason<T extends { photoUrl: string | null }>(row: T): T {
+  return { ...row, photoUrl: photoUrl(row.photoUrl) };
 }
 
 function normalizeHome(raw: HomeResponse): HomeResponse {
   return {
     ...raw,
-    recent: {
-      isFallback: raw.recent?.isFallback ?? true,
-      dateKst: raw.recent?.dateKst ?? null,
-      lines: (raw.recent?.lines ?? []).map(normalizeLine),
-      buzz: raw.recent?.buzz ?? [],
+    recent: { ...raw.recent, lines: raw.recent.lines.map(normalizeLine) },
+    hitters: raw.hitters.map(normalizeSeason),
+    pitchers: raw.pitchers.map(normalizeSeason),
+    minorHitters: raw.minorHitters.map(normalizeSeason),
+    minorPitchers: raw.minorPitchers.map(normalizeSeason),
+    offseason: raw.offseason && { ...raw.offseason, report: raw.offseason.report.map(normalizeReport) },
+    posting: raw.posting && {
+      players: raw.posting.players.map((p) => ({
+        ...p,
+        news: p.news.flatMap((n) => normalizeHeadline(n) ?? []),
+      })),
+      history: raw.posting.history.map((h) => ({ ...h, photoUrl: photoUrl(h.photoUrl) })),
     },
-    ranking: raw.ranking ?? null,
-    hitters: (raw.hitters ?? []).map(normalizeSeason),
-    pitchers: (raw.pitchers ?? []).map(normalizeSeason),
-    minorHitters: (raw.minorHitters ?? []).map(normalizeSeason),
-    minorPitchers: (raw.minorPitchers ?? []).map(normalizeSeason),
-    offseason: raw.offseason
-      ? {
-          ...raw.offseason,
-          nextOpeningDay: raw.offseason.nextOpeningDay ?? null,
-          daysToOpening: raw.offseason.daysToOpening ?? null,
-          playerIds: raw.offseason.playerIds ?? [],
-          report: raw.offseason.report?.map(normalizeReport),
-        }
-      : null,
-    posting: raw.posting
-      ? {
-          players: (raw.posting.players ?? []).map((p) => ({
-            ...p,
-            photoUrl: p.photoUrl ?? null,
-            news: (p.news ?? []).flatMap((n) => normalizeHeadline(n) ?? []),
-            deal: normalizeDeal(p.deal),
-          })),
-          history: (raw.posting.history ?? []).map((h) => ({
-            ...h,
-            photoUrl: photoUrl(h.photoUrl),
-            deal: normalizeDeal(h.deal),
-          })),
-        }
-      : null,
   };
 }
 
 /**
- * 성적표 한 장. MLB 안 위치가 null이면 메이저 기록이 없거나 서버가 위치를 못 읽은 것이라, 화면은 메이저 경기가 없을 때만
- * '위치는 없어요'를 쓰고 메이저에서 뛴 선수면 줄을 뺀다(SeasonReportList).
+ * 성적표 한 장. 단계 이름이 빈 글자면 없는 것으로 본다. MLB 안 위치가 null이면 메이저 기록이 없거나 서버가 위치를
+ * 못 읽은 것이라, 화면은 메이저 경기가 없을 때만 '위치는 없어요'를 쓰고 메이저에서 뛴 선수면 줄을 뺀다(SeasonReportList).
  * 기사는 관련 기사와 같은 규칙으로 다듬는다(원문 주소가 http(s)가 아닌 기사는 링크로 쓸 수 없어 뺀다)
  */
 function normalizeReport(r: SeasonReport): SeasonReport {
   return {
     ...r,
-    wrcPlus: num(r.wrcPlus),
-    eraPlus: num(r.eraPlus),
-    statLevelKo: typeof r.statLevelKo === "string" && r.statLevelKo.trim() !== "" ? r.statLevelKo : null,
-    saber: normalizeSaber(r.saber),
-    winterMoves: Array.isArray(r.winterMoves) ? r.winterMoves : [],
-    news: r.news == null ? r.news : r.news.flatMap((n) => normalizeHeadline(n) ?? []),
+    statLevelKo: r.statLevelKo?.trim() ? r.statLevelKo : null,
+    news: r.news.flatMap((n) => normalizeHeadline(n) ?? []),
   };
 }
 
@@ -352,18 +283,16 @@ function normalizeHeadline<T extends Omit<NewsHeadline, "lead" | "summary">>(n: 
   if (!url) return null;
   return {
     ...n,
-    id: typeof n.id === "number" ? n.id : null,
     url,
-    titleKo: n.titleKo ?? null,
     // 기사 사진은 언론사 서버에서 브라우저가 직접 받는다. https 주소만 쓴다
     imageUrl: n.imageUrl?.startsWith("https://") ? n.imageUrl : null,
     alsoBy: alsoByOf(n.alsoBy),
   };
 }
 
-/** 같은 글을 실은 다른 언론사 이름. 옛 API는 이 칸을 주지 않아 빈 목록이다. 빈 이름은 뺀다 */
-function alsoByOf(value: unknown): string[] {
-  return Array.isArray(value) ? value.filter((p): p is string => typeof p === "string" && p.trim() !== "") : [];
+/** 같은 글을 실은 다른 언론사 이름. 빈 이름은 뺀다 */
+function alsoByOf(names: string[]): string[] {
+  return names.filter((p) => p.trim() !== "");
 }
 
 function normalizeNewsPage(raw: NewsPage): NewsPage {
@@ -374,20 +303,15 @@ function normalizeNewsPage(raw: NewsPage): NewsPage {
     ...raw,
     url,
     playerPhotoUrl: photoUrl(raw.playerPhotoUrl),
-    titleKo: raw.titleKo ?? null,
     imageUrl: raw.imageUrl?.startsWith("https://") ? raw.imageUrl : null,
-    summary: raw.summary ?? null,
-    lead: raw.lead ?? null,
-    // 기사 상세의 같은 기사 언론사는 korleaguer-server#180부터 온다(뉴스 탭 목록 한 줄과 같은 계산)
     alsoBy: alsoByOf(raw.alsoBy),
-    more: (raw.more ?? []).flatMap((n) => normalizeHeadline(n) ?? []),
+    more: raw.more.flatMap((n) => normalizeHeadline(n) ?? []),
   };
 }
 
-/** 뉴스 탭 한 쪽. 링크를 걸 수 없는 기사(원문 주소가 http(s)가 아님)와 이름이 빈 선수는 뺀다 */
 /** MLB 서버 주소만 받는다(영상·사진). 다른 곳이면 null */
-function mlbMediaUrl(value: unknown): string | null {
-  if (typeof value !== "string") return null;
+function mlbMediaUrl(value: string | null): string | null {
+  if (!value) return null;
   try {
     const url = new URL(value);
     return url.protocol === "https:" && (url.hostname === "mlb.com" || url.hostname.endsWith(".mlb.com") || url.hostname.endsWith(".mlbstatic.com"))
@@ -398,44 +322,20 @@ function mlbMediaUrl(value: unknown): string | null {
   }
 }
 
+/** 경기 상세. 공 번호는 영상 주소를 물을 때 주소에 넣으므로 모양을 본다. 영상은 MLB 주소만, 둘 다 없으면 뺀다 */
 function normalizeGameDetail(raw: GameDetail): GameDetail {
   return {
-    playerId: raw.playerId,
-    gamePk: raw.gamePk,
-    role: raw.role === "PITCHER" ? "PITCHER" : "HITTER",
-    available: raw.available === true,
-    clips: raw.clips === true,
-    plays: (Array.isArray(raw.plays) ? raw.plays : []).flatMap((p) => {
-      if (typeof p?.resultKo !== "string" || typeof p.inning !== "number") return [];
-      return [
-        {
-          inning: p.inning,
-          top: p.top === true,
-          resultKo: p.resultKo,
-          eventType: typeof p.eventType === "string" ? p.eventType : "",
-          rbi: num(p.rbi) ?? 0,
-          opponentName: typeof p.opponentName === "string" ? p.opponentName : null,
-          balls: num(p.balls),
-          strikes: num(p.strikes),
-          pitches: num(p.pitches) ?? 0,
-          pitchKo: typeof p.pitchKo === "string" ? p.pitchKo : null,
-          pitchKmh: num(p.pitchKmh),
-          exitKmh: num(p.exitKmh),
-          launchAngle: num(p.launchAngle),
-          distanceM: num(p.distanceM),
-          playId: typeof p.playId === "string" && /^[0-9a-f-]{36}$/.test(p.playId) ? p.playId : null,
-        },
-      ];
-    }),
-    highlights: (Array.isArray(raw.highlights) ? raw.highlights : []).flatMap((h) => {
-      const mp4Url = mlbMediaUrl(h?.mp4Url);
-      const hlsUrl = mlbMediaUrl(h?.hlsUrl);
+    ...raw,
+    plays: raw.plays.map((p) => ({ ...p, playId: p.playId && /^[0-9a-f-]{36}$/.test(p.playId) ? p.playId : null })),
+    highlights: raw.highlights.flatMap((h) => {
+      const mp4Url = mlbMediaUrl(h.mp4Url);
+      const hlsUrl = mlbMediaUrl(h.hlsUrl);
       if (!mp4Url && !hlsUrl) return [];
       return [
         {
-          title: typeof h.title === "string" ? h.title : "",
-          titleKo: typeof h.titleKo === "string" && h.titleKo.trim() !== "" ? h.titleKo.trim() : null,
-          durationSec: num(h.durationSec),
+          ...h,
+          title: h.title ?? "",
+          titleKo: h.titleKo?.trim() || null,
           mp4Url,
           hlsUrl,
           imageUrl: mlbMediaUrl(h.imageUrl),
@@ -445,268 +345,98 @@ function normalizeGameDetail(raw: GameDetail): GameDetail {
   };
 }
 
+/** 뉴스 탭 한 쪽. 링크를 걸 수 없는 기사(원문 주소가 http(s)가 아님)와 이름이 빈 선수·빈 낱말은 뺀다 */
 function normalizeNewsList(raw: NewsList): NewsList {
   return {
-    players: (raw.players ?? [])
-      .filter((p) => typeof p.nameKo === "string" && p.nameKo.trim() !== "")
-      .map((p) => ({
-        nameKo: p.nameKo,
-        photoUrl: photoUrl(p.photoUrl),
-        playerId: typeof p.playerId === "number" ? p.playerId : null,
-        posting: p.posting === true,
-        latestAt: typeof p.latestAt === "string" ? p.latestAt : null,
-      })),
-    player: typeof raw.player === "string" ? raw.player : null,
-    items: (raw.items ?? []).flatMap((n) => {
+    ...raw,
+    players: raw.players
+      .filter((p) => p.nameKo.trim() !== "")
+      .map((p) => ({ ...p, photoUrl: photoUrl(p.photoUrl) })),
+    items: raw.items.flatMap((n) => {
       const headline = normalizeHeadline(n);
       if (!headline) return [];
-      const who = Array.isArray(n.who) ? n.who.filter((w) => typeof w === "string" && w.trim() !== "") : [];
-      return [{ ...headline, who }];
+      return [{ ...headline, who: n.who.filter((w) => w.trim() !== "") }];
     }),
-    next: typeof raw.next === "string" && raw.next !== "" ? raw.next : null,
-    query: typeof raw.query === "string" && raw.query !== "" ? raw.query : null,
-    queryCount: typeof raw.queryCount === "number" && raw.queryCount >= 0 ? raw.queryCount : null,
-    topics: (raw.topics ?? []).filter((t) => typeof t.word === "string" && t.word !== "" && typeof t.count === "number"),
+    // 빈 글자는 없는 것으로 본다(빈 커서로 '더 보기'를 만들지 않는다)
+    next: raw.next || null,
+    query: raw.query || null,
+    topics: raw.topics.filter((t) => t.word !== ""),
   };
 }
 
-/** 계약 내용. 옛 api는 환율(krwPerUsd)을 주지 않는다 */
-function normalizeDeal(deal: PostingDeal | null | undefined): PostingDeal | null {
-  return deal ? { ...deal, krwPerUsd: deal.krwPerUsd ?? null } : null;
-}
-
-/** 목록·상세가 같이 쓰는 선수 정보 */
+/** 목록·상세가 같이 쓰는 선수 정보. 빈 등번호는 없는 것으로 본다 */
 function normalizeSummary<T extends PlayerSummary>(p: T): T {
   return {
     ...p,
-    nameEn: p.nameEn ?? null,
-    position: p.position ?? null,
-    positionKo: p.positionKo ?? null,
-    teamKo: p.teamKo ?? null,
-    teamAbbr: p.teamAbbr ?? null,
     photoUrl: photoUrl(p.photoUrl),
-    age: p.age ?? null,
     jersey: String(p.jersey ?? "").trim() || null,
-    level: p.level === "MLB" || p.level === "MINORS" ? p.level : null,
-    levelTeam: p.levelTeam ?? null,
-    // FA를 주지 않는 오래된 api면 FA가 아닌 것으로 본다(지금처럼 단계 알약만)
-    freeAgent: p.freeAgent === true,
-    returnedKo: p.returnedKo ?? null,
   };
-}
-
-function normalizePlayers(raw: PlayerSummary[]): PlayerSummary[] {
-  return raw.map(normalizeSummary);
 }
 
 function normalizePlayer(raw: PlayerResponse): PlayerResponse {
   const p = raw.player;
   return {
     ...raw,
-    generatedAt: typeof raw.generatedAt === "string" ? raw.generatedAt : null,
     player: {
       ...normalizeSummary(p),
-      teamEn: p.teamEn ?? null,
-      birthPlace: p.birthPlace ?? null,
       mlbUrl: httpUrl(p.mlbUrl),
-      birthDate: p.birthDate ?? null,
-      heightCm: p.heightCm ?? null,
-      weightKg: p.weightKg ?? null,
-      batsThrowsKo: p.batsThrowsKo ?? null,
-      debutYear: p.debutYear ?? null,
-      careerKo: p.careerKo ?? null,
-      // 오래된 api면 없다. 사진 주소가 없는 줄은 뺀다
-      careerPhotos: (p.careerPhotos ?? []).filter((c) => c && typeof c.photoUrl === "string" && c.teamKo),
+      // 팀 이름이 빈 사진은 이름표를 달 수 없어 뺀다
+      careerPhotos: p.careerPhotos.filter((c) => c.teamKo),
     },
-    hitting: raw.hitting ? normalizeSeason(raw.hitting) : null,
-    pitching: raw.pitching ? normalizeSeason(raw.pitching) : null,
-    minorHitting: raw.minorHitting ? normalizeSeason(raw.minorHitting) : null,
-    minorPitching: raw.minorPitching ? normalizeSeason(raw.minorPitching) : null,
-    games: (raw.games ?? []).map(normalizeLine),
-    moves: raw.moves ?? null,
-    saber: normalizeSaber(raw.saber),
-    seasons: (Array.isArray(raw.seasons) ? raw.seasons : []).flatMap((x) => normalizeCareerSeason(x) ?? []),
-    news: (Array.isArray(raw.news) ? raw.news : []).flatMap((n) => normalizeHeadline(n) ?? []),
-    minorGames: (Array.isArray(raw.minorGames) ? raw.minorGames : []).flatMap((m) => normalizeMinorGame(m) ?? []),
+    hitting: raw.hitting && normalizeSeason(raw.hitting),
+    pitching: raw.pitching && normalizeSeason(raw.pitching),
+    minorHitting: raw.minorHitting && normalizeSeason(raw.minorHitting),
+    minorPitching: raw.minorPitching && normalizeSeason(raw.minorPitching),
+    games: raw.games.map(normalizeLine),
+    news: raw.news.flatMap((n) => normalizeHeadline(n) ?? []),
+    minorGames: raw.minorGames.flatMap((m) => normalizeMinorGame(m) ?? []),
   };
 }
 
-/** 마이너 경기 한 줄. 날짜·팀 이름이 없으면 쓸 수 없어 뺀다 */
+/** 마이너 경기 한 줄. 상대 팀 이름이 없으면 쓸 수 없어 뺀다. 단계 이름이 비면 '마이너', 팀 이름이 비면 빈 글자 */
 function normalizeMinorGame(m: MinorGameLine): MinorGameLine | null {
-  if (!m || typeof m.startTimeKst !== "string" || !m.opponentKo) return null;
-  return {
-    ...m,
-    levelKo: m.levelKo || "마이너",
-    teamId: num(m.teamId),
-    teamKo: m.teamKo ?? "",
-    opponentId: num(m.opponentId),
-    home: typeof m.home === "boolean" ? m.home : null,
-    teamScore: num(m.teamScore),
-    opponentScore: num(m.opponentScore),
-    result: m.result === "W" || m.result === "L" || m.result === "T" ? m.result : null,
-    summary: m.summary ?? "",
-    batting: m.batting
-      ? {
-          ...m.batting,
-          doubles: num(m.batting.doubles),
-          triples: num(m.batting.triples),
-          hitByPitch: num(m.batting.hitByPitch),
-          sacFlies: num(m.batting.sacFlies),
-          plateAppearances: num(m.batting.plateAppearances),
-          strikeouts: num(m.batting.strikeouts),
-        }
-      : null,
-    pitching: m.pitching ?? null,
-    seasonType: seasonTypeOf(m.seasonType),
-  };
-}
-
-/** 숫자면 그대로, 아니면 null */
-function num(value: unknown): number | null {
-  return typeof value === "number" && Number.isFinite(value) ? value : null;
-}
-
-/** 서버는 타자·투수를 키로만 나눈다(타자 모양엔 투수 칸이 아예 없다). 화면은 isHitterSaber(saber.ts)로 가른다 */
-function normalizeSaber(raw: unknown): PlayerSaber | null {
-  if (!raw || typeof raw !== "object") return null;
-  const r = raw as Record<string, unknown>;
-  const season = num(r.season);
-  if (season == null) return null;
-  const pct = (r.percentiles ?? null) as Record<string, unknown> | null;
-  const common = { season, war: num(r.war), poolSize: num(r.poolSize) ?? 0 };
-  if ("inningsOuts" in r) {
-    return {
-      ...common,
-      inningsOuts: num(r.inningsOuts),
-      eraMinus: num(r.eraMinus),
-      eraPlus: num(r.eraPlus),
-      fipMinus: num(r.fipMinus),
-      strikeoutRate: num(r.strikeoutRate),
-      walkRate: num(r.walkRate),
-      percentiles: pct
-        ? { overall: num(pct.overall), runPrevention: num(pct.runPrevention), strikeouts: num(pct.strikeouts), walks: num(pct.walks) }
-        : null,
-    };
-  }
-  return {
-    ...common,
-    plateAppearances: num(r.plateAppearances),
-    wrcPlus: num(r.wrcPlus),
-    batting: num(r.batting),
-    baseRunning: num(r.baseRunning),
-    fielding: num(r.fielding),
-    percentiles: pct
-      ? { overall: num(pct.overall), batting: num(pct.batting), baseRunning: num(pct.baseRunning), fielding: num(pct.fielding) }
-      : null,
-  };
-}
-
-function normalizeCareerSeason(raw: unknown): CareerSeason | null {
-  if (!raw || typeof raw !== "object") return null;
-  const r = raw as Record<string, unknown>;
-  const season = num(r.season);
-  if (season == null) return null;
-  const common = { season, teamKo: typeof r.teamKo === "string" ? r.teamKo : null, games: num(r.games), war: num(r.war) };
-  if ("inningsOuts" in r) {
-    return { ...common, inningsOuts: num(r.inningsOuts), era: num(r.era), strikeouts: num(r.strikeouts), eraMinus: num(r.eraMinus) };
-  }
-  return {
-    ...common,
-    plateAppearances: num(r.plateAppearances),
-    avg: num(r.avg),
-    homeRuns: num(r.homeRuns),
-    ops: num(r.ops),
-    wrcPlus: num(r.wrcPlus),
-  };
+  if (!m.opponentKo) return null;
+  return { ...m, levelKo: m.levelKo || "마이너", teamKo: m.teamKo ?? "" };
 }
 
 function normalizeRecords(raw: RecordsResponse): RecordsResponse {
-  const id = (v: number | null | undefined) => (typeof v === "number" ? v : null);
   return {
     ...raw,
-    categories: (raw.categories ?? []).map((c) => ({
+    categories: raw.categories.map((c) => ({
       ...c,
-      leaders: (c.leaders ?? []).map((l) => ({ ...l, playerId: id(l.playerId), photoUrl: photoUrl(l.photoUrl) })),
+      leaders: c.leaders.map((l) => ({ ...l, photoUrl: photoUrl(l.photoUrl) })),
     })),
-    next: (raw.next ?? []).map((n) => ({ ...n, playerId: id(n.playerId), photoUrl: photoUrl(n.photoUrl) })),
-    passed: (raw.passed ?? []).map((p) => ({ ...p, playerId: id(p.playerId), photoUrl: photoUrl(p.photoUrl) })),
-    singleSeason: (raw.singleSeason ?? []).map((b) => ({
-      ...b,
-      rows: (b.rows ?? []).map((r) => ({ ...r, playerId: id(r.playerId) })),
-    })),
+    next: raw.next.map((n) => ({ ...n, photoUrl: photoUrl(n.photoUrl) })),
+    passed: raw.passed.map((p) => ({ ...p, photoUrl: photoUrl(p.photoUrl) })),
   };
 }
 
 function normalizeSameGames(raw: SameGamesResponse): SameGamesResponse {
-  const pairs = (Array.isArray(raw?.pairs) ? raw.pairs : []).flatMap((p): SamePair[] => {
-    const meetings = (Array.isArray(p?.meetings) ? p.meetings : [])
-      .filter((m) => m?.mine && m?.other)
-      .map((m) => ({ mine: normalizeLine(m.mine), other: normalizeLine(m.other) }));
-    if (!p?.other || meetings.length === 0) return [];
-    return [
-      {
-        other: {
-          playerId: p.other.playerId,
-          nameKo: p.other.nameKo,
-          photoUrl: photoUrl(p.other.photoUrl),
-          photoTeamAbbr: p.other.photoTeamAbbr ?? null,
-          teamAbbr: p.other.teamAbbr ?? null,
-        },
-        games: meetings.length,
-        wins: num(p.wins) ?? 0,
-        losses: num(p.losses) ?? 0,
-        teamKo: p.teamKo ?? null,
-        meetings,
-      },
-    ];
-  });
-  return { season: raw.season, playerId: raw.playerId, pairs };
-}
-
-function normalizeCompareLine(l: CompareLine): CompareLine | null {
-  if (!l?.player) return null;
   return {
-    player: normalizeSummary(l.player),
-    games: num(l.games) ?? 0,
-    plateAppearances: num(l.plateAppearances) ?? 0,
-    avg: num(l.avg),
-    homeRuns: num(l.homeRuns) ?? 0,
-    rbi: num(l.rbi) ?? 0,
-    stolenBases: num(l.stolenBases) ?? 0,
-    ops: num(l.ops),
-    wrcPlus: num(l.wrcPlus),
+    ...raw,
+    pairs: raw.pairs.map((p) => ({
+      ...p,
+      other: { ...p.other, photoUrl: photoUrl(p.other.photoUrl) },
+      meetings: p.meetings.map((m) => ({ mine: normalizeLine(m.mine), other: normalizeLine(m.other) })),
+    })),
   };
 }
 
+function normalizeCompareLine(l: CompareLine): CompareLine {
+  return { ...l, player: normalizeSummary(l.player) };
+}
+
 function normalizeCompare(raw: CompareResponse): CompareResponse {
-  const me = raw?.me ? normalizeCompareLine(raw.me) : null;
-  const others = (Array.isArray(raw?.others) ? raw.others : []).flatMap((l) => normalizeCompareLine(l) ?? []);
-  return { season: raw.season, playerId: raw.playerId, me, others: me ? others : [] };
+  return { ...raw, me: raw.me && normalizeCompareLine(raw.me), others: raw.others.map(normalizeCompareLine) };
 }
 
 function normalizeMy(raw: MyPlayersResponse): MyPlayersResponse {
   return {
     ...raw,
-    isFallback: raw.isFallback ?? false,
-    buzz: raw.buzz ?? [],
-    players: (raw.players ?? []).map((p) => ({
+    players: raw.players.map((p) => ({
       ...p,
-      // 선수별 기간이 없으면(오래된 api) 모두 맨 위 기간을 같이 쓴다(당겼는지도 맨 위 값)
-      fromKst: p.fromKst ?? raw.fromKst,
-      toKst: p.toKst ?? raw.toKst,
-      isFallback: p.isFallback ?? raw.isFallback ?? false,
       player: normalizeSummary(p.player),
-      hitting: p.hitting ?? null,
-      pitching: p.pitching ?? null,
-      streak: p.streak ?? null,
-      games: (p.games ?? []).map(normalizeLine),
-      status: p.status ?? null,
-      play: p.play ?? null,
-      fact: p.fact ?? null,
-      // 기간 근거가 없으면(오래된 api) 당겼는지로 정한다
-      basis: p.basis ?? ((p.isFallback ?? raw.isFallback) ? "LAST_PLAYED" : "RECENT"),
-      level: p.level ?? "MLB",
-      seasonTotals: p.seasonTotals ?? null,
+      games: p.games.map(normalizeLine),
     })),
   };
 }
@@ -755,7 +485,7 @@ const TIMEOUT_MS = 5000;
  */
 async function requestApi<T>(
   path: string,
-  normalize: (raw: T) => T,
+  normalize: (raw: T) => T = (raw) => raw,
   timeoutMs = TIMEOUT_MS,
 ): Promise<ApiResult<T>> {
   let res: Response;
@@ -791,45 +521,16 @@ async function homeFromApi() {
   return result;
 }
 
-function normalizeTimeline(raw: Timeline): Timeline {
-  const num = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) ? v : null);
-  return {
-    season: raw.season,
-    seasons: (raw.seasons ?? []).filter((y) => Number.isInteger(y)),
-    from: raw.from,
-    to: raw.to,
-    today: raw.today,
-    inSeason: raw.inSeason === true,
-    players: (raw.players ?? []).map((p) => ({
-      playerId: p.playerId,
-      segments: (p.segments ?? []).map((g) => ({ ...g, levelKo: g.levelKo ?? null, teamKo: g.teamKo ?? null })),
-      moves: p.moves ?? [],
-      lastMoveOn: p.lastMoveOn ?? null,
-      stat: p.stat
-        ? {
-            level: p.stat.level,
-            levelKo: p.stat.levelKo ?? null,
-            games: p.stat.games,
-            wrcPlus: num(p.stat.wrcPlus),
-            avg: num(p.stat.avg),
-            eraPlus: num(p.stat.eraPlus),
-            era: num(p.stat.era),
-          }
-        : null,
-    })),
-  };
-}
-
 async function timelineFromApi(season: number) {
   "use cache";
-  const result = await requestApi(`/api/players/timeline${season > 0 ? `?season=${season}` : ""}`, normalizeTimeline);
+  const result = await requestApi<Timeline>(`/api/players/timeline${season > 0 ? `?season=${season}` : ""}`);
   cacheLife(result.ok ? { stale: 30, revalidate: 30, expire: 300 } : { stale: 0, revalidate: 1, expire: 2 });
   return result;
 }
 
 async function playersFromApi() {
   "use cache";
-  const result = await requestApi("/api/players", normalizePlayers);
+  const result = await requestApi("/api/players", (players: PlayerSummary[]) => players.map(normalizeSummary));
   cacheLife(result.ok ? { stale: 30, revalidate: 30, expire: 300 } : { stale: 0, revalidate: 1, expire: 2 });
   return result;
 }
@@ -931,11 +632,11 @@ export const getPlayers = cache(async () => {
  */
 export async function getTeamAbbrById(): Promise<Record<number, string | null>> {
   const result = await getPlayers();
-  // 이 표는 사진 원 바탕색에만 쓴다. 사진 속 유니폼 팀(photoTeamAbbr)을 먼저, 옛 api면 지금 팀
+  // 이 표는 사진 원 바탕색에만 쓴다. 사진 속 유니폼 팀(photoTeamAbbr)을 먼저, 없으면 지금 팀
   return result.ok ? Object.fromEntries(result.data.map((p) => [p.id, p.photoTeamAbbr ?? p.teamAbbr])) : {};
 }
 
-/** GET /api/players/timeline: 선수 탭 연표. season 0이면 서버가 지금 시즌을 고른다. 옛 api면 notFound(선수 목록으로 대신 그린다) */
+/** GET /api/players/timeline: 선수 탭 연표. season 0이면 서버가 지금 시즌을 고른다 */
 export const getTimeline = cache(async (season: number = 0) => {
   await connection();
   return timelineFromApi(season);
@@ -954,7 +655,7 @@ export const getNews = cache(async (id: number) => {
 
 /**
  * GET /api/news: 뉴스 탭 한 쪽. player(한글 이름)가 null이면 전체, before는 앞 쪽의 next(null이면 첫 쪽),
- * q는 검색어(제목, null이면 거르지 않음). 기사 목록 API가 없는 옛 api면 notFound다
+ * q는 검색어(제목, null이면 거르지 않음)
  */
 export const getNewsList = cache(async (player: string | null, before: string | null, q: string | null = null) => {
   await connection();
@@ -1000,25 +701,25 @@ export async function getMyPlayers(ids: readonly number[], days: number): Promis
   };
 }
 
-/** GET /api/records: 한국인 메이저리거 역대 기록(기록 화면). 옛 api면 notFound */
+/** GET /api/records: 한국인 메이저리거 역대 기록(기록 화면) */
 export const getRecords = cache(async () => {
   await connection();
   return recordsFromApi();
 });
 
-/** GET /api/players/{id}/same-games: 같은 경기에 나온 우리 선수(선수 페이지 칸·홈 맞대결 카드). 옛 api면 notFound */
+/** GET /api/players/{id}/same-games: 같은 경기에 나온 우리 선수(선수 페이지 칸·홈 맞대결 카드) */
 export const getSameGames = cache(async (playerId: number) => {
   await connection();
   return sameGamesFromApi(playerId);
 });
 
-/** GET /api/players/{id}/compare: 두 선수 비교에 쓸 타자 시즌 성적 묶음(선수 페이지 비교 창). 옛 api면 notFound */
+/** GET /api/players/{id}/compare: 두 선수 비교에 쓸 타자 시즌 성적 묶음(선수 페이지 비교 창) */
 export const getCompare = cache(async (playerId: number) => {
   await connection();
   return compareFromApi(playerId);
 });
 
-/** GET /api/players/{id}/games/{gamePk}: 경기 상세(타석별 기록·하이라이트). 옛 api면 notFound */
+/** GET /api/players/{id}/games/{gamePk}: 경기 상세(타석별 기록·하이라이트) */
 export const getGameDetail = cache(async (playerId: number, gamePk: number) => {
   await connection();
   return gameDetailFromApi(playerId, gamePk);

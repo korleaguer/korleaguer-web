@@ -32,7 +32,7 @@ const TONE_BY_CODE: Record<string, keyof typeof TONE> = {
 const SETBACK_LABELS = ["부상자 명단", "출장 정지"];
 
 function toneOf(move: RosterMove): keyof typeof TONE {
-  const label = move.labelKo ?? "";
+  const label = move.labelKo;
   if (SETBACK_LABELS.some((head) => label.startsWith(head))) {
     return label.endsWith("해제") ? "success" : "danger";
   }

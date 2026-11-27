@@ -134,7 +134,7 @@ function buildRow(entry: MyPlayer, report: SeasonReport | null, isMine: boolean,
   // 상태가 '시즌 끝'이 아니게 된 때) 메이저에서 뛰었는지 모르므로 역시 지어내지 않는다(메이저 0경기라고 확인될 때만 그 문장)
   const majorGames = entry.seasonTotals ? (entry.seasonTotals.mlb?.games ?? 0) : null;
   const position =
-    report?.saber === undefined || (report.saber === null && majorGames !== 0) ? null : (
+    !report || (report.saber === null && majorGames !== 0) ? null : (
       <LeaguePositionCompact
         saber={report.saber}
         pitcher={pitcher}

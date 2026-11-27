@@ -65,8 +65,10 @@ export function weekHitters(players: MyPlayer[], today: string, mine: readonly n
   const { from, to } = weekRange(today);
   const rows: WeekHitter[] = [];
   for (const entry of players) {
-    if (entry.player.role !== "HITTER" || entry.level !== "MLB") continue;
-    // 포스트시즌은 뺀다(옛 api라 경기 종류가 없으면 정규시즌으로 본다)
+    // 카드의 단계(level)는 큰 숫자 기간의 단계다. 시즌 합계 카드(FA·시즌 끝·국내 복귀)와 기록 없음 카드는 기간이 없어
+    // 서버가 비워 준다. 그런 타자도 이번 주 메이저 경기를 쳤으면 넣는다(시즌 중에 FA가 되거나 시즌이 끝난 주)
+    if (entry.player.role !== "HITTER" || (entry.level ?? "MLB") !== "MLB") continue;
+    // 포스트시즌은 뺀다(경기 종류를 모르면 정규시즌으로 본다)
     const lines = entry.games.filter(
       (g) => g.played && g.batting && g.seasonType !== "POSTSEASON" && inWeek(g, from, to),
     );
@@ -89,7 +91,7 @@ export function weekHitters(players: MyPlayer[], today: string, mine: readonly n
       nameKo: entry.player.nameKo,
       photoUrl: entry.player.photoUrl,
       teamAbbr: entry.player.teamAbbr,
-      photoTeamAbbr: entry.player.photoTeamAbbr ?? null,
+      photoTeamAbbr: entry.player.photoTeamAbbr,
       games: lines.length,
       plateAppearances,
       atBats,

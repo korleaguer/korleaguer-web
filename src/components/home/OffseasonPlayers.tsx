@@ -88,8 +88,8 @@ export default async function OffseasonPlayers({
     ? myIds.filter((id) => playersResult.data.some((p) => p.id === id)).length
     : myIds.length;
   const my = myResult?.ok ? myResult.data : null;
-  // 서버가 성적표를 주면(사용자 11-12 결정 '시즌 성적표') 내 선수 다음 그 순서로, 아니면(옛 api) 예전 순서와 카드로
-  const reportIndex = new Map((offseason.report ?? []).map((r, i) => [r.playerId, i]));
+  // 서버가 성적표를 주면(사용자 11-12 결정 '시즌 성적표') 내 선수 다음 그 순서로, 성적표가 비면 예전 순서와 카드로
+  const reportIndex = new Map(offseason.report.map((r, i) => [r.playerId, i]));
   const hasReport = reportIndex.size > 0;
   const entries = my ? (hasReport ? reportOrder(my.players, reportIndex, myIds) : order(my.players, myIds)) : [];
   // 제목 옆은 기준 시각만(예전 '내 선수 먼저 · 시즌 판정 순'은 별 표시가 내 선수를 보이고 순서 까닭은 읽는 데 필요 없어 뺐다, 이슈 #329)
@@ -119,7 +119,7 @@ export default async function OffseasonPlayers({
       ) : hasReport ? (
         <SeasonReportList
           entries={entries}
-          reports={offseason.report ?? []}
+          reports={offseason.report}
           myIds={myIds}
           eagerPhotos={onTop ? EAGER_ROWS : 0}
         />
