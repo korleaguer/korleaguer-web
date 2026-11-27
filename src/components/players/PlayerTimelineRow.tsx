@@ -8,7 +8,7 @@ import MovePill from "@/components/MovePill";
 import Chevron from "@/components/Chevron";
 import StatLine from "@/components/StatLine";
 import PlayerAvatar from "@/components/PlayerAvatar";
-import type { ReportRow } from "@/components/home/SeasonReportRows";
+import type { ReportRow } from "@/components/SeasonReportRows";
 
 /** 구간 색(토큰이라 라이트·다크가 따라간다): 메이저 파랑 · 마이너 회색 · 부상 빨강 · 팀 없음 보라. 범례도 같이 쓴다 */
 export const BAND_CLASS: Record<TimelineKind, string> = {

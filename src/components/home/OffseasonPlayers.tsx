@@ -63,7 +63,8 @@ function summaryParts(offseason: OffSeason, entries: MyPlayer[]): string[] {
 
 /**
  * 비시즌 홈의 첫 묶음(홈 응답에 offseason이 있을 때). 지난 경기 한 줄과 '한국 선수 중 1위' 카드 대신 선수 전원의 시즌을 보인다.
- * 서버가 성적표를 주면 흰 카드 한 장 안 한 줄 목록(누르면 펼치기, 이슈 #276), 옛 api면 '내 선수' 카드의 시즌 합계 모양 카드.
+ * 서버가 성적표를 주면 흰 카드 한 장 안 한 줄 목록(누르면 펼치기, 이슈 #276). 서버가 성적표를 만들지 못하면(재료 읽기·계산 실패면
+ * 빈 목록) '내 선수' 카드의 시즌 합계 모양 카드로 대신한다. 이 대신 그리기 하나만 홈이 내 선수 화면 조각(FormCard)을 빌린다.
  * 별은 실제로 '내 선수'로 골랐는지를 따른다.
  */
 export default async function OffseasonPlayers({
@@ -124,7 +125,7 @@ export default async function OffseasonPlayers({
           eagerPhotos={onTop ? EAGER_ROWS : 0}
         />
       ) : (
-        // 옛 api(성적표 없음): 시즌 합계 카드. 같은 줄 카드는 높이를 맞춘다(시즌 합계 카드는 펼치는 목록이 없다)
+        // 서버가 성적표를 만들지 못함: 시즌 합계 카드. 같은 줄 카드는 높이를 맞춘다(시즌 합계 카드는 펼치는 목록이 없다)
         <ul className="grid items-stretch gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {entries.map((entry) => (
             <FormCard

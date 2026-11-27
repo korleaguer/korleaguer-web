@@ -18,7 +18,7 @@ import StarIcon from "@/components/StarIcon";
 import Words from "@/components/Words";
 import Chevron from "@/components/Chevron";
 import SheetOpener from "@/components/SheetOpener";
-import { SameGamesSheetBody, sameGamesRecord, sameGamesStateKey, sameGamesTitle } from "@/components/compare/SameGames";
+import { SameGamesSheetBody, sameGamesRecord, sameGamesStateKey, sameGamesTitle } from "@/components/SameGamesSheet";
 import WeekPair from "./WeekPair";
 import { formatWeekLabel, weekHitters, weekPair, weekRange, type WeekHitter, type WeekSame } from "@/lib/week";
 
