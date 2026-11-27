@@ -7,7 +7,7 @@ import type { LinkedArticle, LinkedTeam } from "@/lib/api";
 import { formatDate, kstDayKey } from "@/lib/format";
 import { titleLang } from "@/lib/news";
 import TeamMark from "@/components/TeamMark";
-import NewsThumb from "@/components/news/NewsThumb";
+import NewsThumb from "@/components/NewsThumb";
 import Words, { WordGroup } from "@/components/Words";
 import { teamColor, teamLogoUrl } from "@/lib/teams";
 import { useModalDialog } from "@/lib/useModalDialog";

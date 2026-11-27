@@ -3,7 +3,7 @@ import Section from "@/components/Section";
 import ScrollList from "@/components/ScrollList";
 import ShowMore from "@/components/ShowMore";
 import { cacheLife } from "next/cache";
-import MovePill from "./MovePill";
+import MovePill from "@/components/MovePill";
 
 /** 처음에 보여 줄 줄 수. 나머지는 '더 보기'로 펼친다 */
 const VISIBLE = 6;

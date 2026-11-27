@@ -7,7 +7,7 @@ import PlayerAvatar from "@/components/PlayerAvatar";
 import ResultPill from "@/components/ResultPill";
 import Highlights, { gameHighlights } from "@/components/Highlights";
 import BuzzLine from "@/components/home/BuzzLine";
-import { PostseasonLine } from "@/components/player/GameRow";
+import PostseasonLine from "@/components/PostseasonLine";
 import ScoreText from "@/components/ScoreText";
 import Section from "@/components/Section";
 import TeamMark from "@/components/TeamMark";

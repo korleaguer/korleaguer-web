@@ -219,3 +219,8 @@ export function kstPrevDayKey(day: string): string | null {
   const noon = Date.parse(`${day}T12:00:00+09:00`);
   return Number.isNaN(noon) ? null : kstDayKey(new Date(noon - 86_400_000));
 }
+
+/** 세는 수에 천 단위 쉼표: 1671 → "1,671" */
+export function formatCount(value: number): string {
+  return value.toLocaleString("ko-KR");
+}

@@ -5,7 +5,7 @@ import type { CompareLine, SamePair } from "@/lib/api";
 import BottomSheet from "@/components/BottomSheet";
 import Chevron from "@/components/Chevron";
 import InfoTip from "@/components/InfoTip";
-import { PairAvatar, PairHeads, PairTable, PillPicker, type PairPerson, type PairRow } from "@/components/compare/PairTable";
+import { PairAvatar, PairHeads, PairTable, PillPicker, type PairPerson, type PairRow } from "@/components/PairTable";
 import SheetOpener from "@/components/SheetOpener";
 import { SameGamesSheetBody, sameGamesRecord, sameGamesTitle } from "@/components/compare/SameGames";
 import { COMPARE_ROWS, leads, sampleNote, type CompareKey } from "@/lib/compare";

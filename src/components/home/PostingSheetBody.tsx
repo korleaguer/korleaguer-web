@@ -5,7 +5,7 @@ import { dDayText, daysLeftSpoken, derivePosting, formatUsd, historyRank, isOpen
 import { kboTeamColor } from "@/lib/teams";
 import HistorySheetRow from "@/components/home/HistorySheetRow";
 import LinkedTeams from "@/components/home/LinkedTeams";
-import KboAvatar from "@/components/home/KboAvatar";
+import KboAvatar from "@/components/KboAvatar";
 import { PostingDot } from "@/components/home/PostingDot";
 import PostingNews from "@/components/home/PostingNews";
 import { cacheLife } from "next/cache";

@@ -10,8 +10,8 @@ import { ArticleSkeleton } from "@/components/PageSkeleton";
 import NotFoundNotice from "@/components/NotFoundNotice";
 import Section from "@/components/Section";
 import NewsPhoto from "@/components/news/NewsPhoto";
-import AllNewsLink from "@/components/news/AllNewsLink";
-import NewsTitleList from "@/components/news/NewsTitleList";
+import AllNewsLink from "@/components/AllNewsLink";
+import NewsTitleList from "@/components/NewsTitleList";
 import PageSuspense from "@/components/PageSuspense";
 
 type Props = PageProps<"/news/[id]">;
