@@ -4,15 +4,8 @@ import type { ReactNode } from "react";
 import type { CardStatus, FormFact, MyPlayer, PlayCode, SeasonTotals } from "@/lib/api";
 import { formatEra, formatRate } from "@/lib/format";
 import RollingNumber from "@/components/RollingNumber";
-import {
-  type BadgeTone,
-  levelKo,
-  otherTotalsLine,
-  pitcherPlayText,
-  playText,
-  statusBadge,
-  statusLine,
-} from "./formLabels";
+import { type BadgeTone, levelKo, statusBadge } from "@/lib/playerStatus";
+import { otherTotalsLine, pitcherPlayText, playText, statusLine } from "./formLabels";
 
 /**
  * 배지 글자색. 위기(부상자 명단·출장 정지·지명 할당)는 본문 글자이고 빨강은 앞 점(DOT_TONE)에만 쓴다.

@@ -5,8 +5,8 @@ import { callAction } from "@/lib/callAction";
 import { moveFocus } from "@/lib/focus";
 import { withObjectParticle } from "@/lib/format";
 import { dismissToastOf, toast, type ToastPress } from "@/lib/toast";
-import { toastSaveFailed } from "./toastSaveFailed";
-import { noteStarPress } from "./useFocusAfterRemove";
+import { toastSaveFailed } from "@/lib/toastSaveFailed";
+import { noteStarPress } from "@/lib/starPress";
 
 /** '내 선수' 목록의 한 자리(setMyPlayer가 돌려준다): 번호와 바로 앞 선수 id */
 type Slot = NonNullable<Awaited<ReturnType<typeof setMyPlayer>>>;

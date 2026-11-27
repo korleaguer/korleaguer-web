@@ -3,7 +3,7 @@ import type { PlayerSummary, RosterMove, Timeline, TimelineKind, TimelinePlayer 
 import { formatEra, formatRate, teamLabel } from "@/lib/format";
 import { leagueWords } from "@/lib/leagueWords";
 import { bandDays, bandSummary, buildFacts, buildMarkers, dayIndex, koDate, monthTicks } from "@/lib/timeline";
-import MyPlayerToggle from "@/components/my/MyPlayerToggle";
+import MyPlayerToggle from "@/components/MyPlayerToggle";
 import MovePill from "@/components/MovePill";
 import Chevron from "@/components/Chevron";
 import StatLine from "@/components/StatLine";
