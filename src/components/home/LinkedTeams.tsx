@@ -28,8 +28,8 @@ const SHEET_STATE = "korleaguerTeamSheet";
 
 type Team = LinkedTeamCounts["teams"][number];
 
-/** 기사 목록이 있으면(새 api) 눌러서 창을 연다. 옛 api면 지금처럼 누를 수 없는 알약 */
-const canOpen = (t: Team) => (t.articles?.length ?? 0) > 0;
+/** 기사 목록이 있으면 눌러서 창을 연다. 기사가 없는 구단은 누를 수 없는 알약 */
+const canOpen = (t: Team) => t.articles.length > 0;
 
 /** 주소 기록 표시가 이 칸(sheetKey)의 것이면 그 구단 약어 */
 function teamInHistory(state: unknown, sheetKey: string): string | null {

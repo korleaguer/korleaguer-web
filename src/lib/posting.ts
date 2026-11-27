@@ -94,7 +94,7 @@ function pastSignings(history: PostingPast[]): Signing[] {
         days: h.daysBeforeDeadline,
         ...money(d.years, d.guaranteedUsd, d.krwPerUsd),
         thisYear: false,
-        photoUrl: h.photoUrl ?? null,
+        photoUrl: h.photoUrl,
       },
     ];
   });
