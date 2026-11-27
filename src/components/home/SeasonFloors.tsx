@@ -1,7 +1,7 @@
 import Link from "next/link";
-import type { GameBuzz, GameLine, HomeResponse, MyPlayer, SamePair } from "@/lib/api";
+import type { GameLine, HomeResponse, MyPlayer } from "@/lib/api";
 import { getMyPlayers, getPlayers, getSameGames } from "@/lib/api";
-import { formatLineup, formatScore, formatSummary, formatTime, kstDayKey, kstPrevDayKey, teamLabel } from "@/lib/format";
+import { formatLineup, formatScore, formatSummary, kstDayKey, kstPrevDayKey, teamLabel } from "@/lib/format";
 import { readMyPlayers } from "@/lib/myPlayers";
 import { teamColor, teamLogoUrl } from "@/lib/teams";
 import { levelKo, statusBadge } from "@/lib/playerStatus";
@@ -12,13 +12,13 @@ import ScoreText from "@/components/ScoreText";
 import Section from "@/components/Section";
 import TeamMark from "@/components/TeamMark";
 import RecentGames from "./RecentGames";
-import FloorBuzz, { type FloorBuzzItem } from "./FloorBuzz";
+import FloorBuzz, { pickFloorBuzz } from "./FloorBuzz";
 import MyPlayersLink from "@/components/home/MyPlayersLink";
 import StarIcon from "@/components/StarIcon";
 import Words from "@/components/Words";
-import { SameGamesLine, sameGamesStateKey } from "@/components/SameGamesSheet";
 import WeekPair from "./WeekPair";
 import { formatWeekLabel, weekHitters, weekPair, weekRange, type WeekHitter, type WeekSame } from "@/lib/week";
+import DerbyCard, { findDerbySeries } from "./DerbyCard";
 
 /**
  * 시즌 중 홈 맨 위: 선수들이 지금 어디서 뛰나를 층으로 묶는다(이슈 #245, 11-16·17 개편 결정).
@@ -116,48 +116,6 @@ export function findDerby(players: MyPlayer[], today: string | null): [GameLine,
  */
 function shownGame(entry: MyPlayer): GameLine | null {
   return entry.games.find((g) => g.gameStatus !== "scheduled" && g.gameStatus !== "postponed") ?? entry.games[0] ?? null;
-}
-
-/** 화제 카드에 두는 줄 수. 많으면 첫 화면이 길어져 우선순위 위에서부터 이만큼만 둔다 */
-const FLOOR_BUZZ_MAX = 3;
-/** 화제로 치는 시간: 경기가 시작한 지 이만큼 안이다('최근 24시간' 경기 카드와 같은 기준) */
-const FLOOR_BUZZ_WINDOW_MS = 24 * 60 * 60 * 1000;
-/** 서버 우선순위: 넘은 기록 > 데뷔·시즌 첫 > 연속 기록 > 시즌 최고 경기 */
-const BUZZ_RANK: Record<GameBuzz["kind"], number> = { PASSED: 0, FIRST: 1, STREAK: 2, SEASON_BEST: 3 };
-
-/**
- * 층 화면 맨 위 화제 카드에 둘 줄(11-21 B안). 선수마다 최근 24시간 안에 시작한 경기 중 서버가 문구를 준 가장 최근 경기 하나만
- * 줄이 된다(선수당 한 줄). 순서는 내 선수 먼저, 그다음 우선순위, 같으면 명단 순이고 세 줄까지다.
- * 옛 api(buzz 칸 없음)·화제 없는 날은 빈 목록이라 카드가 없다.
- */
-export function pickFloorBuzz(
-  players: MyPlayer[],
-  buzz: GameBuzz[],
-  mine: readonly number[],
-  generatedAt: string,
-): FloorBuzzItem[] {
-  const now = Date.parse(generatedAt);
-  if (Number.isNaN(now) || buzz.length === 0) return [];
-  const rows: { item: FloorBuzzItem; mine: boolean; rank: number; order: number }[] = [];
-  players.forEach((entry, order) => {
-    // 최신 경기부터 보며 24시간 안에 뛴 경기 중 문구가 있는 첫 경기를 쓴다(마이너 경기 줄이 맨 앞에 와도 메이저 화제를 놓치지 않는다)
-    for (const game of entry.games) {
-      if (!game.played) continue;
-      const started = Date.parse(game.startTimeKst);
-      if (Number.isNaN(started) || started > now || now - started > FLOOR_BUZZ_WINDOW_MS) continue;
-      const found = buzz.find((b) => b.playerId === entry.player.id && b.gameId === game.gameId);
-      if (!found) continue;
-      rows.push({
-        item: { buzz: found, nameKo: entry.player.nameKo },
-        mine: mine.includes(entry.player.id),
-        rank: BUZZ_RANK[found.kind] ?? 9,
-        order,
-      });
-      return;
-    }
-  });
-  rows.sort((a, b) => Number(b.mine) - Number(a.mine) || a.rank - b.rank || a.order - b.order);
-  return rows.slice(0, FLOOR_BUZZ_MAX).map((r) => r.item);
 }
 
 /** "2026-07-07" → "7월 7일". 달과 날 사이는 줄바꿈 없는 공백이라 Words로 그리면 큰 글씨에서도 '7월'/'7일'로 갈리지 않는다 */
@@ -458,89 +416,5 @@ function FloorRow({ entry, starred, today }: { entry: MyPlayer; starred: boolean
         </span>
       </Link>
     </li>
-  );
-}
-
-/** 맞대결 점수 낭독: '샌디에이고 3, 다저스 2'(화면처럼 원정 먼저). 점수를 모르면 '샌디에이고 대 다저스' */
-function derbyScoreLabel(away: GameLine, home: GameLine): string {
-  if (away.teamScore == null || home.teamScore == null) return `${away.teamKo} 대 ${home.teamKo}`;
-  return `${away.teamKo} ${away.teamScore}, ${home.teamKo} ${home.teamScore}`;
-}
-
-/** 맞대결 두 선수의 이번 시즌 같은 경기 묶음: 화면 왼쪽(원정) 선수 기준 */
-interface DerbySeries {
-  /** 왼쪽(원정) 선수 이름. 전적은 이 선수 팀 것이다 */
-  nameKo: string;
-  pair: SamePair;
-  /** 오늘 경기가 올해 몇 번째 같은 경기인지 */
-  nth: number;
-}
-
-/**
- * 오늘 맞대결 두 선수가 올해 같은 경기에 나온 묶음(GET /api/players/{id}/same-games). 카드 맨 아래 '올해 n번째 · 팀 전적 ›' 줄과
- * 그 줄이 여는 창에 쓴다. 못 받았거나(옛 api) 묶음에 오늘 경기가 없으면 null이라 줄이 없다.
- */
-async function findDerbySeries([a, b]: [GameLine, GameLine]): Promise<DerbySeries | null> {
-  const [home, away] = a.home ? [a, b] : [b, a];
-  const same = await getSameGames(away.playerId);
-  if (!same.ok) return null;
-  const pair = same.data.pairs.find((p) => p.other.playerId === home.playerId);
-  const index = pair?.meetings.findIndex((m) => m.mine.gameId === away.gameId) ?? -1;
-  return pair && index >= 0 ? { nameKo: away.nameKo, pair, nth: index + 1 } : null;
-}
-
-/**
- * 맞대결 카드: 같은 경기에서 뛴 두 선수와 점수. 올해 같은 경기 묶음을 받았으면 맨 아래 '올해 6번째 · 샌프란시스코 4승 2패 ›' 한 줄을
- * 두고, 누르면 그 짝의 경기 목록 창(선수 페이지 '같은 경기에 나온 선수'와 같은 창)을 연다(사용자 11-22 시안 2A, 이슈 #420)
- */
-function DerbyCard({ pair: [a, b], series }: { pair: [GameLine, GameLine]; series: DerbySeries | null }) {
-  const [home, away] = a.home ? [a, b] : [b, a];
-  return (
-    <div className="card mb-3 overflow-hidden">
-      <div className="p-3.5">
-        <div className="flex items-baseline justify-between">
-          {/* 빨강은 위기(부상·DFA) 뜻이라 쓰지 않고 본문 글자를 한 단계 굵게(700) 둔다('오늘 새 기사'처럼, 전수조사 L306) */}
-          <span className="text-label font-bold">오늘 맞대결</span>
-          <span className="text-caption text-muted tabular-nums">{formatTime(a.startTimeKst)} 시작</span>
-        </div>
-        {/* 문서 순서도 화면과 같은 원정 선수 → 점수 → 홈 선수다. 예전에는 grid order로 점수만 가운데로 옮겨서, 화면 낭독기가
-            두 선수를 다 읽은 뒤 팀 이름 없는 '3 : 2'를 읽었다(전수조사 L303) */}
-        <div className="mt-2.5 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
-          <DerbyPlayer line={away} />
-          <div className="text-center">
-            <span aria-hidden className="flex items-center justify-center gap-1.5">
-              <TeamMark logoUrl={teamLogoUrl(away.teamAbbr)} color={teamColor(away.teamAbbr)} size="sm" />
-              <span className="text-score tabular-nums">
-                {away.teamScore ?? "-"} : {home.teamScore ?? "-"}
-              </span>
-              <TeamMark logoUrl={teamLogoUrl(home.teamAbbr)} color={teamColor(home.teamAbbr)} size="sm" />
-            </span>
-            {/* 로고는 그림이라 낭독에는 팀 이름을 붙인다 */}
-            <span className="sr-only">{derbyScoreLabel(away, home)}</span>
-          </div>
-          <DerbyPlayer line={home} />
-        </div>
-      </div>
-      {series && (
-        <div className="border-t border-line">
-          <SameGamesLine stateKey={sameGamesStateKey(series.pair.other.playerId)} nameKo={series.nameKo} pair={series.pair} lead={`올해 ${series.nth}번째`} />
-        </div>
-      )}
-    </div>
-  );
-}
-
-function DerbyPlayer({ line }: { line: GameLine }) {
-  return (
-    <Link
-      href={`/players/${line.playerId}`}
-      className="press-soft flex min-w-0 flex-col items-center gap-1 text-center"
-    >
-      <PlayerAvatar nameKo={line.nameKo} photoUrl={line.photoUrl} teamAbbr={line.teamAbbr} photoTeamAbbr={line.photoTeamAbbr} size={44} />
-      <span className="text-heading">{line.nameKo}</span>
-      <span className="text-caption text-muted">
-        <Words text={formatSummary(line.summary)} />
-      </span>
-    </Link>
   );
 }
